@@ -44,6 +44,20 @@ apps/desktop/       the Electron app: main process (SQLite, credentials, mpv bri
 docs/adr/           decisions worth recording — see CONTEXT.md's own note on when we write one.
 ```
 
+## Known gotcha: better-sqlite3's native binary targets one runtime at a time
+
+`better-sqlite3` compiles a native `.node` binary that must match the exact Node ABI of
+whatever loads it. `apps/desktop`'s `postinstall` runs `electron-rebuild` so the binary
+matches **Electron's** bundled Node — required for `pnpm dev`/`pnpm package` to work at all.
+
+This means the binary is *not* built for your system Node. It happens not to matter today
+because nothing in `pnpm --filter @testcard/core test` touches SQLite. It will matter the
+day a test opens a real database outside Electron (e.g. testing `importSource`/`openDatabase`
+directly under Vitest) — that test run would need `pnpm rebuild better-sqlite3` back to the
+system Node ABI first, and `pnpm install` (which reruns the Electron rebuild) after. If this
+becomes a recurring annoyance, look at running those specific DB tests through Electron's own
+test runner instead of plain Vitest.
+
 ## Security
 
 Provider credentials are extracted from a pasted playlist URL, probed once, then stored via
