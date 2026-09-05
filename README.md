@@ -14,8 +14,8 @@ Early scaffolding. `packages/core`'s source parsing, normalisation and database 
 built and unit-tested. The desktop shell (`apps/desktop`) boots, has a typed IPC bridge, and
 can add an Xtream source / refresh it into SQLite from the UI. Embedded mpv playback
 (`apps/desktop/src/main/mpv/`) is written but **not yet wired to the UI** — see
-`scripts/fetch-mpv.md` for the one manual step needed before it can be exercised, and the
-plan's build order for what comes after.
+`scripts/fetch-mpv.md` for the one manual step needed before it can be exercised, and
+[`docs/phase-2-brief.md`](docs/phase-2-brief.md) for the task breakdown covering that work.
 
 ## Requirements
 
