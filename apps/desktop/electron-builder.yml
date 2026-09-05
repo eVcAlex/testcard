@@ -1,0 +1,23 @@
+appId: dev.alexmcguiness.testcard
+productName: Testcard
+directories:
+  output: ../../release
+  buildResources: build
+files:
+  - out/**/*
+extraResources:
+  - from: resources/mpv
+    to: mpv
+    filter: ["**/*"]
+win:
+  target: nsis
+  # Unsigned for now — see the plan's "Ship" decision. SmartScreen will warn once on install;
+  # revisit code signing only if this is ever released publicly.
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+publish:
+  provider: github
+  # owner/repo are read from the root package.json's "repository" field once this repo has
+  # been pushed to GitHub — see README "Publishing a release".

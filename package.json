@@ -1,0 +1,33 @@
+{
+  "name": "testcard",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A dark, watermark-free IPTV player for Windows.",
+  "author": "Alex McGuiness",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @testcard/desktop dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "oxlint .",
+    "typecheck": "pnpm -r typecheck",
+    "package": "pnpm --filter @testcard/desktop package"
+  },
+  "devDependencies": {
+    "oxlint": "^1.24.0",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "electron",
+      "electron-winstaller",
+      "esbuild"
+    ]
+  }
+}

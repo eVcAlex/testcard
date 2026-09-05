@@ -1,0 +1,30 @@
+# deps / build
+node_modules/
+dist/
+dist-electron/
+release/
+out/
+*.tsbuildinfo
+
+# mpv runtime, fetched by scripts/fetch-mpv.* — never committed
+apps/desktop/resources/mpv/
+
+# secrets — credentials belong in the OS keychain, never on disk in this repo
+*.env
+*.env.*
+!.env.example
+
+# playlists / provider data — never commit real playlists
+*.m3u
+*.m3u8
+**/fixtures/*.local.*
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+pnpm-debug.log*
