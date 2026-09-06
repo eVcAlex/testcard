@@ -57,6 +57,7 @@ export type PlaybackEvent =
   | { readonly type: "error"; readonly channelId: string; readonly message: string }
   | { readonly type: "paused"; readonly paused: boolean }
   | { readonly type: "volume"; readonly volume: number }
+  | { readonly type: "fullscreen"; readonly fullscreen: boolean }
   | { readonly type: "stopped" };
 
 /**
@@ -116,6 +117,11 @@ export interface TestcardApi {
     openInVlc(): Promise<void>;
     /** Whether an "Open in VLC" action can succeed on this machine. */
     vlcAvailable(): Promise<boolean>;
+  };
+  view: {
+    /** Toggles OS fullscreen on the main window. State changes arrive as a `fullscreen` event. */
+    toggleFullscreen(): Promise<void>;
+    isFullscreen(): Promise<boolean>;
   };
   events: {
     /** Subscribes to playback lifecycle events. Returns an unsubscribe function. */

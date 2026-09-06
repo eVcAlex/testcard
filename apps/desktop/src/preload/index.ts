@@ -47,6 +47,10 @@ const api: TestcardApi = {
     openInVlc: bind("playback.openInVlc"),
     vlcAvailable: bind("playback.vlcAvailable"),
   },
+  view: {
+    toggleFullscreen: bind("view.toggleFullscreen"),
+    isFullscreen: bind("view.isFullscreen"),
+  },
   events: {
     onPlayback(listener: (event: PlaybackEvent) => void): () => void {
       const handler = (_event: IpcRendererEvent, payload: PlaybackEvent) => {

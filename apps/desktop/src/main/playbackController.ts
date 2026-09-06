@@ -12,7 +12,7 @@ import {
 import { MpvPlayer, type MpvEvent, type MpvTrack } from "./mpv/mpvProcess.js";
 import { resolveMpvPath } from "./mpv/mpvPath.js";
 import { VideoRegionWindow } from "./videoRegionWindow.js";
-import { OverlayWindow } from "./overlayWindow.js";
+import type { OverlayWindow } from "./overlayWindow.js";
 import { openInVlc as spawnVlc } from "./externalPlayer.js";
 
 interface Adapters {
@@ -140,10 +140,10 @@ export class PlaybackController {
       this.region = new VideoRegionWindow(this.mainWindow);
       if (this.lastRegionRect) this.region.setRegion(this.lastRegionRect);
     }
-    if (!this.overlay) {
-      this.overlay = new OverlayWindow(this.mainWindow);
-      if (this.lastRegionRect) this.overlay.setRegion(this.lastRegionRect);
-    }
+    // The on-video overlay (OverlayWindow) is deliberately not created here yet — the docked
+    // control strip in the player view is the transport surface. The overlay gets wired to
+    // fullscreen mode in a following pass; every `this.overlay?.` call below is a safe no-op
+    // until then.
     if (!this.mpv) {
       this.mpv = new MpvPlayer(resolveMpvPath());
       this.mpv.on("event", (event) => this.onMpvEvent(event));

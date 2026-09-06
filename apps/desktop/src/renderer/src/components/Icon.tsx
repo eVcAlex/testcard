@@ -24,7 +24,9 @@ export type IconName =
   | "moon"
   | "refresh"
   | "x"
-  | "signal";
+  | "signal"
+  | "fullscreen"
+  | "fullscreen-exit";
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -107,6 +109,8 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   x: <path d="M4 4l8 8M12 4l-8 8" />,
   signal: <path d="M2 11l3-3 2.5 2.5L11 7l3 3" />,
+  fullscreen: <path d="M6 2H2v4M14 6V2h-4M2 10v4h4M10 14h4v-4" />,
+  "fullscreen-exit": <path d="M2 6h4V2M14 6h-4V2M2 10h4v4M14 10h-4v4" />,
 };
 
 const FILLED: Partial<Record<IconName, true>> = { star: true, play: true, pause: true, "skip-back": true, "skip-forward": true };

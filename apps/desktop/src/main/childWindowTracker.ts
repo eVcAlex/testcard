@@ -22,6 +22,12 @@ export class ChildWindowTracker {
     if (this.wantVisible) this.showNow();
     else this.reposition();
   };
+  // Fullscreen resizes the parent without a `will-resize`; the content bounds settle a beat
+  // after the event, so re-measure on the next tick as well as immediately.
+  private readonly onFullscreenChange = () => {
+    this.onParentShow();
+    setTimeout(() => this.onParentShow(), 60);
+  };
 
   constructor(
     private readonly parent: BrowserWindow,
@@ -36,6 +42,8 @@ export class ChildWindowTracker {
     parent.on("minimize", this.onParentHide);
     parent.on("hide", this.onParentHide);
     parent.on("show", this.onParentShow);
+    parent.on("enter-full-screen", this.onFullscreenChange);
+    parent.on("leave-full-screen", this.onFullscreenChange);
   }
 
   /** The renderer's latest measured rect. Repositions but does not change visibility. */
@@ -95,5 +103,7 @@ export class ChildWindowTracker {
     this.parent.off("minimize", this.onParentHide);
     this.parent.off("hide", this.onParentHide);
     this.parent.off("show", this.onParentShow);
+    this.parent.off("enter-full-screen", this.onFullscreenChange);
+    this.parent.off("leave-full-screen", this.onFullscreenChange);
   }
 }

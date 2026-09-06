@@ -3,6 +3,7 @@ import { PictureWell } from "./PictureWell.js";
 import { NoSignal } from "./NoSignal.js";
 import { Icon } from "../components/Icon.js";
 import { usePlaybackTransport } from "./usePlaybackTransport.js";
+import { useFullscreen } from "./useFullscreen.js";
 import type { PlaybackState } from "./usePlaybackEvents.js";
 import type { PlaybackTrack } from "../../../shared/ipc.js";
 
@@ -24,14 +25,23 @@ export function PlayerView({
   onBack: () => void;
 }) {
   const { paused, volume, setPaused, setVolume } = usePlaybackTransport();
+  const { fullscreen, toggle: toggleFullscreen } = useFullscreen();
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onBack();
+      if (event.key === "F11") {
+        event.preventDefault();
+        toggleFullscreen();
+        return;
+      }
+      if (event.key !== "Escape") return;
+      // In fullscreen, Esc drops back to the window; otherwise it leaves the player.
+      if (fullscreen) toggleFullscreen();
+      else onBack();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onBack]);
+  }, [onBack, fullscreen, toggleFullscreen]);
 
   const name = state.status === "idle" ? "" : state.channelName;
   const live = state.status === "playing";
@@ -94,6 +104,14 @@ export function PlayerView({
         </span>
 
         <div className="pw-ctl-group pushed">
+          <button
+            type="button"
+            className="btn btn--ghost btn--icon"
+            aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+            onClick={toggleFullscreen}
+          >
+            <Icon name={fullscreen ? "fullscreen-exit" : "fullscreen"} />
+          </button>
           {audioTracks.length > 1 && (
             <select
               className="pw-select"
