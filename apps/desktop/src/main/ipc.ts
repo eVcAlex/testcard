@@ -189,6 +189,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async stop() {
         await playback.stop();
       },
+      async snapshot() {
+        return playback.snapshot();
+      },
       async setVideoRegion(rect) {
         playback.setVideoRegion(rect);
       },

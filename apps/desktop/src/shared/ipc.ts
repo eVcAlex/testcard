@@ -55,7 +55,23 @@ export type PlaybackEvent =
   | { readonly type: "tracks"; readonly channelId: string; readonly tracks: readonly PlaybackTrack[] }
   | { readonly type: "timeout"; readonly channelId: string }
   | { readonly type: "error"; readonly channelId: string; readonly message: string }
+  | { readonly type: "paused"; readonly paused: boolean }
+  | { readonly type: "volume"; readonly volume: number }
   | { readonly type: "stopped" };
+
+/**
+ * A pull-on-mount view of playback state. The overlay window (and an HMR-reloaded renderer)
+ * can start after playback is already running, so they read this once and then follow the
+ * event stream.
+ */
+export interface PlaybackSnapshot {
+  readonly status: "idle" | "loading" | "playing" | "dead";
+  readonly channelId: string | null;
+  readonly channelName: string | null;
+  readonly tracks: readonly PlaybackTrack[];
+  readonly paused: boolean;
+  readonly volume: number;
+}
 
 export interface TestcardApi {
   sources: {
@@ -88,6 +104,8 @@ export interface TestcardApi {
     /** Starts playback of a channel's best (or explicitly chosen) variant inside the mpv window. */
     play(channelId: string, variantId?: string): Promise<void>;
     stop(): Promise<void>;
+    /** Current playback state, for a surface that mounts mid-stream (the overlay, an HMR reload). */
+    snapshot(): Promise<PlaybackSnapshot>;
     /** Tells main where the picture well currently is, so the mpv window can be positioned over it. */
     setVideoRegion(rect: VideoRegionRect): Promise<void>;
     setVolume(volume: number): Promise<void>;

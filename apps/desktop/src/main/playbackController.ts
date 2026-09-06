@@ -1,7 +1,14 @@
 import type { BrowserWindow } from "electron";
 import type Database from "better-sqlite3";
+import { Conf } from "electron-conf/main";
 import { getPlaybackTarget, recordRecent, type PlaybackTarget, type SourceAdapter } from "@testcard/core";
-import { IPC_EVENT_CHANNEL, type PlaybackEvent, type PlaybackTrack, type VideoRegionRect } from "../shared/ipc.js";
+import {
+  IPC_EVENT_CHANNEL,
+  type PlaybackEvent,
+  type PlaybackSnapshot,
+  type PlaybackTrack,
+  type VideoRegionRect,
+} from "../shared/ipc.js";
 import { MpvPlayer, type MpvEvent, type MpvTrack } from "./mpv/mpvProcess.js";
 import { resolveMpvPath } from "./mpv/mpvPath.js";
 import { VideoRegionWindow } from "./videoRegionWindow.js";
@@ -14,9 +21,12 @@ interface Adapters {
 
 /**
  * Bridges the renderer's `playback.*` IPC calls to the embedded mpv process. Owns the mpv
- * child, the frameless child window it renders into, and the "which channel is on" state
- * needed for retry / Open-in-VLC. Kept separate from ipc.ts so that file stays a thin
- * dispatcher.
+ * child, the frameless child window it renders into, and the playback state (channel, tracks,
+ * paused, volume) that both the main window and — later — the overlay window read. Kept
+ * separate from ipc.ts so that file stays a thin dispatcher.
+ *
+ * paused/volume live here, not in the renderer: the overlay is a second view of the same
+ * state, and keeping `paused` here also fixes it silently surviving a channel change.
  */
 export class PlaybackController {
   private mpv: MpvPlayer | null = null;
@@ -24,11 +34,19 @@ export class PlaybackController {
   private lastRegionRect: VideoRegionRect | null = null;
   private current: { target: PlaybackTarget; streamUrl: string } | null = null;
 
+  private status: PlaybackSnapshot["status"] = "idle";
+  private tracks: PlaybackTrack[] = [];
+  private paused = false;
+  private volume: number;
+  private readonly conf = new Conf<{ volume: number }>();
+
   constructor(
     private readonly db: Database.Database,
     private readonly mainWindow: BrowserWindow,
     private readonly adapters: Adapters,
-  ) {}
+  ) {
+    this.volume = clampVolume(this.conf.get("volume", 100));
+  }
 
   async play(channelId: string, variantId?: string): Promise<void> {
     const target = getPlaybackTarget(this.db, channelId, variantId);
@@ -37,14 +55,24 @@ export class PlaybackController {
     const adapter = target.source.kind === "xtream" ? this.adapters.xtream : this.adapters.m3u;
     const streamUrl = await adapter.buildStreamUrl(target.source, target.variant);
     this.current = { target, streamUrl };
+    this.tracks = [];
+
+    // A fresh channel always starts unpaused; the renderer no longer has to track this.
+    this.paused = false;
+    this.emit({ type: "paused", paused: false });
 
     await this.ensureStarted();
+    this.status = "loading";
     this.emit({ type: "loading", channelId, channelName: target.channelName });
+    await this.mpv!.setVolume(this.volume);
+    await this.mpv!.setPaused(false);
     await this.mpv!.play(streamUrl);
   }
 
   async stop(): Promise<void> {
     this.current = null;
+    this.tracks = [];
+    this.status = "idle";
     this.region?.hide();
     await this.mpv?.stop();
     this.mpv = null;
@@ -57,11 +85,16 @@ export class PlaybackController {
   }
 
   async setVolume(volume: number): Promise<void> {
-    await this.mpv?.setVolume(volume);
+    this.volume = clampVolume(volume);
+    this.conf.set("volume", this.volume);
+    await this.mpv?.setVolume(this.volume);
+    this.emit({ type: "volume", volume: this.volume });
   }
 
   async setPaused(paused: boolean): Promise<void> {
+    this.paused = paused;
     await this.mpv?.setPaused(paused);
+    this.emit({ type: "paused", paused });
   }
 
   async setSubtitleTrack(trackId: number | null): Promise<void> {
@@ -75,6 +108,17 @@ export class PlaybackController {
   async openInVlc(): Promise<void> {
     if (!this.current) throw new Error("No channel is selected.");
     await spawnVlc(this.current.streamUrl);
+  }
+
+  snapshot(): PlaybackSnapshot {
+    return {
+      status: this.status,
+      channelId: this.current?.target.channelId ?? null,
+      channelName: this.current?.target.channelName ?? null,
+      tracks: this.tracks,
+      paused: this.paused,
+      volume: this.volume,
+    };
   }
 
   dispose(): void {
@@ -102,25 +146,30 @@ export class PlaybackController {
     switch (event.type) {
       case "playing":
         if (!channelId) return;
+        this.status = "playing";
         recordRecent(this.db, channelId);
         this.region?.show();
         this.emit({ type: "playing", channelId });
         break;
       case "tracks":
         if (!channelId) return;
-        this.emit({ type: "tracks", channelId, tracks: toPlaybackTracks(event.tracks) });
+        this.tracks = toPlaybackTracks(event.tracks);
+        this.emit({ type: "tracks", channelId, tracks: this.tracks });
         break;
       case "timeout":
         if (!channelId) return;
+        this.status = "dead";
         this.region?.hide();
         this.emit({ type: "timeout", channelId });
         break;
       case "error":
         if (!channelId) return;
+        this.status = "dead";
         this.region?.hide();
         this.emit({ type: "error", channelId, message: event.message });
         break;
       case "exited":
+        this.status = "dead";
         this.region?.hide();
         this.mpv = null;
         if (channelId) this.emit({ type: "error", channelId, message: "The player stopped unexpectedly." });
@@ -135,6 +184,11 @@ export class PlaybackController {
       this.mainWindow.webContents.send(IPC_EVENT_CHANNEL, event);
     }
   }
+}
+
+function clampVolume(value: number): number {
+  if (!Number.isFinite(value)) return 100;
+  return Math.max(0, Math.min(130, Math.round(value)));
 }
 
 function toPlaybackTracks(tracks: readonly MpvTrack[]): PlaybackTrack[] {

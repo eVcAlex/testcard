@@ -38,6 +38,7 @@ const api: TestcardApi = {
   playback: {
     play: bind("playback.play"),
     stop: bind("playback.stop"),
+    snapshot: bind("playback.snapshot"),
     setVideoRegion: bind("playback.setVideoRegion"),
     setVolume: bind("playback.setVolume"),
     setPaused: bind("playback.setPaused"),

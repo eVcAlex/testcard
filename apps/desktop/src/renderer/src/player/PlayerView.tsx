@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { PictureWell } from "./PictureWell.js";
 import { NoSignal } from "./NoSignal.js";
 import { Icon } from "../components/Icon.js";
+import { usePlaybackTransport } from "./usePlaybackTransport.js";
 import type { PlaybackState } from "./usePlaybackEvents.js";
 import type { PlaybackTrack } from "../../../shared/ipc.js";
 
@@ -22,13 +23,7 @@ export function PlayerView({
   onRetry: () => void;
   onBack: () => void;
 }) {
-  const [paused, setPaused] = useState(false);
-  const [volume, setVolume] = useState(100);
-
-  // A fresh channel always starts playing; keep our local mirror honest.
-  useEffect(() => {
-    if (state.status === "loading") setPaused(false);
-  }, [state.status, state.status === "loading" ? state.channelId : null]);
+  const { paused, volume, setPaused, setVolume } = usePlaybackTransport();
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -68,11 +63,7 @@ export function PlayerView({
           className="btn btn--icon"
           aria-label={paused ? "Play" : "Pause"}
           disabled={!controlsEnabled}
-          onClick={() => {
-            const next = !paused;
-            setPaused(next);
-            void window.testcard.playback.setPaused(next);
-          }}
+          onClick={() => setPaused(!paused)}
         >
           <Icon name={paused ? "play" : "pause"} />
         </button>
@@ -87,11 +78,7 @@ export function PlayerView({
             value={volume}
             aria-label="Volume"
             disabled={!controlsEnabled}
-            onChange={(event) => {
-              const next = Number(event.target.value);
-              setVolume(next);
-              void window.testcard.playback.setVolume(next);
-            }}
+            onChange={(event) => setVolume(Number(event.target.value))}
           />
         </div>
 
