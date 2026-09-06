@@ -44,9 +44,14 @@ export function searchChannels(db: Database.Database, query: string, limit = 200
 
 /**
  * The default channel grid: every channel, optionally narrowed to one category (the sidebar
- * list) or one country (the filter chips), ordered the way a channel list is normally read (by
- * number, then name). Capped — the renderer narrows rather than rendering all ~18k at once.
- * `categoryId` wins over `country` when both are given.
+ * list) or one country (the filter chips). Ordered exactly as the provider's playlist lists
+ * them — `channels.rowid` is insertion order and `importSource` inserts in playlist order (and
+ * diff-merges on refresh without touching rowid). No re-sort by number or name: the provider's
+ * order is what the user expects to see. Capped — the renderer narrows rather than rendering
+ * all ~18k at once. `categoryId` wins over `country` when both are given.
+ *
+ * Caveat (same as `listCategories`): a channel first seen on a later refresh sorts to the end
+ * of its group rather than its true playlist slot until an explicit sort_order column exists.
  */
 export function browseChannels(
   db: Database.Database,
@@ -70,7 +75,7 @@ export function browseChannels(
       `SELECT ${CHANNEL_COLUMNS}
        FROM channels c
        ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
-       ORDER BY c.channel_number IS NULL, c.channel_number, c.normalised_name
+       ORDER BY c.rowid
        LIMIT ? OFFSET ?`,
     )
     .all(...filters, limit, offset) as ChannelRow[];
