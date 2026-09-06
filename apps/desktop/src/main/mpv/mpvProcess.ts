@@ -7,11 +7,31 @@ import { MpvIpcClient } from "./mpvIpc.js";
 /** How long to wait for the first video frame before treating a stream as dead. See ADR 0001 / CONTEXT.md "Dead channel". */
 export const PLAYBACK_TIMEOUT_MS = 10_000;
 
+export interface MpvTrack {
+  readonly id: number;
+  readonly type: "video" | "audio" | "sub";
+  readonly title?: string;
+  readonly lang?: string;
+  readonly codec?: string;
+  readonly selected: boolean;
+}
+
 export type MpvEvent =
+  | { readonly type: "loading" }
   | { readonly type: "playing" }
+  | { readonly type: "tracks"; readonly tracks: readonly MpvTrack[] }
   | { readonly type: "timeout" }
   | { readonly type: "error"; readonly message: string }
   | { readonly type: "exited"; readonly code: number | null };
+
+interface RawMpvTrack {
+  readonly id: number;
+  readonly type: string;
+  readonly title?: string;
+  readonly lang?: string;
+  readonly codec?: string;
+  readonly selected?: boolean;
+}
 
 /**
  * Owns one embedded mpv child process rendering into a given native window handle (`--wid`).
@@ -23,6 +43,9 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
   private process: ChildProcessWithoutNullStreams | null = null;
   private ipc: MpvIpcClient | null = null;
   private timeoutHandle: NodeJS.Timeout | null = null;
+  /** Bumped on every play() so listeners from a superseded load can detect they're stale. */
+  private loadGeneration = 0;
+  private disposeListeners: (() => void)[] = [];
 
   constructor(private readonly mpvExecutablePath: string) {
     super();
@@ -38,13 +61,19 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
       [
         `--wid=${wid}`,
         `--input-ipc-server=${pipeName}`,
+        "--no-config", // a stray global mpv.conf must not change how the app behaves
         "--no-osc",
         "--no-input-default-bindings",
         "--idle=yes",
         "--force-window=yes",
+        "--keep-open=no",
         "--hwdec=auto-safe",
-        "--profile=low-latency",
+        // NOTE: deliberately not --profile=low-latency here. That profile sets cache=no,
+        // which stutters on the 2160p50 HEVC channel this whole architecture exists to
+        // play (ADR 0001). A modest demuxer cache is the right default; tune later.
         "--cache=yes",
+        "--demuxer-max-bytes=64MiB",
+        "--msg-level=all=warn",
         `--log-file=${join(app.getPath("logs"), "mpv.log")}`,
       ],
       { windowsHide: true },
@@ -57,6 +86,19 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
     // mpv creates the pipe once the process is up; a short retry loop covers the startup race
     // rather than an arbitrary fixed delay.
     await this.connectWithRetry(this.ipc);
+
+    // Observed once for the life of the process; play() (re)attaches per-load listeners for
+    // core-idle / video-params / end-file.
+    await this.ipc.observeProperty("core-idle");
+    await this.ipc.observeProperty("video-params");
+    await this.ipc.observeProperty("track-list");
+
+    // track-list is process-lifetime, not per-load: the list first populates a beat before
+    // the first frame decodes (so before a load "settles"), and it also changes afterwards
+    // when the user switches audio/subtitle track. A per-load listener would miss both.
+    this.ipc.onPropertyChange("track-list", (value) => {
+      this.emit("event", { type: "tracks", tracks: mapTracks(value) });
+    });
   }
 
   private async connectWithRetry(ipc: MpvIpcClient, attemptsLeft = 20): Promise<void> {
@@ -73,43 +115,80 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
     if (!this.ipc) throw new Error("mpv is not started");
     const ipc = this.ipc;
 
-    await ipc.observeProperty("core-idle");
-    let resolved = false;
-    const unsubscribe = ipc.onPropertyChange("core-idle", (idle) => {
-      if (idle === false && !resolved) {
-        resolved = true;
-        if (this.timeoutHandle) clearTimeout(this.timeoutHandle);
-        this.emit("event", { type: "playing" });
-      }
-    });
+    this.clearLoadListeners();
+    const generation = ++this.loadGeneration;
+    const isStale = () => generation !== this.loadGeneration;
+    let settled = false;
 
-    this.timeoutHandle = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        unsubscribe();
-        this.emit("event", { type: "timeout" });
-      }
-    }, PLAYBACK_TIMEOUT_MS);
+    const finish = (event: MpvEvent) => {
+      if (settled || isStale()) return;
+      settled = true;
+      if (this.timeoutHandle) clearTimeout(this.timeoutHandle);
+      this.timeoutHandle = null;
+      this.clearLoadListeners();
+      this.emit("event", event);
+    };
+
+    this.emit("event", { type: "loading" });
+
+    this.disposeListeners.push(
+      // "playing" means a frame actually decoded — video-params goes from null to an object
+      // with real dimensions. core-idle alone flips false while mpv is still probing.
+      ipc.onPropertyChange("video-params", (value) => {
+        if (isDecodedVideoParams(value)) finish({ type: "playing" });
+      }),
+      // A stream that 404s or has no playable track ends almost immediately — surface that
+      // now instead of making the user wait out the full timeout.
+      ipc.onEvent("end-file", (message) => {
+        const reason = String(message["reason"] ?? "");
+        if (reason === "stop" || reason === "redirect") return; // superseded by our own next loadfile
+        finish(
+          reason === "error"
+            ? { type: "error", message: String(message["file_error"] ?? "The stream could not be opened.") }
+            : { type: "timeout" },
+        );
+      }),
+    );
+
+    this.timeoutHandle = setTimeout(() => finish({ type: "timeout" }), PLAYBACK_TIMEOUT_MS);
 
     await ipc.command(["loadfile", streamUrl, "replace"]);
   }
 
   async setSubtitleTrack(trackId: number | null): Promise<void> {
-    await this.ipc?.setProperty("sid", trackId ?? false);
+    await this.ipc?.setProperty("sid", trackId ?? "no");
   }
 
   async setAudioTrack(trackId: number): Promise<void> {
     await this.ipc?.setProperty("aid", trackId);
   }
 
-  /** Repositions the mpv window to match the video region of the app window on resize/move. */
+  async setVolume(volume: number): Promise<void> {
+    await this.ipc?.setProperty("volume", Math.max(0, Math.min(130, Math.round(volume))));
+  }
+
+  async setPaused(paused: boolean): Promise<void> {
+    await this.ipc?.setProperty("pause", paused);
+  }
+
+  /**
+   * Hook for pushing an explicit video rectangle to mpv. With the child-BrowserWindow
+   * approach (see main/videoRegionWindow.ts) the *window* mpv is embedded in is resized
+   * instead, and mpv fills its client area automatically — so this stays a no-op unless a
+   * future floating/PiP mode needs mpv positioned independently of its host window.
+   */
   async setBounds(_bounds: { x: number; y: number; width: number; height: number }): Promise<void> {
-    // mpv's --wid surface tracks the parent HWND's client area automatically once embedded;
-    // this hook exists for the case (a floating/PiP mode, or a transparent overlay window
-    // per ADR 0001) where bounds need to be pushed explicitly. No-op until that lands.
+    // intentionally empty — see doc comment
+  }
+
+  private clearLoadListeners(): void {
+    for (const dispose of this.disposeListeners) dispose();
+    this.disposeListeners = [];
   }
 
   async stop(): Promise<void> {
+    this.loadGeneration += 1; // invalidate any in-flight load
+    this.clearLoadListeners();
     if (this.timeoutHandle) {
       clearTimeout(this.timeoutHandle);
       this.timeoutHandle = null;
@@ -121,4 +200,25 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
     }
     this.process = null;
   }
+}
+
+function isDecodedVideoParams(value: unknown): boolean {
+  return typeof value === "object" && value !== null && typeof (value as { w?: unknown }).w === "number" && (value as { w: number }).w > 0;
+}
+
+function mapTracks(value: unknown): MpvTrack[] {
+  if (!Array.isArray(value)) return [];
+  const tracks: MpvTrack[] = [];
+  for (const raw of value as RawMpvTrack[]) {
+    if (raw.type !== "video" && raw.type !== "audio" && raw.type !== "sub") continue;
+    tracks.push({
+      id: raw.id,
+      type: raw.type,
+      ...(raw.title !== undefined ? { title: raw.title } : {}),
+      ...(raw.lang !== undefined ? { lang: raw.lang } : {}),
+      ...(raw.codec !== undefined ? { codec: raw.codec } : {}),
+      selected: raw.selected === true,
+    });
+  }
+  return tracks;
 }

@@ -12,6 +12,7 @@ export class MpvIpcClient {
   private requestId = 0;
   private readonly pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
   private readonly propertyListeners = new Map<string, Set<(value: unknown) => void>>();
+  private readonly eventListeners = new Map<string, Set<(message: Record<string, unknown>) => void>>();
 
   constructor(private readonly pipeName: string) {}
 
@@ -61,6 +62,15 @@ export class MpvIpcClient {
     if (message["event"] === "property-change" && typeof message["name"] === "string") {
       const listeners = this.propertyListeners.get(message["name"]);
       listeners?.forEach((listener) => listener(message["data"]));
+      return;
+    }
+
+    // Any other mpv event: end-file, file-loaded, playback-restart, ... Dispatched to
+    // listeners registered via onEvent so the player can react to a stream failing
+    // immediately rather than only via the playback timeout.
+    if (typeof message["event"] === "string") {
+      const listeners = this.eventListeners.get(message["event"]);
+      listeners?.forEach((listener) => listener(message));
     }
   }
 
@@ -103,6 +113,17 @@ export class MpvIpcClient {
     return () => set?.delete(listener);
   }
 
+  /** Subscribes to a raw mpv event by name (e.g. "end-file", "file-loaded"). */
+  onEvent(name: string, listener: (message: Record<string, unknown>) => void): () => void {
+    let set = this.eventListeners.get(name);
+    if (!set) {
+      set = new Set();
+      this.eventListeners.set(name, set);
+    }
+    set.add(listener);
+    return () => set?.delete(listener);
+  }
+
   private observedIds = new Map<string, number>();
 
   async observeProperty(name: string): Promise<void> {
@@ -115,6 +136,8 @@ export class MpvIpcClient {
   close(): void {
     this.socket?.end();
     this.socket = null;
+    this.propertyListeners.clear();
+    this.eventListeners.clear();
     this.rejectAllPending(new Error("mpv IPC connection closed"));
   }
 }
