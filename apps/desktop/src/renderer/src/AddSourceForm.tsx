@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 
 export function AddSourceForm({ onAdded }: { onAdded: () => void }) {
@@ -6,7 +6,7 @@ export function AddSourceForm({ onAdded }: { onAdded: () => void }) {
   const [pastedUrl, setPastedUrl] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () => window.testcard.sources.addXtream({ name, pastedUrl }),
+    mutationFn: () => window.testcard.sources.add({ name, pastedUrl }),
     onSuccess: () => {
       setName("");
       setPastedUrl("");
@@ -20,48 +20,28 @@ export function AddSourceForm({ onAdded }: { onAdded: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <h2 style={{ fontSize: 12, textTransform: "uppercase", color: "var(--text-muted)", margin: 0 }}>
-        Add source
-      </h2>
+    <form onSubmit={handleSubmit} className="add-source">
+      <p className="section-title">Add source</p>
       <input
+        className="input"
         placeholder="Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
-        style={inputStyle}
       />
       <input
+        className="input"
         placeholder="Paste your M3U or get.php URL"
         value={pastedUrl}
         onChange={(e) => setPastedUrl(e.target.value)}
         required
-        style={inputStyle}
       />
-      <button
-        type="submit"
-        disabled={mutation.isPending}
-        style={{
-          background: "var(--accent)",
-          border: "none",
-          borderRadius: 6,
-          color: "#fff",
-          padding: "8px 12px",
-          cursor: "pointer",
-        }}
-      >
-        {mutation.isPending ? "Checking…" : "Add"}
+      <button type="submit" className="btn btn--primary" disabled={mutation.isPending}>
+        {mutation.isPending ? "Adding…" : "Add source"}
       </button>
       {mutation.isError && (
-        <p style={{ color: "var(--danger)", fontSize: 12, margin: 0 }}>{(mutation.error as Error).message}</p>
+        <p className="msg msg--error">{(mutation.error as Error).message}</p>
       )}
     </form>
   );
 }
-
-const inputStyle: CSSProperties = {
-  background: "var(--bg-raised)",
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-  padding: "8px 10px",
-};
