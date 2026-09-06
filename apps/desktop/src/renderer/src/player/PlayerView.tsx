@@ -36,7 +36,10 @@ export function PlayerView({
   const name = state.status === "idle" ? "" : state.channelName;
   const live = state.status === "playing";
   const dead = state.status === "dead";
-  const controlsEnabled = live;
+  const loading = state.status === "loading";
+  // Transport is usable as soon as a channel is tuning — mpv queues pause/volume before the
+  // first frame. Track switching needs a decoded stream, so it stays gated on `live`.
+  const transportEnabled = live || loading;
 
   return (
     <div className="pw-player">
@@ -53,7 +56,7 @@ export function PlayerView({
         {state.status === "loading" && <div className="pw-idle-hint">Tuning {name}…</div>}
       </PictureWell>
 
-      <div className="pw-controls" data-disabled={!controlsEnabled && !dead}>
+      <div className="pw-controls" data-disabled={!transportEnabled && !dead}>
         <button type="button" className="btn btn--ghost btn--icon" aria-label="Back to channels" onClick={onBack}>
           <Icon name="back" />
         </button>
@@ -62,7 +65,7 @@ export function PlayerView({
           type="button"
           className="btn btn--icon"
           aria-label={paused ? "Play" : "Pause"}
-          disabled={!controlsEnabled}
+          disabled={!transportEnabled}
           onClick={() => setPaused(!paused)}
         >
           <Icon name={paused ? "play" : "pause"} />
@@ -77,7 +80,6 @@ export function PlayerView({
             max={130}
             value={volume}
             aria-label="Volume"
-            disabled={!controlsEnabled}
             onChange={(event) => setVolume(Number(event.target.value))}
           />
         </div>
@@ -109,7 +111,7 @@ export function PlayerView({
           <select
             className="pw-select"
             aria-label="Subtitles"
-            disabled={!controlsEnabled}
+            disabled={!live}
             defaultValue={subtitleTracks.find((t) => t.selected)?.id ?? "off"}
             onChange={(event) => {
               const value = event.target.value;
