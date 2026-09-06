@@ -88,10 +88,6 @@ export class PlaybackController {
     this.overlay?.setRegion(rect);
   }
 
-  setOverlayInteractive(interactive: boolean): void {
-    this.overlay?.setInteractive(interactive);
-  }
-
   async setVolume(volume: number): Promise<void> {
     this.volume = clampVolume(volume);
     this.conf.set("volume", this.volume);

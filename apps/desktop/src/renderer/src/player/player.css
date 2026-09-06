@@ -508,6 +508,7 @@
   background: var(--picture);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .pw-well {
@@ -577,12 +578,17 @@
   font-size: var(--t-body);
 }
 
-/* accessible control strip — always present in player view (the overlay is a pointer mirror) */
+/* accessible control strip — always present in player view (the overlay is a pointer mirror).
+   flex:none so the picture well can never squeeze it to nothing and let a child window
+   (video region / overlay) cover where it should be. */
 .pw-controls {
+  flex: none;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: var(--s-5);
-  height: 56px;
+  height: 60px;
   padding: 0 var(--s-5);
   background: var(--surface-0);
   border-top: 1px solid var(--line);

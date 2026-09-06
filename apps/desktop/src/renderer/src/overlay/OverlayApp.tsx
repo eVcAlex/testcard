@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer } from "react";
 import { Icon } from "../components/Icon.js";
 import { useOverlayVisibility } from "./useOverlayVisibility.js";
 import type { PlaybackEvent, PlaybackTrack } from "../../../shared/ipc.js";
@@ -39,9 +39,10 @@ function formatLine(tracks: readonly PlaybackTrack[]): string {
 }
 
 /**
- * The on-video transport overlay. Renders playback state pushed from main, mirrors it to a
- * bottom bar (and a centre glyph while paused), and drives its own click-through: the window
- * is interactive only while the pointer is over a `[data-interactive]` region.
+ * The on-video transport overlay. Renders playback state pushed from main and mirrors it to a
+ * bottom bar (plus a centre glyph while paused). The window is interactive; `.ov-root` is a
+ * transparent catch layer that only reveals the bar on movement — clicks land on the controls
+ * or fall on dead space (overlay.css).
  */
 export function OverlayApp() {
   const [state, dispatch] = useReducer(reduce, INITIAL);
@@ -65,63 +66,25 @@ export function OverlayApp() {
 
   const { revealed, bump } = useOverlayVisibility(state.paused);
 
-  const interactiveRef = useRef(false);
-  const buttonDownRef = useRef(false);
-  const setInteractive = useCallback((next: boolean) => {
-    if (next === interactiveRef.current) return;
-    interactiveRef.current = next;
-    void window.testcard.overlay.setInteractive(next);
-  }, []);
-
-  useEffect(() => {
-    const overControl = (x: number, y: number) => {
-      const el = document.elementFromPoint(x, y);
-      return el instanceof Element && el.closest("[data-interactive]") !== null;
-    };
-    const onMove = (event: MouseEvent) => {
-      bump();
-      if (buttonDownRef.current) return; // never flip mid-drag
-      setInteractive(overControl(event.clientX, event.clientY));
-    };
-    const onDown = () => {
-      buttonDownRef.current = true;
-    };
-    const onUp = (event: MouseEvent) => {
-      buttonDownRef.current = false;
-      setInteractive(overControl(event.clientX, event.clientY));
-    };
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("mouseup", onUp);
-      setInteractive(false);
-    };
-  }, [bump, setInteractive]);
-
   if (state.status !== "playing" && state.status !== "loading") return null;
 
   const togglePause = () => void window.testcard.playback.setPaused(!state.paused);
   const fmt = formatLine(state.tracks);
 
   return (
-    <div className="ov-root" data-revealed={revealed}>
+    <div
+      className="ov-root"
+      data-revealed={revealed}
+      onMouseMove={bump}
+      onMouseLeave={() => bump()}
+    >
       {state.paused && (
-        <button
-          type="button"
-          className="ov-center"
-          data-interactive
-          aria-label="Play"
-          onClick={togglePause}
-        >
+        <button type="button" className="ov-center" aria-label="Play" onClick={togglePause}>
           <Icon name="play" size={30} />
         </button>
       )}
 
-      <div className="ov-bar" data-interactive>
+      <div className="ov-bar">
         <button
           type="button"
           className="ov-btn"

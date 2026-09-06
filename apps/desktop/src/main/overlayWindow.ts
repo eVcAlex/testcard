@@ -6,13 +6,14 @@ import type { VideoRegionRect } from "../shared/ipc.js";
 
 /**
  * A transparent, non-focusable, owned sibling of the video-region window that carries the
- * on-video transport controls (mockup study 04). It covers the *whole* picture rect — it needs
- * the full area to detect pointer movement — and is click-through by default
- * (`setIgnoreMouseEvents(true, { forward: true })`), flipping interactive only while the
- * pointer is over a control. See ADR 0002 for the z-order model.
+ * on-video transport controls (mockup study 04). It covers the *whole* picture rect (it needs
+ * the area to reveal the bar on pointer movement) and is kept above the mpv HWND with
+ * `moveTop()`. See ADR 0002 for the z-order model.
  *
- * The accessible transport surface is the docked control strip in the player view; this
- * overlay is a pointer mirror (`focusable: false` => invisible to keyboard and AT).
+ * The window is interactive; the *page* is the click-through layer (`.ov-root` is transparent
+ * and only reveals the bar; clicks hit the controls or dead space). The accessible transport
+ * surface is the docked control strip in the player view — this overlay is `focusable: false`,
+ * so invisible to keyboard and AT.
  */
 export class OverlayWindow {
   private window: BrowserWindow | null = null;
@@ -45,8 +46,10 @@ export class OverlayWindow {
       },
     });
 
-    // Click-through, but keep mousemove flowing so the renderer knows where the pointer is.
-    this.window.setIgnoreMouseEvents(true, { forward: true });
+    // The window is interactive; the *page* is click-through by default — `.ov-root` is
+    // `pointer-events: none` and only the control cluster opts back in (overlay.css). This
+    // avoids depending on `setIgnoreMouseEvents(…, { forward: true })` actually delivering
+    // mousemove to a transparent non-focusable child window, which is unreliable.
 
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
       void this.window.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/overlay.html`);
@@ -81,11 +84,6 @@ export class OverlayWindow {
 
   hide(): void {
     this.tracker?.setVisible(false);
-  }
-
-  setInteractive(interactive: boolean): void {
-    if (!this.window || this.window.isDestroyed()) return;
-    this.window.setIgnoreMouseEvents(!interactive, interactive ? { forward: false } : { forward: true });
   }
 
   /** For PlaybackController to fan playback events to this window's renderer. */

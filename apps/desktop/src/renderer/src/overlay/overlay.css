@@ -11,16 +11,15 @@ body,
   background: transparent;
 }
 
+/*
+ * The window itself is interactive; this page is transparent and captures the pointer only
+ * to (a) reveal the bar on movement and (b) let the controls take clicks. Clicking the empty
+ * picture area does nothing — mpv has no click bindings — which is fine.
+ */
 .ov-root {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  pointer-events: none; /* only the controls below opt back in */
-}
-
-.ov-bar,
-.ov-center {
-  pointer-events: auto;
 }
 
 /* ---- bottom transport bar ---- */

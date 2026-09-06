@@ -57,11 +57,13 @@ They are not redundant and "cleaning them up" to one value reintroduces a bug.
 - HTML still cannot be composited on the video surface (ADR 0001). Transient on-video controls
   are carried by a **third** owned window (`OverlayWindow`) — a transparent sibling of the
   video-region window, covering the full picture rect, kept above the mpv HWND with `moveTop()`
-  (called on `playing`, and on parent `focus` / `restore` / `unmaximize`). It is click-through
-  by default (`setIgnoreMouseEvents(true, { forward: true })`); the renderer hit-tests forwarded
-  `mousemove` against `[data-interactive]` and asks main to flip interactivity, never mid-drag.
-  `backgroundThrottling: false` is mandatory or the auto-hide timer runs at ~1 Hz while the
-  window is unfocused.
+  (called on `playing`, and on parent `focus` / `restore` / `unmaximize`). The window is
+  interactive; the *page* is the click-through layer — `.ov-root` is a transparent catch layer
+  that reveals the bar on movement, and clicks land on the controls or on dead space (mpv has
+  no click bindings, so that costs nothing). This deliberately avoids
+  `setIgnoreMouseEvents(…, { forward: true })`, whose `mousemove` forwarding to a transparent
+  non-focusable child window did not deliver reliably. `backgroundThrottling: false` is
+  mandatory or the auto-hide timer runs at ~1 Hz while the window is unfocused.
   - **Open risk:** `moveTop()` holding the overlay above the mpv HWND across every transition
     (maximize, unmaximize, restore-from-minimise, alt-tab, drag to a second monitor at a
     different DPI) is unverified on real hardware. If a transition defeats it, the fallback is

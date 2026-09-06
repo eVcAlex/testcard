@@ -117,13 +117,6 @@ export interface TestcardApi {
     /** Whether an "Open in VLC" action can succeed on this machine. */
     vlcAvailable(): Promise<boolean>;
   };
-  overlay: {
-    /**
-     * Flips the on-video overlay window between click-through and interactive. Called by the
-     * overlay renderer's own hit-testing as the pointer enters/leaves a control cluster.
-     */
-    setInteractive(interactive: boolean): Promise<void>;
-  };
   events: {
     /** Subscribes to playback lifecycle events. Returns an unsubscribe function. */
     onPlayback(listener: (event: PlaybackEvent) => void): () => void;

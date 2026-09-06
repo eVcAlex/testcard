@@ -85,7 +85,13 @@ export interface CategoryRow {
 
 /**
  * Every category (provider group-title) that still has channels, for the sidebar list.
- * Ordered by name, case-insensitively — the list is browsed alphabetically, not by size.
+ *
+ * Ordered the way the provider's playlist lists them — that's the order a user expects, and it
+ * groups related categories the way the provider intended. `categories.rowid` is insertion
+ * order, and `importSource` inserts in playlist order (and diff-merges on refresh without
+ * touching rowid), so `ORDER BY cat.rowid` is the provider's order. A category that first
+ * appears on a later refresh sorts to the end rather than its true playlist position — a
+ * proper fix needs an explicit sort_order column.
  */
 export function listCategories(db: Database.Database): CategoryRow[] {
   return db
@@ -94,7 +100,7 @@ export function listCategories(db: Database.Database): CategoryRow[] {
        FROM categories cat
        JOIN channels ch ON ch.category_id = cat.id
        GROUP BY cat.id
-       ORDER BY cat.raw_name COLLATE NOCASE`,
+       ORDER BY cat.rowid`,
     )
     .all() as CategoryRow[];
 }
