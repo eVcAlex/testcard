@@ -48,3 +48,11 @@ plays back through an embedded `mpv`, stores everything locally.
 - `packages/core` has zero dependency on Electron or React. It is the only part of this
   codebase a future Android/Firestick app would reuse — everything else in `apps/desktop`
   is assumed to be rewritten for that platform.
+- mpv renders into a **frameless transparent child window** docked over the picture, not a
+  child HWND inside the main window — DirectComposition was occluding it. A second such
+  window carries the on-video overlay controls. See `docs/adr/0002-video-region-window.md`.
+- **Visual language:** the surface follows IPTV Expert — a left sidebar (nav + a scrolling
+  category list), a full-width multi-column channel grid, a hot-pink accent (`--accent`,
+  fully tokenised in `renderer/src/styles/tokens.css`), light + dark themes (default dark),
+  and a fullscreen player view. Type is bundled Inter (self-hosted woff2). Every channel
+  card has a programme-line slot and a hidden progress bar waiting on XMLTV EPG import.
