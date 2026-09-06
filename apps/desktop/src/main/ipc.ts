@@ -214,6 +214,12 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         return isVlcAvailable();
       },
     },
+
+    overlay: {
+      async setInteractive(interactive) {
+        playback.setOverlayInteractive(interactive as boolean);
+      },
+    },
   };
 
   ipcMain.removeHandler(IPC_CHANNEL);

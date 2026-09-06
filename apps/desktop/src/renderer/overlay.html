@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Same lockdown as index.html. This document is loaded into a transparent, non-focusable
+         child window that sits over the mpv video; it only ever renders playback state pushed
+         from main over IPC. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' data:; connect-src 'self';" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Testcard overlay</title>
+  </head>
+  <body>
+    <div id="overlay-root"></div>
+    <script type="module" src="./src/overlay/main.tsx"></script>
+  </body>
+</html>

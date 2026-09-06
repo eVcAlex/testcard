@@ -1,0 +1,147 @@
+/*
+ * The on-video overlay. Transparent page (the window is per-pixel alpha over the mpv HWND —
+ * ADR 0002), so `body` must NOT paint a background here; only the bar and centre glyph draw.
+ * `ov-` prefix, imported after tokens.css + base.css.
+ */
+
+html,
+body,
+#overlay-root {
+  height: 100%;
+  background: transparent;
+}
+
+.ov-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ---- bottom transport bar ---- */
+
+.ov-bar {
+  position: absolute;
+  left: var(--s-5);
+  right: var(--s-5);
+  bottom: var(--s-5);
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  height: 52px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-3);
+  background: var(--scrim);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: var(--elev-3);
+  color: var(--ink);
+  backdrop-filter: blur(12px);
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+
+.ov-root[data-revealed="true"] .ov-bar {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ov-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: rgb(255 255 255 / 0.1);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.ov-btn:hover {
+  background: rgb(255 255 255 / 0.18);
+}
+
+.ov-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ov-name {
+  font-size: var(--t-body);
+  font-weight: var(--wght-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ov-fmt {
+  font-size: var(--t-small);
+  color: var(--ink-muted);
+}
+
+.ov-live {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-micro);
+  font-weight: var(--wght-semibold);
+  letter-spacing: 0.14em;
+  color: var(--ink-muted);
+}
+
+.ov-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+}
+
+.ov-live[data-live="true"] {
+  color: var(--ink);
+}
+
+.ov-live[data-live="true"]::before {
+  background: var(--live);
+  box-shadow: 0 0 0 3px var(--live-halo);
+}
+
+/* ---- centre play glyph (paused only) ---- */
+
+.ov-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--scrim);
+  box-shadow: var(--elev-3);
+  color: var(--ink);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.ov-center svg {
+  margin-left: 3px; /* optical centring of the play triangle */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-bar {
+    transition: none;
+    transform: none;
+  }
+}

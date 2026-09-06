@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted (overlay-window section provisional — see Consequences)
+Accepted. The overlay window is built (`main/overlayWindow.ts`); its cross-transition z-order
+still needs a manual pass on real hardware — see Consequences.
 
 ## Context
 
@@ -53,13 +54,23 @@ They are not redundant and "cleaning them up" to one value reintroduces a bug.
 
 ## Consequences
 
-- HTML still cannot be composited on the video surface (ADR 0001). Transient overlays need
-  either mpv's OSD or a **third** owned window — a transparent sibling of the video-region
-  window, kept above it with `moveTop()`. That overlay window is planned but not yet built; its
-  z-order behaviour across maximize / monitor changes / alt-tab is the open risk, and this ADR
-  will be amended once the spike settles. The always-present control strip in the player view is
-  the accessible surface regardless of that outcome (an overlay would be `focusable: false`, so
-  invisible to keyboard and AT).
+- HTML still cannot be composited on the video surface (ADR 0001). Transient on-video controls
+  are carried by a **third** owned window (`OverlayWindow`) — a transparent sibling of the
+  video-region window, covering the full picture rect, kept above the mpv HWND with `moveTop()`
+  (called on `playing`, and on parent `focus` / `restore` / `unmaximize`). It is click-through
+  by default (`setIgnoreMouseEvents(true, { forward: true })`); the renderer hit-tests forwarded
+  `mousemove` against `[data-interactive]` and asks main to flip interactivity, never mid-drag.
+  `backgroundThrottling: false` is mandatory or the auto-hide timer runs at ~1 Hz while the
+  window is unfocused.
+  - **Open risk:** `moveTop()` holding the overlay above the mpv HWND across every transition
+    (maximize, unmaximize, restore-from-minimise, alt-tab, drag to a second monitor at a
+    different DPI) is unverified on real hardware. If a transition defeats it, the fallback is
+    `setAlwaysOnTop(true, "normal")` + hiding the overlay on parent `blur`; if that also fails,
+    the docked strip is the whole surface and this section records the attempt.
+  - The always-present control strip in the player view stays the **accessible** surface
+    regardless — the overlay is `focusable: false`, so invisible to keyboard and AT, and every
+    overlay action also exists there. paused/volume live in `PlaybackController` so both windows
+    are views of one state.
 - Rect-tracking maths depends on `zoomFactor: 1` in every renderer, so 1 CSS px == 1 DIP and the
   measured rect maps straight through `getContentBounds()`.
 - Second-monitor / DPI changes: `getContentBounds()` is in DIPs and survives, but Chromium can

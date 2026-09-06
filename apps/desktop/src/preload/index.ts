@@ -47,6 +47,9 @@ const api: TestcardApi = {
     openInVlc: bind("playback.openInVlc"),
     vlcAvailable: bind("playback.vlcAvailable"),
   },
+  overlay: {
+    setInteractive: bind("overlay.setInteractive"),
+  },
   events: {
     onPlayback(listener: (event: PlaybackEvent) => void): () => void {
       const handler = (_event: IpcRendererEvent, payload: PlaybackEvent) => {

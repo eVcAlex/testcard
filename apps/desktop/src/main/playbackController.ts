@@ -12,6 +12,7 @@ import {
 import { MpvPlayer, type MpvEvent, type MpvTrack } from "./mpv/mpvProcess.js";
 import { resolveMpvPath } from "./mpv/mpvPath.js";
 import { VideoRegionWindow } from "./videoRegionWindow.js";
+import { OverlayWindow } from "./overlayWindow.js";
 import { openInVlc as spawnVlc } from "./externalPlayer.js";
 
 interface Adapters {
@@ -31,6 +32,7 @@ interface Adapters {
 export class PlaybackController {
   private mpv: MpvPlayer | null = null;
   private region: VideoRegionWindow | null = null;
+  private overlay: OverlayWindow | null = null;
   private lastRegionRect: VideoRegionRect | null = null;
   private current: { target: PlaybackTarget; streamUrl: string } | null = null;
 
@@ -73,6 +75,7 @@ export class PlaybackController {
     this.current = null;
     this.tracks = [];
     this.status = "idle";
+    this.overlay?.hide();
     this.region?.hide();
     await this.mpv?.stop();
     this.mpv = null;
@@ -82,6 +85,11 @@ export class PlaybackController {
   setVideoRegion(rect: VideoRegionRect): void {
     this.lastRegionRect = rect;
     this.region?.setRegion(rect);
+    this.overlay?.setRegion(rect);
+  }
+
+  setOverlayInteractive(interactive: boolean): void {
+    this.overlay?.setInteractive(interactive);
   }
 
   async setVolume(volume: number): Promise<void> {
@@ -124,6 +132,9 @@ export class PlaybackController {
   dispose(): void {
     void this.mpv?.stop();
     this.mpv = null;
+    // Overlay before region: no frame with the bar sitting over bare bezel.
+    this.overlay?.destroy();
+    this.overlay = null;
     this.region?.destroy();
     this.region = null;
   }
@@ -132,6 +143,10 @@ export class PlaybackController {
     if (!this.region) {
       this.region = new VideoRegionWindow(this.mainWindow);
       if (this.lastRegionRect) this.region.setRegion(this.lastRegionRect);
+    }
+    if (!this.overlay) {
+      this.overlay = new OverlayWindow(this.mainWindow);
+      if (this.lastRegionRect) this.overlay.setRegion(this.lastRegionRect);
     }
     if (!this.mpv) {
       this.mpv = new MpvPlayer(resolveMpvPath());
@@ -149,6 +164,7 @@ export class PlaybackController {
         this.status = "playing";
         recordRecent(this.db, channelId);
         this.region?.show();
+        this.overlay?.show();
         this.emit({ type: "playing", channelId });
         break;
       case "tracks":
@@ -159,17 +175,20 @@ export class PlaybackController {
       case "timeout":
         if (!channelId) return;
         this.status = "dead";
+        this.overlay?.hide();
         this.region?.hide();
         this.emit({ type: "timeout", channelId });
         break;
       case "error":
         if (!channelId) return;
         this.status = "dead";
+        this.overlay?.hide();
         this.region?.hide();
         this.emit({ type: "error", channelId, message: event.message });
         break;
       case "exited":
         this.status = "dead";
+        this.overlay?.hide();
         this.region?.hide();
         this.mpv = null;
         if (channelId) this.emit({ type: "error", channelId, message: "The player stopped unexpectedly." });
@@ -183,6 +202,7 @@ export class PlaybackController {
     if (!this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send(IPC_EVENT_CHANNEL, event);
     }
+    this.overlay?.webContents?.send(IPC_EVENT_CHANNEL, event);
   }
 }
 
