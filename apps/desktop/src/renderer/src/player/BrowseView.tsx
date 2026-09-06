@@ -13,10 +13,12 @@ const TITLES: Record<BrowseTab, string> = {
 
 export function BrowseView({
   tab,
+  categoryId,
   activeChannelId,
   onPlay,
 }: {
   tab: BrowseTab;
+  categoryId: string | null;
   activeChannelId: string | null;
   onPlay: (channel: ChannelRow) => void;
 }) {
@@ -31,6 +33,17 @@ export function BrowseView({
   }, [term]);
 
   const searching = debounced.length > 0;
+  const inCategory = categoryId !== null;
+
+  const categories = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => window.testcard.channels.categoryList(),
+    staleTime: 60_000,
+  });
+  const categoryName = useMemo(
+    () => categories.data?.find((c) => c.id === categoryId)?.name ?? "Category",
+    [categories.data, categoryId],
+  );
 
   const countries = useQuery({
     queryKey: ["channels", "countries"],
@@ -39,11 +52,12 @@ export function BrowseView({
   });
 
   const list = useQuery({
-    queryKey: ["channels", tab, searching ? debounced : country, searching],
+    queryKey: ["channels", tab, categoryId, searching ? debounced : country, searching],
     queryFn: () => {
       if (searching) return window.testcard.channels.search(debounced);
       if (tab === "favourites") return window.testcard.channels.favourites();
       if (tab === "recent") return window.testcard.channels.recent();
+      if (inCategory) return window.testcard.channels.browse({ categoryId });
       return window.testcard.channels.browse(country !== null ? { country } : {});
     },
     placeholderData: (prev) => prev,
@@ -52,7 +66,7 @@ export function BrowseView({
   const recent = useQuery({
     queryKey: ["channels", "recent"],
     queryFn: () => window.testcard.channels.recent(),
-    enabled: tab === "live" && !searching,
+    enabled: tab === "live" && !searching && !inCategory,
   });
 
   const favourite = useMutation({
@@ -61,23 +75,28 @@ export function BrowseView({
   });
 
   const rows = useMemo(() => list.data ?? [], [list.data]);
-  const showChips = tab === "live" && !searching && (countries.data?.length ?? 0) > 0;
-  const showRecentStrip = tab === "live" && !searching && (recent.data?.length ?? 0) > 0;
+  const showChips = tab === "live" && !searching && !inCategory && (countries.data?.length ?? 0) > 0;
+  const showRecentStrip =
+    tab === "live" && !searching && !inCategory && (recent.data?.length ?? 0) > 0;
+
+  const heading = searching ? "Search" : inCategory && tab === "live" ? categoryName : TITLES[tab];
 
   const emptyText = list.isError
     ? "Couldn't load channels. Try refreshing the source."
     : searching
       ? `Nothing matches “${debounced}”.`
-      : tab === "favourites"
-        ? "No favourites yet. Tap the star on a channel."
-        : tab === "recent"
-          ? "Nothing played yet."
-          : "No channels. Add a source and refresh it.";
+      : inCategory && tab === "live"
+        ? "No channels in this category."
+        : tab === "favourites"
+          ? "No favourites yet. Tap the star on a channel."
+          : tab === "recent"
+            ? "Nothing played yet."
+            : "No channels. Add a source and refresh it.";
 
   return (
     <main className="pw-main">
       <div className="pw-head">
-        <h2>{searching ? "Search" : TITLES[tab]}</h2>
+        <h2>{heading}</h2>
         <div className="pw-search">
           <Icon name="search" size={15} />
           <input

@@ -15,11 +15,15 @@ const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
 export function Sidebar({
   tab,
   onTab,
+  categoryId,
+  onCategory,
   theme,
   onToggleTheme,
 }: {
   tab: BrowseTab;
   onTab: (tab: BrowseTab) => void;
+  categoryId: string | null;
+  onCategory: (categoryId: string | null) => void;
   theme: Theme;
   onToggleTheme: () => void;
 }) {
@@ -32,6 +36,12 @@ export function Sidebar({
     queryFn: () => window.testcard.sources.list(),
   });
 
+  const categories = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => window.testcard.channels.categoryList(),
+    staleTime: 60_000,
+  });
+
   const refresh = useMutation({
     mutationFn: (sourceId: string) => window.testcard.sources.refresh(sourceId),
     onSuccess: (result) => {
@@ -39,11 +49,17 @@ export function Sidebar({
         `${result.channels.toLocaleString()} channels · ${result.categories} categories`,
       );
       void queryClient.invalidateQueries({ queryKey: ["channels"] });
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (error: unknown) => {
       setRefreshMsg(error instanceof Error ? error.message : "Refresh failed.");
     },
   });
+
+  const pickCategory = (id: string | null) => {
+    onCategory(id);
+    onTab("live");
+  };
 
   return (
     <aside className="pw-sidebar">
@@ -57,8 +73,11 @@ export function Sidebar({
             key={t.id}
             type="button"
             className="pw-nav-item"
-            data-active={t.id === tab}
-            onClick={() => onTab(t.id)}
+            data-active={t.id === tab && (t.id !== "live" || categoryId === null)}
+            onClick={() => {
+              onTab(t.id);
+              if (t.id === "live") onCategory(null);
+            }}
           >
             <Icon name={t.icon} filled={t.id === "favourites" && tab === "favourites"} />
             {t.label}
@@ -69,9 +88,7 @@ export function Sidebar({
       <p className="pw-nav-group">Sources</p>
       <div className="pw-sources">
         {sources.data?.length === 0 && !addOpen && (
-          <p className="pw-source" style={{ color: "var(--ink-faint)" }}>
-            No source yet
-          </p>
+          <p className="pw-source-empty">No source yet</p>
         )}
         {sources.data?.map((source) => (
           <div key={source.id} className="pw-source">
@@ -91,7 +108,7 @@ export function Sidebar({
         {!refresh.isPending && refreshMsg !== null && <p className="pw-refresh-note">{refreshMsg}</p>}
 
         {addOpen ? (
-          <div style={{ padding: "var(--s-2) var(--s-3) 0" }}>
+          <div className="pw-source-add">
             <AddSourceForm
               onAdded={() => {
                 setAddOpen(false);
@@ -105,6 +122,32 @@ export function Sidebar({
             Add source
           </button>
         )}
+      </div>
+
+      <p className="pw-nav-group">Guide</p>
+      <div className="pw-cats">
+        <button
+          type="button"
+          className="pw-cat"
+          data-active={tab === "live" && categoryId === null}
+          onClick={() => pickCategory(null)}
+        >
+          <span className="pw-cat-name">All channels</span>
+        </button>
+        {categories.data?.map((category) => (
+          <button
+            key={category.id}
+            type="button"
+            className="pw-cat"
+            data-active={categoryId === category.id}
+            onClick={() => pickCategory(category.id)}
+            title={category.name}
+          >
+            {category.country && <span className="pw-cat-cc">{category.country}</span>}
+            <span className="pw-cat-name">{category.name}</span>
+            <span className="pw-cat-count">{category.channel_count}</span>
+          </button>
+        ))}
       </div>
 
       <div className="pw-sidebar-foot">

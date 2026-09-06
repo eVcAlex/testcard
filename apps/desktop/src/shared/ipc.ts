@@ -8,7 +8,7 @@
  * playable URL and hands it straight to the mpv process (or to VLC), never through the
  * renderer.
  */
-import type { Channel, ChannelCountry, ChannelRow, CountryNode, Source } from "@testcard/core";
+import type { CategoryRow, Channel, ChannelCountry, ChannelRow, CountryNode, Source } from "@testcard/core";
 
 export interface AddSourceInput {
   readonly name: string;
@@ -69,10 +69,17 @@ export interface TestcardApi {
     listByCategory(categoryId: string): Promise<readonly Channel[]>;
     countries(sourceId: string): Promise<readonly CountryNode[]>;
     search(query: string): Promise<readonly ChannelRow[]>;
-    /** The default grid: all channels, optionally one country, paginated. */
-    browse(opts?: { country?: string; limit?: number; offset?: number }): Promise<readonly ChannelRow[]>;
+    /** The default grid: all channels, optionally one category or country, paginated. */
+    browse(opts?: {
+      categoryId?: string;
+      country?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<readonly ChannelRow[]>;
     recent(): Promise<readonly ChannelRow[]>;
     favourites(): Promise<readonly ChannelRow[]>;
+    /** Every category (provider group-title) with channels, for the sidebar list. */
+    categoryList(): Promise<readonly CategoryRow[]>;
     /** Distinct channel countries with counts, for the filter chips. */
     countryList(): Promise<readonly ChannelCountry[]>;
     toggleFavourite(channelId: string): Promise<boolean>;

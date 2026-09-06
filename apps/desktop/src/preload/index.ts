@@ -31,6 +31,7 @@ const api: TestcardApi = {
     browse: bind("channels.browse"),
     recent: bind("channels.recent"),
     favourites: bind("channels.favourites"),
+    categoryList: bind("channels.categoryList"),
     countryList: bind("channels.countryList"),
     toggleFavourite: bind("channels.toggleFavourite"),
   },

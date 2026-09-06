@@ -21,10 +21,10 @@
   padding: var(--s-4) var(--s-3);
   background: var(--surface-2);
   border-right: 1px solid var(--line);
-  overflow-y: auto;
 }
 
 .pw-brand {
+  flex: none;
   margin: 0;
   padding: var(--s-2) var(--s-3) var(--s-5);
   font-size: var(--t-lead);
@@ -37,6 +37,7 @@
 }
 
 .pw-nav {
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -74,6 +75,7 @@
 }
 
 .pw-nav-group {
+  flex: none;
   margin: var(--s-5) var(--s-3) var(--s-2);
   font-size: var(--t-micro);
   font-weight: var(--wght-semibold);
@@ -83,6 +85,7 @@
 }
 
 .pw-sources {
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
@@ -119,11 +122,90 @@
 }
 
 .pw-sidebar-foot {
-  margin-top: auto;
-  padding-top: var(--s-4);
+  flex: none;
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   gap: var(--s-3);
+}
+
+/* ---- the guide: a scrolling category list, the sidebar's main content ---- */
+
+.pw-cats {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: var(--s-2);
+}
+
+.pw-cat {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-1);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: var(--t-small);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pw-cat:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.pw-cat[data-active="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pw-cat-cc {
+  flex: none;
+  min-width: 15px;
+  font-size: 9px;
+  font-weight: var(--wght-bold);
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+.pw-cat-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-cat-count {
+  flex: none;
+  font-size: var(--t-micro);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.pw-cat[data-active="true"] .pw-cat-count,
+.pw-cat[data-active="true"] .pw-cat-cc {
+  color: var(--accent);
+}
+
+.pw-source-empty {
+  padding: var(--s-3);
+  font-size: var(--t-body);
+  color: var(--ink-faint);
+}
+
+.pw-source-add {
+  padding: var(--s-2) var(--s-3) 0;
 }
 
 .pw-refresh-note {

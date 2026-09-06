@@ -12,6 +12,7 @@ export function PlayerScreen() {
   const { theme, toggle } = useTheme();
   const { state, play, retry, audioTracks, subtitleTracks, formatLine } = usePlaybackEvents();
   const [tab, setTab] = useState<BrowseTab>("live");
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [inPlayer, setInPlayer] = useState(false);
 
   const vlc = useQuery({
@@ -41,8 +42,20 @@ export function PlayerScreen() {
 
   return (
     <div className="pw-app">
-      <Sidebar tab={tab} onTab={setTab} theme={theme} onToggleTheme={toggle} />
-      <BrowseView tab={tab} activeChannelId={activeChannelId} onPlay={onPlay} />
+      <Sidebar
+        tab={tab}
+        onTab={setTab}
+        categoryId={categoryId}
+        onCategory={setCategoryId}
+        theme={theme}
+        onToggleTheme={toggle}
+      />
+      <BrowseView
+        tab={tab}
+        categoryId={categoryId}
+        activeChannelId={activeChannelId}
+        onPlay={onPlay}
+      />
       {inPlayer && (
         <PlayerView
           state={state}

@@ -6,6 +6,7 @@ import {
   createXtreamAdapter,
   extractXtreamCredentials,
   importSource,
+  listCategories,
   listChannelCountries,
   listFavouriteChannels,
   listRecentChannels,
@@ -166,6 +167,10 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
       async favourites() {
         return listFavouriteChannels(db);
+      },
+
+      async categoryList() {
+        return listCategories(db);
       },
 
       async countryList() {

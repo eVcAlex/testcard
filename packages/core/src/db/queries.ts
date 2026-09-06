@@ -43,26 +43,60 @@ export function searchChannels(db: Database.Database, query: string, limit = 200
 }
 
 /**
- * The default channel grid: every channel, optionally filtered to one country, ordered the way
- * a channel list is normally read (by number, then name). Capped — the renderer paginates or
- * narrows with the country filter rather than rendering all ~18k at once.
+ * The default channel grid: every channel, optionally narrowed to one category (the sidebar
+ * list) or one country (the filter chips), ordered the way a channel list is normally read (by
+ * number, then name). Capped — the renderer narrows rather than rendering all ~18k at once.
+ * `categoryId` wins over `country` when both are given.
  */
 export function browseChannels(
   db: Database.Database,
-  opts: { country?: string; limit?: number; offset?: number } = {},
+  opts: { categoryId?: string; country?: string; limit?: number; offset?: number } = {},
 ): ChannelRow[] {
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
-  const byCountry = opts.country !== undefined;
+
+  const where: string[] = [];
+  const filters: unknown[] = [];
+  if (opts.categoryId !== undefined) {
+    where.push("c.category_id = ?");
+    filters.push(opts.categoryId);
+  } else if (opts.country !== undefined) {
+    where.push("c.country IS ?");
+    filters.push(opts.country);
+  }
+
   return db
     .prepare(
       `SELECT ${CHANNEL_COLUMNS}
        FROM channels c
-       ${byCountry ? "WHERE c.country IS ?" : ""}
+       ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
        ORDER BY c.channel_number IS NULL, c.channel_number, c.normalised_name
        LIMIT ? OFFSET ?`,
     )
-    .all(...(byCountry ? [opts.country, limit, offset] : [limit, offset])) as ChannelRow[];
+    .all(...filters, limit, offset) as ChannelRow[];
+}
+
+export interface CategoryRow {
+  readonly id: string;
+  readonly name: string;
+  readonly country: string | null;
+  readonly channel_count: number;
+}
+
+/**
+ * Every category (provider group-title) that still has channels, for the sidebar list.
+ * Ordered by name, case-insensitively — the list is browsed alphabetically, not by size.
+ */
+export function listCategories(db: Database.Database): CategoryRow[] {
+  return db
+    .prepare(
+      `SELECT cat.id, cat.raw_name AS name, cat.country, COUNT(ch.id) AS channel_count
+       FROM categories cat
+       JOIN channels ch ON ch.category_id = cat.id
+       GROUP BY cat.id
+       ORDER BY cat.raw_name COLLATE NOCASE`,
+    )
+    .all() as CategoryRow[];
 }
 
 /** Recently played channels, most recent first — backs the "Recently watched" strip and view. */
