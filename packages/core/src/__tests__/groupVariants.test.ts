@@ -47,6 +47,20 @@ describe("groupVariants", () => {
     expect(a[0]?.id).not.toBe(b[0]?.id);
   });
 
+  it("gives the same stream URL distinct variant ids when it lands in two different channels", () => {
+    // Playlists list the same channel (same URL) under several group-titles; each becomes a
+    // separate channel here, and the variant ids must not collide (a UNIQUE column downstream).
+    const a = groupVariants([{ ...entry("Sky Sports", "http://cdn/x.ts"), categoryId: "catA" }]);
+    const b = groupVariants([{ ...entry("Sky Sports", "http://cdn/x.ts"), categoryId: "catB" }]);
+    expect(a[0]?.variants[0]?.id).not.toBe(b[0]?.variants[0]?.id);
+  });
+
+  it("dedupes a variant listed twice with an identical URL in one group", () => {
+    const entries = [entry("Dead Channel", "http://cdn/placeholder.ts"), entry("Dead Channel", "http://cdn/placeholder.ts")];
+    const [channel] = groupVariants(entries);
+    expect(channel?.variants).toHaveLength(1);
+  });
+
   it("produces a stable id across two independent calls with the same input, for refresh matching", () => {
     const entries = [entry("TNT Sports 1 (1080p50)", "1")];
     const first = groupVariants(entries)[0]?.id;

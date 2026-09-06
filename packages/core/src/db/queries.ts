@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import type { ChannelVariant, Source } from "../source/types.js";
 
 export interface ChannelRow {
   readonly id: string;
@@ -9,10 +10,16 @@ export interface ChannelRow {
   readonly country: string | null;
   readonly logo_url: string | null;
   readonly channel_number: number | null;
+  /** 1 when the channel is in `favourites`. Present on every row this module returns. */
+  readonly is_favourite: 0 | 1;
 }
 
+const CHANNEL_COLUMNS = `c.id, c.source_id, c.category_id, c.normalised_name, c.raw_name,
+  c.country, c.logo_url, c.channel_number,
+  (SELECT 1 FROM favourites f WHERE f.channel_id = c.id) IS NOT NULL AS is_favourite`;
+
 /** FTS5 search over the normalised channel name. Instant at 18k rows — see schema.ts. */
-export function searchChannels(db: Database.Database, query: string, limit = 100): ChannelRow[] {
+export function searchChannels(db: Database.Database, query: string, limit = 200): ChannelRow[] {
   const trimmed = query.trim();
   if (trimmed.length === 0) return [];
 
@@ -25,7 +32,7 @@ export function searchChannels(db: Database.Database, query: string, limit = 100
 
   return db
     .prepare(
-      `SELECT c.id, c.source_id, c.category_id, c.normalised_name, c.raw_name, c.country, c.logo_url, c.channel_number
+      `SELECT ${CHANNEL_COLUMNS}
        FROM channels_fts
        JOIN channels c ON c.rowid = channels_fts.rowid
        WHERE channels_fts MATCH ?
@@ -33,6 +40,72 @@ export function searchChannels(db: Database.Database, query: string, limit = 100
        LIMIT ?`,
     )
     .all(ftsQuery, limit) as ChannelRow[];
+}
+
+/**
+ * The default channel grid: every channel, optionally filtered to one country, ordered the way
+ * a channel list is normally read (by number, then name). Capped — the renderer paginates or
+ * narrows with the country filter rather than rendering all ~18k at once.
+ */
+export function browseChannels(
+  db: Database.Database,
+  opts: { country?: string; limit?: number; offset?: number } = {},
+): ChannelRow[] {
+  const limit = opts.limit ?? 300;
+  const offset = opts.offset ?? 0;
+  const byCountry = opts.country !== undefined;
+  return db
+    .prepare(
+      `SELECT ${CHANNEL_COLUMNS}
+       FROM channels c
+       ${byCountry ? "WHERE c.country IS ?" : ""}
+       ORDER BY c.channel_number IS NULL, c.channel_number, c.normalised_name
+       LIMIT ? OFFSET ?`,
+    )
+    .all(...(byCountry ? [opts.country, limit, offset] : [limit, offset])) as ChannelRow[];
+}
+
+/** Recently played channels, most recent first — backs the "Recently watched" strip and view. */
+export function listRecentChannels(db: Database.Database, limit = 24): ChannelRow[] {
+  return db
+    .prepare(
+      `SELECT ${CHANNEL_COLUMNS}
+       FROM recents r
+       JOIN channels c ON c.id = r.channel_id
+       ORDER BY r.played_at DESC
+       LIMIT ?`,
+    )
+    .all(limit) as ChannelRow[];
+}
+
+/** Favourited channels, newest favourite first. */
+export function listFavouriteChannels(db: Database.Database): ChannelRow[] {
+  return db
+    .prepare(
+      `SELECT ${CHANNEL_COLUMNS}
+       FROM favourites f
+       JOIN channels c ON c.id = f.channel_id
+       ORDER BY f.added_at DESC`,
+    )
+    .all() as ChannelRow[];
+}
+
+export interface ChannelCountry {
+  readonly country: string;
+  readonly count: number;
+}
+
+/** Distinct channel countries with a count, for the filter chip row. "No country" is dropped. */
+export function listChannelCountries(db: Database.Database): ChannelCountry[] {
+  return db
+    .prepare(
+      `SELECT country, COUNT(*) AS count
+       FROM channels
+       WHERE country IS NOT NULL AND country <> ''
+       GROUP BY country
+       ORDER BY count DESC, country ASC`,
+    )
+    .all() as ChannelCountry[];
 }
 
 export interface CountryNode {
@@ -68,4 +141,80 @@ export function recordRecent(db: Database.Database, channelId: string): void {
     `INSERT INTO recents (channel_id, played_at) VALUES (?, ?)
      ON CONFLICT(channel_id) DO UPDATE SET played_at = excluded.played_at`,
   ).run(channelId, Date.now());
+}
+
+/** Everything the main process needs to turn a channel id into a playable stream URL. */
+export interface PlaybackTarget {
+  readonly channelId: string;
+  readonly channelName: string;
+  readonly variant: ChannelVariant;
+  readonly source: Source;
+}
+
+/**
+ * Resolves a channel (and optional explicit variant) to its source and the variant to play.
+ * With no `variantId`, picks the best variant — `sort_order` 0, which `groupVariants` sets to
+ * the highest resolution/framerate. Returns undefined if the channel or variant is unknown.
+ *
+ * The main process passes the result's `source` + `variant` to the source adapter's
+ * `buildStreamUrl` — the resolved URL and the provider credentials never reach the renderer.
+ */
+export function getPlaybackTarget(
+  db: Database.Database,
+  channelId: string,
+  variantId?: string,
+): PlaybackTarget | undefined {
+  const channel = db
+    .prepare(`SELECT id, normalised_name AS name FROM channels WHERE id = ?`)
+    .get(channelId) as { id: string; name: string } | undefined;
+  if (!channel) return undefined;
+
+  const variantRow = db
+    .prepare(
+      `SELECT id, channel_id AS channelId, provider_stream_id AS providerStreamId, quality, is_offline AS isOffline
+       FROM channel_variants
+       WHERE channel_id = ? ${variantId !== undefined ? "AND id = ?" : ""}
+       ORDER BY sort_order
+       LIMIT 1`,
+    )
+    .get(...(variantId !== undefined ? [channelId, variantId] : [channelId])) as
+    | { id: string; channelId: string; providerStreamId: string; quality: string | null; isOffline: 0 | 1 }
+    | undefined;
+  if (!variantRow) return undefined;
+
+  const sourceRow = db
+    .prepare(
+      `SELECT s.id, s.kind, s.name, s.base_url AS baseUrl, s.playlist_url AS playlistUrl, s.epg_url AS epgUrl
+       FROM sources s
+       JOIN channels c ON c.source_id = s.id
+       WHERE c.id = ?`,
+    )
+    .get(channelId) as
+    | { id: string; kind: "xtream" | "m3u"; name: string; baseUrl: string | null; playlistUrl: string | null; epgUrl: string | null }
+    | undefined;
+  if (!sourceRow) return undefined;
+
+  const source: Source =
+    sourceRow.kind === "xtream"
+      ? { id: sourceRow.id, kind: "xtream", name: sourceRow.name, baseUrl: sourceRow.baseUrl ?? "" }
+      : {
+          id: sourceRow.id,
+          kind: "m3u",
+          name: sourceRow.name,
+          playlistUrl: sourceRow.playlistUrl ?? "",
+          ...(sourceRow.epgUrl !== null ? { epgUrl: sourceRow.epgUrl } : {}),
+        };
+
+  return {
+    channelId: channel.id,
+    channelName: channel.name,
+    variant: {
+      id: variantRow.id,
+      sourceId: sourceRow.id,
+      providerStreamId: variantRow.providerStreamId,
+      ...(variantRow.quality !== null ? { quality: variantRow.quality } : {}),
+      isOffline: variantRow.isOffline === 1,
+    },
+    source,
+  };
 }
