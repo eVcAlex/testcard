@@ -46,10 +46,10 @@ export class OverlayWindow {
       },
     });
 
-    // The window is interactive; the *page* is click-through by default — `.ov-root` is
-    // `pointer-events: none` and only the control cluster opts back in (overlay.css). This
-    // avoids depending on `setIgnoreMouseEvents(…, { forward: true })` actually delivering
-    // mousemove to a transparent non-focusable child window, which is unreliable.
+    // The window is interactive; the *page* is the click-through layer (`.ov-root` transparent,
+    // only the control cluster takes clicks — overlay.css). This avoids depending on
+    // `setIgnoreMouseEvents(…, { forward: true })` delivering mousemove to a transparent
+    // non-focusable child window, which is unreliable.
 
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
       void this.window.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/overlay.html`);
@@ -79,7 +79,11 @@ export class OverlayWindow {
 
   show(): void {
     this.tracker?.setVisible(true);
+    // The mpv HWND is a sibling owned window; nudge above it now and again once the layered
+    // surface has composited. If this proves unreliable, ADR 0002's fallback is setAlwaysOnTop.
     this.raise();
+    setTimeout(this.raise, 80);
+    setTimeout(this.raise, 300);
   }
 
   hide(): void {

@@ -17,7 +17,7 @@ import {
   type Channel,
   type Source,
 } from "@testcard/core";
-import { IPC_CHANNEL, IPC_EVENT_CHANNEL, type TestcardApi } from "../shared/ipc.js";
+import { IPC_CHANNEL, type TestcardApi } from "../shared/ipc.js";
 import { getCredentials, saveCredentials } from "./credentials.js";
 import { PlaybackController } from "./playbackController.js";
 import { isVlcAvailable } from "./externalPlayer.js";
@@ -217,23 +217,13 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
     view: {
       async toggleFullscreen() {
-        mainWindow.setFullScreen(!mainWindow.isFullScreen());
+        playback.toggleFullscreen();
       },
       async isFullscreen() {
-        return mainWindow.isFullScreen();
+        return playback.isFullscreen();
       },
     },
   };
-
-  // Fullscreen is driven from the OS (button, F11, Esc), so push state changes to the renderer.
-  // `mainWindow` is a fresh window per registerIpcHandlers call, so these bind once.
-  const sendFullscreen = (fullscreen: boolean) => {
-    if (!mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(IPC_EVENT_CHANNEL, { type: "fullscreen", fullscreen });
-    }
-  };
-  mainWindow.on("enter-full-screen", () => sendFullscreen(true));
-  mainWindow.on("leave-full-screen", () => sendFullscreen(false));
 
   ipcMain.removeHandler(IPC_CHANNEL);
   ipcMain.handle(IPC_CHANNEL, async (_event, path: string, ...args: unknown[]) => {

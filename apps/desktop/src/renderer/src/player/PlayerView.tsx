@@ -66,7 +66,9 @@ export function PlayerView({
         {state.status === "loading" && <div className="pw-idle-hint">Tuning {name}…</div>}
       </PictureWell>
 
-      <div className="pw-controls" data-disabled={!transportEnabled && !dead}>
+      {/* In fullscreen the docked strip gives way to the on-video overlay window (a separate
+          transparent window managed by the main process — HTML can't composite over mpv). */}
+      <div className="pw-controls" data-disabled={!transportEnabled && !dead} hidden={fullscreen}>
         <button type="button" className="btn btn--ghost btn--icon" aria-label="Back to channels" onClick={onBack}>
           <Icon name="back" />
         </button>

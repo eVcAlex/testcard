@@ -12,7 +12,7 @@ import {
 import { MpvPlayer, type MpvEvent, type MpvTrack } from "./mpv/mpvProcess.js";
 import { resolveMpvPath } from "./mpv/mpvPath.js";
 import { VideoRegionWindow } from "./videoRegionWindow.js";
-import type { OverlayWindow } from "./overlayWindow.js";
+import { OverlayWindow } from "./overlayWindow.js";
 import { openInVlc as spawnVlc } from "./externalPlayer.js";
 
 interface Adapters {
@@ -42,12 +42,44 @@ export class PlaybackController {
   private volume: number;
   private readonly conf = new Conf<{ volume: number }>();
 
+  private fullscreen = false;
+  private readonly onEnterFullscreen = () => this.setFullscreen(true);
+  private readonly onLeaveFullscreen = () => this.setFullscreen(false);
+
   constructor(
     private readonly db: Database.Database,
     private readonly mainWindow: BrowserWindow,
     private readonly adapters: Adapters,
   ) {
     this.volume = clampVolume(this.conf.get("volume", 100));
+    this.fullscreen = mainWindow.isFullScreen();
+    mainWindow.on("enter-full-screen", this.onEnterFullscreen);
+    mainWindow.on("leave-full-screen", this.onLeaveFullscreen);
+  }
+
+  private setFullscreen(fullscreen: boolean): void {
+    this.fullscreen = fullscreen;
+    this.emit({ type: "fullscreen", fullscreen });
+    this.syncOverlay();
+  }
+
+  /**
+   * The on-video overlay exists only in fullscreen (where there's no docked control strip).
+   * Windowed, the strip in the player view is the transport surface. HTML can't composite over
+   * the mpv window, so the overlay is a transparent child window over the video — see ADR 0002.
+   */
+  private syncOverlay(): void {
+    const wanted = this.fullscreen && this.status === "playing";
+    if (wanted) {
+      if (!this.overlay) {
+        this.overlay = new OverlayWindow(this.mainWindow);
+        if (this.lastRegionRect) this.overlay.setRegion(this.lastRegionRect);
+      }
+      this.overlay.show();
+    } else if (this.overlay) {
+      this.overlay.destroy();
+      this.overlay = null;
+    }
   }
 
   async play(channelId: string, variantId?: string): Promise<void> {
@@ -75,7 +107,7 @@ export class PlaybackController {
     this.current = null;
     this.tracks = [];
     this.status = "idle";
-    this.overlay?.hide();
+    this.syncOverlay();
     this.region?.hide();
     await this.mpv?.stop();
     this.mpv = null;
@@ -126,6 +158,10 @@ export class PlaybackController {
   }
 
   dispose(): void {
+    if (!this.mainWindow.isDestroyed()) {
+      this.mainWindow.off("enter-full-screen", this.onEnterFullscreen);
+      this.mainWindow.off("leave-full-screen", this.onLeaveFullscreen);
+    }
     void this.mpv?.stop();
     this.mpv = null;
     // Overlay before region: no frame with the bar sitting over bare bezel.
@@ -135,15 +171,19 @@ export class PlaybackController {
     this.region = null;
   }
 
+  isFullscreen(): boolean {
+    return this.mainWindow.isFullScreen();
+  }
+
+  toggleFullscreen(): void {
+    this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+  }
+
   private async ensureStarted(): Promise<void> {
     if (!this.region) {
       this.region = new VideoRegionWindow(this.mainWindow);
       if (this.lastRegionRect) this.region.setRegion(this.lastRegionRect);
     }
-    // The on-video overlay (OverlayWindow) is deliberately not created here yet — the docked
-    // control strip in the player view is the transport surface. The overlay gets wired to
-    // fullscreen mode in a following pass; every `this.overlay?.` call below is a safe no-op
-    // until then.
     if (!this.mpv) {
       this.mpv = new MpvPlayer(resolveMpvPath());
       this.mpv.on("event", (event) => this.onMpvEvent(event));
@@ -160,7 +200,7 @@ export class PlaybackController {
         this.status = "playing";
         recordRecent(this.db, channelId);
         this.region?.show();
-        this.overlay?.show();
+        this.syncOverlay();
         this.emit({ type: "playing", channelId });
         break;
       case "tracks":
@@ -171,20 +211,20 @@ export class PlaybackController {
       case "timeout":
         if (!channelId) return;
         this.status = "dead";
-        this.overlay?.hide();
+        this.syncOverlay();
         this.region?.hide();
         this.emit({ type: "timeout", channelId });
         break;
       case "error":
         if (!channelId) return;
         this.status = "dead";
-        this.overlay?.hide();
+        this.syncOverlay();
         this.region?.hide();
         this.emit({ type: "error", channelId, message: event.message });
         break;
       case "exited":
         this.status = "dead";
-        this.overlay?.hide();
+        this.syncOverlay();
         this.region?.hide();
         this.mpv = null;
         if (channelId) this.emit({ type: "error", channelId, message: "The player stopped unexpectedly." });

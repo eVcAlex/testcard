@@ -54,16 +54,22 @@ They are not redundant and "cleaning them up" to one value reintroduces a bug.
 
 ## Consequences
 
-- HTML still cannot be composited on the video surface (ADR 0001). Transient on-video controls
-  are carried by a **third** owned window (`OverlayWindow`) — a transparent sibling of the
-  video-region window, covering the full picture rect, kept above the mpv HWND with `moveTop()`
-  (called on `playing`, and on parent `focus` / `restore` / `unmaximize`). The window is
-  interactive; the *page* is the click-through layer — `.ov-root` is a transparent catch layer
-  that reveals the bar on movement, and clicks land on the controls or on dead space (mpv has
-  no click bindings, so that costs nothing). This deliberately avoids
-  `setIgnoreMouseEvents(…, { forward: true })`, whose `mousemove` forwarding to a transparent
-  non-focusable child window did not deliver reliably. `backgroundThrottling: false` is
-  mandatory or the auto-hide timer runs at ~1 Hz while the window is unfocused.
+- HTML still cannot be composited on the video surface (ADR 0001). So the transport controls
+  live in **two** places depending on mode:
+  - **Windowed:** a docked control strip in the player-view DOM, below the picture well. No
+    overlay window.
+  - **Fullscreen:** the docked strip is hidden, the picture fills the screen, and a **third**
+    owned window (`OverlayWindow`) carries an auto-hiding on-video bar. It is a transparent
+    sibling of the video-region window covering the full picture rect, kept above the mpv HWND
+    with `moveTop()` (on show, twice more on a timer, and on parent `focus` / `restore` /
+    `unmaximize`). `PlaybackController` creates/destroys it on the `enter`/`leave-full-screen`
+    transition (and only while `status === "playing"`).
+  - The window is interactive; the *page* is the click-through layer — `.ov-root` is a
+    transparent catch layer that reveals the bar on movement, and clicks land on the controls
+    or on dead space (mpv has no click bindings). This avoids
+    `setIgnoreMouseEvents(…, { forward: true })`, whose `mousemove` forwarding to a transparent
+    non-focusable child window did not deliver reliably. `backgroundThrottling: false` is
+    mandatory or the auto-hide timer runs at ~1 Hz while the window is unfocused.
   - **Open risk:** `moveTop()` holding the overlay above the mpv HWND across every transition
     (maximize, unmaximize, restore-from-minimise, alt-tab, drag to a second monitor at a
     different DPI) is unverified on real hardware. If a transition defeats it, the fallback is

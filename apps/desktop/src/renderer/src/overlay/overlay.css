@@ -70,6 +70,31 @@ body,
   background: rgb(255 255 255 / 0.18);
 }
 
+.ov-btn--ghost {
+  background: transparent;
+}
+
+.ov-btn--ghost:hover {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.ov-btn--ghost[data-on="true"] {
+  color: var(--accent);
+}
+
+.ov-vol {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  color: var(--ink-muted);
+}
+
+.ov-vol input[type="range"] {
+  width: 96px;
+  accent-color: var(--accent);
+}
+
 .ov-id {
   flex: 1;
   min-width: 0;
