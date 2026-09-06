@@ -87,11 +87,19 @@ export function OverlayApp() {
 
   const subtitleTracks = state.tracks.filter((t) => t.type === "sub");
   const subOn = subtitleTracks.some((t) => t.selected);
+  const audioTracks = state.tracks.filter((t) => t.type === "audio");
+  const currentAudio = audioTracks.find((t) => t.selected) ?? audioTracks[0];
   const fmt = formatLine(state.tracks);
   const togglePause = () => void api().playback.setPaused(!state.paused);
   const toggleSubtitles = () => {
     const first = subtitleTracks[0];
     void api().playback.setSubtitleTrack(subOn || !first ? null : first.id);
+  };
+  const cycleAudio = () => {
+    if (audioTracks.length < 2) return;
+    const i = audioTracks.findIndex((t) => t.id === currentAudio?.id);
+    const next = audioTracks[(i + 1) % audioTracks.length];
+    if (next) void api().playback.setAudioTrack(next.id);
   };
 
   return (
@@ -159,6 +167,17 @@ export function OverlayApp() {
         <span className="ov-live" data-live={state.status === "playing"}>
           {state.status === "playing" ? "LIVE" : "TUNING"}
         </span>
+
+        {audioTracks.length > 1 && (
+          <button
+            type="button"
+            className="ov-btn ov-btn--ghost ov-audio"
+            aria-label={`Audio track: ${currentAudio?.label ?? ""}. Switch`}
+            onClick={cycleAudio}
+          >
+            {(currentAudio?.label ?? "AUD").split(" · ")[0]}
+          </button>
+        )}
 
         {subtitleTracks.length > 0 && (
           <button

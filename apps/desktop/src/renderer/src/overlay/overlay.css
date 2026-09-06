@@ -82,6 +82,15 @@ body,
   color: var(--accent);
 }
 
+.ov-audio {
+  width: auto;
+  min-width: 34px;
+  padding: 0 var(--s-3);
+  font-size: var(--t-micro);
+  font-weight: var(--wght-bold);
+  letter-spacing: 0.04em;
+}
+
 .ov-vol {
   flex: none;
   display: flex;
