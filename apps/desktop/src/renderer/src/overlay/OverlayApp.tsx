@@ -8,6 +8,7 @@ interface OverlayState {
   readonly channelName: string;
   readonly paused: boolean;
   readonly volume: number;
+  readonly fullscreen: boolean;
   readonly tracks: readonly PlaybackTrack[];
 }
 
@@ -16,6 +17,7 @@ const INITIAL: OverlayState = {
   channelName: "",
   paused: false,
   volume: 100,
+  fullscreen: false,
   tracks: [],
 };
 
@@ -34,6 +36,8 @@ function reduce(state: OverlayState, event: PlaybackEvent): OverlayState {
       return { ...state, paused: event.paused };
     case "volume":
       return { ...state, volume: event.volume };
+    case "fullscreen":
+      return { ...state, fullscreen: event.fullscreen };
     case "stopped":
       return INITIAL;
     default:
@@ -47,11 +51,13 @@ function formatLine(tracks: readonly PlaybackTrack[]): string {
   return [video?.codec, audio?.codec].filter(Boolean).join(" · ");
 }
 
+const api = () => window.testcard;
+
 /**
- * The on-video transport overlay, shown only in fullscreen. Renders playback state pushed from
- * main and mirrors the docked control strip: exit-fullscreen, play/pause, volume, now-playing,
- * LIVE, subtitle toggle. The window is interactive; `.ov-root` is a transparent catch layer
- * that reveals the bar on movement — clicks land on the controls or on dead space (overlay.css).
+ * The on-video transport overlay, over the video in both windowed and fullscreen mode (HTML
+ * can't composite over mpv — ADR 0002). Renders playback state pushed from main. The window is
+ * interactive; `.ov-root` is a transparent catch layer that reveals the bar on movement —
+ * clicks land on the controls or on dead space (overlay.css).
  */
 export function OverlayApp() {
   const [state, dispatch] = useReducer(reduce, INITIAL);
@@ -69,6 +75,7 @@ export function OverlayApp() {
       }
       dispatch({ type: "paused", paused: snap.paused });
       dispatch({ type: "volume", volume: snap.volume });
+      dispatch({ type: "fullscreen", fullscreen: snap.fullscreen });
     });
 
     return window.testcard.events.onPlayback((event) => dispatch(event));
@@ -81,10 +88,10 @@ export function OverlayApp() {
   const subtitleTracks = state.tracks.filter((t) => t.type === "sub");
   const subOn = subtitleTracks.some((t) => t.selected);
   const fmt = formatLine(state.tracks);
-  const togglePause = () => void window.testcard.playback.setPaused(!state.paused);
+  const togglePause = () => void api().playback.setPaused(!state.paused);
   const toggleSubtitles = () => {
     const first = subtitleTracks[0];
-    void window.testcard.playback.setSubtitleTrack(subOn || !first ? null : first.id);
+    void api().playback.setSubtitleTrack(subOn || !first ? null : first.id);
   };
 
   return (
@@ -99,10 +106,19 @@ export function OverlayApp() {
         <button
           type="button"
           className="ov-btn ov-btn--ghost"
-          aria-label="Exit fullscreen"
-          onClick={() => void window.testcard.view.toggleFullscreen()}
+          aria-label="Back to channels"
+          onClick={() => void api().playback.exitPlayer()}
         >
-          <Icon name="fullscreen-exit" size={18} />
+          <Icon name="back" size={18} />
+        </button>
+
+        <button
+          type="button"
+          className="ov-btn ov-btn--ghost"
+          aria-label="Previous channel"
+          onClick={() => void api().playback.channelStep(-1)}
+        >
+          <Icon name="skip-back" size={18} />
         </button>
 
         <button
@@ -114,6 +130,15 @@ export function OverlayApp() {
           <Icon name={state.paused ? "play" : "pause"} size={18} />
         </button>
 
+        <button
+          type="button"
+          className="ov-btn ov-btn--ghost"
+          aria-label="Next channel"
+          onClick={() => void api().playback.channelStep(1)}
+        >
+          <Icon name="skip-forward" size={18} />
+        </button>
+
         <div className="ov-vol">
           <Icon name={state.volume === 0 ? "volume-x" : "volume"} size={16} />
           <input
@@ -122,7 +147,7 @@ export function OverlayApp() {
             max={130}
             value={state.volume}
             aria-label="Volume"
-            onChange={(event) => void window.testcard.playback.setVolume(Number(event.target.value))}
+            onChange={(event) => void api().playback.setVolume(Number(event.target.value))}
           />
         </div>
 
@@ -146,6 +171,15 @@ export function OverlayApp() {
             <Icon name="cc" size={18} />
           </button>
         )}
+
+        <button
+          type="button"
+          className="ov-btn ov-btn--ghost"
+          aria-label={state.fullscreen ? "Exit fullscreen" : "Fullscreen"}
+          onClick={() => void api().view.toggleFullscreen()}
+        >
+          <Icon name={state.fullscreen ? "fullscreen-exit" : "fullscreen"} size={18} />
+        </button>
       </div>
     </div>
   );

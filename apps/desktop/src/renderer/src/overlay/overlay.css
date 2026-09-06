@@ -31,9 +31,9 @@ body,
   bottom: var(--s-5);
   display: flex;
   align-items: center;
-  gap: var(--s-4);
+  gap: var(--s-3);
   height: 52px;
-  padding: 0 var(--s-4);
+  padding: 0 var(--s-3);
   border-radius: var(--r-3);
   background: var(--scrim);
   border: 1px solid rgb(255 255 255 / 0.08);
@@ -56,12 +56,12 @@ body,
   flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border: 0;
   border-radius: var(--r-pill);
-  background: rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.12);
   color: var(--ink);
   cursor: pointer;
 }

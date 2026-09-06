@@ -192,6 +192,12 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async snapshot() {
         return playback.snapshot();
       },
+      async channelStep(delta) {
+        playback.channelStep(delta as number);
+      },
+      async exitPlayer() {
+        playback.exitPlayer();
+      },
       async setVideoRegion(rect) {
         playback.setVideoRegion(rect);
       },

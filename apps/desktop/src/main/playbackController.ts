@@ -64,12 +64,12 @@ export class PlaybackController {
   }
 
   /**
-   * The on-video overlay exists only in fullscreen (where there's no docked control strip).
-   * Windowed, the strip in the player view is the transport surface. HTML can't composite over
-   * the mpv window, so the overlay is a transparent child window over the video — see ADR 0002.
+   * The transport controls are an on-video overlay in both windowed and fullscreen mode — HTML
+   * can't composite over the mpv window, so it's a transparent child window over the video
+   * (ADR 0002). Shown whenever a channel is tuning or playing.
    */
   private syncOverlay(): void {
-    const wanted = this.fullscreen && this.status === "playing";
+    const wanted = this.status === "playing" || this.status === "loading";
     if (wanted) {
       if (!this.overlay) {
         this.overlay = new OverlayWindow(this.mainWindow);
@@ -97,6 +97,7 @@ export class PlaybackController {
 
     await this.ensureStarted();
     this.status = "loading";
+    this.syncOverlay();
     this.emit({ type: "loading", channelId, channelName: target.channelName });
     await this.mpv!.setVolume(this.volume);
     await this.mpv!.setPaused(false);
@@ -154,7 +155,21 @@ export class PlaybackController {
       tracks: this.tracks,
       paused: this.paused,
       volume: this.volume,
+      fullscreen: this.mainWindow.isFullScreen(),
     };
+  }
+
+  /** Overlay → main window. The main window owns the browse list, so it does the stepping. */
+  channelStep(delta: number): void {
+    if (!this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send(IPC_EVENT_CHANNEL, { type: "channel-step", delta });
+    }
+  }
+
+  exitPlayer(): void {
+    if (!this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send(IPC_EVENT_CHANNEL, { type: "exit-player" });
+    }
   }
 
   dispose(): void {

@@ -16,11 +16,14 @@ export function BrowseView({
   categoryId,
   activeChannelId,
   onPlay,
+  onListChange,
 }: {
   tab: BrowseTab;
   categoryId: string | null;
   activeChannelId: string | null;
   onPlay: (channel: ChannelRow) => void;
+  /** The ordered list currently shown — PlayerScreen uses it for prev/next channel stepping. */
+  onListChange: (rows: readonly ChannelRow[]) => void;
 }) {
   const queryClient = useQueryClient();
   const [term, setTerm] = useState("");
@@ -75,6 +78,8 @@ export function BrowseView({
   });
 
   const rows = useMemo(() => list.data ?? [], [list.data]);
+  useEffect(() => onListChange(rows), [rows, onListChange]);
+
   const showChips = tab === "live" && !searching && !inCategory && (countries.data?.length ?? 0) > 0;
   const showRecentStrip =
     tab === "live" && !searching && !inCategory && (recent.data?.length ?? 0) > 0;

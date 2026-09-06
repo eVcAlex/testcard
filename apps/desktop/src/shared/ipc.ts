@@ -58,6 +58,11 @@ export type PlaybackEvent =
   | { readonly type: "paused"; readonly paused: boolean }
   | { readonly type: "volume"; readonly volume: number }
   | { readonly type: "fullscreen"; readonly fullscreen: boolean }
+  // Requested from the overlay window (which has no channel-list context); the main window
+  // acts on these — step to the next/previous channel in the current browse list, or leave the
+  // player. Sent only to the main window, never the overlay.
+  | { readonly type: "channel-step"; readonly delta: number }
+  | { readonly type: "exit-player" }
   | { readonly type: "stopped" };
 
 /**
@@ -72,6 +77,7 @@ export interface PlaybackSnapshot {
   readonly tracks: readonly PlaybackTrack[];
   readonly paused: boolean;
   readonly volume: number;
+  readonly fullscreen: boolean;
 }
 
 export interface TestcardApi {
@@ -107,6 +113,10 @@ export interface TestcardApi {
     stop(): Promise<void>;
     /** Current playback state, for a surface that mounts mid-stream (the overlay, an HMR reload). */
     snapshot(): Promise<PlaybackSnapshot>;
+    /** Overlay → main window: step channel in the current browse list (+1 / -1). */
+    channelStep(delta: number): Promise<void>;
+    /** Overlay → main window: leave the player and stop playback. */
+    exitPlayer(): Promise<void>;
     /** Tells main where the picture well currently is, so the mpv window can be positioned over it. */
     setVideoRegion(rect: VideoRegionRect): Promise<void>;
     setVolume(volume: number): Promise<void>;
