@@ -81,6 +81,18 @@ export function createM3UAdapter(): SourceAdapter {
       return variant.providerStreamId;
     },
 
+    async probeEpgUrl(source) {
+      if (source.kind !== "m3u") return undefined;
+      // Only the `#EXTM3U` line is needed — `parseM3U` yields the header first, so read one
+      // item and let breaking out of the loop cancel the rest of the download.
+      const response = await fetch(source.playlistUrl);
+      if (!response.ok || response.body === null) return undefined;
+      for await (const item of parseM3U(response.body)) {
+        return item.kind === "header" ? item.header.urlTvg : undefined;
+      }
+      return undefined;
+    },
+
     async *importAll(source) {
       // Single fetch + single streaming parse pass — the whole reason this method exists
       // instead of composing fetchCategories/fetchChannels, see the interface doc comment.

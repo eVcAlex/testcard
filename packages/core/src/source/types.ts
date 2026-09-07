@@ -106,6 +106,13 @@ export interface SourceAdapter {
   /** Resolves a variant to a playable stream URL. Never logged, never persisted verbatim. */
   buildStreamUrl(source: Source, variant: ChannelVariant): Promise<string>;
   /**
+   * Best-effort XMLTV URL for this source, used when the user hasn't supplied one explicitly.
+   * M3U: the playlist's `url-tvg` header (contains no secret). Xtream: `xmltv.php` built from
+   * the stored credentials — so the result may embed credentials and the caller must treat it
+   * like a stream URL (use it, never persist or log it).
+   */
+  probeEpgUrl?(source: Source): Promise<string | undefined>;
+  /**
    * Bulk import path used by the DB import routine (see `packages/core/src/db`), yielding
    * every category with its channels from a single underlying fetch. Prefer this over calling
    * `fetchCategories` + `fetchChannels` in a loop: for the M3U adapter that loop would

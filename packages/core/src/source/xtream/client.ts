@@ -83,6 +83,17 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
       return `${credentials.baseUrl}/live/${credentials.username}/${credentials.password}/${variant.providerStreamId}.ts`;
     },
 
+    async probeEpgUrl(source) {
+      if (source.kind !== "xtream") return undefined;
+      // Full XMLTV for the account. Credential-bearing — the caller fetches it and must not
+      // persist or log it (same contract as buildStreamUrl).
+      const credentials = await getCredentials(source.id);
+      const url = new URL(`${credentials.baseUrl}/xmltv.php`);
+      url.searchParams.set("username", credentials.username);
+      url.searchParams.set("password", credentials.password);
+      return url.toString();
+    },
+
     async *importAll(source) {
       // Each call below is already a cheap, independent player_api.php request — unlike the
       // M3U adapter there's no whole-playlist re-fetch to avoid, so this is a thin wrapper.
