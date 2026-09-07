@@ -16,6 +16,7 @@ interface XtreamLiveStreamDTO {
   readonly category_id: string;
   readonly stream_icon?: string;
   readonly num?: number;
+  readonly epg_channel_id?: string;
   readonly tv_archive?: number;
   readonly tv_archive_duration?: number;
 }
@@ -64,6 +65,7 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
         categoryId: category.id,
         providerStreamId: String(dto.stream_id),
         rawName: dto.name,
+        ...(dto.epg_channel_id !== undefined && dto.epg_channel_id !== "" ? { tvgId: dto.epg_channel_id } : {}),
         ...(dto.stream_icon !== undefined && dto.stream_icon !== "" ? { logoUrl: dto.stream_icon } : {}),
         ...(dto.num !== undefined ? { channelNumber: dto.num } : {}),
         ...(dto.tv_archive === 1

@@ -48,6 +48,7 @@ export function createM3UAdapter(): SourceAdapter {
         // M3U has no numeric stream id — the URL itself is the stable provider handle.
         providerStreamId: item.entry.url,
         rawName: item.entry.rawName,
+        ...(attrs["tvg-id"] !== undefined && attrs["tvg-id"] !== "" ? { tvgId: attrs["tvg-id"] } : {}),
         ...(attrs["tvg-logo"] !== undefined ? { logoUrl: attrs["tvg-logo"] } : {}),
         ...(attrs["tvg-chno"] !== undefined && !Number.isNaN(Number(attrs["tvg-chno"]))
           ? { channelNumber: Number(attrs["tvg-chno"]) }

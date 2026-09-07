@@ -68,6 +68,8 @@ export interface Channel {
   readonly country?: string;
   readonly logoUrl?: string;
   readonly channelNumber?: number;
+  /** Provider `tvg-id` (XMLTV `<channel id>`), for joining to EPG `Programme` rows. */
+  readonly tvgId?: string;
   readonly variants: readonly ChannelVariant[];
   readonly catchup?: {
     readonly type: string;
