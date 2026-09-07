@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
 import { AddSourceForm } from "../AddSourceForm.js";
@@ -45,16 +45,32 @@ export function Sidebar({
   const refresh = useMutation({
     mutationFn: (sourceId: string) => window.testcard.sources.refresh(sourceId),
     onSuccess: (result) => {
-      setRefreshMsg(
+      const parts = [
         `${result.channels.toLocaleString()} channels · ${result.categories} categories`,
-      );
+      ];
+      if (result.programmes !== undefined) parts.push(`${result.programmes.toLocaleString()} programmes`);
+      setRefreshMsg(parts.join(" · "));
       void queryClient.invalidateQueries({ queryKey: ["channels"] });
       void queryClient.invalidateQueries({ queryKey: ["categories"] });
+      void queryClient.invalidateQueries({ queryKey: ["epg"] });
     },
     onError: (error: unknown) => {
       setRefreshMsg(error instanceof Error ? error.message : "Refresh failed.");
     },
   });
+
+  // Live guide-import progress, pushed from main during a refresh.
+  useEffect(() => {
+    if (!window.testcard?.events?.onTask) return;
+    return window.testcard.events.onTask((event) => {
+      if (event.type !== "epg") return;
+      if (event.phase === "parsing" && event.programmes) {
+        setRefreshMsg(`Guide: ${event.programmes.toLocaleString()} programmes…`);
+      } else if (event.phase === "error" && event.message) {
+        setRefreshMsg(`Guide: ${event.message}`);
+      }
+    });
+  }, []);
 
   const pickCategory = (id: string | null) => {
     onCategory(id);

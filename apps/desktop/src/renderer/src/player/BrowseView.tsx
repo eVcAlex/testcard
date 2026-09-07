@@ -80,6 +80,22 @@ export function BrowseView({
   const rows = useMemo(() => list.data ?? [], [list.data]);
   useEffect(() => onListChange(rows), [rows, onListChange]);
 
+  const channelIds = useMemo(() => rows.map((r) => r.id).sort(), [rows]);
+  const epg = useQuery({
+    queryKey: ["epg", "now-next", channelIds],
+    queryFn: () => window.testcard.epg.nowNext(channelIds),
+    enabled: channelIds.length > 0,
+    refetchInterval: 60_000,
+    placeholderData: (prev) => prev,
+  });
+
+  // A coarse clock so every card's progress bar advances without re-fetching.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   const showChips = tab === "live" && !searching && !inCategory && (countries.data?.length ?? 0) > 0;
   const showRecentStrip =
     tab === "live" && !searching && !inCategory && (recent.data?.length ?? 0) > 0;
@@ -167,6 +183,8 @@ export function BrowseView({
         <ChannelGrid
           channels={rows}
           activeChannelId={activeChannelId}
+          {...(epg.data !== undefined ? { nowNext: epg.data } : {})}
+          nowMs={nowMs}
           onPlay={onPlay}
           onToggleFavourite={(id) => favourite.mutate(id)}
           empty={emptyText}
