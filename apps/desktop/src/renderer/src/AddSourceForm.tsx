@@ -4,12 +4,19 @@ import { useMutation } from "@tanstack/react-query";
 export function AddSourceForm({ onAdded }: { onAdded: () => void }) {
   const [name, setName] = useState("");
   const [pastedUrl, setPastedUrl] = useState("");
+  const [epgUrl, setEpgUrl] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () => window.testcard.sources.add({ name, pastedUrl }),
+    mutationFn: () =>
+      window.testcard.sources.add({
+        name,
+        pastedUrl,
+        ...(epgUrl.trim() !== "" ? { epgUrl: epgUrl.trim() } : {}),
+      }),
     onSuccess: () => {
       setName("");
       setPastedUrl("");
+      setEpgUrl("");
       onAdded();
     },
   });
@@ -35,6 +42,12 @@ export function AddSourceForm({ onAdded }: { onAdded: () => void }) {
         value={pastedUrl}
         onChange={(e) => setPastedUrl(e.target.value)}
         required
+      />
+      <input
+        className="input"
+        placeholder="XMLTV / EPG URL — optional"
+        value={epgUrl}
+        onChange={(e) => setEpgUrl(e.target.value)}
       />
       <button type="submit" className="btn btn--primary" disabled={mutation.isPending}>
         {mutation.isPending ? "Adding…" : "Add source"}

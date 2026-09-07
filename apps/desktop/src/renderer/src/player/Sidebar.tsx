@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
 import { AddSourceForm } from "../AddSourceForm.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "favourites" | "recent";
+export type BrowseTab = "live" | "guide" | "favourites" | "recent";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "live", label: "Live TV", icon: "tv" },
+  { id: "guide", label: "Guide", icon: "grid" },
   { id: "favourites", label: "Favourites", icon: "star" },
   { id: "recent", label: "Recent", icon: "clock" },
 ];
@@ -45,20 +46,37 @@ export function Sidebar({
   const refresh = useMutation({
     mutationFn: (sourceId: string) => window.testcard.sources.refresh(sourceId),
     onSuccess: (result) => {
-      setRefreshMsg(
+      const parts = [
         `${result.channels.toLocaleString()} channels · ${result.categories} categories`,
-      );
+      ];
+      if (result.programmes !== undefined) parts.push(`${result.programmes.toLocaleString()} programmes`);
+      setRefreshMsg(parts.join(" · "));
       void queryClient.invalidateQueries({ queryKey: ["channels"] });
       void queryClient.invalidateQueries({ queryKey: ["categories"] });
+      void queryClient.invalidateQueries({ queryKey: ["epg"] });
     },
     onError: (error: unknown) => {
       setRefreshMsg(error instanceof Error ? error.message : "Refresh failed.");
     },
   });
 
+  // Live guide-import progress, pushed from main during a refresh.
+  useEffect(() => {
+    if (!window.testcard?.events?.onTask) return;
+    return window.testcard.events.onTask((event) => {
+      if (event.type !== "epg") return;
+      if (event.phase === "parsing" && event.programmes) {
+        setRefreshMsg(`Guide: ${event.programmes.toLocaleString()} programmes…`);
+      } else if (event.phase === "error" && event.message) {
+        setRefreshMsg(`Guide: ${event.message}`);
+      }
+    });
+  }, []);
+
   const pickCategory = (id: string | null) => {
     onCategory(id);
-    onTab("live");
+    // Stay in the guide if that's where the user is; otherwise show the channel grid.
+    if (tab !== "guide") onTab("live");
   };
 
   return (
@@ -124,7 +142,7 @@ export function Sidebar({
         )}
       </div>
 
-      <p className="pw-nav-group">Guide</p>
+      <p className="pw-nav-group">Categories</p>
       <div className="pw-cats">
         <button
           type="button"

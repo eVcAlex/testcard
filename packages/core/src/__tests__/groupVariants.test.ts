@@ -61,6 +61,16 @@ describe("groupVariants", () => {
     expect(channel?.variants).toHaveLength(1);
   });
 
+  it("takes the first non-empty tvg-id across a channel's variants", () => {
+    // The provider left tvg-id blank on the first-listed (HD) entry and set it on a later one.
+    const entries: RawChannelEntry[] = [
+      { ...entry("TNT Sports 1 (1080p50)", "1") },
+      { ...entry("TNT Sports 1 (720p25)", "2"), tvgId: "tnt.sports.1.uk" },
+    ];
+    const [channel] = groupVariants(entries);
+    expect(channel?.tvgId).toBe("tnt.sports.1.uk");
+  });
+
   it("produces a stable id across two independent calls with the same input, for refresh matching", () => {
     const entries = [entry("TNT Sports 1 (1080p50)", "1")];
     const first = groupVariants(entries)[0]?.id;

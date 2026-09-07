@@ -82,7 +82,8 @@ body,
   color: var(--accent);
 }
 
-.ov-audio {
+.ov-audio,
+.ov-aspect {
   width: auto;
   min-width: 34px;
   padding: 0 var(--s-3);

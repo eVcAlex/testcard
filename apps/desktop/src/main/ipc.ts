@@ -5,25 +5,86 @@ import {
   createM3UAdapter,
   createXtreamAdapter,
   extractXtreamCredentials,
+  importEpg,
   importSource,
   listCategories,
   listChannelCountries,
   listFavouriteChannels,
   listRecentChannels,
+  nowNextForChannels,
   probeXtream,
+  programmesInWindow,
   searchChannels,
   listCountries,
   toggleFavourite,
   type Channel,
+  type ProgrammeRow,
   type Source,
+  type SourceAdapter,
 } from "@testcard/core";
-import { IPC_CHANNEL, type TestcardApi } from "../shared/ipc.js";
+import {
+  IPC_CHANNEL,
+  IPC_TASK_CHANNEL,
+  type NowNextLite,
+  type ProgrammeLite,
+  type TaskEvent,
+  type TestcardApi,
+} from "../shared/ipc.js";
 import { getCredentials, saveCredentials } from "./credentials.js";
 import { PlaybackController } from "./playbackController.js";
 import { isVlcAvailable } from "./externalPlayer.js";
 import { randomUUID } from "node:crypto";
 
 let activeController: PlaybackController | null = null;
+
+function toProgrammeLite(row: ProgrammeRow): ProgrammeLite {
+  return {
+    channelId: row.channel_id,
+    title: row.title,
+    ...(row.description !== null ? { description: row.description } : {}),
+    startMs: row.start_at,
+    endMs: row.end_at,
+  };
+}
+
+/**
+ * Fetches and imports the source's EPG. URL priority: an explicit user-supplied URL, else the
+ * adapter's auto-detected one (`url-tvg` / `xmltv.php`). A credential-free discovered URL is
+ * persisted so the UI can show it; Xtream's credential-bearing `xmltv.php` is re-derived every
+ * refresh and never stored. Returns the programme count, or undefined when no EPG URL exists.
+ * Throws on a fetch/parse failure — the caller downgrades that to a non-fatal task event.
+ */
+async function refreshEpg(
+  db: Database.Database,
+  source: Source,
+  adapter: SourceAdapter,
+  storedEpgUrl: string | null,
+  emitTask: (event: TaskEvent) => void,
+): Promise<number | undefined> {
+  const stored = storedEpgUrl?.trim() ?? "";
+  const epgUrl = stored !== "" ? stored : await adapter.probeEpgUrl?.(source);
+  if (!epgUrl) return undefined;
+
+  if (stored === "" && source.kind === "m3u") {
+    db.prepare(`UPDATE sources SET epg_url = ? WHERE id = ?`).run(epgUrl, source.id);
+  }
+
+  emitTask({ type: "epg", sourceId: source.id, phase: "fetching" });
+  const response = await fetch(epgUrl);
+  if (!response.ok || response.body === null) {
+    throw new Error(`The EPG URL responded with HTTP ${response.status}.`);
+  }
+  // Only decompress ourselves when the server did NOT — otherwise fetch already un-gzipped it.
+  const gzipped = /\.gz($|\?)/i.test(epgUrl) && response.headers.get("content-encoding") === null;
+
+  emitTask({ type: "epg", sourceId: source.id, phase: "parsing", programmes: 0 });
+  const result = await importEpg(db, source.id, response.body, {
+    gzipped,
+    onProgress: (programmes) => emitTask({ type: "epg", sourceId: source.id, phase: "parsing", programmes }),
+  });
+  emitTask({ type: "epg", sourceId: source.id, phase: "done", programmes: result.programmes });
+  return result.programmes;
+}
 
 /**
  * Single dispatcher keyed by "namespace.method" (e.g. "channels.search") rather than one
@@ -43,14 +104,19 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
     playback.dispose();
   });
 
+  const emitTask = (event: TaskEvent): void => {
+    if (!mainWindow.isDestroyed()) mainWindow.webContents.send(IPC_TASK_CHANNEL, event);
+  };
+
   const api: Omit<TestcardApi, "events"> = {
     sources: {
       async list() {
         return db.prepare(`SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl FROM sources`).all() as Source[];
       },
 
-      async add({ name, pastedUrl }) {
+      async add({ name, pastedUrl, epgUrl }) {
         const url = pastedUrl.trim();
+        const epg = epgUrl?.trim() ?? "";
 
         // Xtream if we can pull username/password out of the URL; a plain hosted playlist
         // otherwise. That's also the fallback the M3U adapter is designed for — see its doc.
@@ -63,12 +129,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
           const id = randomUUID();
           await saveCredentials(id, credentials);
-          db.prepare(`INSERT INTO sources (id, kind, name, base_url, created_at) VALUES (?, 'xtream', ?, ?, ?)`).run(
-            id,
-            name,
-            credentials.baseUrl,
-            Date.now(),
-          );
+          db.prepare(
+            `INSERT INTO sources (id, kind, name, base_url, epg_url, created_at) VALUES (?, 'xtream', ?, ?, ?, ?)`,
+          ).run(id, name, credentials.baseUrl, epg !== "" ? epg : null, Date.now());
 
           const source: Source = { id, kind: "xtream", name, baseUrl: credentials.baseUrl };
           return source;
@@ -93,25 +156,43 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         }
 
         const id = randomUUID();
-        db.prepare(`INSERT INTO sources (id, kind, name, playlist_url, created_at) VALUES (?, 'm3u', ?, ?, ?)`).run(
-          id,
-          name,
-          url,
-          Date.now(),
-        );
+        db.prepare(
+          `INSERT INTO sources (id, kind, name, playlist_url, epg_url, created_at) VALUES (?, 'm3u', ?, ?, ?, ?)`,
+        ).run(id, name, url, epg !== "" ? epg : null, Date.now());
 
-        const source: Source = { id, kind: "m3u", name, playlistUrl: url };
+        const source: Source = {
+          id,
+          kind: "m3u",
+          name,
+          playlistUrl: url,
+          ...(epg !== "" ? { epgUrl: epg } : {}),
+        };
         return source;
       },
 
       async refresh(sourceId) {
         const row = db.prepare(`SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl FROM sources WHERE id = ?`).get(sourceId) as
-          | (Source & { baseUrl?: string; playlistUrl?: string })
+          | (Source & { baseUrl?: string; playlistUrl?: string; epgUrl?: string | null })
           | undefined;
         if (!row) throw new Error(`Unknown source: ${sourceId}`);
 
         const adapter = row.kind === "xtream" ? xtreamAdapter : m3uAdapter;
-        return importSource(db, row, adapter);
+        const result = await importSource(db, row, adapter);
+
+        // EPG is best-effort: a bad or missing guide URL must not fail the playlist refresh.
+        const programmes = await refreshEpg(db, row, adapter, row.epgUrl ?? null, emitTask).catch(
+          (error: unknown) => {
+            emitTask({
+              type: "epg",
+              sourceId,
+              phase: "error",
+              message: error instanceof Error ? error.message : "The guide could not be updated.",
+            });
+            return undefined;
+          },
+        );
+
+        return programmes !== undefined ? { ...result, programmes } : result;
       },
 
       async remove(sourceId) {
@@ -182,6 +263,22 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
     },
 
+    epg: {
+      async nowNext(channelIds) {
+        const out: Record<string, NowNextLite> = {};
+        for (const [channelId, nn] of nowNextForChannels(db, channelIds)) {
+          out[channelId] = {
+            ...(nn.now !== undefined ? { now: toProgrammeLite(nn.now) } : {}),
+            ...(nn.next !== undefined ? { next: toProgrammeLite(nn.next) } : {}),
+          };
+        }
+        return out;
+      },
+      async window(channelIds, fromMs, toMs) {
+        return programmesInWindow(db, channelIds, fromMs, toMs).map(toProgrammeLite);
+      },
+    },
+
     playback: {
       async play(channelId, variantId) {
         await playback.play(channelId, variantId);
@@ -206,6 +303,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
       async setPaused(paused) {
         await playback.setPaused(paused);
+      },
+      async setAspect(mode) {
+        await playback.setAspect(mode);
       },
       async setSubtitleTrack(trackId) {
         await playback.setSubtitleTrack(trackId);

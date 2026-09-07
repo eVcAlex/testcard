@@ -17,6 +17,11 @@ export interface AddSourceInput {
    * back) or a direct M3U playlist URL. Main detects which and stores the right source kind.
    */
   readonly pastedUrl: string;
+  /**
+   * Optional explicit XMLTV/EPG URL. When absent, main auto-detects one on refresh (the M3U
+   * `url-tvg` header, or Xtream `xmltv.php`).
+   */
+  readonly epgUrl?: string;
 }
 
 export interface RefreshResult {
@@ -24,7 +29,32 @@ export interface RefreshResult {
   readonly channels: number;
   readonly variants: number;
   readonly durationMs: number;
+  /** Programme rows imported from EPG, when a guide URL was available. */
+  readonly programmes?: number;
 }
+
+/** A programme as it crosses IPC — unix ms, never a `Date` (which doesn't survive every path). */
+export interface ProgrammeLite {
+  readonly channelId: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly startMs: number;
+  readonly endMs: number;
+}
+
+export interface NowNextLite {
+  readonly now?: ProgrammeLite;
+  readonly next?: ProgrammeLite;
+}
+
+/** Background-task progress, pushed on `IPC_TASK_CHANNEL` (kept off the playback event stream). */
+export type TaskEvent = {
+  readonly type: "epg";
+  readonly sourceId: string;
+  readonly phase: "fetching" | "parsing" | "done" | "error";
+  readonly programmes?: number;
+  readonly message?: string;
+};
 
 /** A viewport-relative rectangle in CSS pixels — where the renderer wants the video. */
 export interface VideoRegionRect {
@@ -33,6 +63,9 @@ export interface VideoRegionRect {
   readonly width: number;
   readonly height: number;
 }
+
+/** How mpv should fit the video into the picture. `fit` letterboxes; `fill` zoom-crops. */
+export type AspectMode = "fit" | "fill" | "16:9" | "4:3";
 
 export interface PlaybackTrack {
   readonly id: number;
@@ -57,6 +90,7 @@ export type PlaybackEvent =
   | { readonly type: "error"; readonly channelId: string; readonly message: string }
   | { readonly type: "paused"; readonly paused: boolean }
   | { readonly type: "volume"; readonly volume: number }
+  | { readonly type: "aspect"; readonly aspect: AspectMode }
   | { readonly type: "fullscreen"; readonly fullscreen: boolean }
   // Requested from the overlay window (which has no channel-list context); the main window
   // acts on these — step to the next/previous channel in the current browse list, or leave the
@@ -77,6 +111,7 @@ export interface PlaybackSnapshot {
   readonly tracks: readonly PlaybackTrack[];
   readonly paused: boolean;
   readonly volume: number;
+  readonly aspect: AspectMode;
   readonly fullscreen: boolean;
 }
 
@@ -107,6 +142,12 @@ export interface TestcardApi {
     countryList(): Promise<readonly ChannelCountry[]>;
     toggleFavourite(channelId: string): Promise<boolean>;
   };
+  epg: {
+    /** Now + next per channel, for the visible grid. Channels with no EPG are omitted. */
+    nowNext(channelIds: readonly string[]): Promise<Record<string, NowNextLite>>;
+    /** Every programme overlapping `[fromMs, toMs]` for the given channels — the guide grid. */
+    window(channelIds: readonly string[], fromMs: number, toMs: number): Promise<readonly ProgrammeLite[]>;
+  };
   playback: {
     /** Starts playback of a channel's best (or explicitly chosen) variant inside the mpv window. */
     play(channelId: string, variantId?: string): Promise<void>;
@@ -121,6 +162,8 @@ export interface TestcardApi {
     setVideoRegion(rect: VideoRegionRect): Promise<void>;
     setVolume(volume: number): Promise<void>;
     setPaused(paused: boolean): Promise<void>;
+    /** Sets how the video fits the picture. Persisted, re-applied on the next channel. */
+    setAspect(mode: AspectMode): Promise<void>;
     setSubtitleTrack(trackId: number | null): Promise<void>;
     setAudioTrack(trackId: number): Promise<void>;
     /** Opens the current channel's stream in VLC (for a channel mpv couldn't play). */
@@ -136,10 +179,14 @@ export interface TestcardApi {
   events: {
     /** Subscribes to playback lifecycle events. Returns an unsubscribe function. */
     onPlayback(listener: (event: PlaybackEvent) => void): () => void;
+    /** Subscribes to background-task progress (EPG import). Returns an unsubscribe function. */
+    onTask(listener: (event: TaskEvent) => void): () => void;
   };
 }
 
 /** IPC channel name for request/response calls. */
 export const IPC_CHANNEL = "testcard:invoke" as const;
-/** IPC channel name for main-initiated events (webContents.send -> ipcRenderer.on). */
+/** IPC channel name for main-initiated playback events (webContents.send -> ipcRenderer.on). */
 export const IPC_EVENT_CHANNEL = "testcard:event" as const;
+/** IPC channel name for main-initiated background-task progress. */
+export const IPC_TASK_CHANNEL = "testcard:task" as const;

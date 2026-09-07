@@ -3,6 +3,10 @@ import { join } from "node:path";
 import { is } from "@electron-toolkit/utils";
 import { registerIpcHandlers } from "./ipc.js";
 import { getDatabase } from "./database.js";
+import { registerLogoProtocol, registerLogoScheme } from "./logoCache.js";
+
+// Privileged schemes must be declared before the app is ready.
+registerLogoScheme();
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -43,6 +47,7 @@ function createMainWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
+  registerLogoProtocol();
   const db = getDatabase();
   const mainWindow = createMainWindow();
   registerIpcHandlers(db, mainWindow);

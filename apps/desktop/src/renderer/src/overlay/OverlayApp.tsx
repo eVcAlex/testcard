@@ -1,13 +1,14 @@
 import { useEffect, useReducer } from "react";
 import { Icon } from "../components/Icon.js";
 import { useOverlayVisibility } from "./useOverlayVisibility.js";
-import type { PlaybackEvent, PlaybackTrack } from "../../../shared/ipc.js";
+import type { AspectMode, PlaybackEvent, PlaybackTrack } from "../../../shared/ipc.js";
 
 interface OverlayState {
   readonly status: "idle" | "loading" | "playing" | "dead";
   readonly channelName: string;
   readonly paused: boolean;
   readonly volume: number;
+  readonly aspect: AspectMode;
   readonly fullscreen: boolean;
   readonly tracks: readonly PlaybackTrack[];
 }
@@ -17,9 +18,13 @@ const INITIAL: OverlayState = {
   channelName: "",
   paused: false,
   volume: 100,
+  aspect: "fit",
   fullscreen: false,
   tracks: [],
 };
+
+const ASPECT_ORDER: readonly AspectMode[] = ["fit", "fill", "16:9", "4:3"];
+const ASPECT_LABEL: Record<AspectMode, string> = { fit: "FIT", fill: "FILL", "16:9": "16:9", "4:3": "4:3" };
 
 function reduce(state: OverlayState, event: PlaybackEvent): OverlayState {
   switch (event.type) {
@@ -36,6 +41,8 @@ function reduce(state: OverlayState, event: PlaybackEvent): OverlayState {
       return { ...state, paused: event.paused };
     case "volume":
       return { ...state, volume: event.volume };
+    case "aspect":
+      return { ...state, aspect: event.aspect };
     case "fullscreen":
       return { ...state, fullscreen: event.fullscreen };
     case "stopped":
@@ -75,6 +82,7 @@ export function OverlayApp() {
       }
       dispatch({ type: "paused", paused: snap.paused });
       dispatch({ type: "volume", volume: snap.volume });
+      dispatch({ type: "aspect", aspect: snap.aspect });
       dispatch({ type: "fullscreen", fullscreen: snap.fullscreen });
     });
 
@@ -100,6 +108,11 @@ export function OverlayApp() {
     const i = audioTracks.findIndex((t) => t.id === currentAudio?.id);
     const next = audioTracks[(i + 1) % audioTracks.length];
     if (next) void api().playback.setAudioTrack(next.id);
+  };
+  const cycleAspect = () => {
+    const i = ASPECT_ORDER.indexOf(state.aspect);
+    const next = ASPECT_ORDER[(i + 1) % ASPECT_ORDER.length];
+    if (next) void api().playback.setAspect(next);
   };
 
   return (
@@ -190,6 +203,15 @@ export function OverlayApp() {
             <Icon name="cc" size={18} />
           </button>
         )}
+
+        <button
+          type="button"
+          className="ov-btn ov-btn--ghost ov-aspect"
+          aria-label={`Aspect ratio: ${ASPECT_LABEL[state.aspect]}. Change`}
+          onClick={cycleAspect}
+        >
+          {ASPECT_LABEL[state.aspect]}
+        </button>
 
         <button
           type="button"

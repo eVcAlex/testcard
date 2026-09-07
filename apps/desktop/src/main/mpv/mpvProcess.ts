@@ -172,6 +172,16 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
   }
 
   /**
+   * `fit` = default letterbox; `fill` = zoom until the picture is covered, cropping overflow
+   * (`panscan`); `16:9` / `4:3` force the display aspect regardless of the stream's own.
+   */
+  async setAspect(mode: "fit" | "fill" | "16:9" | "4:3"): Promise<void> {
+    if (!this.ipc) return;
+    await this.ipc.setProperty("video-aspect-override", mode === "16:9" || mode === "4:3" ? mode : "-1");
+    await this.ipc.setProperty("panscan", mode === "fill" ? 1 : 0);
+  }
+
+  /**
    * Hook for pushing an explicit video rectangle to mpv. With the child-BrowserWindow
    * approach (see main/videoRegionWindow.ts) the *window* mpv is embedded in is resized
    * instead, and mpv fills its client area automatically — so this stays a no-op unless a

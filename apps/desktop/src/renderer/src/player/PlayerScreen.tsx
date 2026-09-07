@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ChannelRow } from "@testcard/core";
 import { Sidebar, type BrowseTab } from "./Sidebar.js";
 import { BrowseView } from "./BrowseView.js";
+import { GuideView } from "./GuideView.js";
 import { PlayerView } from "./PlayerView.js";
 import { usePlaybackEvents } from "./usePlaybackEvents.js";
 import { useTheme } from "./useTheme.js";
@@ -79,13 +80,22 @@ export function PlayerScreen() {
         theme={theme}
         onToggleTheme={toggle}
       />
-      <BrowseView
-        tab={tab}
-        categoryId={categoryId}
-        activeChannelId={activeChannelId}
-        onPlay={onPlay}
-        onListChange={setPlaylist}
-      />
+      {tab === "guide" ? (
+        <GuideView
+          categoryId={categoryId}
+          activeChannelId={activeChannelId}
+          onPlay={onPlay}
+          onListChange={setPlaylist}
+        />
+      ) : (
+        <BrowseView
+          tab={tab}
+          categoryId={categoryId}
+          activeChannelId={activeChannelId}
+          onPlay={onPlay}
+          onListChange={setPlaylist}
+        />
+      )}
       {inPlayer && (
         <PlayerView
           state={state}

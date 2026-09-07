@@ -1,5 +1,12 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
-import { IPC_CHANNEL, IPC_EVENT_CHANNEL, type PlaybackEvent, type TestcardApi } from "../shared/ipc.js";
+import {
+  IPC_CHANNEL,
+  IPC_EVENT_CHANNEL,
+  IPC_TASK_CHANNEL,
+  type PlaybackEvent,
+  type TaskEvent,
+  type TestcardApi,
+} from "../shared/ipc.js";
 
 /**
  * `sources` / `channels` / `playback` are pure request/response: each leaf forwards to
@@ -35,6 +42,10 @@ const api: TestcardApi = {
     countryList: bind("channels.countryList"),
     toggleFavourite: bind("channels.toggleFavourite"),
   },
+  epg: {
+    nowNext: bind("epg.nowNext"),
+    window: bind("epg.window"),
+  },
   playback: {
     play: bind("playback.play"),
     stop: bind("playback.stop"),
@@ -44,6 +55,7 @@ const api: TestcardApi = {
     setVideoRegion: bind("playback.setVideoRegion"),
     setVolume: bind("playback.setVolume"),
     setPaused: bind("playback.setPaused"),
+    setAspect: bind("playback.setAspect"),
     setSubtitleTrack: bind("playback.setSubtitleTrack"),
     setAudioTrack: bind("playback.setAudioTrack"),
     openInVlc: bind("playback.openInVlc"),
@@ -61,6 +73,15 @@ const api: TestcardApi = {
       ipcRenderer.on(IPC_EVENT_CHANNEL, handler);
       return () => {
         ipcRenderer.off(IPC_EVENT_CHANNEL, handler);
+      };
+    },
+    onTask(listener: (event: TaskEvent) => void): () => void {
+      const handler = (_event: IpcRendererEvent, payload: TaskEvent) => {
+        listener(payload);
+      };
+      ipcRenderer.on(IPC_TASK_CHANNEL, handler);
+      return () => {
+        ipcRenderer.off(IPC_TASK_CHANNEL, handler);
       };
     },
   },

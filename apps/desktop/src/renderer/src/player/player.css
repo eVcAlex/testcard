@@ -578,6 +578,175 @@
   font-size: var(--t-body);
 }
 
+/* ============================ timeline guide ============================ */
+
+.pw-guide {
+  --guide-gutter: 184px;
+  --guide-row-h: 56px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pw-guide-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--s-6) var(--s-4);
+}
+
+.pw-guide-head h2 {
+  margin: 0;
+  font-size: var(--t-title);
+  font-weight: var(--wght-bold);
+  letter-spacing: var(--track-tight);
+}
+
+.pw-guide-note {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--ink-muted);
+}
+
+.pw-guide-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: var(--s-7);
+}
+
+.pw-guide-inner {
+  position: relative;
+}
+
+.pw-guide-ruler {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  height: 30px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--line);
+}
+
+.pw-guide-ruler-pad {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  flex: none;
+  width: var(--guide-gutter);
+  background: var(--surface-1);
+  border-right: 1px solid var(--line);
+}
+
+.pw-guide-ruler-track {
+  position: relative;
+  flex: none;
+}
+
+.pw-guide-tick {
+  position: absolute;
+  top: 7px;
+  padding-left: var(--s-2);
+  font-size: var(--t-micro);
+  font-weight: var(--wght-semibold);
+  color: var(--ink-faint);
+  border-left: 1px solid var(--line);
+  height: 16px;
+}
+
+.pw-guide-row {
+  display: flex;
+  height: var(--guide-row-h);
+  border-bottom: 1px solid var(--line);
+}
+
+.pw-guide-ch {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: var(--guide-gutter);
+  padding: 0 var(--s-3);
+  background: var(--surface-2);
+  border: 0;
+  border-right: 1px solid var(--line);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: var(--t-small);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pw-guide-ch:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.pw-guide-row[data-active="true"] .pw-guide-ch {
+  color: var(--accent);
+}
+
+.pw-guide-ch-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-guide-ch-num {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.pw-guide-track {
+  position: relative;
+  flex: none;
+}
+
+.pw-guide-prog {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s-3);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-1);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-small);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.pw-guide-prog:hover {
+  background: var(--surface-4);
+}
+
+.pw-guide-prog-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-guide-now {
+  position: absolute;
+  top: 30px;
+  bottom: 0;
+  width: 2px;
+  background: var(--live);
+  pointer-events: none;
+  z-index: 2;
+}
+
 @media (max-width: 900px) {
   .pw-app {
     grid-template-columns: 1fr;
