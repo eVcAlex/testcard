@@ -4,6 +4,7 @@ import { Conf } from "electron-conf/main";
 import { getPlaybackTarget, recordRecent, type PlaybackTarget, type SourceAdapter } from "@testcard/core";
 import {
   IPC_EVENT_CHANNEL,
+  type AspectMode,
   type PlaybackEvent,
   type PlaybackSnapshot,
   type PlaybackTrack,
@@ -40,7 +41,8 @@ export class PlaybackController {
   private tracks: PlaybackTrack[] = [];
   private paused = false;
   private volume: number;
-  private readonly conf = new Conf<{ volume: number }>();
+  private aspect: AspectMode;
+  private readonly conf = new Conf<{ volume: number; aspect: AspectMode }>();
 
   private fullscreen = false;
   private readonly onEnterFullscreen = () => this.setFullscreen(true);
@@ -52,6 +54,7 @@ export class PlaybackController {
     private readonly adapters: Adapters,
   ) {
     this.volume = clampVolume(this.conf.get("volume", 100));
+    this.aspect = this.conf.get("aspect", "fit");
     this.fullscreen = mainWindow.isFullScreen();
     mainWindow.on("enter-full-screen", this.onEnterFullscreen);
     mainWindow.on("leave-full-screen", this.onLeaveFullscreen);
@@ -101,6 +104,7 @@ export class PlaybackController {
     this.emit({ type: "loading", channelId, channelName: target.channelName });
     await this.mpv!.setVolume(this.volume);
     await this.mpv!.setPaused(false);
+    await this.mpv!.setAspect(this.aspect);
     await this.mpv!.play(streamUrl);
   }
 
@@ -134,6 +138,13 @@ export class PlaybackController {
     this.emit({ type: "paused", paused });
   }
 
+  async setAspect(aspect: AspectMode): Promise<void> {
+    this.aspect = aspect;
+    this.conf.set("aspect", aspect);
+    await this.mpv?.setAspect(aspect);
+    this.emit({ type: "aspect", aspect });
+  }
+
   async setSubtitleTrack(trackId: number | null): Promise<void> {
     await this.mpv?.setSubtitleTrack(trackId);
   }
@@ -155,6 +166,7 @@ export class PlaybackController {
       tracks: this.tracks,
       paused: this.paused,
       volume: this.volume,
+      aspect: this.aspect,
       fullscreen: this.mainWindow.isFullScreen(),
     };
   }

@@ -304,6 +304,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async setPaused(paused) {
         await playback.setPaused(paused);
       },
+      async setAspect(mode) {
+        await playback.setAspect(mode);
+      },
       async setSubtitleTrack(trackId) {
         await playback.setSubtitleTrack(trackId);
       },

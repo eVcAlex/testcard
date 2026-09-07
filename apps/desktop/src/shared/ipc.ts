@@ -64,6 +64,9 @@ export interface VideoRegionRect {
   readonly height: number;
 }
 
+/** How mpv should fit the video into the picture. `fit` letterboxes; `fill` zoom-crops. */
+export type AspectMode = "fit" | "fill" | "16:9" | "4:3";
+
 export interface PlaybackTrack {
   readonly id: number;
   /** "video" tracks are reported for the codec readout only — not offered as switchable. */
@@ -87,6 +90,7 @@ export type PlaybackEvent =
   | { readonly type: "error"; readonly channelId: string; readonly message: string }
   | { readonly type: "paused"; readonly paused: boolean }
   | { readonly type: "volume"; readonly volume: number }
+  | { readonly type: "aspect"; readonly aspect: AspectMode }
   | { readonly type: "fullscreen"; readonly fullscreen: boolean }
   // Requested from the overlay window (which has no channel-list context); the main window
   // acts on these — step to the next/previous channel in the current browse list, or leave the
@@ -107,6 +111,7 @@ export interface PlaybackSnapshot {
   readonly tracks: readonly PlaybackTrack[];
   readonly paused: boolean;
   readonly volume: number;
+  readonly aspect: AspectMode;
   readonly fullscreen: boolean;
 }
 
@@ -157,6 +162,8 @@ export interface TestcardApi {
     setVideoRegion(rect: VideoRegionRect): Promise<void>;
     setVolume(volume: number): Promise<void>;
     setPaused(paused: boolean): Promise<void>;
+    /** Sets how the video fits the picture. Persisted, re-applied on the next channel. */
+    setAspect(mode: AspectMode): Promise<void>;
     setSubtitleTrack(trackId: number | null): Promise<void>;
     setAudioTrack(trackId: number): Promise<void>;
     /** Opens the current channel's stream in VLC (for a channel mpv couldn't play). */

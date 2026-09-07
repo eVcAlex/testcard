@@ -55,6 +55,7 @@ const api: TestcardApi = {
     setVideoRegion: bind("playback.setVideoRegion"),
     setVolume: bind("playback.setVolume"),
     setPaused: bind("playback.setPaused"),
+    setAspect: bind("playback.setAspect"),
     setSubtitleTrack: bind("playback.setSubtitleTrack"),
     setAudioTrack: bind("playback.setAudioTrack"),
     openInVlc: bind("playback.openInVlc"),
