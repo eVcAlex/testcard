@@ -45,11 +45,14 @@ body,
   transition:
     opacity var(--dur-slow) var(--ease-out),
     transform var(--dur-slow) var(--ease-out);
+  /* Faded-out bar must not swallow clicks on the video behind its 52px strip. */
+  pointer-events: none;
 }
 
 .ov-root[data-revealed="true"] .ov-bar {
   opacity: 1;
   transform: translateY(0);
+  pointer-events: auto;
 }
 
 .ov-btn {

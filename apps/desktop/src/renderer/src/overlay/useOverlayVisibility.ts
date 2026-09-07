@@ -3,9 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const IDLE_MS = 3000;
 
 /**
- * revealed | hidden, driven by forwarded pointer movement. `locked` (paused, or a menu open)
- * pins it revealed. The window itself stays shown while playing — only the bar fades — so
- * there are no window show/hide races to manage here (see ADR 0002).
+ * revealed | hidden, driven by pointer movement over the picture. `locked` pins it revealed —
+ * the caller passes `paused || hovering the bar || holding a control`, since a stationary hover
+ * and a slider drag produce no mousemove. When `locked` clears, the 3 s idle countdown
+ * restarts. The window itself stays shown while playing — only the bar fades (see ADR 0002).
  */
 export function useOverlayVisibility(locked: boolean): { revealed: boolean; bump: () => void } {
   const [revealed, setRevealed] = useState(true);
