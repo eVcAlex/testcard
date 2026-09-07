@@ -18,6 +18,7 @@ export type IconName =
   | "volume-x"
   | "cc"
   | "aspect"
+  | "grid"
   | "back"
   | "chevron-right"
   | "sun"
@@ -90,6 +91,12 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <rect x="1.8" y="4" width="12.4" height="8" rx="1" />
       <path d="M4.5 4v8M11.5 4v8" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="2" y="2.5" width="12" height="11" rx="1.2" />
+      <path d="M2 6h12M6.5 6v7.5" />
     </>
   ),
   back: <path d="M10 3.5 5.5 8l4.5 4.5" />,

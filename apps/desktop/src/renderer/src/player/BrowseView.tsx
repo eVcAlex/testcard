@@ -7,6 +7,7 @@ import type { BrowseTab } from "./Sidebar.js";
 
 const TITLES: Record<BrowseTab, string> = {
   live: "Live TV",
+  guide: "Guide",
   favourites: "Favourites",
   recent: "Recently watched",
 };

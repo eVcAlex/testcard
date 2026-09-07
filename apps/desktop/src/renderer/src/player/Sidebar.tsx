@@ -4,10 +4,11 @@ import { Icon, type IconName } from "../components/Icon.js";
 import { AddSourceForm } from "../AddSourceForm.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "favourites" | "recent";
+export type BrowseTab = "live" | "guide" | "favourites" | "recent";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "live", label: "Live TV", icon: "tv" },
+  { id: "guide", label: "Guide", icon: "grid" },
   { id: "favourites", label: "Favourites", icon: "star" },
   { id: "recent", label: "Recent", icon: "clock" },
 ];
@@ -74,7 +75,8 @@ export function Sidebar({
 
   const pickCategory = (id: string | null) => {
     onCategory(id);
-    onTab("live");
+    // Stay in the guide if that's where the user is; otherwise show the channel grid.
+    if (tab !== "guide") onTab("live");
   };
 
   return (
@@ -140,7 +142,7 @@ export function Sidebar({
         )}
       </div>
 
-      <p className="pw-nav-group">Guide</p>
+      <p className="pw-nav-group">Categories</p>
       <div className="pw-cats">
         <button
           type="button"
