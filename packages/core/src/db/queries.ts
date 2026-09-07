@@ -188,6 +188,87 @@ export function recordRecent(db: Database.Database, channelId: string): void {
   ).run(channelId, Date.now());
 }
 
+export interface ProgrammeRow {
+  readonly channel_id: string;
+  readonly title: string;
+  readonly description: string | null;
+  /** unix ms */
+  readonly start_at: number;
+  /** unix ms */
+  readonly end_at: number;
+}
+
+/** SQLite caps a statement at 999 bound variables; chunk any `IN (...)` list below that. */
+const SQL_VARS_MAX = 900;
+
+function chunk<T>(items: readonly T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+/**
+ * The now-airing and next programme for each of `channelIds`, batched for a visible grid.
+ * `at` is unix ms (defaults to now). Channels with no matching EPG are simply absent from the
+ * returned map. Same rule as `resolveNowNext` but straight off rows, so no Date round-trip.
+ */
+export function nowNextForChannels(
+  db: Database.Database,
+  channelIds: readonly string[],
+  at: number = Date.now(),
+): Map<string, { now?: ProgrammeRow; next?: ProgrammeRow }> {
+  const result = new Map<string, { now?: ProgrammeRow; next?: ProgrammeRow }>();
+  if (channelIds.length === 0) return result;
+
+  const horizon = at + 24 * 60 * 60 * 1000;
+  for (const ids of chunk(channelIds, SQL_VARS_MAX)) {
+    const rows = db
+      .prepare(
+        `SELECT channel_id, title, description, start_at, end_at
+         FROM programmes
+         WHERE channel_id IN (${ids.map(() => "?").join(",")})
+           AND end_at > ? AND start_at < ?
+         ORDER BY channel_id, start_at`,
+      )
+      .all(...ids, at, horizon) as ProgrammeRow[];
+
+    for (const row of rows) {
+      const entry = result.get(row.channel_id) ?? {};
+      if (row.start_at <= at && at < row.end_at) {
+        entry.now = row;
+      } else if (row.start_at > at && (entry.next === undefined || row.start_at < entry.next.start_at)) {
+        entry.next = row;
+      }
+      result.set(row.channel_id, entry);
+    }
+  }
+  return result;
+}
+
+/** Every programme overlapping `[fromMs, toMs]` for the given channels — backs the guide grid. */
+export function programmesInWindow(
+  db: Database.Database,
+  channelIds: readonly string[],
+  fromMs: number,
+  toMs: number,
+): ProgrammeRow[] {
+  if (channelIds.length === 0) return [];
+  const out: ProgrammeRow[] = [];
+  for (const ids of chunk(channelIds, SQL_VARS_MAX)) {
+    const rows = db
+      .prepare(
+        `SELECT channel_id, title, description, start_at, end_at
+         FROM programmes
+         WHERE channel_id IN (${ids.map(() => "?").join(",")})
+           AND start_at < ? AND end_at > ?
+         ORDER BY channel_id, start_at`,
+      )
+      .all(...ids, toMs, fromMs) as ProgrammeRow[];
+    out.push(...rows);
+  }
+  return out;
+}
+
 /** Everything the main process needs to turn a channel id into a playable stream URL. */
 export interface PlaybackTarget {
   readonly channelId: string;
