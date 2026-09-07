@@ -26,16 +26,23 @@ plays back through an embedded `mpv`, stores everything locally.
   country prefix separated out. This is what search (FTS5) indexes and what variant
   grouping keys on — one parser feeds both features.
 - **Now/Next** — the current and following Programme for a Channel, resolved from EPG data
-  at read time. Not stored as its own concept; derived from `Programme` rows by time.
-- **Programme** — one EPG entry for a Channel: title, start, end. Sourced from XMLTV (M3U
-  path) or `get_short_epg` (Xtream path).
+  at read time (`nowNextForChannels` / `resolveNowNext`). Not stored as its own concept;
+  derived from `Programme` rows by time. Drives the channel-card second line + progress bar.
+- **Programme** — one EPG entry for a Channel: title, start, end, description. Imported from
+  XMLTV on source refresh (`importEpg`), keyed to Channels by `tvg_id`. Crosses IPC as
+  `ProgrammeLite` (unix-ms `startMs`/`endMs`, never a `Date`). The Xtream per-channel
+  `get_short_epg` path exists (`fetchShortEpg`) but is not yet wired.
+- **Guide** — the timeline view: channels down a sticky gutter, a scrolling time axis, and
+  `Programme` blocks on a px-per-minute scale. `epg.window(channelIds, from, to)` feeds it.
 - **Dead channel** — a Variant that returns no stream data within the 10s playback timeout.
   Expected and frequent at 18k-channel scale; a designed UI state ("Channel didn't
   respond"), not an error.
-- **Refresh** — re-fetching a Source's channel/category/EPG data. Always **diff-and-merge**
-  against existing Channels (matched by provider id, falling back to normalised name),
-  never a destructive rebuild — Favourites and Recents are keyed off the stable internal id
-  and must survive a refresh even when a provider renumbers or renames things.
+- **Refresh** — re-fetching a Source's channel/category data, then its EPG. Channels are
+  **diff-and-merge** against existing ones (matched by stable internal id), never a
+  destructive rebuild — Favourites and Recents survive a renumber/rename. EPG is
+  delete-then-insert per source (see `docs/adr/0003`), best-effort: a bad guide URL never
+  fails the channel refresh. The EPG URL is the user's explicit one, else auto-detected
+  (M3U `url-tvg` header / Xtream `xmltv.php`).
 - **Favourite** — a user-starred Channel. Survives Refresh (see above).
 - **Recent** — a Channel the user has played, most-recent-first. Survives Refresh.
 
@@ -54,5 +61,10 @@ plays back through an embedded `mpv`, stores everything locally.
 - **Visual language:** the surface follows IPTV Expert — a left sidebar (nav + a scrolling
   category list), a full-width multi-column channel grid, a hot-pink accent (`--accent`,
   fully tokenised in `renderer/src/styles/tokens.css`), light + dark themes (default dark),
-  and a fullscreen player view. Type is bundled Inter (self-hosted woff2). Every channel
-  card has a programme-line slot and a hidden progress bar waiting on XMLTV EPG import.
+  and a fullscreen player view. Type is bundled Inter (self-hosted woff2). Channel cards
+  show now/next + a progress bar from EPG; a timeline Guide tab shows the full grid.
+- **EPG import** streams XMLTV on source refresh, batched to keep the app responsive, with
+  progress pushed on `IPC_TASK_CHANNEL`. See `docs/adr/0003-epg-import.md`.
+- **Aspect ratio** (fit/fill/16:9/4:3) is an mpv property re-applied per load and persisted
+  like volume; **channel logos** are served through the `testcard-logo:` privileged scheme
+  backed by a main-process disk cache. See `docs/adr/0004-player-refinements.md`.
