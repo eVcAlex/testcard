@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChannelRow } from "@testcard/core";
 import { Icon } from "../components/Icon.js";
 import { ChannelGrid } from "./ChannelGrid.js";
+import { logoSrc } from "../lib/logo.js";
 import type { BrowseTab } from "./Sidebar.js";
 
 const TITLES: Record<BrowseTab, string> = {
@@ -170,7 +171,7 @@ export function BrowseView({
                   onClick={() => onPlay(channel)}
                 >
                   {channel.logo_url ? (
-                    <img src={channel.logo_url} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                    <img src={logoSrc(channel.logo_url)} alt="" loading="lazy" referrerPolicy="no-referrer" />
                   ) : (
                     <Icon name="tv" />
                   )}

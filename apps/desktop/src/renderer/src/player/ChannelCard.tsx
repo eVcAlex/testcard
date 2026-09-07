@@ -3,6 +3,7 @@ import type { ChannelRow } from "@testcard/core";
 import type { NowNextLite } from "../../../shared/ipc.js";
 import { Icon } from "../components/Icon.js";
 import { formatClock, progressPct } from "../lib/time.js";
+import { logoSrc } from "../lib/logo.js";
 
 /** Two-letter fallback when a channel has no usable logo. */
 function initials(name: string): string {
@@ -41,7 +42,7 @@ export function ChannelCard({
         <span className="pw-card-logo">
           {showLogo ? (
             <img
-              src={channel.logo_url ?? ""}
+              src={logoSrc(channel.logo_url)}
               alt=""
               loading="lazy"
               decoding="async"
