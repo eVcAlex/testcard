@@ -245,9 +245,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         if (verified.kind === "xtream") {
           await saveCredentials(id, verified.credentials);
           db.prepare(
-            `INSERT INTO sources (id, kind, name, base_url, epg_url, original_input, refresh_interval_hours, created_at)
-             VALUES (?, 'xtream', ?, ?, ?, ?, ?, ?)`,
-          ).run(id, name, verified.credentials.baseUrl, epg !== "" ? epg : null, pastedUrl.trim(), interval, Date.now());
+            `INSERT INTO sources (id, kind, name, base_url, epg_url, refresh_interval_hours, created_at)
+             VALUES (?, 'xtream', ?, ?, ?, ?, ?)`,
+          ).run(id, name, verified.credentials.baseUrl, epg !== "" ? epg : null, interval, Date.now());
 
           const source: Source = {
             id,
@@ -260,9 +260,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         }
 
         db.prepare(
-          `INSERT INTO sources (id, kind, name, playlist_url, epg_url, original_input, refresh_interval_hours, created_at)
-           VALUES (?, 'm3u', ?, ?, ?, ?, ?, ?)`,
-        ).run(id, name, verified.url, epg !== "" ? epg : null, verified.url, interval, Date.now());
+          `INSERT INTO sources (id, kind, name, playlist_url, epg_url, refresh_interval_hours, created_at)
+           VALUES (?, 'm3u', ?, ?, ?, ?, ?)`,
+        ).run(id, name, verified.url, epg !== "" ? epg : null, interval, Date.now());
 
         const source: Source = {
           id,
@@ -315,8 +315,8 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           }
 
           db.prepare(
-            `UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, original_input = ?, refresh_interval_hours = ? WHERE id = ?`,
-          ).run(name, playlistUrl, epg, playlistUrl, interval, sourceId);
+            `UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, refresh_interval_hours = ? WHERE id = ?`,
+          ).run(name, playlistUrl, epg, interval, sourceId);
 
           const source: Source = { id: sourceId, kind: "m3u", name, playlistUrl, ...(epg !== null ? { epgUrl: epg } : {}) };
           return source;

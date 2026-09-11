@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS sources (
   base_url      TEXT,           -- xtream only
   playlist_url  TEXT,           -- m3u only
   epg_url       TEXT,           -- explicit XMLTV URL, either kind, optional
-  original_input TEXT,          -- the raw URL the user pasted (may embed credentials — stays in main)
   refresh_interval_hours INTEGER, -- NULL = manual refresh only
   created_at    INTEGER NOT NULL,
   last_refreshed_at INTEGER

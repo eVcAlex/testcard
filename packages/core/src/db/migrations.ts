@@ -36,6 +36,19 @@ export const MIGRATIONS: readonly Migration[] = [
       addColumn(db, "sources", "refresh_interval_hours INTEGER");
     },
   },
+  {
+    version: 3,
+    up: (db) => {
+      // Phase 4a.1 — `original_input` briefly stored the raw pasted URL for an Xtream source,
+      // which is a get.php link carrying the plaintext username/password in its query string.
+      // It was never read back (the edit form only ever gets a redacted display + editable
+      // fields), so this is a straight leak with no offsetting benefit: drop it. SQLite has
+      // supported DROP COLUMN since 3.35 (2021); better-sqlite3 ^12 bundles well past that.
+      if (hasColumn(db, "sources", "original_input")) {
+        db.exec(`ALTER TABLE sources DROP COLUMN original_input`);
+      }
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

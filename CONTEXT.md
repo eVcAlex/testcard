@@ -82,3 +82,7 @@ plays back through an embedded `mpv`, stores everything locally.
 - **Schema migrations** are forward-only: `SCHEMA_SQL` always describes the latest shape (a
   fresh install just runs it), and an ordered `MIGRATIONS` list brings an existing database
   up to date. See `docs/adr/0005-migration-runner.md`.
+- The raw URL a user pastes to add an Xtream source is deliberately **stored nowhere** — it's a
+  `get.php` link with the provider password in its query string, and `sources` briefly kept it
+  in a plaintext `original_input` column (removed by migration v3) with no reader to justify the
+  risk. Don't re-add it "for reference": credentials only ever live in `credentials.enc.json`.
