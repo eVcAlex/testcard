@@ -23,8 +23,8 @@ body,
 }
 
 body {
-  background: var(--surface-1);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-ui);
   font-size: var(--t-body);
   line-height: var(--lh-body);
@@ -55,7 +55,7 @@ img {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: var(--r-1);
 }
@@ -75,7 +75,7 @@ img {
 /* ---- scrollbar: quiet, on the rail's scroll container ------------------ */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -84,13 +84,13 @@ img {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--line-strong);
+  background: var(--border-strong);
   border: 3px solid transparent;
   background-clip: padding-box;
   border-radius: var(--r-pill);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-faint);
+  background: var(--faint-foreground);
   background-clip: padding-box;
 }

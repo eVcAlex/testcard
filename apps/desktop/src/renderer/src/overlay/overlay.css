@@ -38,7 +38,7 @@ body,
   background: var(--scrim);
   border: 1px solid rgb(255 255 255 / 0.08);
   box-shadow: var(--elev-3);
-  color: var(--ink);
+  color: var(--foreground);
   backdrop-filter: blur(12px);
   opacity: 0;
   transform: translateY(8px);
@@ -65,7 +65,7 @@ body,
   border: 0;
   border-radius: var(--r-pill);
   background: rgb(255 255 255 / 0.12);
-  color: var(--ink);
+  color: var(--foreground);
   cursor: pointer;
 }
 
@@ -100,7 +100,7 @@ body,
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
 }
 
 .ov-vol input[type="range"] {
@@ -126,7 +126,7 @@ body,
 
 .ov-fmt {
   font-size: var(--t-small);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
 }
 
 .ov-live {
@@ -137,7 +137,7 @@ body,
   font-size: var(--t-micro);
   font-weight: var(--wght-semibold);
   letter-spacing: 0.14em;
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
 }
 
 .ov-live::before {
@@ -145,11 +145,11 @@ body,
   width: 7px;
   height: 7px;
   border-radius: var(--r-pill);
-  background: var(--line-strong);
+  background: var(--border-strong);
 }
 
 .ov-live[data-live="true"] {
-  color: var(--ink);
+  color: var(--foreground);
 }
 
 .ov-live[data-live="true"]::before {
@@ -173,7 +173,7 @@ body,
   border-radius: var(--r-pill);
   background: var(--scrim);
   box-shadow: var(--elev-3);
-  color: var(--ink);
+  color: var(--foreground);
   cursor: pointer;
   backdrop-filter: blur(12px);
 }

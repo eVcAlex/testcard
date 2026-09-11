@@ -8,14 +8,13 @@
  * ADR 0001 / ADR 0002), so the player view hands the whole window to it.
  *
  * Token model: semantic pairs (background/foreground, card, border, accent/accent-foreground,
- * ring — after shadcn's convention) are the source of truth. `--surface-N` / `--ink*` / `--line*`
- * are kept as aliases onto the semantic tokens for any code that still reads them; new code
- * should read the semantic names directly. `--accent` here is Testcard's own brand accent, not
- * shadcn's hover-surface `accent` — a deliberate divergence, not a half-applied convention.
+ * ring — after shadcn's convention) are the source of truth; every component reads these
+ * directly. `--accent` here is Testcard's own brand accent, not shadcn's hover-surface
+ * `accent` — a deliberate divergence, not a half-applied convention.
  *
  * :root is the default DARK theme. `:root[data-theme="light"]` redefines only the semantic
- * tokens — the aliases below need no redeclaration there; they resolve dynamically.
- * Style components through these tokens, never a raw colour or a value behind [data-theme].
+ * tokens. Style components through these tokens, never a raw colour or a value behind
+ * [data-theme].
  */
 :root {
   color-scheme: dark;
@@ -52,19 +51,6 @@
                        warm note in an otherwise cool system, unchanged across themes. */
   --live-halo: color-mix(in oklab, var(--live) 22%, transparent);
   --fault: #f0745c; /* error text */
-
-  /* ---- legacy aliases: pre-Mist names, kept for any code that still reads them ---- */
-  --surface-0: var(--surface-sunken);
-  --surface-1: var(--background);
-  --surface-2: var(--surface-raised);
-  --surface-3: var(--card);
-  --surface-4: var(--card-hover);
-  --line: var(--border);
-  --line-strong: var(--border-strong);
-  --ink: var(--foreground);
-  --ink-muted: var(--muted-foreground);
-  --ink-faint: var(--faint-foreground);
-  --accent-ink: var(--accent-foreground);
 
   /* ---- spacing ------------------------------------------------------- */
   --s-1: 2px;

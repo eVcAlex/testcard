@@ -12,11 +12,11 @@
   gap: var(--s-2);
   height: var(--control-h);
   padding: 0 var(--s-4);
-  background: var(--surface-3);
-  border: 1px solid var(--line-strong);
+  background: var(--card);
+  border: 1px solid var(--border-strong);
   border-radius: var(--r-1);
   box-shadow: var(--edge-light);
-  color: var(--ink);
+  color: var(--foreground);
   font-weight: var(--wght-medium);
   cursor: pointer;
   transition:
@@ -25,7 +25,7 @@
 }
 
 .btn:hover {
-  background: var(--surface-4);
+  background: var(--card-hover);
 }
 
 .btn:active {
@@ -42,7 +42,7 @@
 .btn--primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent-ink);
+  color: var(--accent-foreground);
   box-shadow: var(--edge-light);
 }
 
@@ -58,7 +58,7 @@
 }
 
 .btn--ghost:hover {
-  background: var(--surface-3);
+  background: var(--card);
 }
 
 .btn--icon {
@@ -78,14 +78,14 @@
   width: 100%;
   height: var(--control-h);
   padding: 0 var(--s-3);
-  background: var(--surface-0);
-  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
   border-radius: var(--r-1);
-  color: var(--ink);
+  color: var(--foreground);
 }
 
 .input::placeholder {
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
 }
 
 .input:focus-visible {
@@ -100,7 +100,7 @@
 
 .field > span {
   font-size: var(--t-small);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
 }
 
 /* stacked mini-form: the "add source" panel in the sidebar */
@@ -116,15 +116,15 @@
   margin: 0;
   font-size: var(--t-micro);
   font-weight: var(--wght-semibold);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   text-transform: uppercase;
 }
 
 /* ---- card: a discrete object (a source). NOT a channel row. ---------- */
 
 .card {
-  background: var(--surface-3);
-  border: 1px solid var(--line);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r-2);
   box-shadow: var(--elev-1), var(--edge-light);
 }
@@ -138,12 +138,12 @@
   height: 22px;
   padding: 0 var(--s-3);
   border-radius: var(--r-pill);
-  background: var(--surface-3);
-  border: 1px solid var(--line);
+  background: var(--card);
+  border: 1px solid var(--border);
   font-size: var(--t-micro);
   font-weight: var(--wght-semibold);
   letter-spacing: var(--track-wide);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   white-space: nowrap;
 }
 
@@ -156,7 +156,7 @@
 }
 
 .msg--hint {
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
 }
 
 .msg--error {

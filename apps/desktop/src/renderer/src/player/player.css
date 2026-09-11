@@ -8,8 +8,8 @@
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   height: 100%;
-  background: var(--surface-1);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--foreground);
 }
 
 /* ============================ sidebar ============================ */
@@ -19,8 +19,8 @@
   flex-direction: column;
   min-height: 0;
   padding: var(--s-4) var(--s-3);
-  background: var(--surface-2);
-  border-right: 1px solid var(--line);
+  background: var(--surface-raised);
+  border-right: 1px solid var(--border);
 }
 
 .pw-brand {
@@ -52,7 +52,7 @@
   background: transparent;
   border: 0;
   border-radius: var(--r-1);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   font: inherit;
   font-size: var(--t-body);
   font-weight: var(--wght-medium);
@@ -61,8 +61,8 @@
 }
 
 .pw-nav-item:hover {
-  background: var(--surface-3);
-  color: var(--ink);
+  background: var(--card);
+  color: var(--foreground);
 }
 
 .pw-nav-item[data-active="true"] {
@@ -81,7 +81,7 @@
   font-weight: var(--wght-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
 }
 
 .pw-sources {
@@ -98,7 +98,7 @@
   padding: var(--s-3);
   border-radius: var(--r-1);
   font-size: var(--t-body);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
 }
 
 .pw-source::before {
@@ -125,7 +125,7 @@
   flex: none;
   margin-top: var(--s-3);
   padding-top: var(--s-3);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: var(--s-3);
@@ -152,7 +152,7 @@
   background: transparent;
   border: 0;
   border-radius: var(--r-1);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   font: inherit;
   font-size: var(--t-small);
   text-align: left;
@@ -160,8 +160,8 @@
 }
 
 .pw-cat:hover {
-  background: var(--surface-3);
-  color: var(--ink);
+  background: var(--card);
+  color: var(--foreground);
 }
 
 .pw-cat[data-active="true"] {
@@ -175,7 +175,7 @@
   font-size: 9px;
   font-weight: var(--wght-bold);
   letter-spacing: 0.03em;
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
 }
 
 .pw-cat-name {
@@ -189,7 +189,7 @@
 .pw-cat-count {
   flex: none;
   font-size: var(--t-micro);
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
   font-variant-numeric: tabular-nums;
 }
 
@@ -201,7 +201,7 @@
 .pw-source-empty {
   padding: var(--s-3);
   font-size: var(--t-body);
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
 }
 
 .pw-source-add {
@@ -211,7 +211,7 @@
 .pw-refresh-note {
   padding: var(--s-2) var(--s-3) 0;
   font-size: var(--t-small);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
 
@@ -246,10 +246,10 @@
   width: 260px;
   height: var(--control-h);
   padding: 0 var(--s-4);
-  background: var(--surface-0);
-  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
 }
 
 .pw-search:focus-within {
@@ -261,7 +261,7 @@
   min-width: 0;
   background: transparent;
   border: 0;
-  color: var(--ink);
+  color: var(--foreground);
   font: inherit;
   font-size: var(--t-body);
 }
@@ -271,7 +271,7 @@
 }
 
 .pw-search input::placeholder {
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
 }
 
 .pw-filters {
@@ -287,23 +287,23 @@
   gap: var(--s-2);
   height: 28px;
   padding: 0 var(--s-3);
-  background: var(--surface-0);
-  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   font: inherit;
   font-size: var(--t-small);
   cursor: pointer;
 }
 
 .pw-chip:hover {
-  color: var(--ink);
+  color: var(--foreground);
 }
 
 .pw-chip[data-active="true"] {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent-ink);
+  color: var(--accent-foreground);
 }
 
 .pw-chip .pw-chip-count {
@@ -322,7 +322,7 @@
   margin: var(--s-4) 0 var(--s-3);
   font-size: var(--t-small);
   font-weight: var(--wght-semibold);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
 }
 
 .pw-recent-strip {
@@ -338,8 +338,8 @@
   flex: none;
   display: grid;
   place-items: center;
-  background: var(--surface-3);
-  border: 1px solid var(--line);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r-2);
   cursor: pointer;
   overflow: hidden;
@@ -368,7 +368,7 @@
 }
 
 .pw-card:hover {
-  background: var(--surface-3);
+  background: var(--card);
 }
 
 .pw-card[data-active="true"] {
@@ -398,13 +398,13 @@
   flex: none;
   display: grid;
   place-items: center;
-  background: var(--surface-0);
-  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
   border-radius: var(--r-1);
   overflow: hidden;
   font-size: 9px;
   font-weight: var(--wght-bold);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   letter-spacing: 0.02em;
 }
 
@@ -437,14 +437,14 @@
   flex: none;
   font-size: var(--t-small);
   font-weight: var(--wght-regular);
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
   font-variant-numeric: tabular-nums;
 }
 
 .pw-card-prog {
   margin: 1px 0 5px;
   font-size: var(--t-small);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -453,7 +453,7 @@
 .pw-card-bar {
   height: 2px;
   border-radius: var(--r-pill);
-  background: var(--surface-4);
+  background: var(--card-hover);
   overflow: hidden;
 }
 
@@ -473,14 +473,14 @@
   background: transparent;
   border: 0;
   border-radius: var(--r-1);
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
   cursor: pointer;
   opacity: 0;
 }
 
 .pw-card-star:hover {
-  background: var(--surface-4);
-  color: var(--ink);
+  background: var(--card-hover);
+  color: var(--foreground);
 }
 
 .pw-card:hover .pw-card-star,
@@ -495,7 +495,7 @@
 .pw-empty {
   padding: var(--s-8) var(--s-4);
   text-align: center;
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   font-size: var(--t-body);
 }
 
@@ -559,7 +559,7 @@
 .pw-nosignal-detail {
   max-width: 44ch;
   margin: 0;
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
   font-size: var(--t-body);
   line-height: var(--lh-body);
 }
@@ -576,7 +576,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
   font-size: var(--t-body);
 }
 
@@ -608,7 +608,7 @@
 .pw-guide-note {
   margin: 0;
   font-size: var(--t-small);
-  color: var(--ink-muted);
+  color: var(--muted-foreground);
 }
 
 .pw-guide-scroll {
@@ -628,8 +628,8 @@
   z-index: var(--z-sticky);
   display: flex;
   height: 30px;
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--line);
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
 }
 
 .pw-guide-ruler-pad {
@@ -638,8 +638,8 @@
   z-index: 1;
   flex: none;
   width: var(--guide-gutter);
-  background: var(--surface-1);
-  border-right: 1px solid var(--line);
+  background: var(--background);
+  border-right: 1px solid var(--border);
 }
 
 .pw-guide-ruler-track {
@@ -653,15 +653,15 @@
   padding-left: var(--s-2);
   font-size: var(--t-micro);
   font-weight: var(--wght-semibold);
-  color: var(--ink-faint);
-  border-left: 1px solid var(--line);
+  color: var(--faint-foreground);
+  border-left: 1px solid var(--border);
   height: 16px;
 }
 
 .pw-guide-row {
   display: flex;
   height: var(--guide-row-h);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border);
 }
 
 .pw-guide-ch {
@@ -674,10 +674,10 @@
   gap: var(--s-3);
   width: var(--guide-gutter);
   padding: 0 var(--s-3);
-  background: var(--surface-2);
+  background: var(--surface-raised);
   border: 0;
-  border-right: 1px solid var(--line);
-  color: var(--ink-muted);
+  border-right: 1px solid var(--border);
+  color: var(--muted-foreground);
   font: inherit;
   font-size: var(--t-small);
   text-align: left;
@@ -685,8 +685,8 @@
 }
 
 .pw-guide-ch:hover {
-  background: var(--surface-3);
-  color: var(--ink);
+  background: var(--card);
+  color: var(--foreground);
 }
 
 .pw-guide-row[data-active="true"] .pw-guide-ch {
@@ -696,6 +696,7 @@
 .pw-guide-ch-name {
   flex: 1;
   min-width: 0;
+  font-weight: var(--wght-medium);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -703,7 +704,7 @@
 
 .pw-guide-ch-num {
   flex: none;
-  color: var(--ink-faint);
+  color: var(--faint-foreground);
 }
 
 .pw-guide-track {
@@ -718,10 +719,10 @@
   display: flex;
   align-items: center;
   padding: 0 var(--s-3);
-  background: var(--surface-3);
-  border: 1px solid var(--line);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r-1);
-  color: var(--ink);
+  color: var(--foreground);
   font: inherit;
   font-size: var(--t-small);
   text-align: left;
@@ -730,7 +731,7 @@
 }
 
 .pw-guide-prog:hover {
-  background: var(--surface-4);
+  background: var(--card-hover);
 }
 
 .pw-guide-prog-name {
