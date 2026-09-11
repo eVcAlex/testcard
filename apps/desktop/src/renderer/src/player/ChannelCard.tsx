@@ -27,6 +27,7 @@ export function ChannelCard({
   onToggleFavourite: (channelId: string) => void;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
   const showLogo = channel.logo_url !== null && channel.logo_url.length > 0 && !logoFailed;
   const fav = channel.is_favourite === 1;
 
@@ -39,7 +40,7 @@ export function ChannelCard({
   return (
     <div className="pw-card" data-active={active}>
       <button type="button" className="pw-card-main" onClick={() => onPlay(channel)}>
-        <span className="pw-card-logo">
+        <span className="pw-card-logo" data-loading={showLogo && !logoLoaded}>
           {showLogo ? (
             <img
               src={logoSrc(channel.logo_url)}
@@ -47,6 +48,7 @@ export function ChannelCard({
               loading="lazy"
               decoding="async"
               referrerPolicy="no-referrer"
+              onLoad={() => setLogoLoaded(true)}
               onError={() => setLogoFailed(true)}
             />
           ) : (

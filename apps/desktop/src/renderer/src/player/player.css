@@ -250,10 +250,17 @@
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   color: var(--faint-foreground);
+  box-shadow: 0 0 0 0 transparent;
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
 }
 
 .pw-search:focus-within {
   border-color: var(--accent-line);
+  /* Glides in rather than snapping — the ring is the focus signifier, the border-colour
+     change alone is too subtle to read as "focused" at a glance. */
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 .pw-search input {
@@ -406,6 +413,36 @@
   font-weight: var(--wght-bold);
   color: var(--muted-foreground);
   letter-spacing: 0.02em;
+}
+
+/* Cold-cache logo fetch (logoCache.ts) — shimmer while it loads instead of sitting on the
+   empty well, so the wait reads as intentional rather than as a broken image. */
+.pw-card-logo[data-loading="true"] {
+  background: linear-gradient(
+    100deg,
+    var(--surface-sunken) 30%,
+    var(--card-hover) 50%,
+    var(--surface-sunken) 70%
+  );
+  background-size: 200% 100%;
+  animation: pw-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes pw-shimmer {
+  from {
+    background-position: 140% 0;
+  }
+  to {
+    background-position: -40% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-card-logo[data-loading="true"] {
+    /* An infinite animation isn't covered by base.css's blanket duration clamp the way a
+       one-shot transition is — stop it outright rather than let it flash on a loop. */
+    animation: none;
+  }
 }
 
 .pw-card-logo img {
