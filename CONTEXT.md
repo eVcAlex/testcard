@@ -6,10 +6,13 @@ plays back through an embedded `mpv`, stores everything locally.
 ## Glossary
 
 - **Source** — one configured provider account (an Xtream login, or a plain M3U + optional
-  XMLTV URL). A user may have several. Editable and removable in place: an edit keeps the
-  same internal id, so Favourites/Recents survive it; `kind` (Xtream vs M3U) can never change
-  on an existing Source — there's no UI for it, and it isn't a supported edit. All sources
-  normalise into the same shape below; the app never special-cases "Xtream" vs "M3U" outside
+  XMLTV URL). A user may have several, managed from their own full-pane "Sources" screen (a
+  sidebar tab, not a dialog) rather than a dialog or a sidebar row. Editable and removable in
+  place: an edit keeps the same internal id, so Favourites/Recents survive it; `kind` (Xtream
+  vs M3U) can never change on an existing Source — there's no UI for it, and it isn't a
+  supported edit. Adding one offers two entry paths (an M3U/M3U8 URL or a pasted Xtream
+  `get.php` link, vs. structured Xtream host/username/password fields) that both still end up
+  as the same normalised shape below; the app never special-cases "Xtream" vs "M3U" outside
   `packages/core/src/source/`.
 - **Channel** — one logical live-TV channel as a human thinks of it — "TNT Sports 1". Has a
   **stable internal id** that survives playlist refreshes, independent of whatever id the

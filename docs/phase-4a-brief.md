@@ -1,9 +1,12 @@
 # Phase 4a brief
 
-> **Status: Phase 4a is done** (branch `phase-4a-polish`). A polish pass surfaced by using the
-> app: the on-video overlay auto-hide bug, a real schema migration runner, a from-scratch theme
-> (the hot-pink accent is gone), source editing/deletion, and playlist auto-refresh. See
-> `docs/adr/0005-migration-runner.md` and `docs/adr/0006-theme-system.md`.
+> **Status: Phase 4a and its 4a.1 follow-up are both done** (branch `phase-4a-polish`). Phase 4a
+> was a polish pass surfaced by using the app: the on-video overlay auto-hide bug, a real schema
+> migration runner, a from-scratch theme (the hot-pink accent is gone), source editing/deletion,
+> and playlist auto-refresh. Phase 4a.1, immediately after, redid source management as its own
+> screen after a side-by-side comparison against a reference app showed the sidebar-embedded
+> version was too small to use — see "Phase 4a.1" below. See `docs/adr/0005-migration-runner.md`
+> and `docs/adr/0006-theme-system.md`.
 
 ## What shipped
 
@@ -66,7 +69,10 @@
 - **Xtream edit UX**: editing an Xtream source shows its (non-secret) server URL plus
   blank-means-unchanged username/password fields, not a redacted display of the original
   pasted `get.php` URL — that URL embeds the password in cleartext and was judged not worth
-  round-tripping to the renderer even redacted, for a rarely-needed reference string.
+  round-tripping to the renderer even redacted, for a rarely-needed reference string. (Phase
+  4a.1 went further and stopped storing that URL at all — see below. Adding a source now offers
+  the same structured fields on a dedicated Xtream tab, so a provider that hands out
+  host/username/password separately no longer requires hand-assembling a `get.php` URL first.)
 - **beui's view-transition theme toggle** (`document.startViewTransition()` + a clip-path
   circle reveal) — scoped out of the theme work as a "nice, not needed" detail. `useTheme.ts`
   is where it would slot in.
@@ -80,3 +86,53 @@
 - **Phase 4b (VOD & series)** is next and is unstarted — see the phase-4 plan's sketch for the
   domain/schema/adapter shape it needs. The migration runner this phase built is its main
   prerequisite from 4a.
+
+## Phase 4a.1 — source management as a real screen
+
+Using the app surfaced that Phase 4a's sidebar-embedded source editor was too small: the edit
+form's "Save changes" button wrapped onto two lines, URL fields truncated after ~20 characters,
+and every field was placeholder-only with no label. Comparing against a reference app that gives
+source management a whole screen prompted this follow-up.
+
+### What shipped
+
+1. **A stored-credential leak, found while planning this** — `sources.original_input` held the
+   raw `get.php` URL pasted to add an Xtream source, which carries the provider password in its
+   query string, written to unencrypted `testcard.sqlite3` alongside the DPAPI-encrypted
+   `credentials.enc.json` that exists specifically to avoid this. The column also had no reader
+   (Phase 4a's edit form deliberately never round-tripped it — see the carry-over above), so it
+   was pure write-only risk. Migration v3 drops it; `SCHEMA_VERSION` → 3.
+2. **Structured Xtream add** — `AddSourceInput` is now a discriminated union on `via` ("url" vs
+   "xtream"), not the source's resulting `kind` (a "url" paste that's a `get.php` link still
+   produces an Xtream source, exactly as before). The add form gets an M3U/Xtream segmented
+   control; the Xtream tab is host + username + password fields, no URL to hand-assemble.
+3. **A dedicated Sources screen** — `BrowseTab` gains `"sources"`, following the same pattern
+   `"guide"` already set: a sidebar tab that swaps out the whole main pane. The old sidebar row
+   list, inline add form, and `addOpen` state are gone; `SourcesView` owns list/add/edit
+   navigation locally. A fresh install (no sources yet) lands there automatically instead of on
+   an empty channel grid.
+4. **Real form fields** — every input in `SourceForm` gets a label and, where useful, a hint,
+   replacing placeholder-only fields. Also fixed in passing: an edit's `["sources"]` cache
+   invalidation was previously the caller's job and `SourceRow`'s edit path forgot it, so a
+   rename didn't show until something else refreshed the list; it now lives in `SourceForm`
+   itself. `formatRelative` (the "refreshed 2h ago" note) now floors instead of rounds its
+   minutes/hours math, so 59m30s no longer reads "60m ago".
+
+### Verify on hardware
+
+- Open `testcard.sqlite3` → no `original_input` column, `schema_meta.version` = 3, existing
+  sources still refresh.
+- Add an Xtream source via the new tab (host + username + password, no URL) → authenticates and
+  imports. Pasting a full `get.php` URL into the M3U tab still detects Xtream, as before.
+- Sidebar → Sources: card list with host, kind pill, relative refresh time; kebab menu behaves
+  as it did in the sidebar; back arrow returns from add/edit. Renaming a source shows the new
+  name immediately on return, without needing an unrelated refresh first.
+- A database with no sources opens straight to the Sources screen; adding one doesn't force you
+  back there afterwards.
+- Regression: favourites/recents survive an edit + refresh; auto-refresh, both themes, and the
+  overlay are all untouched by this pass.
+
+### Carry-overs
+
+Everything Phase 4a and Phase 3 already carried over is still open (see above). Nothing new was
+deferred in this pass.
