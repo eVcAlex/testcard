@@ -6,8 +6,11 @@ plays back through an embedded `mpv`, stores everything locally.
 ## Glossary
 
 - **Source** — one configured provider account (an Xtream login, or a plain M3U + optional
-  XMLTV URL). A user may have several. All sources normalise into the same shape below; the
-  app never special-cases "Xtream" vs "M3U" outside `packages/core/src/source/`.
+  XMLTV URL). A user may have several. Editable and removable in place: an edit keeps the
+  same internal id, so Favourites/Recents survive it; `kind` (Xtream vs M3U) can never change
+  on an existing Source — there's no UI for it, and it isn't a supported edit. All sources
+  normalise into the same shape below; the app never special-cases "Xtream" vs "M3U" outside
+  `packages/core/src/source/`.
 - **Channel** — one logical live-TV channel as a human thinks of it — "TNT Sports 1". Has a
   **stable internal id** that survives playlist refreshes, independent of whatever id the
   provider assigns.
@@ -42,7 +45,10 @@ plays back through an embedded `mpv`, stores everything locally.
   destructive rebuild — Favourites and Recents survive a renumber/rename. EPG is
   delete-then-insert per source (see `docs/adr/0003`), best-effort: a bad guide URL never
   fails the channel refresh. The EPG URL is the user's explicit one, else auto-detected
-  (M3U `url-tvg` header / Xtream `xmltv.php`).
+  (M3U `url-tvg` header / Xtream `xmltv.php`). Manual by default; a Source may also set a
+  `refresh_interval_hours` (Off/6h/12h/24h), checked every 15 minutes by a background
+  scheduler (`main/refreshScheduler.ts`) that's guarded against double-running a Source
+  that's already mid-refresh.
 - **Favourite** — a user-starred Channel. Survives Refresh (see above).
 - **Recent** — a Channel the user has played, most-recent-first. Survives Refresh.
 
@@ -58,13 +64,21 @@ plays back through an embedded `mpv`, stores everything locally.
 - mpv renders into a **frameless transparent child window** docked over the picture, not a
   child HWND inside the main window — DirectComposition was occluding it. A second such
   window carries the on-video overlay controls. See `docs/adr/0002-video-region-window.md`.
-- **Visual language:** the surface follows IPTV Expert — a left sidebar (nav + a scrolling
-  category list), a full-width multi-column channel grid, a hot-pink accent (`--accent`,
-  fully tokenised in `renderer/src/styles/tokens.css`), light + dark themes (default dark),
-  and a fullscreen player view. Type is bundled Inter (self-hosted woff2). Channel cards
-  show now/next + a progress bar from EPG; a timeline Guide tab shows the full grid.
+- **Visual language:** "Mist" — a cool-neutral, restrained palette (a quiet teal `--accent`,
+  never the old hot pink) laid out as a left sidebar (nav + a scrolling category list), a
+  full-width multi-column channel grid, light + dark themes (default dark), and a fullscreen
+  player view. Type is bundled Inter (self-hosted woff2). Channel cards show now/next + a
+  progress bar from EPG; a timeline Guide tab shows the full grid. Tokens follow a shadcn-style
+  semantic pair model (`--background`/`--foreground`, `--card`, `--border`,
+  `--accent`/`--accent-foreground`, `--ring`) in `renderer/src/styles/tokens.css`, plus a small
+  motion-token layer (`--dur-1/2/3`, `--ease-spring`) for a few hand-ported micro-interactions
+  (spring-press buttons, a gliding focus ring, a logo-loading shimmer). See
+  `docs/adr/0006-theme-system.md`.
 - **EPG import** streams XMLTV on source refresh, batched to keep the app responsive, with
   progress pushed on `IPC_TASK_CHANNEL`. See `docs/adr/0003-epg-import.md`.
 - **Aspect ratio** (fit/fill/16:9/4:3) is an mpv property re-applied per load and persisted
   like volume; **channel logos** are served through the `testcard-logo:` privileged scheme
   backed by a main-process disk cache. See `docs/adr/0004-player-refinements.md`.
+- **Schema migrations** are forward-only: `SCHEMA_SQL` always describes the latest shape (a
+  fresh install just runs it), and an ordered `MIGRATIONS` list brings an existing database
+  up to date. See `docs/adr/0005-migration-runner.md`.
