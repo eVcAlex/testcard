@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
-import { AddSourceForm } from "../AddSourceForm.js";
+import { SourceForm } from "../SourceForm.js";
+import { SourceRow } from "./SourceRow.js";
 import type { Theme } from "./useTheme.js";
 
 export type BrowseTab = "live" | "guide" | "favourites" | "recent";
@@ -29,7 +30,6 @@ export function Sidebar({
   onToggleTheme: () => void;
 }) {
   const queryClient = useQueryClient();
-  const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
   const sources = useQuery({
@@ -42,36 +42,6 @@ export function Sidebar({
     queryFn: () => window.testcard.channels.categoryList(),
     staleTime: 60_000,
   });
-
-  const refresh = useMutation({
-    mutationFn: (sourceId: string) => window.testcard.sources.refresh(sourceId),
-    onSuccess: (result) => {
-      const parts = [
-        `${result.channels.toLocaleString()} channels · ${result.categories} categories`,
-      ];
-      if (result.programmes !== undefined) parts.push(`${result.programmes.toLocaleString()} programmes`);
-      setRefreshMsg(parts.join(" · "));
-      void queryClient.invalidateQueries({ queryKey: ["channels"] });
-      void queryClient.invalidateQueries({ queryKey: ["categories"] });
-      void queryClient.invalidateQueries({ queryKey: ["epg"] });
-    },
-    onError: (error: unknown) => {
-      setRefreshMsg(error instanceof Error ? error.message : "Refresh failed.");
-    },
-  });
-
-  // Live guide-import progress, pushed from main during a refresh.
-  useEffect(() => {
-    if (!window.testcard?.events?.onTask) return;
-    return window.testcard.events.onTask((event) => {
-      if (event.type !== "epg") return;
-      if (event.phase === "parsing" && event.programmes) {
-        setRefreshMsg(`Guide: ${event.programmes.toLocaleString()} programmes…`);
-      } else if (event.phase === "error" && event.message) {
-        setRefreshMsg(`Guide: ${event.message}`);
-      }
-    });
-  }, []);
 
   const pickCategory = (id: string | null) => {
     onCategory(id);
@@ -109,29 +79,17 @@ export function Sidebar({
           <p className="pw-source-empty">No source yet</p>
         )}
         {sources.data?.map((source) => (
-          <div key={source.id} className="pw-source">
-            <span className="pw-source-name">{source.name}</span>
-            <button
-              type="button"
-              className="btn btn--ghost btn--icon"
-              aria-label={`Refresh ${source.name}`}
-              disabled={refresh.isPending}
-              onClick={() => refresh.mutate(source.id)}
-            >
-              <Icon name="refresh" />
-            </button>
-          </div>
+          <SourceRow key={source.id} source={source} />
         ))}
-        {refresh.isPending && <p className="pw-refresh-note">Fetching playlist…</p>}
-        {!refresh.isPending && refreshMsg !== null && <p className="pw-refresh-note">{refreshMsg}</p>}
 
         {addOpen ? (
           <div className="pw-source-add">
-            <AddSourceForm
-              onAdded={() => {
+            <SourceForm
+              onDone={() => {
                 setAddOpen(false);
                 void queryClient.invalidateQueries({ queryKey: ["sources"] });
               }}
+              onCancel={() => setAddOpen(false)}
             />
           </div>
         ) : (

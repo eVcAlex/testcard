@@ -15,6 +15,8 @@ export type Source =
       readonly name: string;
       readonly baseUrl: string;
       /** Credentials are looked up from the OS keychain by `id` — never stored here. */
+      /** Explicit XMLTV override — Xtream normally auto-derives one from `xmltv.php` on refresh. */
+      readonly epgUrl?: string;
     }
   | {
       readonly id: string;

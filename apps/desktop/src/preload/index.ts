@@ -28,6 +28,7 @@ const api: TestcardApi = {
   sources: {
     list: bind("sources.list"),
     add: bind("sources.add"),
+    update: bind("sources.update"),
     refresh: bind("sources.refresh"),
     remove: bind("sources.remove"),
   },

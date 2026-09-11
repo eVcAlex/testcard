@@ -24,6 +24,36 @@ export interface AddSourceInput {
   readonly epgUrl?: string;
 }
 
+/**
+ * A source edit. `kind` cannot change here — the edit form has no kind toggle, so the shape of
+ * the patch itself picks a lane: `playlistUrl` only makes sense for an M3U source, `xtream`
+ * only for an Xtream one. Main rejects the wrong one for a given source's stored kind.
+ */
+export interface UpdateSourceInput {
+  readonly name: string;
+  /** Omit to leave unchanged; `""` clears the stored EPG URL. */
+  readonly epgUrl?: string;
+  /** M3U only: a replacement playlist URL. Omit to keep the current one. */
+  readonly playlistUrl?: string;
+  /**
+   * Xtream only: omit any field to keep its current value. `password` sent blank (or omitted)
+   * means "unchanged" — the stored password is never sent to the renderer to prefill, so this
+   * is the only way an edit form can represent "leave it alone."
+   */
+  readonly xtream?: {
+    readonly baseUrl?: string;
+    readonly username?: string;
+    readonly password?: string;
+  };
+}
+
+/** A source as listed in the sidebar — the domain `Source` plus desktop-only bookkeeping. */
+export type SourceListItem = Source & {
+  readonly createdAt: number;
+  readonly lastRefreshedAt?: number;
+  readonly refreshIntervalHours?: number;
+};
+
 export interface RefreshResult {
   readonly categories: number;
   readonly channels: number;
@@ -117,10 +147,13 @@ export interface PlaybackSnapshot {
 
 export interface TestcardApi {
   sources: {
-    list(): Promise<readonly Source[]>;
+    list(): Promise<readonly SourceListItem[]>;
     /** Adds an Xtream or M3U source; the kind is detected from the pasted URL. */
     add(input: AddSourceInput): Promise<Source>;
+    /** Edits a source in place — same id, so favourites/recents survive. Kind cannot change. */
+    update(sourceId: string, patch: UpdateSourceInput): Promise<Source>;
     refresh(sourceId: string): Promise<RefreshResult>;
+    /** Deletes a source, its credentials, and any favourites/recents left orphaned by it. */
     remove(sourceId: string): Promise<void>;
   };
   channels: {

@@ -111,6 +111,11 @@
   gap: var(--s-3);
 }
 
+.form-actions {
+  display: flex;
+  gap: var(--s-3);
+}
+
 /* ---- section heading -------------------------------------------------- */
 
 .section-title {

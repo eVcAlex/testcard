@@ -1,7 +1,7 @@
 import { app, protocol } from "electron";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 /**
@@ -60,6 +60,23 @@ async function cachedLogo(target: string): Promise<Buffer | null> {
     inflight.set(key, pending);
   }
   return pending;
+}
+
+/**
+ * Best-effort eviction for a removed source's logos. The cache has no source-keyed index (it's
+ * a flat sha1(url) -> bytes map, deliberately — see the file header), so the caller must supply
+ * the exact `logo_url` values that source's channels had before it deletes them. Computes the
+ * cache path directly rather than reading the module-level `cacheDir`, so this works even if
+ * called before `registerLogoProtocol()` has run.
+ */
+export async function purgeCachedLogos(urls: readonly string[]): Promise<void> {
+  const dir = join(app.getPath("userData"), "logo-cache");
+  await Promise.all(
+    urls.map(async (url) => {
+      const key = createHash("sha1").update(url).digest("hex");
+      await unlink(join(dir, key)).catch(() => undefined);
+    }),
+  );
 }
 
 function contentTypeFor(url: string): string {
