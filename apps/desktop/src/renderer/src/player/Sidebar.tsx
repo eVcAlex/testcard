@@ -1,17 +1,15 @@
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
-import { SourceForm } from "../SourceForm.js";
-import { SourceRow } from "./SourceRow.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "guide" | "favourites" | "recent";
+export type BrowseTab = "live" | "guide" | "favourites" | "recent" | "sources";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "live", label: "Live TV", icon: "tv" },
   { id: "guide", label: "Guide", icon: "grid" },
   { id: "favourites", label: "Favourites", icon: "star" },
   { id: "recent", label: "Recent", icon: "clock" },
+  { id: "sources", label: "Sources", icon: "signal" },
 ];
 
 export function Sidebar({
@@ -29,9 +27,6 @@ export function Sidebar({
   theme: Theme;
   onToggleTheme: () => void;
 }) {
-  const queryClient = useQueryClient();
-  const [addOpen, setAddOpen] = useState(false);
-
   const sources = useQuery({
     queryKey: ["sources"],
     queryFn: () => window.testcard.sources.list(),
@@ -69,36 +64,12 @@ export function Sidebar({
           >
             <Icon name={t.icon} filled={t.id === "favourites" && tab === "favourites"} />
             {t.label}
+            {t.id === "sources" && sources.data !== undefined && (
+              <span className="pw-nav-count">{sources.data.length}</span>
+            )}
           </button>
         ))}
       </nav>
-
-      <p className="pw-nav-group">Sources</p>
-      <div className="pw-sources">
-        {sources.data?.length === 0 && !addOpen && (
-          <p className="pw-source-empty">No source yet</p>
-        )}
-        {sources.data?.map((source) => (
-          <SourceRow key={source.id} source={source} />
-        ))}
-
-        {addOpen ? (
-          <div className="pw-source-add">
-            <SourceForm
-              onDone={() => {
-                setAddOpen(false);
-                void queryClient.invalidateQueries({ queryKey: ["sources"] });
-              }}
-              onCancel={() => setAddOpen(false)}
-            />
-          </div>
-        ) : (
-          <button type="button" className="pw-nav-item" onClick={() => setAddOpen(true)}>
-            <Icon name="plus" />
-            Add source
-          </button>
-        )}
-      </div>
 
       <p className="pw-nav-group">Categories</p>
       <div className="pw-cats">

@@ -10,13 +10,14 @@
  */
 import type { CategoryRow, Channel, ChannelCountry, ChannelRow, CountryNode, Source } from "@testcard/core";
 
-export interface AddSourceInput {
+/**
+ * How the user entered the source — not the same thing as the resulting `Source["kind"]`. A
+ * `"url"` paste that turns out to be a `get.php` link still produces an Xtream source (main
+ * detects that from the URL, as it always has); `"xtream"` is the form's own tab for a provider
+ * that only gave a host/username/password, so there's nothing to hand-assemble into a URL for.
+ */
+export type AddSourceInput = {
   readonly name: string;
-  /**
-   * Either a pasted Xtream `get.php` URL (credentials are extracted and probed, never echoed
-   * back) or a direct M3U playlist URL. Main detects which and stores the right source kind.
-   */
-  readonly pastedUrl: string;
   /**
    * Optional explicit XMLTV/EPG URL. When absent, main auto-detects one on refresh (the M3U
    * `url-tvg` header, or Xtream `xmltv.php`).
@@ -24,7 +25,23 @@ export interface AddSourceInput {
   readonly epgUrl?: string;
   /** Hours between automatic refreshes. Absent (or `undefined`) means manual refresh only. */
   readonly refreshIntervalHours?: number;
-}
+} & (
+  | {
+      readonly via: "url";
+      /**
+       * Either a pasted Xtream `get.php` URL (credentials are extracted and probed, never
+       * echoed back) or a direct M3U playlist URL. Main detects which and stores the right
+       * source kind.
+       */
+      readonly pastedUrl: string;
+    }
+  | {
+      readonly via: "xtream";
+      readonly baseUrl: string;
+      readonly username: string;
+      readonly password: string;
+    }
+);
 
 /**
  * A source edit. `kind` cannot change here — the edit form has no kind toggle, so the shape of
@@ -152,7 +169,7 @@ export interface PlaybackSnapshot {
 export interface TestcardApi {
   sources: {
     list(): Promise<readonly SourceListItem[]>;
-    /** Adds an Xtream or M3U source; the kind is detected from the pasted URL. */
+    /** Adds an Xtream or M3U source — see `AddSourceInput["via"]` for the two entry paths. */
     add(input: AddSourceInput): Promise<Source>;
     /** Edits a source in place — same id, so favourites/recents survive. Kind cannot change. */
     update(sourceId: string, patch: UpdateSourceInput): Promise<Source>;

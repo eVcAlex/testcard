@@ -103,23 +103,20 @@ type VerifiedSource =
   | { readonly kind: "xtream"; readonly credentials: XtreamCredentials }
   | { readonly kind: "m3u"; readonly url: string };
 
-/**
- * Probes a pasted URL exactly the way `sources.add` always has — Xtream credential extraction
- * + an auth check, or a plain playlist reachability check — without committing anything to the
- * database. Shared by `add` and `update` so the two can't drift on what "verified" means.
- */
-async function verifySource(pastedUrl: string): Promise<VerifiedSource> {
-  const url = pastedUrl.trim();
-
-  const credentials = extractXtreamCredentials(url);
-  if (credentials) {
-    const auth = await probeXtream(credentials);
-    if (!auth.authenticated) {
-      throw new Error("Those credentials didn't authenticate against the provider.");
-    }
-    return { kind: "xtream", credentials };
+/** An auth check against `player_api.php`, throwing the message the add/edit form should show. */
+async function verifyXtreamCredentials(credentials: XtreamCredentials): Promise<void> {
+  const auth = await probeXtream(credentials);
+  if (!auth.authenticated) {
+    throw new Error("Those credentials didn't authenticate against the provider.");
   }
+}
 
+/**
+ * Confirms a plain playlist URL is well-formed and reachable before saving — mirroring the
+ * Xtream probe, but without downloading the whole playlist here; `sources.refresh` streams and
+ * parses it.
+ */
+async function verifyPlaylistUrl(url: string): Promise<string> {
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -130,14 +127,48 @@ async function verifySource(pastedUrl: string): Promise<VerifiedSource> {
     throw new Error("A playlist URL must start with http:// or https://.");
   }
 
-  // Confirm it's reachable before saving, mirroring the Xtream probe — but don't download the
-  // whole playlist here; `sources.refresh` streams and parses it.
   const probe = await fetch(url, { method: "GET" });
   void probe.body?.cancel();
   if (!probe.ok) {
     throw new Error(`The playlist URL responded with HTTP ${probe.status}.`);
   }
-  return { kind: "m3u", url };
+  return url;
+}
+
+/**
+ * Probes a pasted URL exactly the way `sources.add`'s M3U tab always has — Xtream credential
+ * extraction + an auth check, or a plain playlist reachability check — without committing
+ * anything to the database. Shared by `add`'s "url" path and `update`'s m3u branch so the two
+ * can't drift on what "verified" means.
+ */
+async function verifySource(pastedUrl: string): Promise<VerifiedSource> {
+  const url = pastedUrl.trim();
+
+  const credentials = extractXtreamCredentials(url);
+  if (credentials) {
+    await verifyXtreamCredentials(credentials);
+    return { kind: "xtream", credentials };
+  }
+
+  return { kind: "m3u", url: await verifyPlaylistUrl(url) };
+}
+
+/**
+ * Reduces a pasted URL (anything up to a full `get.php?username=...` link) to just its
+ * scheme + host, so a user who pastes their whole provider URL into the "Server URL" field
+ * still gets a clean base URL rather than one carrying a stray path or query string.
+ */
+function normaliseBaseUrl(input: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(input.trim());
+  } catch {
+    throw new Error("That's not a valid server URL.");
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("A server URL must start with http:// or https://.");
+  }
+  return `${parsed.protocol}//${parsed.host}`;
 }
 
 /**
@@ -236,10 +267,23 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         );
       },
 
-      async add({ name, pastedUrl, epgUrl, refreshIntervalHours }) {
-        const epg = epgUrl?.trim() ?? "";
-        const interval = refreshIntervalHours ?? null;
-        const verified = await verifySource(pastedUrl);
+      async add(input) {
+        const epg = input.epgUrl?.trim() ?? "";
+        const interval = input.refreshIntervalHours ?? null;
+        const name = input.name;
+
+        const verified: VerifiedSource =
+          input.via === "xtream"
+            ? await (async () => {
+                const credentials: XtreamCredentials = {
+                  baseUrl: normaliseBaseUrl(input.baseUrl),
+                  username: input.username.trim(),
+                  password: input.password,
+                };
+                await verifyXtreamCredentials(credentials);
+                return { kind: "xtream", credentials };
+              })()
+            : await verifySource(input.pastedUrl);
         const id = randomUUID();
 
         if (verified.kind === "xtream") {

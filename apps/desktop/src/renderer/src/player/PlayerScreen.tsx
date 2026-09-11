@@ -4,6 +4,7 @@ import type { ChannelRow } from "@testcard/core";
 import { Sidebar, type BrowseTab } from "./Sidebar.js";
 import { BrowseView } from "./BrowseView.js";
 import { GuideView } from "./GuideView.js";
+import { SourcesView } from "./SourcesView.js";
 import { PlayerView } from "./PlayerView.js";
 import { usePlaybackEvents } from "./usePlaybackEvents.js";
 import { useTheme } from "./useTheme.js";
@@ -22,6 +23,19 @@ export function PlayerScreen() {
     queryFn: () => window.testcard.playback.vlcAvailable(),
     staleTime: Infinity,
   });
+
+  // First run: land on the Sources screen instead of an empty channel grid. One-shot — the
+  // query key is shared with Sidebar's own ["sources"] query, so this adds no extra fetch.
+  const firstRunHandled = useRef(false);
+  const sources = useQuery({
+    queryKey: ["sources"],
+    queryFn: () => window.testcard.sources.list(),
+  });
+  useEffect(() => {
+    if (firstRunHandled.current || sources.data === undefined) return;
+    firstRunHandled.current = true;
+    if (sources.data.length === 0) setTab("sources");
+  }, [sources.data]);
 
   useEffect(() => {
     return () => void window.testcard.playback.stop();
@@ -80,7 +94,9 @@ export function PlayerScreen() {
         theme={theme}
         onToggleTheme={toggle}
       />
-      {tab === "guide" ? (
+      {tab === "sources" ? (
+        <SourcesView />
+      ) : tab === "guide" ? (
         <GuideView
           categoryId={categoryId}
           activeChannelId={activeChannelId}
