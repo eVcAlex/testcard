@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-/** The seven-bar sequence, in broadcast order. Used once here and nowhere else. */
+/**
+ * The seven-bar SMPTE colour-bar sequence, in broadcast order. Used once here and nowhere
+ * else. These are a broadcast spec, not theme colour — they stay literal across every theme
+ * and every reskin, unlike everything else in this file's stylesheet.
+ */
 const BARS = ["#c0c0c0", "#c0c000", "#00c0c0", "#00c000", "#c000c0", "#c00000", "#0000c0"];
 
 /**

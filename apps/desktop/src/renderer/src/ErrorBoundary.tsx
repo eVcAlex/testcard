@@ -30,8 +30,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
           gap: 12,
           padding: 32,
           textAlign: "center",
-          color: "#e8ebee",
-          background: "#171a1e",
+          color: "#eef1f3",
+          background: "#14171a",
         }}
       >
         <div style={{ color: "#f0745c", fontSize: 16 }}>Something in the interface broke</div>
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
           style={{
             maxWidth: "60ch",
             whiteSpace: "pre-wrap",
-            color: "#8c959c",
+            color: "#949ca4",
             fontSize: 12,
             fontFamily: "ui-monospace, monospace",
           }}
@@ -51,10 +51,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
           onClick={() => window.location.reload()}
           style={{
             padding: "7px 14px",
-            background: "#262b30",
-            border: "1px solid #3a4249",
+            background: "#1c2024",
+            border: "1px solid #343c43",
             borderRadius: 6,
-            color: "#e8ebee",
+            color: "#eef1f3",
             cursor: "pointer",
           }}
         >

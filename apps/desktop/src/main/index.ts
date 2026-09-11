@@ -17,10 +17,10 @@ function createMainWindow(): BrowserWindow {
     show: false,
     autoHideMenuBar: true,
     // The resize-gutter colour: what shows for a frame when the window grows before the
-    // renderer paints. Must equal --surface-1 (styles/tokens.css). Not --picture #000000
+    // renderer paints. Must equal --background (styles/tokens.css). Not --picture #000000
     // (that's the video hole only) and not the child windows' #00000000 (load-bearing
     // transparency, see ADR 0002). Dark literal here on purpose — main has no token system.
-    backgroundColor: "#171a1e",
+    backgroundColor: "#14171a",
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
