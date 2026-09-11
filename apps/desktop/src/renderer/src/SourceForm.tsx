@@ -25,13 +25,23 @@ export function SourceForm({
   const [xtreamBaseUrl, setXtreamBaseUrl] = useState(source?.kind === "xtream" ? source.baseUrl : "");
   const [xtreamUsername, setXtreamUsername] = useState("");
   const [xtreamPassword, setXtreamPassword] = useState("");
+  // "" means manual-only (Off) — the one non-numeric option in an otherwise numeric select.
+  const [refreshInterval, setRefreshInterval] = useState(
+    source?.refreshIntervalHours !== undefined ? String(source.refreshIntervalHours) : "",
+  );
 
   const mutation = useMutation({
     mutationFn: () => {
       const epg = epgUrl.trim();
+      const interval = refreshInterval === "" ? undefined : Number(refreshInterval);
 
       if (!editing) {
-        return window.testcard.sources.add({ name, pastedUrl, ...(epg !== "" ? { epgUrl: epg } : {}) });
+        return window.testcard.sources.add({
+          name,
+          pastedUrl,
+          ...(epg !== "" ? { epgUrl: epg } : {}),
+          ...(interval !== undefined ? { refreshIntervalHours: interval } : {}),
+        });
       }
 
       if (source.kind === "m3u") {
@@ -39,6 +49,7 @@ export function SourceForm({
         return window.testcard.sources.update(source.id, {
           name,
           epgUrl: epg,
+          refreshIntervalHours: interval ?? null,
           ...(url !== "" && url !== source.playlistUrl ? { playlistUrl: url } : {}),
         });
       }
@@ -47,6 +58,7 @@ export function SourceForm({
       return window.testcard.sources.update(source.id, {
         name,
         epgUrl: epg,
+        refreshIntervalHours: interval ?? null,
         xtream: {
           ...(baseUrl !== "" && baseUrl !== source.baseUrl ? { baseUrl } : {}),
           ...(xtreamUsername.trim() !== "" ? { username: xtreamUsername.trim() } : {}),
@@ -59,6 +71,7 @@ export function SourceForm({
         setName("");
         setPastedUrl("");
         setEpgUrl("");
+        setRefreshInterval("");
       }
       onDone();
     },
@@ -122,6 +135,16 @@ export function SourceForm({
         value={epgUrl}
         onChange={(e) => setEpgUrl(e.target.value)}
       />
+
+      <label className="field">
+        <span>Auto-refresh</span>
+        <select className="input" value={refreshInterval} onChange={(e) => setRefreshInterval(e.target.value)}>
+          <option value="">Off — manual only</option>
+          <option value="6">Every 6 hours</option>
+          <option value="12">Every 12 hours</option>
+          <option value="24">Every 24 hours</option>
+        </select>
+      </label>
 
       <div className="form-actions">
         <button type="submit" className="btn btn--primary" disabled={mutation.isPending}>

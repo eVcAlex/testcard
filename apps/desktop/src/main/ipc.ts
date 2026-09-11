@@ -28,6 +28,7 @@ import {
   IPC_TASK_CHANNEL,
   type NowNextLite,
   type ProgrammeLite,
+  type RefreshResult,
   type SourceListItem,
   type TaskEvent,
   type TestcardApi,
@@ -37,9 +38,17 @@ import { deleteCredentials, getCredentials, saveCredentials } from "./credential
 import { purgeCachedLogos } from "./logoCache.js";
 import { PlaybackController } from "./playbackController.js";
 import { isVlcAvailable } from "./externalPlayer.js";
+import { startRefreshScheduler } from "./refreshScheduler.js";
 import { randomUUID } from "node:crypto";
 
 let activeController: PlaybackController | null = null;
+let activeSchedulerStop: (() => void) | null = null;
+
+/** Called from `main/index.ts` on `window-all-closed`, mirroring `activeController`'s cleanup. */
+export function stopActiveRefreshScheduler(): void {
+  activeSchedulerStop?.();
+  activeSchedulerStop = null;
+}
 
 function toProgrammeLite(row: ProgrammeRow): ProgrammeLite {
   return {
@@ -142,6 +151,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
   const m3uAdapter = createM3UAdapter();
 
   activeController?.dispose();
+  activeSchedulerStop?.();
   const playback = new PlaybackController(db, mainWindow, { xtream: xtreamAdapter, m3u: m3uAdapter });
   activeController = playback;
   mainWindow.on("closed", () => {
@@ -152,6 +162,42 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
   const emitTask = (event: TaskEvent): void => {
     if (!mainWindow.isDestroyed()) mainWindow.webContents.send(IPC_TASK_CHANNEL, event);
   };
+
+  // Shared by the manual `sources.refresh` IPC call and the auto-refresh scheduler below, so
+  // a slow refresh a user kicked off by hand and a tick that comes due mid-refresh can't
+  // double-run the same source against its provider.
+  const refreshingSourceIds = new Set<string>();
+
+  async function refreshSource(sourceId: string): Promise<RefreshResult> {
+    if (refreshingSourceIds.has(sourceId)) {
+      throw new Error("This source is already refreshing.");
+    }
+    refreshingSourceIds.add(sourceId);
+    try {
+      const row = db
+        .prepare(`SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl FROM sources WHERE id = ?`)
+        .get(sourceId) as (Source & { baseUrl?: string; playlistUrl?: string; epgUrl?: string | null }) | undefined;
+      if (!row) throw new Error(`Unknown source: ${sourceId}`);
+
+      const adapter = row.kind === "xtream" ? xtreamAdapter : m3uAdapter;
+      const result = await importSource(db, row, adapter);
+
+      // EPG is best-effort: a bad or missing guide URL must not fail the playlist refresh.
+      const programmes = await refreshEpg(db, row, adapter, row.epgUrl ?? null, emitTask).catch((error: unknown) => {
+        emitTask({
+          type: "epg",
+          sourceId,
+          phase: "error",
+          message: error instanceof Error ? error.message : "The guide could not be updated.",
+        });
+        return undefined;
+      });
+
+      return programmes !== undefined ? { ...result, programmes } : result;
+    } finally {
+      refreshingSourceIds.delete(sourceId);
+    }
+  }
 
   const api: Omit<TestcardApi, "events"> = {
     sources: {
@@ -190,17 +236,18 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         );
       },
 
-      async add({ name, pastedUrl, epgUrl }) {
+      async add({ name, pastedUrl, epgUrl, refreshIntervalHours }) {
         const epg = epgUrl?.trim() ?? "";
+        const interval = refreshIntervalHours ?? null;
         const verified = await verifySource(pastedUrl);
         const id = randomUUID();
 
         if (verified.kind === "xtream") {
           await saveCredentials(id, verified.credentials);
           db.prepare(
-            `INSERT INTO sources (id, kind, name, base_url, epg_url, original_input, created_at)
-             VALUES (?, 'xtream', ?, ?, ?, ?, ?)`,
-          ).run(id, name, verified.credentials.baseUrl, epg !== "" ? epg : null, pastedUrl.trim(), Date.now());
+            `INSERT INTO sources (id, kind, name, base_url, epg_url, original_input, refresh_interval_hours, created_at)
+             VALUES (?, 'xtream', ?, ?, ?, ?, ?, ?)`,
+          ).run(id, name, verified.credentials.baseUrl, epg !== "" ? epg : null, pastedUrl.trim(), interval, Date.now());
 
           const source: Source = {
             id,
@@ -213,9 +260,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         }
 
         db.prepare(
-          `INSERT INTO sources (id, kind, name, playlist_url, epg_url, original_input, created_at)
-           VALUES (?, 'm3u', ?, ?, ?, ?, ?)`,
-        ).run(id, name, verified.url, epg !== "" ? epg : null, verified.url, Date.now());
+          `INSERT INTO sources (id, kind, name, playlist_url, epg_url, original_input, refresh_interval_hours, created_at)
+           VALUES (?, 'm3u', ?, ?, ?, ?, ?, ?)`,
+        ).run(id, name, verified.url, epg !== "" ? epg : null, verified.url, interval, Date.now());
 
         const source: Source = {
           id,
@@ -229,15 +276,28 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
       async update(sourceId, patch: UpdateSourceInput) {
         const row = db
-          .prepare(`SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl FROM sources WHERE id = ?`)
+          .prepare(
+            `SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl,
+                    refresh_interval_hours as refreshIntervalHours
+             FROM sources WHERE id = ?`,
+          )
           .get(sourceId) as
-          | { id: string; kind: "xtream" | "m3u"; name: string; baseUrl: string | null; playlistUrl: string | null; epgUrl: string | null }
+          | {
+              id: string;
+              kind: "xtream" | "m3u";
+              name: string;
+              baseUrl: string | null;
+              playlistUrl: string | null;
+              epgUrl: string | null;
+              refreshIntervalHours: number | null;
+            }
           | undefined;
         if (!row) throw new Error(`Unknown source: ${sourceId}`);
 
         const name = patch.name.trim();
         if (name === "") throw new Error("A source needs a name.");
         const epg = patch.epgUrl !== undefined ? (patch.epgUrl.trim() !== "" ? patch.epgUrl.trim() : null) : row.epgUrl;
+        const interval = patch.refreshIntervalHours !== undefined ? patch.refreshIntervalHours : row.refreshIntervalHours;
 
         if (row.kind === "m3u") {
           if (patch.xtream !== undefined) {
@@ -254,13 +314,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
             playlistUrl = verified.url;
           }
 
-          db.prepare(`UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, original_input = ? WHERE id = ?`).run(
-            name,
-            playlistUrl,
-            epg,
-            playlistUrl,
-            sourceId,
-          );
+          db.prepare(
+            `UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, original_input = ?, refresh_interval_hours = ? WHERE id = ?`,
+          ).run(name, playlistUrl, epg, playlistUrl, interval, sourceId);
 
           const source: Source = { id: sourceId, kind: "m3u", name, playlistUrl, ...(epg !== null ? { epgUrl: epg } : {}) };
           return source;
@@ -291,7 +347,13 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           await saveCredentials(sourceId, credentials);
         }
 
-        db.prepare(`UPDATE sources SET name = ?, base_url = ?, epg_url = ? WHERE id = ?`).run(name, credentials.baseUrl, epg, sourceId);
+        db.prepare(`UPDATE sources SET name = ?, base_url = ?, epg_url = ?, refresh_interval_hours = ? WHERE id = ?`).run(
+          name,
+          credentials.baseUrl,
+          epg,
+          interval,
+          sourceId,
+        );
 
         const source: Source = {
           id: sourceId,
@@ -304,28 +366,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
 
       async refresh(sourceId) {
-        const row = db.prepare(`SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl FROM sources WHERE id = ?`).get(sourceId) as
-          | (Source & { baseUrl?: string; playlistUrl?: string; epgUrl?: string | null })
-          | undefined;
-        if (!row) throw new Error(`Unknown source: ${sourceId}`);
-
-        const adapter = row.kind === "xtream" ? xtreamAdapter : m3uAdapter;
-        const result = await importSource(db, row, adapter);
-
-        // EPG is best-effort: a bad or missing guide URL must not fail the playlist refresh.
-        const programmes = await refreshEpg(db, row, adapter, row.epgUrl ?? null, emitTask).catch(
-          (error: unknown) => {
-            emitTask({
-              type: "epg",
-              sourceId,
-              phase: "error",
-              message: error instanceof Error ? error.message : "The guide could not be updated.",
-            });
-            return undefined;
-          },
-        );
-
-        return programmes !== undefined ? { ...result, programmes } : result;
+        return refreshSource(sourceId);
       },
 
       async remove(sourceId) {
@@ -489,4 +530,6 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
     if (!fn) throw new Error(`Unknown IPC call: ${path}`);
     return fn(...args);
   });
+
+  activeSchedulerStop = startRefreshScheduler(db, refreshSource);
 }

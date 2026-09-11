@@ -22,6 +22,8 @@ export interface AddSourceInput {
    * `url-tvg` header, or Xtream `xmltv.php`).
    */
   readonly epgUrl?: string;
+  /** Hours between automatic refreshes. Absent (or `undefined`) means manual refresh only. */
+  readonly refreshIntervalHours?: number;
 }
 
 /**
@@ -45,6 +47,8 @@ export interface UpdateSourceInput {
     readonly username?: string;
     readonly password?: string;
   };
+  /** Omit to leave unchanged; `null` turns auto-refresh off (manual only). */
+  readonly refreshIntervalHours?: number | null;
 }
 
 /** A source as listed in the sidebar — the domain `Source` plus desktop-only bookkeeping. */

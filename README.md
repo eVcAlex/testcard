@@ -10,12 +10,16 @@ glossary and [`docs/adr/`](docs/adr) for the decisions behind non-obvious choice
 
 ## Status
 
-Early scaffolding. `packages/core`'s source parsing, normalisation and database layer are
-built and unit-tested. The desktop shell (`apps/desktop`) boots, has a typed IPC bridge, and
-can add an Xtream source / refresh it into SQLite from the UI. Embedded mpv playback
-(`apps/desktop/src/main/mpv/`) is written but **not yet wired to the UI** — see
-`scripts/fetch-mpv.md` for the one manual step needed before it can be exercised, and
-[`docs/phase-2-brief.md`](docs/phase-2-brief.md) for the task breakdown covering that work.
+Live TV works end to end. `packages/core`'s source parsing, normalisation and database layer
+are built and unit-tested; the desktop shell (`apps/desktop`) has a typed IPC bridge, embedded
+mpv playback (see `scripts/fetch-mpv.md` for the one manual setup step), and a channel
+browser with search, favourites, recents, and an EPG timeline guide. Sources (Xtream or M3U)
+can be added, edited, removed, and refreshed by hand or on a per-source schedule (Off / 6h /
+12h / 24h) via a background scheduler.
+
+Not built yet: VOD and series (only live channels import today). See
+[`docs/phase-3-brief.md`](docs/phase-3-brief.md) for the most recent phase close-out and
+[`docs/adr/`](docs/adr) for the decisions behind non-obvious choices along the way.
 
 ## Requirements
 

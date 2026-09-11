@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell } from "electron";
 import { join } from "node:path";
 import { is } from "@electron-toolkit/utils";
-import { registerIpcHandlers } from "./ipc.js";
+import { registerIpcHandlers, stopActiveRefreshScheduler } from "./ipc.js";
 import { getDatabase } from "./database.js";
 import { registerLogoProtocol, registerLogoScheme } from "./logoCache.js";
 
@@ -61,5 +61,6 @@ void app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
+  stopActiveRefreshScheduler();
   if (process.platform !== "darwin") app.quit();
 });
