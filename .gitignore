@@ -28,3 +28,7 @@ Thumbs.db
 # logs
 *.log
 pnpm-debug.log*
+
+# local worktrees / agent scratch workspace — never committed
+.worktrees/
+.superpowers/
