@@ -32,7 +32,12 @@ export default defineConfig({
     root: resolve(__dirname, "src/renderer"),
     build: {
       rollupOptions: {
-        input: { index: resolve(__dirname, "src/renderer/index.html") },
+        // Two entries: the main window and the transparent on-video overlay window (ADR 0002).
+        // Rollup dedupes React + the shared token/font chunk across them.
+        input: {
+          index: resolve(__dirname, "src/renderer/index.html"),
+          overlay: resolve(__dirname, "src/renderer/overlay.html"),
+        },
       },
     },
     plugins: [react()],

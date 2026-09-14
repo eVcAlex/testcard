@@ -1,5 +1,19 @@
 # Phase 2 brief
 
+> **Status: Phase 2 is done** (branch `phase-2-playback-and-surface`). Embedded mpv playback
+> works end to end; the surface was reworked to the IPTV Expert layout (sidebar + category
+> list + multi-column grid, light/dark, fullscreen player) and the on-video overlay window
+> was built. See `docs/adr/0002-video-region-window.md`.
+>
+> **Carried into Phase 3:** XMLTV EPG import (the programme lines + progress bars are stubbed
+> to `category · country` until then); the overlay's cross-transition z-order needs a manual
+> pass on real hardware; TNT Sports Ultimate 2160p50 verification against the packaged build;
+> a main-process logo cache.
+>
+> The original brief follows for history.
+
+---
+
 Paste this to a new agent/session to continue Testcard.
 
 ---

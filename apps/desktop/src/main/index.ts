@@ -3,6 +3,10 @@ import { join } from "node:path";
 import { is } from "@electron-toolkit/utils";
 import { registerIpcHandlers } from "./ipc.js";
 import { getDatabase } from "./database.js";
+import { registerLogoProtocol, registerLogoScheme } from "./logoCache.js";
+
+// Privileged schemes must be declared before the app is ready.
+registerLogoScheme();
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -12,10 +16,15 @@ function createMainWindow(): BrowserWindow {
     minHeight: 640,
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: "#0b0b0d", // dark by default, no flash-of-white on load
+    // The resize-gutter colour: what shows for a frame when the window grows before the
+    // renderer paints. Must equal --surface-1 (styles/tokens.css). Not --picture #000000
+    // (that's the video hole only) and not the child windows' #00000000 (load-bearing
+    // transparency, see ADR 0002). Dark literal here on purpose — main has no token system.
+    backgroundColor: "#171a1e",
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
+      zoomFactor: 1, // keep 1 CSS px == 1 DIP so the mpv video region maths stays valid
     },
   });
 
@@ -38,13 +47,16 @@ function createMainWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
+  registerLogoProtocol();
   const db = getDatabase();
-  registerIpcHandlers(db);
-
-  createMainWindow();
+  const mainWindow = createMainWindow();
+  registerIpcHandlers(db, mainWindow);
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      const next = createMainWindow();
+      registerIpcHandlers(db, next);
+    }
   });
 });
 

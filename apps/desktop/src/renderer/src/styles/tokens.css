@@ -1,0 +1,142 @@
+/*
+ * Testcard design tokens — the ONLY file allowed to name a raw colour.
+ *
+ * Reference: IPTV Expert — left sidebar, a full-width multi-column channel grid with an EPG
+ * progress bar under every channel, a hot-pink accent, and a fullscreen overlay player. The
+ * picture is an opaque hole punched through the UI (mpv renders into separate windows — see
+ * ADR 0001 / ADR 0002), so the player view hands the whole window to it.
+ *
+ * :root is the default DARK theme. `:root[data-theme="light"]` redefines only what changes.
+ * Style components through these tokens, never a raw colour or a value behind [data-theme].
+ */
+:root {
+  color-scheme: dark;
+
+  /* ---- surfaces: a single elevation ramp -------------------------------- */
+  --picture: #000000; /* the video hole ONLY — nothing else is true black */
+  --surface-0: #101215; /* sunken: inputs, wells, search pill */
+  --surface-1: #171a1e; /* app background / main pane */
+  --surface-2: #1e2226; /* sidebar, raised panels */
+  --surface-3: #262b30; /* cards, hover */
+  --surface-4: #2e343a; /* pressed / active hover */
+  --scrim: #05080bcc; /* overlay bar over live video — dark in both themes */
+
+  /* ---- lines ---------------------------------------------------------- */
+  --line: #2b3137;
+  --line-strong: #3a4249;
+
+  /* ---- ink ---------------------------------------------------------- */
+  --ink: #e8ebee;
+  --ink-muted: #8c959c;
+  --ink-faint: #5f676d;
+
+  /* ---- accent: edit --accent and --accent-ink to reskin ------------- */
+  --accent: #ec2a6b; /* IPTV Expert hot pink */
+  --accent-ink: #ffffff; /* text / icon on a SOLID accent fill */
+  --accent-strong: color-mix(in oklab, var(--accent) 82%, white);
+  --accent-soft: color-mix(in oklab, var(--accent) 15%, transparent);
+  --accent-line: color-mix(in oklab, var(--accent) 55%, transparent);
+
+  /* ---- status: reserved ------------------------------------------------ */
+  --live: #e8402a; /* on-air dot + NO SIGNAL headline — nowhere else */
+  --live-halo: color-mix(in oklab, var(--live) 22%, transparent);
+  --fault: #f0745c; /* error text */
+
+  /* ---- spacing ------------------------------------------------------- */
+  --s-1: 2px;
+  --s-2: 4px;
+  --s-3: 8px;
+  --s-4: 12px;
+  --s-5: 16px;
+  --s-6: 20px;
+  --s-7: 24px;
+  --s-8: 32px;
+  --s-9: 48px;
+
+  /* ---- radius: encodes hierarchy ------------------------------------ */
+  --r-0: 0; /* the picture — mpv's HWND is a hard rectangle, cannot be corner-clipped */
+  --r-1: 6px; /* inputs, chips, buttons */
+  --r-2: 10px; /* rows, cards, panels */
+  --r-3: 14px; /* the overlay bar, hero */
+  --r-pill: 999px;
+
+  /* ---- elevation --------------------------------------------------- */
+  --elev-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --elev-2: 0 6px 20px -6px rgb(0 0 0 / 0.5);
+  --elev-3: 0 16px 44px -12px rgb(0 0 0 / 0.6);
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.04);
+
+  /* ---- sizes ------------------------------------------------------ */
+  --sidebar-w: 216px;
+  --control-h: 34px;
+  --control-h-lg: 42px;
+  --icon: 16px;
+  --icon-lg: 20px;
+  --logo: 34px;
+  --card-min: 268px;
+  --titlebar-h: 0px; /* frameless-less: standard Windows chrome for now */
+
+  /* ---- type ----------------------------------------------------- */
+  --t-micro: 11px;
+  --t-small: 12px;
+  --t-body: 13px;
+  --t-lead: 15px;
+  --t-title: 21px;
+  --t-display: 28px;
+  --lh-tight: 1.2;
+  --lh-body: 1.5;
+  --wght-regular: 400;
+  --wght-medium: 520;
+  --wght-semibold: 600;
+  --wght-bold: 700;
+  --track-tight: -0.011em;
+  --font-ui:
+    "Inter Variable", "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+    sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", "Consolas", monospace;
+
+  /* ---- motion -------------------------------------------------- */
+  --dur-fast: 90ms;
+  --dur: 150ms;
+  --dur-slow: 240ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.9, 0.4);
+
+  /* ---- z-index (in-document only) ---------------------------- */
+  --z-content: 0;
+  --z-sticky: 10;
+  --z-popover: 20;
+}
+
+/* ================= LIGHT THEME ================= */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --surface-0: #eef0f2;
+  --surface-1: #ffffff;
+  --surface-2: #f6f7f9;
+  --surface-3: #f0f2f5;
+  --surface-4: #e7eaee;
+
+  --line: #e4e7ea;
+  --line-strong: #d3d8dd;
+
+  --ink: #1b2127;
+  --ink-muted: #5c6872;
+  --ink-faint: #93a0a8;
+
+  --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+
+  --elev-1: 0 1px 2px rgb(15 23 30 / 0.08);
+  --elev-2: 0 8px 22px -8px rgb(15 23 30 / 0.18);
+  --elev-3: 0 18px 46px -14px rgb(15 23 30 / 0.28);
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur: 1ms;
+    --dur-slow: 1ms;
+  }
+}

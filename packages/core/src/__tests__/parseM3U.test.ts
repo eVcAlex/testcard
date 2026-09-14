@@ -34,6 +34,12 @@ describe("parseM3U", () => {
     });
   });
 
+  it("keeps the tvg-id attribute for the EPG join", async () => {
+    const items = await collect(SAMPLE);
+    const first = items.find((i) => i.kind === "entry");
+    expect(first?.kind === "entry" && first.entry.attributes["tvg-id"]).toBe("tnt1");
+  });
+
   it("parses catchup attributes", async () => {
     const items = await collect(SAMPLE);
     const first = items.find((i) => i.kind === "entry");

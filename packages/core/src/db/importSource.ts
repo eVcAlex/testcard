@@ -49,6 +49,7 @@ export async function importSource(
       country          = excluded.country,
       logo_url         = excluded.logo_url,
       channel_number   = excluded.channel_number,
+      tvg_id           = excluded.tvg_id,
       catchup_type     = excluded.catchup_type,
       catchup_days     = excluded.catchup_days,
       last_seen_at     = excluded.last_seen_at
@@ -87,7 +88,7 @@ export async function importSource(
           channelNumber: channel.channelNumber ?? null,
           catchupType: channel.catchup?.type ?? null,
           catchupDays: channel.catchup?.days ?? null,
-          tvgId: null,
+          tvgId: channel.tvgId ?? null,
           firstSeenAt: now,
           lastSeenAt: now,
         });

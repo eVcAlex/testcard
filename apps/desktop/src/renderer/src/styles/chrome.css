@@ -1,0 +1,164 @@
+/*
+ * Shared UI primitives — buttons, inputs, section headings, cards, pills, messages.
+ * One definition each, so nothing drifts. Used by the player surface and the overlay.
+ */
+
+/* ---- buttons -------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  height: var(--control-h);
+  padding: 0 var(--s-4);
+  background: var(--surface-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-1);
+  box-shadow: var(--edge-light);
+  color: var(--ink);
+  font-weight: var(--wght-medium);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover {
+  background: var(--surface-4);
+}
+
+.btn:active {
+  transform: translateY(0.5px);
+  box-shadow: none;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--edge-light);
+}
+
+.btn--primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.btn--ghost:hover {
+  background: var(--surface-3);
+}
+
+.btn--icon {
+  width: var(--control-h);
+  padding: 0;
+  flex: none;
+}
+
+.btn--icon svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+
+/* ---- inputs -------------------------------------------------------- */
+
+.input {
+  width: 100%;
+  height: var(--control-h);
+  padding: 0 var(--s-3);
+  background: var(--surface-0);
+  border: 1px solid var(--line);
+  border-radius: var(--r-1);
+  color: var(--ink);
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+.input:focus-visible {
+  border-color: var(--accent-line);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.field > span {
+  font-size: var(--t-small);
+  color: var(--ink-muted);
+}
+
+/* stacked mini-form: the "add source" panel in the sidebar */
+.add-source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+/* ---- section heading -------------------------------------------------- */
+
+.section-title {
+  margin: 0;
+  font-size: var(--t-micro);
+  font-weight: var(--wght-semibold);
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+/* ---- card: a discrete object (a source). NOT a channel row. ---------- */
+
+.card {
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  box-shadow: var(--elev-1), var(--edge-light);
+}
+
+/* ---- pill: status nomenclature (LIVE / TUNING / STANDBY / NO SIGNAL) - */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 22px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  font-size: var(--t-micro);
+  font-weight: var(--wght-semibold);
+  letter-spacing: var(--track-wide);
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+/* ---- messages ---------------------------------------------------- */
+
+.msg {
+  margin: 0;
+  font-size: var(--t-small);
+  line-height: var(--lh-body);
+}
+
+.msg--hint {
+  color: var(--ink-muted);
+}
+
+.msg--error {
+  color: var(--fault);
+}

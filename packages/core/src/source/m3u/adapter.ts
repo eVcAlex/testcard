@@ -48,6 +48,7 @@ export function createM3UAdapter(): SourceAdapter {
         // M3U has no numeric stream id — the URL itself is the stable provider handle.
         providerStreamId: item.entry.url,
         rawName: item.entry.rawName,
+        ...(attrs["tvg-id"] !== undefined && attrs["tvg-id"] !== "" ? { tvgId: attrs["tvg-id"] } : {}),
         ...(attrs["tvg-logo"] !== undefined ? { logoUrl: attrs["tvg-logo"] } : {}),
         ...(attrs["tvg-chno"] !== undefined && !Number.isNaN(Number(attrs["tvg-chno"]))
           ? { channelNumber: Number(attrs["tvg-chno"]) }
@@ -78,6 +79,18 @@ export function createM3UAdapter(): SourceAdapter {
     async buildStreamUrl(_source, variant) {
       // For M3U, providerStreamId *is* the direct stream URL captured at parse time.
       return variant.providerStreamId;
+    },
+
+    async probeEpgUrl(source) {
+      if (source.kind !== "m3u") return undefined;
+      // Only the `#EXTM3U` line is needed — `parseM3U` yields the header first, so read one
+      // item and let breaking out of the loop cancel the rest of the download.
+      const response = await fetch(source.playlistUrl);
+      if (!response.ok || response.body === null) return undefined;
+      for await (const item of parseM3U(response.body)) {
+        return item.kind === "header" ? item.header.urlTvg : undefined;
+      }
+      return undefined;
     },
 
     async *importAll(source) {
