@@ -124,3 +124,57 @@ export interface SourceAdapter {
    */
   importAll(source: Source): AsyncGenerator<ChannelPage>;
 }
+
+/**
+ * A movie as listed by Xtream's `get_vod_streams` — Xtream-only (see Scope), so this lives
+ * outside `SourceAdapter`. `plot`/`durationSecs` are deliberately absent: that bulk list call
+ * doesn't return them (see the design spec's "Import strategy" — they're a lazy per-item fetch).
+ */
+export interface Movie {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly categoryId: string;
+  readonly providerStreamId: string;
+  readonly name: string;
+  readonly posterUrl?: string;
+  /** From `get_vod_streams`; some Xtream panels omit it — see the container_extension fallback. */
+  readonly containerExtension?: string;
+  readonly rating?: string;
+}
+
+/**
+ * A TV series as listed by Xtream's `get_series`. Unlike `Movie`, `plot` is cheap here — the
+ * list DTO includes it, so it's not part of the lazy per-item fetch.
+ */
+export interface Series {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly categoryId: string;
+  readonly providerSeriesId: string;
+  readonly name: string;
+  readonly posterUrl?: string;
+  readonly rating?: string;
+  readonly plot?: string;
+}
+
+/** One season of a Series, from the lazy `get_series_info` fetch (see `fetchSeriesDetails`). */
+export interface Season {
+  readonly id: string;
+  readonly seriesId: string;
+  readonly seasonNumber: number;
+  readonly name?: string;
+  readonly posterUrl?: string;
+}
+
+/** One episode of a Season, from the lazy `get_series_info` fetch. */
+export interface Episode {
+  readonly id: string;
+  readonly seasonId: string;
+  readonly seriesId: string;
+  readonly providerEpisodeId: string;
+  readonly episodeNumber: number;
+  readonly name: string;
+  readonly containerExtension?: string;
+  readonly durationSecs?: number;
+  readonly plot?: string;
+}
