@@ -1014,3 +1014,48 @@
   color: var(--foreground);
   line-height: var(--lh-tight);
 }
+
+.pw-detail-pane {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 90vw);
+  background: var(--surface-raised);
+  border-left: 1px solid var(--border);
+  padding: 24px;
+  overflow-y: auto;
+  z-index: var(--z-popover);
+}
+
+.pw-detail-close {
+  background: none;
+  border: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.pw-detail-poster {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: var(--r-2);
+  margin: 12px 0;
+}
+
+.pw-detail-plot {
+  color: var(--muted-foreground);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  margin: 12px 0;
+}
+
+.pw-detail-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}

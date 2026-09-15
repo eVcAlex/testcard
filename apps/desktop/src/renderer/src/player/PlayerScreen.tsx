@@ -4,6 +4,7 @@ import type { ChannelRow } from "@testcard/core";
 import { Sidebar, type BrowseTab } from "./Sidebar.js";
 import { BrowseView } from "./BrowseView.js";
 import { GuideView } from "./GuideView.js";
+import { MoviesView } from "./MoviesView.js";
 import { SourcesView } from "./SourcesView.js";
 import { PlayerView } from "./PlayerView.js";
 import { usePlaybackEvents } from "./usePlaybackEvents.js";
@@ -57,6 +58,8 @@ export function PlayerScreen() {
     });
   }, []);
 
+  const onPlaybackStarted = useCallback(() => setInPlayer(true), []);
+
   // Step through the current browse list — driven by the overlay's prev/next buttons (which
   // have no list context) and by keyboard. Wraps around.
   const activeChannelId = state.status === "idle" ? null : state.channelId;
@@ -103,6 +106,8 @@ export function PlayerScreen() {
           onPlay={onPlay}
           onListChange={setPlaylist}
         />
+      ) : tab === "movies" ? (
+        <MoviesView onPlaybackStarted={onPlaybackStarted} />
       ) : (
         <BrowseView
           tab={tab}

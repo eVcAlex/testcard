@@ -24,3 +24,14 @@ export function formatRelative(ms: number, nowMs: number = Date.now()): string {
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
 }
+
+/** "1:23:45" or "23:45" from a duration in seconds — for a resume/duration readout. */
+export function formatDuration(totalSecs: number): string {
+  const secs = Math.max(0, Math.round(totalSecs));
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+  const ss = String(s).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
