@@ -2,21 +2,43 @@ import { ipcMain, type BrowserWindow } from "electron";
 import type Database from "better-sqlite3";
 import {
   browseChannels,
+  browseMovies,
+  browseSeries,
   createM3UAdapter,
   createXtreamAdapter,
+  ensureMovieDetails,
+  ensureSeriesEpisodes,
   extractXtreamCredentials,
+  getMovieById,
+  getMoviePlaybackTarget,
+  getPlaybackProgress,
+  getSeriesDetail,
+  getSeriesSource,
   importEpg,
+  importSeries,
   importSource,
+  importVod,
   listCategories,
   listChannelCountries,
   listFavouriteChannels,
+  listFavouriteMovies,
+  listFavouriteSeries,
+  listMovieCategories,
   listRecentChannels,
+  listRecentMovies,
+  listRecentSeries,
+  listSeriesCategories,
   nowNextForChannels,
   probeXtream,
   programmesInWindow,
   searchChannels,
+  searchMovies,
+  searchSeries,
+  setPlaybackProgress,
   listCountries,
   toggleFavourite,
+  toggleMovieFavourite,
+  toggleSeriesFavourite,
   type Channel,
   type ProgrammeRow,
   type Source,
@@ -183,7 +205,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
   activeController?.dispose();
   activeSchedulerStop?.();
-  const playback = new PlaybackController(db, mainWindow, { xtream: xtreamAdapter, m3u: m3uAdapter });
+  const playback = new PlaybackController(db, mainWindow, { xtream: xtreamAdapter, m3u: m3uAdapter }, getCredentials);
   activeController = playback;
   mainWindow.on("closed", () => {
     if (activeController === playback) activeController = null;
@@ -213,6 +235,11 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       const adapter = row.kind === "xtream" ? xtreamAdapter : m3uAdapter;
       const result = await importSource(db, row, adapter);
 
+      // Movies/series are Xtream-only (design spec "Scope") — imported right after channels,
+      // same cost profile as live import.
+      const vod = row.kind === "xtream" ? await importVod(db, row, getCredentials) : undefined;
+      const series = row.kind === "xtream" ? await importSeries(db, row, getCredentials) : undefined;
+
       // EPG is best-effort: a bad or missing guide URL must not fail the playlist refresh.
       const programmes = await refreshEpg(db, row, adapter, row.epgUrl ?? null, emitTask).catch((error: unknown) => {
         emitTask({
@@ -224,10 +251,21 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         return undefined;
       });
 
-      return programmes !== undefined ? { ...result, programmes } : result;
+      return {
+        ...result,
+        ...(programmes !== undefined ? { programmes } : {}),
+        ...(vod !== undefined ? { movies: vod.movies } : {}),
+        ...(series !== undefined ? { series: series.series } : {}),
+      };
     } finally {
       refreshingSourceIds.delete(sourceId);
     }
+  }
+
+  function getMoviePlaybackTargetOrThrow(movieId: string) {
+    const target = getMoviePlaybackTarget(db, movieId);
+    if (!target) throw new Error(`Unknown movie: ${movieId}`);
+    return target;
   }
 
   const api: Omit<TestcardApi, "events"> = {
@@ -414,24 +452,38 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
 
       async remove(sourceId) {
-        // Collect logo URLs before the cascade deletes the channels that reference them — the
-        // logo cache is keyed by sha1(url), not source id, so this is the only point where we
-        // know which cache files belonged to this source (see logoCache.ts).
+        // Collect logo/poster URLs before the cascade deletes the rows that reference them —
+        // the cache is keyed by sha1(url), not source id (see logoCache.ts).
         const logoRows = db
           .prepare(`SELECT DISTINCT logo_url FROM channels WHERE source_id = ? AND logo_url IS NOT NULL`)
           .all(sourceId) as { logo_url: string }[];
+        const moviePosterRows = db
+          .prepare(`SELECT DISTINCT poster_url FROM movies WHERE source_id = ? AND poster_url IS NOT NULL`)
+          .all(sourceId) as { poster_url: string }[];
+        const seriesPosterRows = db
+          .prepare(`SELECT DISTINCT poster_url FROM series WHERE source_id = ? AND poster_url IS NOT NULL`)
+          .all(sourceId) as { poster_url: string }[];
 
-        // FK cascade takes categories/channels/variants/programmes with it.
+        // FK cascade takes categories/channels/variants/programmes/movie_categories/movies/
+        // series_categories/series/seasons/episodes with it.
         db.prepare(`DELETE FROM sources WHERE id = ?`).run(sourceId);
 
-        // favourites/recents have no FK by design (CONTEXT.md: a channel missing from one
-        // refresh shouldn't silently drop a favourite) — a source delete is permanent, so this
-        // is the one place stale rows are actually pruned rather than just left to go dark.
+        // favourites/recents have no FK by design (a title missing from one refresh shouldn't
+        // silently drop a favourite) — a source delete is permanent, so this is the one place
+        // stale rows are actually pruned rather than just left to go dark.
         db.prepare(`DELETE FROM favourites WHERE channel_id NOT IN (SELECT id FROM channels)`).run();
         db.prepare(`DELETE FROM recents WHERE channel_id NOT IN (SELECT id FROM channels)`).run();
+        db.prepare(`DELETE FROM movie_favourites WHERE movie_id NOT IN (SELECT id FROM movies)`).run();
+        db.prepare(`DELETE FROM movie_recents WHERE movie_id NOT IN (SELECT id FROM movies)`).run();
+        db.prepare(`DELETE FROM series_favourites WHERE series_id NOT IN (SELECT id FROM series)`).run();
+        db.prepare(`DELETE FROM series_recents WHERE series_id NOT IN (SELECT id FROM series)`).run();
 
         await deleteCredentials(sourceId);
-        await purgeCachedLogos(logoRows.map((row) => row.logo_url)).catch(() => undefined);
+        await purgeCachedLogos([
+          ...logoRows.map((row) => row.logo_url),
+          ...moviePosterRows.map((row) => row.poster_url),
+          ...seriesPosterRows.map((row) => row.poster_url),
+        ]).catch(() => undefined);
       },
     },
 
@@ -514,9 +566,81 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
     },
 
+    movies: {
+      async categoryList() {
+        return listMovieCategories(db);
+      },
+      async browse(opts) {
+        return browseMovies(db, opts ?? {});
+      },
+      async search(query) {
+        return searchMovies(db, query);
+      },
+      async favourites() {
+        return listFavouriteMovies(db);
+      },
+      async recent() {
+        return listRecentMovies(db);
+      },
+      async toggleFavourite(movieId) {
+        return toggleMovieFavourite(db, movieId);
+      },
+      async details(movieId) {
+        const target = getMoviePlaybackTargetOrThrow(movieId);
+        if (target.source.kind === "xtream") await ensureMovieDetails(db, target.source, movieId, getCredentials);
+        const row = getMovieById(db, movieId);
+        if (!row) throw new Error(`Unknown movie: ${movieId}`);
+        return row;
+      },
+    },
+
+    series: {
+      async categoryList() {
+        return listSeriesCategories(db);
+      },
+      async browse(opts) {
+        return browseSeries(db, opts ?? {});
+      },
+      async search(query) {
+        return searchSeries(db, query);
+      },
+      async favourites() {
+        return listFavouriteSeries(db);
+      },
+      async recent() {
+        return listRecentSeries(db);
+      },
+      async toggleFavourite(seriesId) {
+        return toggleSeriesFavourite(db, seriesId);
+      },
+      async episodes(seriesId) {
+        const source = getSeriesSource(db, seriesId);
+        if (!source) throw new Error(`Unknown series: ${seriesId}`);
+        if (source.kind === "xtream") await ensureSeriesEpisodes(db, source, seriesId, getCredentials);
+        const detail = getSeriesDetail(db, seriesId);
+        if (!detail) throw new Error(`Unknown series: ${seriesId}`);
+        return detail;
+      },
+    },
+
+    progress: {
+      async get(itemType, itemId) {
+        return getPlaybackProgress(db, itemType, itemId);
+      },
+      async set(itemType, itemId, positionSecs, durationSecs) {
+        setPlaybackProgress(db, itemType, itemId, positionSecs, durationSecs ?? null);
+      },
+    },
+
     playback: {
       async play(channelId, variantId) {
         await playback.play(channelId, variantId);
+      },
+      async playMovie(movieId, opts) {
+        await playback.playMovie(movieId, opts ?? {});
+      },
+      async playEpisode(episodeId, opts) {
+        await playback.playEpisode(episodeId, opts ?? {});
       },
       async stop() {
         await playback.stop();

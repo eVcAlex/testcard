@@ -8,7 +8,20 @@
  * playable URL and hands it straight to the mpv process (or to VLC), never through the
  * renderer.
  */
-import type { CategoryRow, Channel, ChannelCountry, ChannelRow, CountryNode, Source } from "@testcard/core";
+import type {
+  CategoryRow,
+  Channel,
+  ChannelCountry,
+  ChannelRow,
+  CountryNode,
+  MovieCategoryRow,
+  MovieRow,
+  PlaybackProgressRow,
+  SeriesCategoryRow,
+  SeriesDetail,
+  SeriesRow,
+  Source,
+} from "@testcard/core";
 
 /**
  * How the user entered the source — not the same thing as the resulting `Source["kind"]`. A
@@ -82,6 +95,10 @@ export interface RefreshResult {
   readonly durationMs: number;
   /** Programme rows imported from EPG, when a guide URL was available. */
   readonly programmes?: number;
+  /** Movies imported, when the source is Xtream (design spec "Import strategy"). */
+  readonly movies?: number;
+  /** Series imported, when the source is Xtream. */
+  readonly series?: number;
 }
 
 /** A programme as it crosses IPC — unix ms, never a `Date` (which doesn't survive every path). */
@@ -202,9 +219,39 @@ export interface TestcardApi {
     /** Every programme overlapping `[fromMs, toMs]` for the given channels — the guide grid. */
     window(channelIds: readonly string[], fromMs: number, toMs: number): Promise<readonly ProgrammeLite[]>;
   };
+  movies: {
+    /** Every movie category that still has movies, for MoviesView's category tree. */
+    categoryList(): Promise<readonly MovieCategoryRow[]>;
+    /** The default poster grid: all movies, optionally one category, paginated. */
+    browse(opts?: { categoryId?: string; limit?: number; offset?: number }): Promise<readonly MovieRow[]>;
+    search(query: string): Promise<readonly MovieRow[]>;
+    favourites(): Promise<readonly MovieRow[]>;
+    recent(): Promise<readonly MovieRow[]>;
+    toggleFavourite(movieId: string): Promise<boolean>;
+    /** Triggers the lazy plot/duration (get_vod_info) fetch if not already cached, then returns the row. */
+    details(movieId: string): Promise<MovieRow>;
+  };
+  series: {
+    categoryList(): Promise<readonly SeriesCategoryRow[]>;
+    browse(opts?: { categoryId?: string; limit?: number; offset?: number }): Promise<readonly SeriesRow[]>;
+    search(query: string): Promise<readonly SeriesRow[]>;
+    favourites(): Promise<readonly SeriesRow[]>;
+    recent(): Promise<readonly SeriesRow[]>;
+    toggleFavourite(seriesId: string): Promise<boolean>;
+    /** Lazy-fetches (or returns cached) seasons/episodes for a series. */
+    episodes(seriesId: string): Promise<SeriesDetail>;
+  };
+  progress: {
+    get(itemType: "movie" | "episode", itemId: string): Promise<PlaybackProgressRow | undefined>;
+    set(itemType: "movie" | "episode", itemId: string, positionSecs: number, durationSecs?: number): Promise<void>;
+  };
   playback: {
     /** Starts playback of a channel's best (or explicitly chosen) variant inside the mpv window. */
     play(channelId: string, variantId?: string): Promise<void>;
+    /** Starts a movie, resolving container_extension (lazily, if missing) then building its URL. */
+    playMovie(movieId: string, opts?: { resume?: boolean }): Promise<void>;
+    /** Starts an episode. */
+    playEpisode(episodeId: string, opts?: { resume?: boolean }): Promise<void>;
     stop(): Promise<void>;
     /** Current playback state, for a surface that mounts mid-stream (the overlay, an HMR reload). */
     snapshot(): Promise<PlaybackSnapshot>;
