@@ -236,9 +236,36 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       const result = await importSource(db, row, adapter);
 
       // Movies/series are Xtream-only (design spec "Scope") — imported right after channels,
-      // same cost profile as live import.
-      const vod = row.kind === "xtream" ? await importVod(db, row, getCredentials) : undefined;
-      const series = row.kind === "xtream" ? await importSeries(db, row, getCredentials) : undefined;
+      // same cost profile as live import. Best-effort, same as EPG below: a provider without a
+      // VOD/series catalog (or a transient API hiccup) must not fail the whole refresh when
+      // channel import already succeeded.
+      let vod: { categories: number; movies: number; durationMs: number } | undefined;
+      let series: { categories: number; series: number; durationMs: number } | undefined;
+      if (row.kind === "xtream") {
+        emitTask({ type: "vod", sourceId, phase: "fetching" });
+        vod = await importVod(db, row, getCredentials).catch((error: unknown) => {
+          emitTask({
+            type: "vod",
+            sourceId,
+            phase: "error",
+            message: error instanceof Error ? error.message : "The movie catalog could not be updated.",
+          });
+          return undefined;
+        });
+        if (vod !== undefined) emitTask({ type: "vod", sourceId, phase: "done", movies: vod.movies });
+
+        emitTask({ type: "series", sourceId, phase: "fetching" });
+        series = await importSeries(db, row, getCredentials).catch((error: unknown) => {
+          emitTask({
+            type: "series",
+            sourceId,
+            phase: "error",
+            message: error instanceof Error ? error.message : "The series catalog could not be updated.",
+          });
+          return undefined;
+        });
+        if (series !== undefined) emitTask({ type: "series", sourceId, phase: "done", series: series.series });
+      }
 
       // EPG is best-effort: a bad or missing guide URL must not fail the playlist refresh.
       const programmes = await refreshEpg(db, row, adapter, row.epgUrl ?? null, emitTask).catch((error: unknown) => {
@@ -477,6 +504,12 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         db.prepare(`DELETE FROM movie_recents WHERE movie_id NOT IN (SELECT id FROM movies)`).run();
         db.prepare(`DELETE FROM series_favourites WHERE series_id NOT IN (SELECT id FROM series)`).run();
         db.prepare(`DELETE FROM series_recents WHERE series_id NOT IN (SELECT id FROM series)`).run();
+        // Polymorphic (item_type + item_id, no FK) — the cascade above can't reach it.
+        db.prepare(
+          `DELETE FROM playback_progress
+           WHERE (item_type = 'movie'   AND item_id NOT IN (SELECT id FROM movies))
+              OR (item_type = 'episode' AND item_id NOT IN (SELECT id FROM episodes))`,
+        ).run();
 
         await deleteCredentials(sourceId);
         await purgeCachedLogos([
