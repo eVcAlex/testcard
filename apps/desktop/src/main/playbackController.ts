@@ -378,6 +378,11 @@ export class PlaybackController {
         if (this.pendingResumeSecs !== null) {
           const resumeSecs = this.pendingResumeSecs;
           this.pendingResumeSecs = null;
+          // Seed the known position with the resume target now, not 0 — the seek is
+          // fire-and-forget and the first real "time-pos" update can be seconds away. Without
+          // this, a pause (or any other progress write) landing in that gap would persist 0,
+          // clobbering the very position we just resumed from.
+          this.lastKnownPositionSecs = resumeSecs;
           void this.mpv?.seek(resumeSecs);
         }
         break;
