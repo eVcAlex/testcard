@@ -4,6 +4,8 @@ import type { ChannelRow } from "@testcard/core";
 import { Icon } from "../components/Icon.js";
 import { ChannelGrid } from "./ChannelGrid.js";
 import { logoSrc } from "../lib/logo.js";
+import { MoviesView } from "./MoviesView.js";
+import { SeriesView } from "./SeriesView.js";
 import type { BrowseTab } from "./Sidebar.js";
 
 // "guide", "sources", "movies", and "series" never actually reach this component —
@@ -25,6 +27,7 @@ export function BrowseView({
   activeChannelId,
   onPlay,
   onListChange,
+  onPlaybackStarted,
 }: {
   tab: BrowseTab;
   categoryId: string | null;
@@ -32,11 +35,14 @@ export function BrowseView({
   onPlay: (channel: ChannelRow) => void;
   /** The ordered list currently shown — PlayerScreen uses it for prev/next channel stepping. */
   onListChange: (rows: readonly ChannelRow[]) => void;
+  onPlaybackStarted: () => void;
 }) {
   const queryClient = useQueryClient();
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
   const [country, setCountry] = useState<string | null>(null);
+  const [contentType, setContentType] = useState<"live" | "movies" | "series">("live");
+  const showSwitcher = tab === "favourites" || tab === "recent";
 
   useEffect(() => {
     const id = setTimeout(() => setDebounced(term.trim()), 160);
@@ -50,6 +56,7 @@ export function BrowseView({
     queryKey: ["categories"],
     queryFn: () => window.testcard.channels.categoryList(),
     staleTime: 60_000,
+    enabled: !showSwitcher || contentType === "live",
   });
   const categoryName = useMemo(
     () => categories.data?.find((c) => c.id === categoryId)?.name ?? "Category",
@@ -60,6 +67,7 @@ export function BrowseView({
     queryKey: ["channels", "countries"],
     queryFn: () => window.testcard.channels.countryList(),
     staleTime: 60_000,
+    enabled: !showSwitcher || contentType === "live",
   });
 
   const list = useQuery({
@@ -71,13 +79,14 @@ export function BrowseView({
       if (inCategory) return window.testcard.channels.browse({ categoryId });
       return window.testcard.channels.browse(country !== null ? { country } : {});
     },
+    enabled: !showSwitcher || contentType === "live",
     placeholderData: (prev) => prev,
   });
 
   const recent = useQuery({
     queryKey: ["channels", "recent"],
     queryFn: () => window.testcard.channels.recent(),
-    enabled: tab === "live" && !searching && !inCategory,
+    enabled: tab === "live" && !searching && !inCategory && (!showSwitcher || contentType === "live"),
   });
 
   const favourite = useMutation({
@@ -92,7 +101,7 @@ export function BrowseView({
   const epg = useQuery({
     queryKey: ["epg", "now-next", channelIds],
     queryFn: () => window.testcard.epg.nowNext(channelIds),
-    enabled: channelIds.length > 0,
+    enabled: channelIds.length > 0 && (!showSwitcher || contentType === "live"),
     refetchInterval: 60_000,
     placeholderData: (prev) => prev,
   });
@@ -122,10 +131,40 @@ export function BrowseView({
             ? "Nothing played yet."
             : "No channels. Add a source and refresh it.";
 
+  const switcher = showSwitcher ? (
+    <div className="pw-segmented" role="tablist" aria-label="Content type">
+      {(["live", "movies", "series"] as const).map((ct) => (
+        <button
+          key={ct}
+          type="button"
+          role="tab"
+          className="pw-segmented-item"
+          data-active={contentType === ct}
+          aria-selected={contentType === ct}
+          onClick={() => setContentType(ct)}
+        >
+          {ct === "live" ? "Live" : ct === "movies" ? "Movies" : "Series"}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
+  // Test `tab` directly (not the derived `showSwitcher` boolean) in each branch condition —
+  // TS narrows `tab: BrowseTab` down to "favourites" | "recent" here, matching MoviesView/
+  // SeriesView's `scope` prop type; narrowing does not propagate through an intermediate
+  // boolean like `showSwitcher`.
+  if ((tab === "favourites" || tab === "recent") && contentType === "movies") {
+    return <MoviesView scope={tab} onPlaybackStarted={onPlaybackStarted} headerExtra={switcher} />;
+  }
+  if ((tab === "favourites" || tab === "recent") && contentType === "series") {
+    return <SeriesView scope={tab} onPlaybackStarted={onPlaybackStarted} headerExtra={switcher} />;
+  }
+
   return (
     <main className="pw-main">
       <div className="pw-head">
         <h2>{heading}</h2>
+        {switcher}
         <div className="pw-search">
           <Icon name="search" size={15} />
           <input

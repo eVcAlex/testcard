@@ -1112,3 +1112,26 @@
 .pw-episode-btn:hover {
   background: var(--card-hover);
 }
+
+.pw-segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 2px;
+  gap: 2px;
+}
+
+.pw-segmented-item {
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: var(--t-small);
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+.pw-segmented-item[data-active="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}

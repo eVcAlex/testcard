@@ -118,6 +118,7 @@ export function PlayerScreen() {
           activeChannelId={activeChannelId}
           onPlay={onPlay}
           onListChange={setPlaylist}
+          onPlaybackStarted={onPlaybackStarted}
         />
       )}
       {inPlayer && (
