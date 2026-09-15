@@ -5,6 +5,7 @@ import { Sidebar, type BrowseTab } from "./Sidebar.js";
 import { BrowseView } from "./BrowseView.js";
 import { GuideView } from "./GuideView.js";
 import { MoviesView } from "./MoviesView.js";
+import { SeriesView } from "./SeriesView.js";
 import { SourcesView } from "./SourcesView.js";
 import { PlayerView } from "./PlayerView.js";
 import { usePlaybackEvents } from "./usePlaybackEvents.js";
@@ -108,6 +109,8 @@ export function PlayerScreen() {
         />
       ) : tab === "movies" ? (
         <MoviesView onPlaybackStarted={onPlaybackStarted} />
+      ) : tab === "series" ? (
+        <SeriesView onPlaybackStarted={onPlaybackStarted} />
       ) : (
         <BrowseView
           tab={tab}

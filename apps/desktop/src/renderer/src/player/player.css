@@ -1059,3 +1059,56 @@
   margin-top: 16px;
   flex-wrap: wrap;
 }
+
+.pw-episode-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pw-episode-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-radius: var(--r-1);
+}
+
+.pw-episode-row:hover {
+  background: var(--card-hover);
+}
+
+.pw-episode-num {
+  width: 24px;
+  color: var(--muted-foreground);
+  font-size: var(--t-small);
+  text-align: right;
+}
+
+.pw-episode-name {
+  flex: 1;
+  font-size: var(--t-body);
+  color: var(--foreground);
+}
+
+.pw-episode-duration {
+  color: var(--muted-foreground);
+  font-size: var(--t-small);
+}
+
+.pw-episode-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r-1);
+  color: var(--foreground);
+  padding: 4px 10px;
+  font-size: var(--t-small);
+  cursor: pointer;
+}
+
+.pw-episode-btn:hover {
+  background: var(--card-hover);
+}
