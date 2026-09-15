@@ -1,0 +1,153 @@
+import type Database from "better-sqlite3";
+import type { Source } from "../source/types.js";
+
+export interface MovieRow {
+  readonly id: string;
+  readonly source_id: string;
+  readonly category_id: string;
+  readonly name: string;
+  readonly poster_url: string | null;
+  readonly rating: string | null;
+  readonly plot: string | null;
+  readonly duration_secs: number | null;
+  readonly details_fetched_at: number | null;
+  readonly is_favourite: 0 | 1;
+  readonly position_secs: number | null;
+  readonly watched: 0 | 1;
+}
+
+const MOVIE_COLUMNS = `m.id, m.source_id, m.category_id, m.name, m.poster_url, m.rating, m.plot,
+  m.duration_secs, m.details_fetched_at,
+  (SELECT 1 FROM movie_favourites f WHERE f.movie_id = m.id) IS NOT NULL AS is_favourite,
+  (SELECT position_secs FROM playback_progress pp WHERE pp.item_type = 'movie' AND pp.item_id = m.id) AS position_secs,
+  COALESCE((SELECT watched FROM playback_progress pp WHERE pp.item_type = 'movie' AND pp.item_id = m.id), 0) AS watched`;
+
+/** FTS5 search over movie titles. Same prefix-query shape as `searchChannels`. */
+export function searchMovies(db: Database.Database, query: string, limit = 200): MovieRow[] {
+  const trimmed = query.trim();
+  if (trimmed.length === 0) return [];
+  const ftsQuery = trimmed.split(/\s+/).map((token) => `${token.replace(/["*]/g, "")}*`).join(" ");
+  return db
+    .prepare(
+      `SELECT ${MOVIE_COLUMNS}
+       FROM movies_fts
+       JOIN movies m ON m.rowid = movies_fts.rowid
+       WHERE movies_fts MATCH ?
+       ORDER BY rank
+       LIMIT ?`,
+    )
+    .all(ftsQuery, limit) as MovieRow[];
+}
+
+/** The default poster grid: every movie, optionally narrowed to one category. Provider order. */
+export function browseMovies(db: Database.Database, opts: { categoryId?: string; limit?: number; offset?: number } = {}): MovieRow[] {
+  const limit = opts.limit ?? 300;
+  const offset = opts.offset ?? 0;
+  const where = opts.categoryId !== undefined ? "WHERE m.category_id = ?" : "";
+  const filters = opts.categoryId !== undefined ? [opts.categoryId] : [];
+  return db
+    .prepare(`SELECT ${MOVIE_COLUMNS} FROM movies m ${where} ORDER BY m.rowid LIMIT ? OFFSET ?`)
+    .all(...filters, limit, offset) as MovieRow[];
+}
+
+export interface MovieCategoryRow {
+  readonly id: string;
+  readonly name: string;
+  readonly country: string | null;
+  readonly movie_count: number;
+}
+
+/** Every movie category that still has movies, for `MoviesView`'s category tree. */
+export function listMovieCategories(db: Database.Database): MovieCategoryRow[] {
+  return db
+    .prepare(
+      `SELECT cat.id, cat.raw_name AS name, cat.country, COUNT(m.id) AS movie_count
+       FROM movie_categories cat
+       JOIN movies m ON m.category_id = cat.id
+       GROUP BY cat.id
+       ORDER BY cat.rowid`,
+    )
+    .all() as MovieCategoryRow[];
+}
+
+export function listFavouriteMovies(db: Database.Database): MovieRow[] {
+  return db
+    .prepare(`SELECT ${MOVIE_COLUMNS} FROM movie_favourites f JOIN movies m ON m.id = f.movie_id ORDER BY f.added_at DESC`)
+    .all() as MovieRow[];
+}
+
+export function listRecentMovies(db: Database.Database, limit = 24): MovieRow[] {
+  return db
+    .prepare(`SELECT ${MOVIE_COLUMNS} FROM movie_recents r JOIN movies m ON m.id = r.movie_id ORDER BY r.played_at DESC LIMIT ?`)
+    .all(limit) as MovieRow[];
+}
+
+export function toggleMovieFavourite(db: Database.Database, movieId: string): boolean {
+  const existing = db.prepare(`SELECT 1 FROM movie_favourites WHERE movie_id = ?`).get(movieId);
+  if (existing) {
+    db.prepare(`DELETE FROM movie_favourites WHERE movie_id = ?`).run(movieId);
+    return false;
+  }
+  db.prepare(`INSERT INTO movie_favourites (movie_id, added_at) VALUES (?, ?)`).run(movieId, Date.now());
+  return true;
+}
+
+export function recordMovieRecent(db: Database.Database, movieId: string): void {
+  db.prepare(
+    `INSERT INTO movie_recents (movie_id, played_at) VALUES (?, ?)
+     ON CONFLICT(movie_id) DO UPDATE SET played_at = excluded.played_at`,
+  ).run(movieId, Date.now());
+}
+
+/** A single movie row by id, for the detail pane after `ensureMovieDetails` has run. */
+export function getMovieById(db: Database.Database, movieId: string): MovieRow | undefined {
+  return db.prepare(`SELECT ${MOVIE_COLUMNS} FROM movies m WHERE m.id = ?`).get(movieId) as MovieRow | undefined;
+}
+
+/** Everything the main process needs to build a movie's playable stream URL. */
+export interface MoviePlaybackTarget {
+  readonly movieId: string;
+  readonly movieName: string;
+  readonly providerStreamId: string;
+  readonly containerExtension: string | null;
+  readonly source: Source;
+}
+
+export function getMoviePlaybackTarget(db: Database.Database, movieId: string): MoviePlaybackTarget | undefined {
+  const row = db
+    .prepare(
+      `SELECT m.id AS movieId, m.name AS movieName, m.provider_stream_id AS providerStreamId, m.container_extension AS containerExtension,
+              s.id AS sourceId, s.kind AS kind, s.name AS sourceName, s.base_url AS baseUrl
+       FROM movies m
+       JOIN sources s ON s.id = m.source_id
+       WHERE m.id = ?`,
+    )
+    .get(movieId) as
+    | {
+        movieId: string;
+        movieName: string;
+        providerStreamId: string;
+        containerExtension: string | null;
+        sourceId: string;
+        kind: "xtream" | "m3u";
+        sourceName: string;
+        baseUrl: string | null;
+      }
+    | undefined;
+  if (!row) return undefined;
+
+  // Movies are Xtream-only (design spec "Scope"), but the source row shape is generic — build
+  // whichever kind it actually is so a stale row fails loudly downstream rather than here.
+  const source: Source =
+    row.kind === "xtream"
+      ? { id: row.sourceId, kind: "xtream", name: row.sourceName, baseUrl: row.baseUrl ?? "" }
+      : { id: row.sourceId, kind: "m3u", name: row.sourceName, playlistUrl: "" };
+
+  return {
+    movieId: row.movieId,
+    movieName: row.movieName,
+    providerStreamId: row.providerStreamId,
+    containerExtension: row.containerExtension,
+    source,
+  };
+}
