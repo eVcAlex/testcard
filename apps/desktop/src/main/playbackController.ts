@@ -1,7 +1,22 @@
 import type { BrowserWindow } from "electron";
 import type Database from "better-sqlite3";
 import { Conf } from "electron-conf/main";
-import { getPlaybackTarget, recordRecent, type PlaybackTarget, type SourceAdapter } from "@testcard/core";
+import {
+  buildEpisodeStreamUrl,
+  buildMovieStreamUrl,
+  ensureMovieDetails,
+  getEpisodePlaybackTarget,
+  getMoviePlaybackTarget,
+  getPlaybackProgress,
+  getPlaybackTarget,
+  recordMovieRecent,
+  recordRecent,
+  recordSeriesRecent,
+  setPlaybackProgress,
+  type CredentialsLookup,
+  type PlaybackTarget,
+  type SourceAdapter,
+} from "@testcard/core";
 import {
   IPC_EVENT_CHANNEL,
   type AspectMode,
@@ -21,6 +36,18 @@ interface Adapters {
   readonly m3u: SourceAdapter;
 }
 
+type CurrentPlayback =
+  | { readonly kind: "channel"; readonly target: PlaybackTarget; readonly streamUrl: string }
+  | { readonly kind: "movie"; readonly movieId: string; readonly movieName: string; readonly streamUrl: string; readonly durationSecs: number | null }
+  | {
+      readonly kind: "episode";
+      readonly episodeId: string;
+      readonly episodeName: string;
+      readonly seriesId: string;
+      readonly streamUrl: string;
+      readonly durationSecs: number | null;
+    };
+
 /**
  * Bridges the renderer's `playback.*` IPC calls to the embedded mpv process. Owns the mpv
  * child, the frameless child window it renders into, and the playback state (channel, tracks,
@@ -35,7 +62,11 @@ export class PlaybackController {
   private region: VideoRegionWindow | null = null;
   private overlay: OverlayWindow | null = null;
   private lastRegionRect: VideoRegionRect | null = null;
-  private current: { target: PlaybackTarget; streamUrl: string } | null = null;
+  private current: CurrentPlayback | null = null;
+  private lastKnownPositionSecs = 0;
+  private lastProgressWriteMs = 0;
+  private pendingResumeSecs: number | null = null;
+  private static readonly PROGRESS_WRITE_INTERVAL_MS = 5000;
 
   private status: PlaybackSnapshot["status"] = "idle";
   private tracks: PlaybackTrack[] = [];
@@ -52,6 +83,7 @@ export class PlaybackController {
     private readonly db: Database.Database,
     private readonly mainWindow: BrowserWindow,
     private readonly adapters: Adapters,
+    private readonly getCredentials: CredentialsLookup,
   ) {
     this.volume = clampVolume(this.conf.get("volume", 100));
     this.aspect = this.conf.get("aspect", "fit");
@@ -91,8 +123,11 @@ export class PlaybackController {
 
     const adapter = target.source.kind === "xtream" ? this.adapters.xtream : this.adapters.m3u;
     const streamUrl = await adapter.buildStreamUrl(target.source, target.variant);
-    this.current = { target, streamUrl };
+    this.current = { kind: "channel", target, streamUrl };
     this.tracks = [];
+    this.pendingResumeSecs = null;
+    this.lastKnownPositionSecs = 0;
+    this.lastProgressWriteMs = 0;
 
     // A fresh channel always starts unpaused; the renderer no longer has to track this.
     this.paused = false;
@@ -108,7 +143,87 @@ export class PlaybackController {
     await this.mpv!.play(streamUrl);
   }
 
+  async playMovie(movieId: string, opts: { resume?: boolean } = {}): Promise<void> {
+    let target = getMoviePlaybackTarget(this.db, movieId);
+    if (!target) throw new Error("That movie could not be found.");
+    if (target.source.kind !== "xtream") throw new Error("Movies are only available on Xtream sources.");
+
+    if (target.containerExtension === null || target.containerExtension === "") {
+      await ensureMovieDetails(this.db, target.source, movieId, this.getCredentials);
+      target = getMoviePlaybackTarget(this.db, movieId) ?? target;
+    }
+
+    const streamUrl = await buildMovieStreamUrl(
+      target.source,
+      { providerStreamId: target.providerStreamId, ...(target.containerExtension !== null ? { containerExtension: target.containerExtension } : {}) },
+      this.getCredentials,
+    );
+
+    const progress = opts.resume === true ? getPlaybackProgress(this.db, "movie", movieId) : undefined;
+    this.pendingResumeSecs = progress ? progress.position_secs : null;
+
+    this.current = { kind: "movie", movieId, movieName: target.movieName, streamUrl, durationSecs: progress?.duration_secs ?? null };
+    this.tracks = [];
+    this.lastKnownPositionSecs = 0;
+    this.lastProgressWriteMs = 0;
+    this.paused = false;
+    this.emit({ type: "paused", paused: false });
+
+    await this.ensureStarted();
+    this.status = "loading";
+    this.syncOverlay();
+    this.emit({ type: "loading", channelId: movieId, channelName: target.movieName });
+    await this.mpv!.setVolume(this.volume);
+    await this.mpv!.setPaused(false);
+    await this.mpv!.setAspect(this.aspect);
+    await this.mpv!.play(streamUrl);
+  }
+
+  async playEpisode(episodeId: string, opts: { resume?: boolean } = {}): Promise<void> {
+    const target = getEpisodePlaybackTarget(this.db, episodeId);
+    if (!target) throw new Error("That episode could not be found.");
+    if (target.source.kind !== "xtream") throw new Error("Series are only available on Xtream sources.");
+
+    const streamUrl = await buildEpisodeStreamUrl(
+      target.source,
+      {
+        providerEpisodeId: target.providerEpisodeId,
+        ...(target.containerExtension !== null ? { containerExtension: target.containerExtension } : {}),
+      },
+      this.getCredentials,
+    );
+
+    const progress = opts.resume === true ? getPlaybackProgress(this.db, "episode", episodeId) : undefined;
+    this.pendingResumeSecs = progress ? progress.position_secs : null;
+
+    this.current = {
+      kind: "episode",
+      episodeId,
+      episodeName: target.episodeName,
+      seriesId: target.seriesId,
+      streamUrl,
+      durationSecs: progress?.duration_secs ?? null,
+    };
+    this.tracks = [];
+    this.lastKnownPositionSecs = 0;
+    this.lastProgressWriteMs = 0;
+    this.paused = false;
+    this.emit({ type: "paused", paused: false });
+
+    await this.ensureStarted();
+    this.status = "loading";
+    this.syncOverlay();
+    this.emit({ type: "loading", channelId: episodeId, channelName: target.episodeName });
+    await this.mpv!.setVolume(this.volume);
+    await this.mpv!.setPaused(false);
+    await this.mpv!.setAspect(this.aspect);
+    await this.mpv!.play(streamUrl);
+  }
+
   async stop(): Promise<void> {
+    if (this.current && this.current.kind !== "channel") {
+      this.persistProgress(this.current, this.lastKnownPositionSecs);
+    }
     this.current = null;
     this.tracks = [];
     this.status = "idle";
@@ -136,6 +251,9 @@ export class PlaybackController {
     this.paused = paused;
     await this.mpv?.setPaused(paused);
     this.emit({ type: "paused", paused });
+    if (paused && this.current && this.current.kind !== "channel") {
+      this.persistProgress(this.current, this.lastKnownPositionSecs);
+    }
   }
 
   async setAspect(aspect: AspectMode): Promise<void> {
@@ -161,8 +279,14 @@ export class PlaybackController {
   snapshot(): PlaybackSnapshot {
     return {
       status: this.status,
-      channelId: this.current?.target.channelId ?? null,
-      channelName: this.current?.target.channelName ?? null,
+      channelId: this.current ? this.currentId() : null,
+      channelName: this.current
+        ? this.current.kind === "channel"
+          ? this.current.target.channelName
+          : this.current.kind === "movie"
+            ? this.current.movieName
+            : this.current.episodeName
+        : null,
       tracks: this.tracks,
       paused: this.paused,
       volume: this.volume,
@@ -206,6 +330,26 @@ export class PlaybackController {
     this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
   }
 
+  private currentId(): string {
+    if (!this.current) return "";
+    if (this.current.kind === "channel") return this.current.target.channelId;
+    if (this.current.kind === "movie") return this.current.movieId;
+    return this.current.episodeId;
+  }
+
+  private maybePersistProgress(current: Extract<CurrentPlayback, { kind: "movie" | "episode" }>, positionSecs: number): void {
+    const now = Date.now();
+    if (now - this.lastProgressWriteMs < PlaybackController.PROGRESS_WRITE_INTERVAL_MS) return;
+    this.lastProgressWriteMs = now;
+    this.persistProgress(current, positionSecs);
+  }
+
+  private persistProgress(current: Extract<CurrentPlayback, { kind: "movie" | "episode" }>, positionSecs: number): void {
+    const itemType = current.kind === "movie" ? "movie" : "episode";
+    const itemId = current.kind === "movie" ? current.movieId : current.episodeId;
+    setPlaybackProgress(this.db, itemType, itemId, positionSecs, current.durationSecs);
+  }
+
   private async ensureStarted(): Promise<void> {
     if (!this.region) {
       this.region = new VideoRegionWindow(this.mainWindow);
@@ -219,44 +363,61 @@ export class PlaybackController {
   }
 
   private onMpvEvent(event: MpvEvent): void {
-    const channelId = this.current?.target.channelId;
+    const current = this.current;
 
     switch (event.type) {
-      case "playing":
-        if (!channelId) return;
+      case "playing": {
+        if (!current) return;
         this.status = "playing";
-        recordRecent(this.db, channelId);
+        if (current.kind === "channel") recordRecent(this.db, current.target.channelId);
+        else if (current.kind === "movie") recordMovieRecent(this.db, current.movieId);
+        else recordSeriesRecent(this.db, current.seriesId);
         this.region?.show();
         this.syncOverlay();
-        this.emit({ type: "playing", channelId });
+        this.emit({ type: "playing", channelId: this.currentId() });
+        if (this.pendingResumeSecs !== null) {
+          const resumeSecs = this.pendingResumeSecs;
+          this.pendingResumeSecs = null;
+          void this.mpv?.seek(resumeSecs);
+        }
         break;
+      }
       case "tracks":
-        if (!channelId) return;
+        if (!current) return;
         this.tracks = toPlaybackTracks(event.tracks);
-        this.emit({ type: "tracks", channelId, tracks: this.tracks });
+        this.emit({ type: "tracks", channelId: this.currentId(), tracks: this.tracks });
         break;
       case "timeout":
-        if (!channelId) return;
+        if (!current) return;
         this.status = "dead";
         this.syncOverlay();
         this.region?.hide();
-        this.emit({ type: "timeout", channelId });
+        this.emit({ type: "timeout", channelId: this.currentId() });
         break;
       case "error":
-        if (!channelId) return;
+        if (!current) return;
         this.status = "dead";
         this.syncOverlay();
         this.region?.hide();
-        this.emit({ type: "error", channelId, message: event.message });
+        this.emit({ type: "error", channelId: this.currentId(), message: event.message });
         break;
       case "exited":
         this.status = "dead";
         this.syncOverlay();
         this.region?.hide();
         this.mpv = null;
-        if (channelId) this.emit({ type: "error", channelId, message: "The player stopped unexpectedly." });
+        if (current) this.emit({ type: "error", channelId: this.currentId(), message: "The player stopped unexpectedly." });
         break;
       case "loading":
+        break;
+      case "time-pos":
+        if (!current || current.kind === "channel") return;
+        this.lastKnownPositionSecs = event.seconds;
+        this.maybePersistProgress(current, event.seconds);
+        break;
+      case "end-file":
+        if (!current || current.kind === "channel") return;
+        if (event.reason === "eof") this.persistProgress(current, this.lastKnownPositionSecs);
         break;
     }
   }

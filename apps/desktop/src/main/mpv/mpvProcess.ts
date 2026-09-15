@@ -22,7 +22,9 @@ export type MpvEvent =
   | { readonly type: "tracks"; readonly tracks: readonly MpvTrack[] }
   | { readonly type: "timeout" }
   | { readonly type: "error"; readonly message: string }
-  | { readonly type: "exited"; readonly code: number | null };
+  | { readonly type: "exited"; readonly code: number | null }
+  | { readonly type: "time-pos"; readonly seconds: number }
+  | { readonly type: "end-file"; readonly reason: string };
 
 interface RawMpvTrack {
   readonly id: number;
@@ -92,12 +94,25 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
     await this.ipc.observeProperty("core-idle");
     await this.ipc.observeProperty("video-params");
     await this.ipc.observeProperty("track-list");
+    await this.ipc.observeProperty("time-pos");
 
     // track-list is process-lifetime, not per-load: the list first populates a beat before
     // the first frame decodes (so before a load "settles"), and it also changes afterwards
     // when the user switches audio/subtitle track. A per-load listener would miss both.
     this.ipc.onPropertyChange("track-list", (value) => {
       this.emit("event", { type: "tracks", tracks: mapTracks(value) });
+    });
+
+    // Process-lifetime, not per-load (mirrors track-list above) — drives PlaybackController's
+    // playback_progress persistence for movies/episodes; live channels ignore this event.
+    this.ipc.onPropertyChange("time-pos", (value) => {
+      if (typeof value === "number") this.emit("event", { type: "time-pos", seconds: value });
+    });
+    // Also process-lifetime: play()'s own end-file listener below is per-load and only cares
+    // whether a stream failed to *start*. This one tells the controller a title actually
+    // finished (or was replaced), for progress persistence and watched-marking.
+    this.ipc.onEvent("end-file", (message) => {
+      this.emit("event", { type: "end-file", reason: String(message["reason"] ?? "unknown") });
     });
   }
 
@@ -179,6 +194,11 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
     if (!this.ipc) return;
     await this.ipc.setProperty("video-aspect-override", mode === "16:9" || mode === "4:3" ? mode : "-1");
     await this.ipc.setProperty("panscan", mode === "fill" ? 1 : 0);
+  }
+
+  /** Absolute seek, used to resume a movie/episode at its saved `playback_progress` position. */
+  async seek(seconds: number): Promise<void> {
+    await this.ipc?.command(["seek", seconds, "absolute"]);
   }
 
   /**
