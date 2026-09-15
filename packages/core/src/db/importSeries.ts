@@ -1,0 +1,81 @@
+import type Database from "better-sqlite3";
+import { parseName } from "../normalise/parseName.js";
+import type { CredentialsLookup } from "../source/xtream/client.js";
+import { fetchSeriesCategories, fetchSeriesList } from "../source/xtream/vod.js";
+import type { Category, Series, Source } from "../source/types.js";
+
+/**
+ * Imports (or re-imports) an Xtream source's full series catalog: `get_series_categories` +
+ * `get_series` per category. Same diff-and-merge shape as `importVod.ts`. Every touched row has
+ * `episodes_fetched_at` reset to NULL — a previously-fetched season/episode list is now presumed
+ * stale and re-fetched lazily next time the series is opened (see `importVodDetails.ts`).
+ */
+export async function importSeries(
+  db: Database.Database,
+  source: Source,
+  getCredentials: CredentialsLookup,
+): Promise<{ categories: number; series: number; durationMs: number }> {
+  const startedAt = Date.now();
+  const now = Date.now();
+
+  const categories = await fetchSeriesCategories(source, getCredentials);
+
+  const upsertCategory = db.prepare(`
+    INSERT INTO series_categories (id, source_id, provider_id, raw_name, country)
+    VALUES (@id, @sourceId, @providerId, @rawName, @country)
+    ON CONFLICT(id) DO UPDATE SET raw_name = excluded.raw_name, country = excluded.country
+  `);
+  function categoryParams(category: Category) {
+    return { ...category, country: parseName(category.rawName).country ?? null };
+  }
+
+  const upsertSeries = db.prepare(`
+    INSERT INTO series (
+      id, source_id, category_id, provider_series_id, name, poster_url,
+      rating, plot, first_seen_at, last_seen_at
+    ) VALUES (
+      @id, @sourceId, @categoryId, @providerSeriesId, @name, @posterUrl,
+      @rating, @plot, @firstSeenAt, @lastSeenAt
+    )
+    ON CONFLICT(id) DO UPDATE SET
+      category_id         = excluded.category_id,
+      provider_series_id  = excluded.provider_series_id,
+      name                = excluded.name,
+      poster_url          = excluded.poster_url,
+      rating              = excluded.rating,
+      plot                = excluded.plot,
+      episodes_fetched_at = NULL,
+      last_seen_at        = excluded.last_seen_at
+  `);
+
+  const pages: { category: Category; series: readonly Series[] }[] = [];
+  for (const category of categories) {
+    pages.push({ category, series: await fetchSeriesList(source, category, getCredentials) });
+  }
+
+  let seriesCount = 0;
+  const applyAll = db.transaction(() => {
+    for (const page of pages) {
+      upsertCategory.run(categoryParams(page.category));
+      for (const series of page.series) {
+        upsertSeries.run({
+          id: series.id,
+          sourceId: series.sourceId,
+          categoryId: series.categoryId,
+          providerSeriesId: series.providerSeriesId,
+          name: series.name,
+          posterUrl: series.posterUrl ?? null,
+          rating: series.rating ?? null,
+          plot: series.plot ?? null,
+          firstSeenAt: now,
+          lastSeenAt: now,
+        });
+        seriesCount += 1;
+      }
+    }
+  });
+
+  applyAll();
+
+  return { categories: categories.length, series: seriesCount, durationMs: Date.now() - startedAt };
+}
