@@ -30,7 +30,10 @@ export type IconName =
   | "fullscreen-exit"
   | "more"
   | "edit"
-  | "trash";
+  | "trash"
+  | "film"
+  | "layers"
+  | "check";
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -142,6 +145,23 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M6.5 7.5v4M9.5 7.5v4" />
     </>
   ),
+  film: (
+    <>
+      <rect x="2" y="2.5" width="12" height="11" rx="1.2" />
+      <path d="M2 5.5h12M2 10.5h12" />
+      <circle cx="4.5" cy="4" r="0.6" />
+      <circle cx="11.5" cy="4" r="0.6" />
+      <circle cx="4.5" cy="12" r="0.6" />
+      <circle cx="11.5" cy="12" r="0.6" />
+    </>
+  ),
+  layers: (
+    <>
+      <path d="M8 2.5 14 6 8 9.5 2 6z" />
+      <path d="M2 9.5 8 13l6-3.5" />
+    </>
+  ),
+  check: <path d="M3.5 8.5l3 3 6-7" />,
 };
 
 const FILLED: Partial<Record<IconName, true>> = {

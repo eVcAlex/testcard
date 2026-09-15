@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "guide" | "favourites" | "recent" | "sources";
+export type BrowseTab = "live" | "guide" | "movies" | "series" | "favourites" | "recent" | "sources";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "live", label: "Live TV", icon: "tv" },
   { id: "guide", label: "Guide", icon: "grid" },
+  { id: "movies", label: "Movies", icon: "film" },
+  { id: "series", label: "Series", icon: "layers" },
   { id: "favourites", label: "Favourites", icon: "star" },
   { id: "recent", label: "Recent", icon: "clock" },
   { id: "sources", label: "Sources", icon: "signal" },
