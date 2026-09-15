@@ -52,12 +52,6 @@ export function MoviesView({
     enabled: selectedMovieId !== null,
   });
 
-  const progress = useQuery({
-    queryKey: ["progress", "movie", selectedMovieId],
-    queryFn: () => window.testcard.progress.get("movie", selectedMovieId as string),
-    enabled: selectedMovieId !== null,
-  });
-
   const favourite = useMutation({
     mutationFn: (movieId: string) => window.testcard.movies.toggleFavourite(movieId),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["movies"] }),
@@ -73,7 +67,11 @@ export function MoviesView({
   );
 
   const rows = list.data ?? [];
-  const promptResume = progress.data !== undefined && shouldPromptResume(progress.data.position_secs, progress.data.duration_secs);
+  // Same source `SeriesView` reads for episodes: the movies.details catalog row already carries
+  // both fields, so there's no need for a separate progress query (and one resolving `undefined`
+  // for an unplayed movie would break TanStack Query v5, which retries `undefined` as an error).
+  const resumePositionSecs = detail.data?.position_secs ?? null;
+  const promptResume = resumePositionSecs !== null && shouldPromptResume(resumePositionSecs, detail.data?.duration_secs ?? null);
 
   const heading = scope === "favourites" ? "Favourite movies" : scope === "recent" ? "Recently watched movies" : "Movies";
   const emptyText = list.isError
@@ -150,7 +148,7 @@ export function MoviesView({
                 {promptResume ? (
                   <>
                     <button type="button" className="btn btn--primary" onClick={() => play(true)}>
-                      Resume from {formatDuration(progress.data!.position_secs)}
+                      Resume from {formatDuration(resumePositionSecs!)}
                     </button>
                     <button type="button" className="btn btn--ghost" onClick={() => play(false)}>
                       Start over

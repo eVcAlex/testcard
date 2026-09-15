@@ -159,10 +159,14 @@ export class PlaybackController {
       this.getCredentials,
     );
 
-    const progress = opts.resume === true ? getPlaybackProgress(this.db, "movie", movieId) : undefined;
-    this.pendingResumeSecs = progress ? progress.position_secs : null;
+    // Fetched unconditionally (cheap primary-key lookup) — not just for resume — because it's
+    // also the fallback source for durationSecs when the catalog doesn't have one yet.
+    const progress = getPlaybackProgress(this.db, "movie", movieId);
+    this.pendingResumeSecs = opts.resume === true && progress ? progress.position_secs : null;
 
-    this.current = { kind: "movie", movieId, movieName: target.movieName, streamUrl, durationSecs: progress?.duration_secs ?? null };
+    // Catalog value first: it's kept fresh by `importVod`/`ensureMovieDetails`, whereas the
+    // progress row's duration is just whatever was last observed during a previous session.
+    this.current = { kind: "movie", movieId, movieName: target.movieName, streamUrl, durationSecs: target.durationSecs ?? progress?.duration_secs ?? null };
     this.tracks = [];
     this.lastKnownPositionSecs = 0;
     this.lastProgressWriteMs = 0;
@@ -193,16 +197,20 @@ export class PlaybackController {
       this.getCredentials,
     );
 
-    const progress = opts.resume === true ? getPlaybackProgress(this.db, "episode", episodeId) : undefined;
-    this.pendingResumeSecs = progress ? progress.position_secs : null;
+    // Fetched unconditionally (cheap primary-key lookup) — not just for resume — because it's
+    // also the fallback source for durationSecs when the catalog doesn't have one yet.
+    const progress = getPlaybackProgress(this.db, "episode", episodeId);
+    this.pendingResumeSecs = opts.resume === true && progress ? progress.position_secs : null;
 
+    // Catalog value first: it's kept fresh by `importSeries`/`ensureSeriesEpisodes`, whereas the
+    // progress row's duration is just whatever was last observed during a previous session.
     this.current = {
       kind: "episode",
       episodeId,
       episodeName: target.episodeName,
       seriesId: target.seriesId,
       streamUrl,
-      durationSecs: progress?.duration_secs ?? null,
+      durationSecs: target.durationSecs ?? progress?.duration_secs ?? null,
     };
     this.tracks = [];
     this.lastKnownPositionSecs = 0;

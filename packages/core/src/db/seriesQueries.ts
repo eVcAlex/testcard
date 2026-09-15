@@ -169,6 +169,8 @@ export interface EpisodePlaybackTarget {
   readonly seriesId: string;
   readonly providerEpisodeId: string;
   readonly containerExtension: string | null;
+  /** The catalog's `episodes.duration_secs` — filled in bulk by `ensureSeriesEpisodes`. */
+  readonly durationSecs: number | null;
   readonly source: Source;
 }
 
@@ -176,7 +178,7 @@ export function getEpisodePlaybackTarget(db: Database.Database, episodeId: strin
   const row = db
     .prepare(
       `SELECT e.id AS episodeId, e.name AS episodeName, e.series_id AS seriesId, e.provider_episode_id AS providerEpisodeId,
-              e.container_extension AS containerExtension,
+              e.container_extension AS containerExtension, e.duration_secs AS durationSecs,
               s.id AS sourceId, s.kind AS kind, s.name AS sourceName, s.base_url AS baseUrl
        FROM episodes e
        JOIN series sr ON sr.id = e.series_id
@@ -190,6 +192,7 @@ export function getEpisodePlaybackTarget(db: Database.Database, episodeId: strin
         seriesId: string;
         providerEpisodeId: string;
         containerExtension: string | null;
+        durationSecs: number | null;
         sourceId: string;
         kind: "xtream" | "m3u";
         sourceName: string;
@@ -209,6 +212,7 @@ export function getEpisodePlaybackTarget(db: Database.Database, episodeId: strin
     seriesId: row.seriesId,
     providerEpisodeId: row.providerEpisodeId,
     containerExtension: row.containerExtension,
+    durationSecs: row.durationSecs,
     source,
   };
 }

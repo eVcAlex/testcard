@@ -110,6 +110,8 @@ export interface MoviePlaybackTarget {
   readonly movieName: string;
   readonly providerStreamId: string;
   readonly containerExtension: string | null;
+  /** The catalog's `movies.duration_secs` — NULL until `ensureMovieDetails`'s lazy fetch has run. */
+  readonly durationSecs: number | null;
   readonly source: Source;
 }
 
@@ -117,6 +119,7 @@ export function getMoviePlaybackTarget(db: Database.Database, movieId: string): 
   const row = db
     .prepare(
       `SELECT m.id AS movieId, m.name AS movieName, m.provider_stream_id AS providerStreamId, m.container_extension AS containerExtension,
+              m.duration_secs AS durationSecs,
               s.id AS sourceId, s.kind AS kind, s.name AS sourceName, s.base_url AS baseUrl
        FROM movies m
        JOIN sources s ON s.id = m.source_id
@@ -128,6 +131,7 @@ export function getMoviePlaybackTarget(db: Database.Database, movieId: string): 
         movieName: string;
         providerStreamId: string;
         containerExtension: string | null;
+        durationSecs: number | null;
         sourceId: string;
         kind: "xtream" | "m3u";
         sourceName: string;
@@ -148,6 +152,7 @@ export function getMoviePlaybackTarget(db: Database.Database, movieId: string): 
     movieName: row.movieName,
     providerStreamId: row.providerStreamId,
     containerExtension: row.containerExtension,
+    durationSecs: row.durationSecs,
     source,
   };
 }
