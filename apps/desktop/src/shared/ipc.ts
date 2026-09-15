@@ -116,13 +116,28 @@ export interface NowNextLite {
 }
 
 /** Background-task progress, pushed on `IPC_TASK_CHANNEL` (kept off the playback event stream). */
-export type TaskEvent = {
-  readonly type: "epg";
-  readonly sourceId: string;
-  readonly phase: "fetching" | "parsing" | "done" | "error";
-  readonly programmes?: number;
-  readonly message?: string;
-};
+export type TaskEvent =
+  | {
+      readonly type: "epg";
+      readonly sourceId: string;
+      readonly phase: "fetching" | "parsing" | "done" | "error";
+      readonly programmes?: number;
+      readonly message?: string;
+    }
+  | {
+      readonly type: "vod";
+      readonly sourceId: string;
+      readonly phase: "fetching" | "done" | "error";
+      readonly movies?: number;
+      readonly message?: string;
+    }
+  | {
+      readonly type: "series";
+      readonly sourceId: string;
+      readonly phase: "fetching" | "done" | "error";
+      readonly series?: number;
+      readonly message?: string;
+    };
 
 /** A viewport-relative rectangle in CSS pixels — where the renderer wants the video. */
 export interface VideoRegionRect {

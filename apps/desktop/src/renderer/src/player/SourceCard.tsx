@@ -38,15 +38,24 @@ export function SourceCard({ source, onEdit }: { source: SourceListItem; onEdit:
     if (!menuOpen) setConfirmingRemove(false);
   }, [menuOpen]);
 
-  // Live guide-import progress for THIS source, pushed from main during its refresh.
+  // Live import progress for THIS source, pushed from main during its refresh — channels/VOD/
+  // series/guide each report their own phase, so the card doesn't sit blank between them.
   useEffect(() => {
     if (!window.testcard?.events?.onTask) return;
     return window.testcard.events.onTask((event) => {
-      if (event.type !== "epg" || event.sourceId !== source.id) return;
-      if (event.phase === "parsing" && event.programmes) {
-        setRefreshMsg(`Guide: ${event.programmes.toLocaleString()} programmes…`);
-      } else if (event.phase === "error" && event.message) {
-        setRefreshMsg(`Guide: ${event.message}`);
+      if (event.sourceId !== source.id) return;
+      if (event.type === "epg") {
+        if (event.phase === "parsing" && event.programmes) {
+          setRefreshMsg(`Guide: ${event.programmes.toLocaleString()} programmes…`);
+        } else if (event.phase === "error" && event.message) {
+          setRefreshMsg(`Guide: ${event.message}`);
+        }
+      } else if (event.type === "vod") {
+        if (event.phase === "fetching") setRefreshMsg("Movies: updating…");
+        else if (event.phase === "error" && event.message) setRefreshMsg(`Movies: ${event.message}`);
+      } else if (event.type === "series") {
+        if (event.phase === "fetching") setRefreshMsg("Series: updating…");
+        else if (event.phase === "error" && event.message) setRefreshMsg(`Series: ${event.message}`);
       }
     });
   }, [source.id]);
