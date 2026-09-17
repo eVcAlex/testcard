@@ -76,19 +76,30 @@ export function listRecentSeries(db: Database.Database, limit = 24): SeriesRow[]
 export function toggleSeriesFavourite(db: Database.Database, seriesId: string): boolean {
   const existing = db.prepare(`SELECT 1 FROM series_favourites WHERE series_id = ?`).get(seriesId);
   if (existing) {
+    const row = db.prepare(`SELECT remote_key FROM series_favourites WHERE series_id = ?`).get(seriesId) as { remote_key: string | null };
     db.prepare(`DELETE FROM series_favourites WHERE series_id = ?`).run(seriesId);
+    if (row.remote_key !== null) {
+      db.prepare(`INSERT INTO sync_tombstones (table_name, remote_key, deleted_at) VALUES ('series_favourites', ?, ?)`).run(row.remote_key, Date.now());
+    }
     return false;
   }
-  db.prepare(`INSERT INTO series_favourites (series_id, added_at) VALUES (?, ?)`).run(seriesId, Date.now());
+  const series = db.prepare(`SELECT remote_key FROM series WHERE id = ?`).get(seriesId) as { remote_key: string | null } | undefined;
+  db.prepare(`INSERT INTO series_favourites (series_id, added_at, remote_key, updated_at) VALUES (?, ?, ?, ?)`).run(
+    seriesId,
+    Date.now(),
+    series?.remote_key ?? null,
+    Date.now(),
+  );
   return true;
 }
 
 /** Bumped on any episode play, not just a series-level "play" action (there isn't one). */
 export function recordSeriesRecent(db: Database.Database, seriesId: string): void {
+  const series = db.prepare(`SELECT remote_key FROM series WHERE id = ?`).get(seriesId) as { remote_key: string | null } | undefined;
   db.prepare(
-    `INSERT INTO series_recents (series_id, played_at) VALUES (?, ?)
-     ON CONFLICT(series_id) DO UPDATE SET played_at = excluded.played_at`,
-  ).run(seriesId, Date.now());
+    `INSERT INTO series_recents (series_id, played_at, remote_key, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(series_id) DO UPDATE SET played_at = excluded.played_at, remote_key = excluded.remote_key, updated_at = excluded.updated_at`,
+  ).run(seriesId, Date.now(), series?.remote_key ?? null, Date.now());
 }
 
 export interface SeasonRow {

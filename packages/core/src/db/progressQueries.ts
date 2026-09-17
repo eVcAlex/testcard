@@ -39,14 +39,17 @@ export function setPlaybackProgress(
   positionSecs: number,
   durationSecs: number | null,
 ): void {
+  const table = itemType === "movie" ? "movies" : "episodes";
+  const item = db.prepare(`SELECT remote_key FROM ${table} WHERE id = ?`).get(itemId) as { remote_key: string | null } | undefined;
   const watched = isWatched(positionSecs, durationSecs) ? 1 : 0;
   db.prepare(
-    `INSERT INTO playback_progress (item_type, item_id, position_secs, duration_secs, watched, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)
+    `INSERT INTO playback_progress (item_type, item_id, position_secs, duration_secs, watched, updated_at, remote_key)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(item_type, item_id) DO UPDATE SET
        position_secs = excluded.position_secs,
        duration_secs = excluded.duration_secs,
        watched       = excluded.watched,
-       updated_at    = excluded.updated_at`,
-  ).run(itemType, itemId, Math.round(positionSecs), durationSecs, watched, Date.now());
+       updated_at    = excluded.updated_at,
+       remote_key    = excluded.remote_key`,
+  ).run(itemType, itemId, Math.round(positionSecs), durationSecs, watched, Date.now(), item?.remote_key ?? null);
 }

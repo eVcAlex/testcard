@@ -85,18 +85,29 @@ export function listRecentMovies(db: Database.Database, limit = 24): MovieRow[] 
 export function toggleMovieFavourite(db: Database.Database, movieId: string): boolean {
   const existing = db.prepare(`SELECT 1 FROM movie_favourites WHERE movie_id = ?`).get(movieId);
   if (existing) {
+    const row = db.prepare(`SELECT remote_key FROM movie_favourites WHERE movie_id = ?`).get(movieId) as { remote_key: string | null };
     db.prepare(`DELETE FROM movie_favourites WHERE movie_id = ?`).run(movieId);
+    if (row.remote_key !== null) {
+      db.prepare(`INSERT INTO sync_tombstones (table_name, remote_key, deleted_at) VALUES ('movie_favourites', ?, ?)`).run(row.remote_key, Date.now());
+    }
     return false;
   }
-  db.prepare(`INSERT INTO movie_favourites (movie_id, added_at) VALUES (?, ?)`).run(movieId, Date.now());
+  const movie = db.prepare(`SELECT remote_key FROM movies WHERE id = ?`).get(movieId) as { remote_key: string | null } | undefined;
+  db.prepare(`INSERT INTO movie_favourites (movie_id, added_at, remote_key, updated_at) VALUES (?, ?, ?, ?)`).run(
+    movieId,
+    Date.now(),
+    movie?.remote_key ?? null,
+    Date.now(),
+  );
   return true;
 }
 
 export function recordMovieRecent(db: Database.Database, movieId: string): void {
+  const movie = db.prepare(`SELECT remote_key FROM movies WHERE id = ?`).get(movieId) as { remote_key: string | null } | undefined;
   db.prepare(
-    `INSERT INTO movie_recents (movie_id, played_at) VALUES (?, ?)
-     ON CONFLICT(movie_id) DO UPDATE SET played_at = excluded.played_at`,
-  ).run(movieId, Date.now());
+    `INSERT INTO movie_recents (movie_id, played_at, remote_key, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(movie_id) DO UPDATE SET played_at = excluded.played_at, remote_key = excluded.remote_key, updated_at = excluded.updated_at`,
+  ).run(movieId, Date.now(), movie?.remote_key ?? null, Date.now());
 }
 
 /** A single movie row by id, for the detail pane after `ensureMovieDetails` has run. */
