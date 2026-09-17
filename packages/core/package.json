@@ -13,7 +13,8 @@
   "dependencies": {
     "@testcard/sync-schema": "workspace:*",
     "better-sqlite3": "^12.4.1",
-    "sax": "^1.4.1"
+    "sax": "^1.4.1",
+    "wretch": "^2.11.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
