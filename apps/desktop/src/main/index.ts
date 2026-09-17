@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell } from "electron";
 import { join } from "node:path";
 import { is } from "@electron-toolkit/utils";
-import { registerIpcHandlers } from "./ipc.js";
+import { registerIpcHandlers, stopActiveRefreshScheduler } from "./ipc.js";
 import { getDatabase } from "./database.js";
 import { registerLogoProtocol, registerLogoScheme } from "./logoCache.js";
 
@@ -17,10 +17,10 @@ function createMainWindow(): BrowserWindow {
     show: false,
     autoHideMenuBar: true,
     // The resize-gutter colour: what shows for a frame when the window grows before the
-    // renderer paints. Must equal --surface-1 (styles/tokens.css). Not --picture #000000
+    // renderer paints. Must equal --background (styles/tokens.css). Not --picture #000000
     // (that's the video hole only) and not the child windows' #00000000 (load-bearing
     // transparency, see ADR 0002). Dark literal here on purpose — main has no token system.
-    backgroundColor: "#171a1e",
+    backgroundColor: "#14171a",
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
@@ -61,5 +61,6 @@ void app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
+  stopActiveRefreshScheduler();
   if (process.platform !== "darwin") app.quit();
 });

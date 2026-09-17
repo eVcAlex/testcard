@@ -10,19 +10,70 @@
  */
 import type { CategoryRow, Channel, ChannelCountry, ChannelRow, CountryNode, Source } from "@testcard/core";
 
-export interface AddSourceInput {
+/**
+ * How the user entered the source — not the same thing as the resulting `Source["kind"]`. A
+ * `"url"` paste that turns out to be a `get.php` link still produces an Xtream source (main
+ * detects that from the URL, as it always has); `"xtream"` is the form's own tab for a provider
+ * that only gave a host/username/password, so there's nothing to hand-assemble into a URL for.
+ */
+export type AddSourceInput = {
   readonly name: string;
-  /**
-   * Either a pasted Xtream `get.php` URL (credentials are extracted and probed, never echoed
-   * back) or a direct M3U playlist URL. Main detects which and stores the right source kind.
-   */
-  readonly pastedUrl: string;
   /**
    * Optional explicit XMLTV/EPG URL. When absent, main auto-detects one on refresh (the M3U
    * `url-tvg` header, or Xtream `xmltv.php`).
    */
   readonly epgUrl?: string;
+  /** Hours between automatic refreshes. Absent (or `undefined`) means manual refresh only. */
+  readonly refreshIntervalHours?: number;
+} & (
+  | {
+      readonly via: "url";
+      /**
+       * Either a pasted Xtream `get.php` URL (credentials are extracted and probed, never
+       * echoed back) or a direct M3U playlist URL. Main detects which and stores the right
+       * source kind.
+       */
+      readonly pastedUrl: string;
+    }
+  | {
+      readonly via: "xtream";
+      readonly baseUrl: string;
+      readonly username: string;
+      readonly password: string;
+    }
+);
+
+/**
+ * A source edit. `kind` cannot change here — the edit form has no kind toggle, so the shape of
+ * the patch itself picks a lane: `playlistUrl` only makes sense for an M3U source, `xtream`
+ * only for an Xtream one. Main rejects the wrong one for a given source's stored kind.
+ */
+export interface UpdateSourceInput {
+  readonly name: string;
+  /** Omit to leave unchanged; `""` clears the stored EPG URL. */
+  readonly epgUrl?: string;
+  /** M3U only: a replacement playlist URL. Omit to keep the current one. */
+  readonly playlistUrl?: string;
+  /**
+   * Xtream only: omit any field to keep its current value. `password` sent blank (or omitted)
+   * means "unchanged" — the stored password is never sent to the renderer to prefill, so this
+   * is the only way an edit form can represent "leave it alone."
+   */
+  readonly xtream?: {
+    readonly baseUrl?: string;
+    readonly username?: string;
+    readonly password?: string;
+  };
+  /** Omit to leave unchanged; `null` turns auto-refresh off (manual only). */
+  readonly refreshIntervalHours?: number | null;
 }
+
+/** A source as listed in the sidebar — the domain `Source` plus desktop-only bookkeeping. */
+export type SourceListItem = Source & {
+  readonly createdAt: number;
+  readonly lastRefreshedAt?: number;
+  readonly refreshIntervalHours?: number;
+};
 
 export interface RefreshResult {
   readonly categories: number;
@@ -117,10 +168,13 @@ export interface PlaybackSnapshot {
 
 export interface TestcardApi {
   sources: {
-    list(): Promise<readonly Source[]>;
-    /** Adds an Xtream or M3U source; the kind is detected from the pasted URL. */
+    list(): Promise<readonly SourceListItem[]>;
+    /** Adds an Xtream or M3U source — see `AddSourceInput["via"]` for the two entry paths. */
     add(input: AddSourceInput): Promise<Source>;
+    /** Edits a source in place — same id, so favourites/recents survive. Kind cannot change. */
+    update(sourceId: string, patch: UpdateSourceInput): Promise<Source>;
     refresh(sourceId: string): Promise<RefreshResult>;
+    /** Deletes a source, its credentials, and any favourites/recents left orphaned by it. */
     remove(sourceId: string): Promise<void>;
   };
   channels: {

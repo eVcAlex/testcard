@@ -77,9 +77,8 @@ A bad or unreachable guide URL emits a `{ phase: "error" }` task event and the p
   tests — `better-sqlite3`'s native binding is built for Electron's ABI, not plain Node, so
   core has never had DB-backed tests. `parseXmltv` is covered (pure). The DB paths are verified
   in the desktop smoke test.
-- No schema migration was needed — `tvg_id`, `programmes` and `epg_url` were all in v1. There
-  is still no migration runner; the first Phase-3 change that needs a new column will have to
-  add one.
+- No schema migration was needed — `tvg_id`, `programmes` and `epg_url` were all in v1. (Phase
+  4a added the migration runner — see ADR 0005.)
 - The guide view caps at 200 channels per category. A provider category larger than that, or a
   cross-category guide, needs virtualization (`@tanstack/react-virtual`, already a dependency).
 - Xtream's per-channel `get_short_epg` path (`fetchShortEpg`, already written) is still unused —

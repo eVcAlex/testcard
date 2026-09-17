@@ -1,44 +1,54 @@
 /*
  * Testcard design tokens — the ONLY file allowed to name a raw colour.
  *
- * Reference: IPTV Expert — left sidebar, a full-width multi-column channel grid with an EPG
- * progress bar under every channel, a hot-pink accent, and a fullscreen overlay player. The
- * picture is an opaque hole punched through the UI (mpv renders into separate windows — see
+ * "Mist" — a cool-neutral, restrained identity: a dense hairline-ruled channel list, one quiet
+ * teal accent, muted-foreground hierarchy. Every neutral carries a slight blue-green bias
+ * (hue ≈ 200°) so the elevation ramp and the accent read as one family, not grey-plus-a-colour.
+ * The picture is an opaque hole punched through the UI (mpv renders into separate windows — see
  * ADR 0001 / ADR 0002), so the player view hands the whole window to it.
  *
- * :root is the default DARK theme. `:root[data-theme="light"]` redefines only what changes.
- * Style components through these tokens, never a raw colour or a value behind [data-theme].
+ * Token model: semantic pairs (background/foreground, card, border, accent/accent-foreground,
+ * ring — after shadcn's convention) are the source of truth; every component reads these
+ * directly. `--accent` here is Testcard's own brand accent, not shadcn's hover-surface
+ * `accent` — a deliberate divergence, not a half-applied convention.
+ *
+ * :root is the default DARK theme. `:root[data-theme="light"]` redefines only the semantic
+ * tokens. Style components through these tokens, never a raw colour or a value behind
+ * [data-theme].
  */
 :root {
   color-scheme: dark;
 
-  /* ---- surfaces: a single elevation ramp -------------------------------- */
+  /* ---- semantic surfaces: a single elevation ramp ----------------------- */
   --picture: #000000; /* the video hole ONLY — nothing else is true black */
-  --surface-0: #101215; /* sunken: inputs, wells, search pill */
-  --surface-1: #171a1e; /* app background / main pane */
-  --surface-2: #1e2226; /* sidebar, raised panels */
-  --surface-3: #262b30; /* cards, hover */
-  --surface-4: #2e343a; /* pressed / active hover */
+  --background: #14171a; /* app background / main pane */
+  --surface-sunken: #0f1214; /* inputs, wells, search pill */
+  --surface-raised: #1a1d21; /* sidebar, raised panels */
+  --card: #1c2024; /* cards, rows */
+  --card-hover: #232830; /* hover */
+  --card-active: #2b3138; /* pressed / active */
   --scrim: #05080bcc; /* overlay bar over live video — dark in both themes */
 
-  /* ---- lines ---------------------------------------------------------- */
-  --line: #2b3137;
-  --line-strong: #3a4249;
+  /* ---- semantic lines ---------------------------------------------------- */
+  --border: #262c31;
+  --border-strong: #343c43;
 
-  /* ---- ink ---------------------------------------------------------- */
-  --ink: #e8ebee;
-  --ink-muted: #8c959c;
-  --ink-faint: #5f676d;
+  /* ---- semantic foreground ------------------------------------------- */
+  --foreground: #eef1f3;
+  --muted-foreground: #949ca4;
+  --faint-foreground: #69727a; /* decorative / disabled only — never body copy */
 
-  /* ---- accent: edit --accent and --accent-ink to reskin ------------- */
-  --accent: #ec2a6b; /* IPTV Expert hot pink */
-  --accent-ink: #ffffff; /* text / icon on a SOLID accent fill */
+  /* ---- accent: edit --accent and --accent-foreground to reskin ------- */
+  --accent: #4fb3a6; /* Mist's one quiet note — verified as legible TEXT, not just a fill */
+  --accent-foreground: #06211e; /* ink on a SOLID accent fill */
   --accent-strong: color-mix(in oklab, var(--accent) 82%, white);
   --accent-soft: color-mix(in oklab, var(--accent) 15%, transparent);
   --accent-line: color-mix(in oklab, var(--accent) 55%, transparent);
+  --ring: color-mix(in oklab, var(--accent) 60%, transparent);
 
   /* ---- status: reserved ------------------------------------------------ */
-  --live: #e8402a; /* on-air dot + NO SIGNAL headline — nowhere else */
+  --live: #e8402a; /* on-air dot + NO SIGNAL headline — nowhere else. The one deliberately
+                       warm note in an otherwise cool system, unchanged across themes. */
   --live-halo: color-mix(in oklab, var(--live) 22%, transparent);
   --fault: #f0745c; /* error text */
 
@@ -56,8 +66,8 @@
   /* ---- radius: encodes hierarchy ------------------------------------ */
   --r-0: 0; /* the picture — mpv's HWND is a hard rectangle, cannot be corner-clipped */
   --r-1: 6px; /* inputs, chips, buttons */
-  --r-2: 10px; /* rows, cards, panels */
-  --r-3: 14px; /* the overlay bar, hero */
+  --r-2: 9px; /* rows, cards, panels */
+  --r-3: 13px; /* the overlay bar, hero */
   --r-pill: 999px;
 
   /* ---- elevation --------------------------------------------------- */
@@ -90,17 +100,21 @@
   --wght-semibold: 600;
   --wght-bold: 700;
   --track-tight: -0.011em;
+  --track-wide: 0.04em;
   --font-ui:
     "Inter Variable", "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
     sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", "Consolas", monospace;
 
-  /* ---- motion -------------------------------------------------- */
-  --dur-fast: 90ms;
-  --dur: 150ms;
-  --dur-slow: 240ms;
+  /* ---- motion: transform/opacity only, one shared curve family ------ */
+  --dur-1: 120ms; /* colour, hover */
+  --dur-2: 160ms; /* press, small transforms */
+  --dur-3: 240ms; /* panels, overlay */
+  --dur-fast: var(--dur-1); /* legacy alias */
+  --dur: var(--dur-2); /* legacy alias */
+  --dur-slow: var(--dur-3); /* legacy alias */
   --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
   --ease-in: cubic-bezier(0.5, 0, 0.9, 0.4);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1); /* press-release only */
 
   /* ---- z-index (in-document only) ---------------------------- */
   --z-content: 0;
@@ -112,20 +126,25 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --surface-0: #eef0f2;
-  --surface-1: #ffffff;
-  --surface-2: #f6f7f9;
-  --surface-3: #f0f2f5;
-  --surface-4: #e7eaee;
+  --background: #f7f8f9;
+  --surface-sunken: #eceff1;
+  --surface-raised: #f0f2f4;
+  --card: #ffffff;
+  --card-hover: #f2f4f6;
+  --card-active: #e8ecef;
 
-  --line: #e4e7ea;
-  --line-strong: #d3d8dd;
+  --border: #e3e7ea;
+  --border-strong: #cfd6db;
 
-  --ink: #1b2127;
-  --ink-muted: #5c6872;
-  --ink-faint: #93a0a8;
+  --foreground: #14181b;
+  --muted-foreground: #5b6670;
+  --faint-foreground: #8d99a2;
 
+  --accent: #1f7a70;
+  --accent-foreground: #ffffff;
   --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+
+  --fault: #b4321c;
 
   --elev-1: 0 1px 2px rgb(15 23 30 / 0.08);
   --elev-2: 0 8px 22px -8px rgb(15 23 30 / 0.18);
@@ -135,8 +154,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --dur-fast: 1ms;
-    --dur: 1ms;
-    --dur-slow: 1ms;
+    --dur-1: 1ms;
+    --dur-2: 1ms;
+    --dur-3: 1ms;
   }
 }

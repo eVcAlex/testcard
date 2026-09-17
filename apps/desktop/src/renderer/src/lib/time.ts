@@ -12,3 +12,15 @@ export function progressPct(startMs: number, endMs: number, nowMs: number): numb
   if (endMs <= startMs) return 0;
   return Math.max(0, Math.min(100, ((nowMs - startMs) / (endMs - startMs)) * 100));
 }
+
+/** "just now" / "5m ago" / "3h ago" / "2d ago", for a source's "last refreshed" note. */
+export function formatRelative(ms: number, nowMs: number = Date.now()): string {
+  const deltaS = Math.max(0, Math.floor((nowMs - ms) / 1000));
+  if (deltaS < 60) return "just now";
+  const minutes = Math.floor(deltaS / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}

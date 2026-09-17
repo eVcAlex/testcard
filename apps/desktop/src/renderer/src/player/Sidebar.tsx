@@ -1,16 +1,15 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
-import { AddSourceForm } from "../AddSourceForm.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "guide" | "favourites" | "recent";
+export type BrowseTab = "live" | "guide" | "favourites" | "recent" | "sources";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "live", label: "Live TV", icon: "tv" },
   { id: "guide", label: "Guide", icon: "grid" },
   { id: "favourites", label: "Favourites", icon: "star" },
   { id: "recent", label: "Recent", icon: "clock" },
+  { id: "sources", label: "Sources", icon: "signal" },
 ];
 
 export function Sidebar({
@@ -28,10 +27,6 @@ export function Sidebar({
   theme: Theme;
   onToggleTheme: () => void;
 }) {
-  const queryClient = useQueryClient();
-  const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
-
   const sources = useQuery({
     queryKey: ["sources"],
     queryFn: () => window.testcard.sources.list(),
@@ -42,36 +37,6 @@ export function Sidebar({
     queryFn: () => window.testcard.channels.categoryList(),
     staleTime: 60_000,
   });
-
-  const refresh = useMutation({
-    mutationFn: (sourceId: string) => window.testcard.sources.refresh(sourceId),
-    onSuccess: (result) => {
-      const parts = [
-        `${result.channels.toLocaleString()} channels · ${result.categories} categories`,
-      ];
-      if (result.programmes !== undefined) parts.push(`${result.programmes.toLocaleString()} programmes`);
-      setRefreshMsg(parts.join(" · "));
-      void queryClient.invalidateQueries({ queryKey: ["channels"] });
-      void queryClient.invalidateQueries({ queryKey: ["categories"] });
-      void queryClient.invalidateQueries({ queryKey: ["epg"] });
-    },
-    onError: (error: unknown) => {
-      setRefreshMsg(error instanceof Error ? error.message : "Refresh failed.");
-    },
-  });
-
-  // Live guide-import progress, pushed from main during a refresh.
-  useEffect(() => {
-    if (!window.testcard?.events?.onTask) return;
-    return window.testcard.events.onTask((event) => {
-      if (event.type !== "epg") return;
-      if (event.phase === "parsing" && event.programmes) {
-        setRefreshMsg(`Guide: ${event.programmes.toLocaleString()} programmes…`);
-      } else if (event.phase === "error" && event.message) {
-        setRefreshMsg(`Guide: ${event.message}`);
-      }
-    });
-  }, []);
 
   const pickCategory = (id: string | null) => {
     onCategory(id);
@@ -99,48 +64,12 @@ export function Sidebar({
           >
             <Icon name={t.icon} filled={t.id === "favourites" && tab === "favourites"} />
             {t.label}
+            {t.id === "sources" && sources.data !== undefined && (
+              <span className="pw-nav-count">{sources.data.length}</span>
+            )}
           </button>
         ))}
       </nav>
-
-      <p className="pw-nav-group">Sources</p>
-      <div className="pw-sources">
-        {sources.data?.length === 0 && !addOpen && (
-          <p className="pw-source-empty">No source yet</p>
-        )}
-        {sources.data?.map((source) => (
-          <div key={source.id} className="pw-source">
-            <span className="pw-source-name">{source.name}</span>
-            <button
-              type="button"
-              className="btn btn--ghost btn--icon"
-              aria-label={`Refresh ${source.name}`}
-              disabled={refresh.isPending}
-              onClick={() => refresh.mutate(source.id)}
-            >
-              <Icon name="refresh" />
-            </button>
-          </div>
-        ))}
-        {refresh.isPending && <p className="pw-refresh-note">Fetching playlist…</p>}
-        {!refresh.isPending && refreshMsg !== null && <p className="pw-refresh-note">{refreshMsg}</p>}
-
-        {addOpen ? (
-          <div className="pw-source-add">
-            <AddSourceForm
-              onAdded={() => {
-                setAddOpen(false);
-                void queryClient.invalidateQueries({ queryKey: ["sources"] });
-              }}
-            />
-          </div>
-        ) : (
-          <button type="button" className="pw-nav-item" onClick={() => setAddOpen(true)}>
-            <Icon name="plus" />
-            Add source
-          </button>
-        )}
-      </div>
 
       <p className="pw-nav-group">Categories</p>
       <div className="pw-cats">

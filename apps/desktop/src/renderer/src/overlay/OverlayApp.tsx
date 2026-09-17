@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { Icon } from "../components/Icon.js";
 import { useOverlayVisibility } from "./useOverlayVisibility.js";
 import type { AspectMode, PlaybackEvent, PlaybackTrack } from "../../../shared/ipc.js";
@@ -89,7 +89,22 @@ export function OverlayApp() {
     return window.testcard.events.onPlayback((event) => dispatch(event));
   }, []);
 
-  const { revealed, bump } = useOverlayVisibility(state.paused);
+  // Keep the bar up while the pointer is actually on it or holding a control (a stationary
+  // hover and a slider drag emit no mousemove, so movement alone isn't enough — see the hook).
+  const [hovering, setHovering] = useState(false);
+  const [pressing, setPressing] = useState(false);
+  const { revealed, bump } = useOverlayVisibility(state.paused || hovering || pressing);
+
+  useEffect(() => {
+    if (!pressing) return;
+    const release = () => setPressing(false);
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    return () => {
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+    };
+  }, [pressing]);
 
   if (state.status !== "playing" && state.status !== "loading") return null;
 
@@ -116,14 +131,19 @@ export function OverlayApp() {
   };
 
   return (
-    <div className="ov-root" data-revealed={revealed} onMouseMove={bump} onMouseLeave={() => bump()}>
+    <div className="ov-root" data-revealed={revealed} onMouseMove={bump}>
       {state.paused && (
         <button type="button" className="ov-center" aria-label="Play" onClick={togglePause}>
           <Icon name="play" size={30} />
         </button>
       )}
 
-      <div className="ov-bar">
+      <div
+        className="ov-bar"
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+        onPointerDown={() => setPressing(true)}
+      >
         <button
           type="button"
           className="ov-btn ov-btn--ghost"

@@ -27,7 +27,10 @@ export type IconName =
   | "x"
   | "signal"
   | "fullscreen"
-  | "fullscreen-exit";
+  | "fullscreen-exit"
+  | "more"
+  | "edit"
+  | "trash";
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -118,9 +121,37 @@ const PATHS: Record<IconName, ReactNode> = {
   signal: <path d="M2 11l3-3 2.5 2.5L11 7l3 3" />,
   fullscreen: <path d="M6 2H2v4M14 6V2h-4M2 10v4h4M10 14h4v-4" />,
   "fullscreen-exit": <path d="M2 6h4V2M14 6h-4V2M2 10h4v4M14 10h-4v4" />,
+  more: (
+    <>
+      <circle cx="8" cy="3.3" r="1.2" />
+      <circle cx="8" cy="8" r="1.2" />
+      <circle cx="8" cy="12.7" r="1.2" />
+    </>
+  ),
+  edit: (
+    <>
+      <path d="M10.5 2.5l3 3L5 14H2v-3z" />
+      <path d="M9 4l3 3" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M2.5 4.5h11" />
+      <path d="M5.5 4.5V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5" />
+      <path d="M4 4.5l.6 8.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9l.6-8.4" />
+      <path d="M6.5 7.5v4M9.5 7.5v4" />
+    </>
+  ),
 };
 
-const FILLED: Partial<Record<IconName, true>> = { star: true, play: true, pause: true, "skip-back": true, "skip-forward": true };
+const FILLED: Partial<Record<IconName, true>> = {
+  star: true,
+  play: true,
+  pause: true,
+  "skip-back": true,
+  "skip-forward": true,
+  more: true,
+};
 
 export function Icon({
   name,

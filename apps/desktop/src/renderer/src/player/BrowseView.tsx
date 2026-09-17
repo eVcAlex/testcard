@@ -6,11 +6,14 @@ import { ChannelGrid } from "./ChannelGrid.js";
 import { logoSrc } from "../lib/logo.js";
 import type { BrowseTab } from "./Sidebar.js";
 
+// "guide" and "sources" never actually reach this component — PlayerScreen branches to
+// GuideView/SourcesView first — but BrowseTab is one shared union, so this stays total.
 const TITLES: Record<BrowseTab, string> = {
   live: "Live TV",
   guide: "Guide",
   favourites: "Favourites",
   recent: "Recently watched",
+  sources: "Sources",
 };
 
 export function BrowseView({

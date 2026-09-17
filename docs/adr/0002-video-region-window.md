@@ -46,7 +46,7 @@ black gap reads better than a smeared video rect trying to chase the drag.
 
 | Value | Where | Why |
 |---|---|---|
-| `#171a1e` | `main/index.ts` `backgroundColor` | the resize-gutter colour — must equal `--surface-1`, the app background |
+| `#14171a` | `main/index.ts` `backgroundColor` | the resize-gutter colour — must equal `--background`, the app background |
 | `#000000` | `--picture` token, the well | true black hides any 1 px mismatch between the CSS rect and the HWND bounds |
 | `#00000000` | `VideoRegionWindow` (and any future overlay) | load-bearing transparency, per above |
 
