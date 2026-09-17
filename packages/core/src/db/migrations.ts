@@ -175,6 +175,55 @@ export const MIGRATIONS: readonly Migration[] = [
       `);
     },
   },
+  {
+    version: 5,
+    up: (db) => {
+      // Device sync — remote_key/sync-clock columns added to every syncable table so the sync
+      // client can find "what changed since the last cursor" without a full-table diff. See the
+      // design spec's "Local schema additions".
+      addColumn(db, "sources", "remote_key TEXT");
+      addColumn(db, "sources", "sync_updated_at INTEGER");
+      addColumn(db, "sources", "sync_deleted_at INTEGER");
+      addColumn(db, "movies", "remote_key TEXT");
+      addColumn(db, "series", "remote_key TEXT");
+      addColumn(db, "episodes", "remote_key TEXT");
+
+      for (const table of ["movie_favourites", "movie_recents", "series_favourites", "series_recents"] as const) {
+        addColumn(db, table, "remote_key TEXT");
+        addColumn(db, table, "updated_at INTEGER");
+      }
+      addColumn(db, "playback_progress", "remote_key TEXT");
+      addColumn(db, "playback_progress", "deleted_at INTEGER");
+
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_sources_remote_key ON sources(remote_key);
+        CREATE INDEX IF NOT EXISTS idx_movies_remote_key ON movies(remote_key);
+        CREATE INDEX IF NOT EXISTS idx_series_remote_key ON series(remote_key);
+        CREATE INDEX IF NOT EXISTS idx_episodes_remote_key ON episodes(remote_key);
+        CREATE INDEX IF NOT EXISTS idx_movie_favourites_remote_key ON movie_favourites(remote_key);
+        CREATE INDEX IF NOT EXISTS idx_movie_recents_remote_key ON movie_recents(remote_key);
+        CREATE INDEX IF NOT EXISTS idx_series_favourites_remote_key ON series_favourites(remote_key);
+        CREATE INDEX IF NOT EXISTS idx_series_recents_remote_key ON series_recents(remote_key);
+        CREATE INDEX IF NOT EXISTS idx_playback_progress_remote_key ON playback_progress(remote_key);
+
+        CREATE TABLE IF NOT EXISTS sync_tombstones (
+          table_name  TEXT NOT NULL,
+          remote_key  TEXT NOT NULL,
+          deleted_at  INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_sync_tombstones_table ON sync_tombstones(table_name);
+
+        CREATE TABLE IF NOT EXISTS sync_state (
+          id              INTEGER PRIMARY KEY CHECK (id = 1),
+          last_pulled_at  INTEGER NOT NULL DEFAULT 0,
+          last_pushed_at  INTEGER NOT NULL DEFAULT 0,
+          account_email   TEXT,
+          session_token   TEXT,
+          sync_salt       TEXT
+        );
+      `);
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -28,8 +28,12 @@ CREATE TABLE IF NOT EXISTS sources (
   epg_url       TEXT,           -- explicit XMLTV URL, either kind, optional
   refresh_interval_hours INTEGER, -- NULL = manual refresh only
   created_at    INTEGER NOT NULL,
-  last_refreshed_at INTEGER
+  last_refreshed_at INTEGER,
+  remote_key    TEXT,           -- sha1(normalizedHost) — xtream only, see sync/remoteKey.ts
+  sync_updated_at INTEGER,      -- sync clock; NULL until first pushed
+  sync_deleted_at INTEGER       -- sync tombstone; NULL = live
 );
+CREATE INDEX IF NOT EXISTS idx_sources_remote_key ON sources(remote_key);
 
 CREATE TABLE IF NOT EXISTS categories (
   id            TEXT PRIMARY KEY,
@@ -132,9 +136,11 @@ CREATE TABLE IF NOT EXISTS movies (
   duration_secs       INTEGER,             -- NULL until lazily fetched
   details_fetched_at  INTEGER,             -- NULL = never fetched or refresh invalidated it
   first_seen_at       INTEGER NOT NULL,
-  last_seen_at        INTEGER NOT NULL
+  last_seen_at        INTEGER NOT NULL,
+  remote_key          TEXT   -- sha1(normalizedHost + providerStreamId), see sync/remoteKey.ts
 );
 CREATE INDEX IF NOT EXISTS idx_movies_category ON movies(category_id);
+CREATE INDEX IF NOT EXISTS idx_movies_remote_key ON movies(remote_key);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS movies_fts USING fts5(name, content='movies', content_rowid='rowid');
 
@@ -171,9 +177,11 @@ CREATE TABLE IF NOT EXISTS series (
   plot                 TEXT,               -- cheap: Xtream's get_series list DTO includes this
   episodes_fetched_at  INTEGER,            -- NULL = seasons/episodes never fetched or stale
   first_seen_at        INTEGER NOT NULL,
-  last_seen_at         INTEGER NOT NULL
+  last_seen_at         INTEGER NOT NULL,
+  remote_key           TEXT   -- sha1(normalizedHost + providerSeriesId), see sync/remoteKey.ts
 );
 CREATE INDEX IF NOT EXISTS idx_series_category ON series(category_id);
+CREATE INDEX IF NOT EXISTS idx_series_remote_key ON series(remote_key);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS series_fts USING fts5(name, content='series', content_rowid='rowid');
 
@@ -208,18 +216,46 @@ CREATE TABLE IF NOT EXISTS episodes (
   name                 TEXT NOT NULL,
   container_extension  TEXT,
   duration_secs        INTEGER,
-  plot                 TEXT
+  plot                 TEXT,
+  remote_key           TEXT   -- sha1(normalizedHost + providerEpisodeId), see sync/remoteKey.ts
 );
 CREATE INDEX IF NOT EXISTS idx_episodes_season ON episodes(season_id);
 CREATE INDEX IF NOT EXISTS idx_episodes_series ON episodes(series_id);
+CREATE INDEX IF NOT EXISTS idx_episodes_remote_key ON episodes(remote_key);
 
-CREATE TABLE IF NOT EXISTS movie_favourites (movie_id TEXT PRIMARY KEY, added_at INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS movie_recents (movie_id TEXT PRIMARY KEY, played_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS movie_favourites (
+  movie_id    TEXT PRIMARY KEY,
+  added_at    INTEGER NOT NULL,
+  remote_key  TEXT,
+  updated_at  INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_movie_favourites_remote_key ON movie_favourites(remote_key);
+
+CREATE TABLE IF NOT EXISTS movie_recents (
+  movie_id    TEXT PRIMARY KEY,
+  played_at   INTEGER NOT NULL,
+  remote_key  TEXT,
+  updated_at  INTEGER
+);
 CREATE INDEX IF NOT EXISTS idx_movie_recents_played_at ON movie_recents(played_at DESC);
+CREATE INDEX IF NOT EXISTS idx_movie_recents_remote_key ON movie_recents(remote_key);
 
-CREATE TABLE IF NOT EXISTS series_favourites (series_id TEXT PRIMARY KEY, added_at INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS series_recents (series_id TEXT PRIMARY KEY, played_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS series_favourites (
+  series_id   TEXT PRIMARY KEY,
+  added_at    INTEGER NOT NULL,
+  remote_key  TEXT,
+  updated_at  INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_series_favourites_remote_key ON series_favourites(remote_key);
+
+CREATE TABLE IF NOT EXISTS series_recents (
+  series_id   TEXT PRIMARY KEY,
+  played_at   INTEGER NOT NULL,
+  remote_key  TEXT,
+  updated_at  INTEGER
+);
 CREATE INDEX IF NOT EXISTS idx_series_recents_played_at ON series_recents(played_at DESC);
+CREATE INDEX IF NOT EXISTS idx_series_recents_remote_key ON series_recents(remote_key);
 
 CREATE TABLE IF NOT EXISTS playback_progress (
   item_type     TEXT NOT NULL CHECK (item_type IN ('movie', 'episode')),
@@ -228,7 +264,30 @@ CREATE TABLE IF NOT EXISTS playback_progress (
   duration_secs INTEGER,
   watched       INTEGER NOT NULL DEFAULT 0,
   updated_at    INTEGER NOT NULL,
+  remote_key    TEXT,
+  deleted_at    INTEGER,
   PRIMARY KEY (item_type, item_id)
+);
+CREATE INDEX IF NOT EXISTS idx_playback_progress_remote_key ON playback_progress(remote_key);
+
+-- Local-only record of a delete the sync push step still needs to tell the server about.
+-- Existing delete paths (unfavourite, source removal) keep their current hard-delete behaviour
+-- unchanged; they additionally insert a row here. Pruned once the push that reported it succeeds.
+CREATE TABLE IF NOT EXISTS sync_tombstones (
+  table_name  TEXT NOT NULL,
+  remote_key  TEXT NOT NULL,
+  deleted_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sync_tombstones_table ON sync_tombstones(table_name);
+
+-- Singleton row (id always 1) tracking this device's sync cursors.
+CREATE TABLE IF NOT EXISTS sync_state (
+  id              INTEGER PRIMARY KEY CHECK (id = 1),
+  last_pulled_at  INTEGER NOT NULL DEFAULT 0,
+  last_pushed_at  INTEGER NOT NULL DEFAULT 0,
+  account_email   TEXT,      -- NULL = signed out
+  session_token   TEXT,
+  sync_salt       TEXT       -- base64 PBKDF2 salt; not secret, safe to persist (see Task 9)
 );
 
 CREATE TABLE IF NOT EXISTS schema_meta (
