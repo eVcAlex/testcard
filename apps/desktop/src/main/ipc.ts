@@ -31,6 +31,7 @@ import {
   nowNextForChannels,
   probeXtream,
   programmesInWindow,
+  remoteKeyFor,
   searchChannels,
   searchMovies,
   searchSeries,
@@ -353,10 +354,11 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
         if (verified.kind === "xtream") {
           await saveCredentials(id, verified.credentials);
+          const remoteKey = await remoteKeyFor(verified.credentials.baseUrl, "source");
           db.prepare(
-            `INSERT INTO sources (id, kind, name, base_url, epg_url, refresh_interval_hours, created_at)
-             VALUES (?, 'xtream', ?, ?, ?, ?, ?)`,
-          ).run(id, name, verified.credentials.baseUrl, epg !== "" ? epg : null, interval, Date.now());
+            `INSERT INTO sources (id, kind, name, base_url, epg_url, refresh_interval_hours, created_at, remote_key, sync_updated_at)
+             VALUES (?, 'xtream', ?, ?, ?, ?, ?, ?, ?)`,
+          ).run(id, name, verified.credentials.baseUrl, epg !== "" ? epg : null, interval, Date.now(), remoteKey, Date.now());
 
           const source: Source = {
             id,
@@ -456,11 +458,14 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           await saveCredentials(sourceId, credentials);
         }
 
-        db.prepare(`UPDATE sources SET name = ?, base_url = ?, epg_url = ?, refresh_interval_hours = ? WHERE id = ?`).run(
+        const remoteKey = await remoteKeyFor(credentials.baseUrl, "source");
+        db.prepare(`UPDATE sources SET name = ?, base_url = ?, epg_url = ?, refresh_interval_hours = ?, remote_key = ?, sync_updated_at = ? WHERE id = ?`).run(
           name,
           credentials.baseUrl,
           epg,
           interval,
+          remoteKey,
+          Date.now(),
           sourceId,
         );
 
