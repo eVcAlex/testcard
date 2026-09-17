@@ -41,6 +41,8 @@ describe("POST /sync/push then GET /sync/pull", () => {
       ctx,
     );
     expect(pushRes.status).toBe(200);
+    // The cursor is the max client-authored updatedAt of what was pushed, never server wall-clock.
+    expect((await pushRes.json()).newCursor).toBe(1000);
 
     const pullRes = await app.request("/sync/pull?since=0", {}, env, ctx);
     expect(pullRes.status).toBe(200);
@@ -49,6 +51,69 @@ describe("POST /sync/push then GET /sync/pull", () => {
     expect(pulled.movieFavourites[0].remoteKey).toBe("movie-abc");
     expect(pulled.progress).toHaveLength(1);
     expect(pulled.progress[0].positionSecs).toBe(300);
+    // Likewise on the way back: max updatedAt of the returned rows, not Date.now().
+    expect(pulled.serverCursor).toBe(1000);
+  });
+
+  it("derives cursors from client-authored updatedAt, never server wall-clock", async () => {
+    const app = testApp();
+    const ctx = createExecutionContext();
+    const before = Date.now();
+
+    // All timestamps are deliberately far in the past. A wall-clock cursor would come back as
+    // roughly Date.now() and skip any row written between the SELECT and the response.
+    const pushRes = await app.request(
+      "/sync/push",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sources: [],
+          movieFavourites: [{ remoteKey: "cursor-a", addedAt: 100, updatedAt: 100, deletedAt: null }],
+          movieRecents: [{ remoteKey: "cursor-b", playedAt: 900, updatedAt: 900, deletedAt: null }],
+          seriesFavourites: [],
+          seriesRecents: [{ remoteKey: "cursor-c", playedAt: 400, updatedAt: 400, deletedAt: null }],
+          progress: [],
+        }),
+      },
+      env,
+      ctx,
+    );
+    expect(pushRes.status).toBe(200);
+    const { newCursor } = await pushRes.json();
+    expect(newCursor).toBe(900); // max across all six arrays
+    expect(newCursor).toBeLessThan(before);
+
+    // An empty push must not advance the cursor either.
+    const emptyPushRes = await app.request(
+      "/sync/push",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sources: [], movieFavourites: [], movieRecents: [], seriesFavourites: [], seriesRecents: [], progress: [] }),
+      },
+      env,
+      ctx,
+    );
+    expect((await emptyPushRes.json()).newCursor).toBe(0);
+
+    // A pull that returns rows reports their high-water mark...
+    const pulled = await (await app.request("/sync/pull?since=0", {}, env, ctx)).json();
+    expect(pulled.serverCursor).toBe(900);
+    expect(pulled.serverCursor).toBeLessThan(before);
+
+    // ...and a pull that returns nothing leaves `since` exactly where it was, so a client's stored
+    // cursor never drifts forward past rows it has not seen.
+    const emptyPull = await (await app.request("/sync/pull?since=900", {}, env, ctx)).json();
+    expect(emptyPull.movieRecents).toHaveLength(0);
+    expect(emptyPull.serverCursor).toBe(900);
+  });
+
+  it("rejects a malformed `since` with 400 rather than silently returning nothing", async () => {
+    const app = testApp();
+    const ctx = createExecutionContext();
+    const res = await app.request("/sync/pull?since=abc", {}, env, ctx);
+    expect(res.status).toBe(400);
   });
 
   it("does not overwrite a newer row with an older push (last-write-wins)", async () => {

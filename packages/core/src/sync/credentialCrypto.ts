@@ -6,6 +6,18 @@ import { SourceCredentialsPayloadSchema, type SourceCredentialsPayload } from "@
  * ciphertext. See the design spec's "Credential encryption". If the account password is lost
  * with no separate recovery flow, this is intentionally unrecoverable — see the spec's stated
  * trade-off; that's what makes this real encryption rather than security theatre.
+ *
+ * CHANGING the account password — not just losing it — has the same effect: the AES-GCM key is
+ * derived from the password, so a new password derives a *different* key and every previously
+ * synced credential becomes permanently undecryptable on every device. `better-auth`'s
+ * `emailAndPassword: { enabled: true }` in `apps/sync-worker/src/auth.ts` means a change-password
+ * endpoint is already live, and nothing currently guards this.
+ *
+ * Whoever wires up a password-change flow (a future task — deliberately not built speculatively
+ * here) MUST account for it, by either:
+ *   - blocking password changes while any synced source exists, or
+ *   - re-encrypting every source with the new derived key as part of the change, and only
+ *     committing the password change once that re-upload has succeeded.
  */
 
 export interface EncryptedPayload {

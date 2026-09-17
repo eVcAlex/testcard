@@ -117,6 +117,12 @@ POST /sync/push
         applies deletions as tombstones, returns { newCursor }
 ```
 
+Cursor invariant: both `serverCursor` and `newCursor` are always derived from client-authored
+`updated_at` values (the high-water mark of the rows actually pulled, or of the rows just pushed) —
+never from the server's wall-clock. A wall-clock cursor is computed after the reads complete, so it
+sits ahead of any write that landed in that window, and the next `?since=<cursor>` pull would skip
+those rows permanently. An empty pull returns `since` unchanged so the cursor never drifts.
+
 Trigger points: app start, network reconnect, every few minutes while foregrounded, and shortly
 after a significant local mutation (favourite toggled, progress checkpoint written) — debounced,
 not per-keystroke.

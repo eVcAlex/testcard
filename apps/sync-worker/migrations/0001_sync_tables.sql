@@ -2,9 +2,12 @@ CREATE TABLE IF NOT EXISTS sources (
   id                TEXT PRIMARY KEY,
   user_id           TEXT NOT NULL,
   remote_key        TEXT NOT NULL,
-  label             TEXT NOT NULL,
-  credentials_blob  TEXT NOT NULL,
-  credentials_iv    TEXT NOT NULL,
+  -- Nullable on purpose: a tombstone (deleted_at set) carries no credentials, so deleting a source
+  -- lets a device forget them instead of re-uploading the ciphertext forever. See
+  -- packages/sync-schema's SyncSourceSchema, which enforces the all-or-nothing pairing.
+  label             TEXT,
+  credentials_blob  TEXT,
+  credentials_iv    TEXT,
   updated_at        INTEGER NOT NULL,
   deleted_at        INTEGER
 );

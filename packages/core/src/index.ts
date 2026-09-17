@@ -13,3 +13,6 @@ export * from "./db/migrations.js";
 export * from "./db/openDatabase.js";
 export * from "./db/importSource.js";
 export * from "./db/queries.js";
+export * from "./sync/remoteKey.js";
+export * from "./sync/credentialCrypto.js";
+export * from "./sync/client.js";

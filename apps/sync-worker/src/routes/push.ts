@@ -1,6 +1,5 @@
-import type { Context } from "hono";
-import { SyncPushRequestSchema, SyncPushResponseSchema } from "@testcard/sync-schema";
-import type { Env } from "../index.js";
+import { SyncPushRequestSchema, SyncPushResponseSchema, type SyncPushRequest } from "@testcard/sync-schema";
+import { parseJsonBody, type AppContext } from "../validation.js";
 
 type FavouriteOrRecentTable = "movie_favourites" | "movie_recents" | "series_favourites" | "series_recents";
 
@@ -25,9 +24,31 @@ function upsertFavouriteOrRecent(
     .bind(userId, remoteKey, timestamp, updatedAt, deletedAt);
 }
 
-export async function handlePush(c: Context<{ Bindings: Env; Variables: { userId: string } }>): Promise<Response> {
+/**
+ * The cursor a client persists must be derived from the client-authored `updated_at` values it just
+ * sent, never from the Worker's wall-clock — see `docs/superpowers/specs/2026-09-16-device-sync-design.md`
+ * ("Sync protocol"). A wall-clock cursor would sit *ahead* of rows that landed while this request
+ * was in flight, and the next `?since=<cursor>` pull would skip them permanently.
+ */
+function maxUpdatedAt(body: SyncPushRequest): number {
+  const all = [
+    ...body.sources,
+    ...body.movieFavourites,
+    ...body.movieRecents,
+    ...body.seriesFavourites,
+    ...body.seriesRecents,
+    ...body.progress,
+  ];
+  // An empty push moves nothing, so it must not move the cursor either: 0 leaves the client's own
+  // stored cursor as the greater value, which is what it keeps using.
+  return all.reduce((max, row) => Math.max(max, row.updatedAt), 0);
+}
+
+export async function handlePush(c: AppContext): Promise<Response> {
   const userId = c.get("userId");
-  const body = SyncPushRequestSchema.parse(await c.req.json());
+  const parsed = await parseJsonBody(c, SyncPushRequestSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const db = c.env.DB;
 
   const statements = [
@@ -41,6 +62,8 @@ export async function handlePush(c: Context<{ Bindings: Env; Variables: { userId
              credentials_iv = excluded.credentials_iv, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at
            WHERE excluded.updated_at > sources.updated_at`,
         )
+        // label/blob/iv are null on a tombstone (see SyncSourceSchema); D1 binds JS null as SQL
+        // NULL, and 0001_sync_tables.sql drops NOT NULL on those columns to accept it.
         .bind(`${userId}:${s.remoteKey}`, userId, s.remoteKey, s.label, s.credentialsBlob, s.credentialsIv, s.updatedAt, s.deletedAt),
     ),
     ...body.movieFavourites.map((f) => upsertFavouriteOrRecent(db, "movie_favourites", "added_at", userId, f.remoteKey, f.addedAt, f.updatedAt, f.deletedAt)),
@@ -63,5 +86,5 @@ export async function handlePush(c: Context<{ Bindings: Env; Variables: { userId
 
   if (statements.length > 0) await db.batch(statements);
 
-  return c.json(SyncPushResponseSchema.parse({ newCursor: Date.now() }));
+  return c.json(SyncPushResponseSchema.parse({ newCursor: maxUpdatedAt(body) }));
 }

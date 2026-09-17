@@ -14,6 +14,10 @@ apps/desktop/resources/mpv/
 *.env.*
 !.env.example
 
+# local wrangler state — holds the local D1 database, i.e. real account rows and encrypted
+# credential blobs once the desktop app syncs against it. Never committed.
+apps/sync-worker/.wrangler/
+
 # playlists / provider data — never commit real playlists
 *.m3u
 *.m3u8
