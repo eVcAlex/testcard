@@ -20,3 +20,6 @@ export * from "./db/importVodDetails.js";
 export * from "./db/vodQueries.js";
 export * from "./db/seriesQueries.js";
 export * from "./db/progressQueries.js";
+export * from "./sync/remoteKey.js";
+export * from "./sync/credentialCrypto.js";
+export * from "./sync/client.js";

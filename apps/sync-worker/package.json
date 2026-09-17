@@ -1,0 +1,30 @@
+{
+  "name": "@testcard/sync-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:migrate:local": "wrangler d1 migrations apply testcard-sync --local",
+    "db:migrate:remote": "wrangler d1 migrations apply testcard-sync --remote"
+  },
+  "dependencies": {
+    "@testcard/sync-schema": "workspace:*",
+    "better-auth": "^1.2.7",
+    "hono": "^4.6.14",
+    "kysely": "^0.28.17",
+    "kysely-d1": "^0.3.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.9.0",
+    "@testcard/core": "workspace:*",
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4",
+    "wrangler": "^3.99.0"
+  }
+}
