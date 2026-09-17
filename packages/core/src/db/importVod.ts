@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
+import { remoteKeyFor } from "../sync/remoteKey.js";
 import type { CredentialsLookup } from "../source/xtream/client.js";
 import { fetchMovies, fetchVodCategories } from "../source/xtream/vod.js";
 import type { Category, Movie, Source } from "../source/types.js";
@@ -34,10 +35,10 @@ export async function importVod(
   const upsertMovie = db.prepare(`
     INSERT INTO movies (
       id, source_id, category_id, provider_stream_id, name, poster_url,
-      container_extension, rating, first_seen_at, last_seen_at
+      container_extension, rating, first_seen_at, last_seen_at, remote_key
     ) VALUES (
       @id, @sourceId, @categoryId, @providerStreamId, @name, @posterUrl,
-      @containerExtension, @rating, @firstSeenAt, @lastSeenAt
+      @containerExtension, @rating, @firstSeenAt, @lastSeenAt, @remoteKey
     )
     ON CONFLICT(id) DO UPDATE SET
       category_id          = excluded.category_id,
@@ -47,7 +48,8 @@ export async function importVod(
       container_extension  = excluded.container_extension,
       rating               = excluded.rating,
       details_fetched_at   = NULL,
-      last_seen_at         = excluded.last_seen_at
+      last_seen_at         = excluded.last_seen_at,
+      remote_key            = excluded.remote_key
   `);
 
   // Pages are drained into memory first — better-sqlite3 has no async transaction support,
@@ -55,6 +57,14 @@ export async function importVod(
   const pages: { category: Category; movies: readonly Movie[] }[] = [];
   for (const category of categories) {
     pages.push({ category, movies: await fetchMovies(source, category, getCredentials) });
+  }
+
+  const providerHost = source.kind === "xtream" ? source.baseUrl : "";
+  const remoteKeys = new Map<string, string>();
+  for (const page of pages) {
+    for (const movie of page.movies) {
+      remoteKeys.set(movie.id, await remoteKeyFor(providerHost, movie.providerStreamId));
+    }
   }
 
   let movieCount = 0;
@@ -73,6 +83,7 @@ export async function importVod(
           rating: movie.rating ?? null,
           firstSeenAt: now,
           lastSeenAt: now,
+          remoteKey: remoteKeys.get(movie.id),
         });
         movieCount += 1;
       }

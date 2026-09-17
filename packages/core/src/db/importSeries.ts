@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
+import { remoteKeyFor } from "../sync/remoteKey.js";
 import type { CredentialsLookup } from "../source/xtream/client.js";
 import { fetchSeriesCategories, fetchSeriesList } from "../source/xtream/vod.js";
 import type { Category, Series, Source } from "../source/types.js";
@@ -32,10 +33,10 @@ export async function importSeries(
   const upsertSeries = db.prepare(`
     INSERT INTO series (
       id, source_id, category_id, provider_series_id, name, poster_url,
-      rating, plot, first_seen_at, last_seen_at
+      rating, plot, first_seen_at, last_seen_at, remote_key
     ) VALUES (
       @id, @sourceId, @categoryId, @providerSeriesId, @name, @posterUrl,
-      @rating, @plot, @firstSeenAt, @lastSeenAt
+      @rating, @plot, @firstSeenAt, @lastSeenAt, @remoteKey
     )
     ON CONFLICT(id) DO UPDATE SET
       category_id         = excluded.category_id,
@@ -45,12 +46,21 @@ export async function importSeries(
       rating              = excluded.rating,
       plot                = excluded.plot,
       episodes_fetched_at = NULL,
-      last_seen_at        = excluded.last_seen_at
+      last_seen_at        = excluded.last_seen_at,
+      remote_key           = excluded.remote_key
   `);
 
   const pages: { category: Category; series: readonly Series[] }[] = [];
   for (const category of categories) {
     pages.push({ category, series: await fetchSeriesList(source, category, getCredentials) });
+  }
+
+  const providerHost = source.kind === "xtream" ? source.baseUrl : "";
+  const remoteKeys = new Map<string, string>();
+  for (const page of pages) {
+    for (const series of page.series) {
+      remoteKeys.set(series.id, await remoteKeyFor(providerHost, series.providerSeriesId));
+    }
   }
 
   let seriesCount = 0;
@@ -69,6 +79,7 @@ export async function importSeries(
           plot: series.plot ?? null,
           firstSeenAt: now,
           lastSeenAt: now,
+          remoteKey: remoteKeys.get(series.id),
         });
         seriesCount += 1;
       }

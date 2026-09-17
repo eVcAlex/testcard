@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { remoteKeyFor } from "../sync/remoteKey.js";
 import type { CredentialsLookup } from "../source/xtream/client.js";
 import { fetchSeriesDetails, fetchVodDetails } from "../source/xtream/vod.js";
 import type { Movie, Series, Source } from "../source/types.js";
@@ -81,12 +82,18 @@ export async function ensureSeriesEpisodes(
   };
   const { seasons, episodes } = await fetchSeriesDetails(source, series, getCredentials);
 
+  const providerHost = source.kind === "xtream" ? source.baseUrl : "";
+  const episodeRemoteKeys = new Map<string, string>();
+  for (const episode of episodes) {
+    episodeRemoteKeys.set(episode.id, await remoteKeyFor(providerHost, episode.providerEpisodeId));
+  }
+
   const deleteEpisodes = db.prepare(`DELETE FROM episodes WHERE series_id = ?`);
   const deleteSeasons = db.prepare(`DELETE FROM seasons WHERE series_id = ?`);
   const insertSeason = db.prepare(`INSERT INTO seasons (id, series_id, season_number, name, poster_url) VALUES (?, ?, ?, ?, ?)`);
   const insertEpisode = db.prepare(`
-    INSERT INTO episodes (id, season_id, series_id, provider_episode_id, episode_number, name, container_extension, duration_secs, plot)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO episodes (id, season_id, series_id, provider_episode_id, episode_number, name, container_extension, duration_secs, plot, remote_key)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const stamp = db.prepare(`UPDATE series SET episodes_fetched_at = ? WHERE id = ?`);
 
@@ -107,6 +114,7 @@ export async function ensureSeriesEpisodes(
         episode.containerExtension ?? null,
         episode.durationSecs ?? null,
         episode.plot ?? null,
+        episodeRemoteKeys.get(episode.id) ?? null,
       );
     }
     stamp.run(Date.now(), seriesId);
