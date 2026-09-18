@@ -297,6 +297,8 @@ export interface TestcardApi {
     signUp(email: string, password: string): Promise<SyncStatus>;
     signIn(email: string, password: string): Promise<SyncStatus>;
     signOut(): Promise<SyncStatus>;
+    /** Re-supplies the account password after a relaunch (never persisted — see `SyncController`'s class doc). Runs one sync immediately on success. */
+    reenterPassword(password: string): Promise<SyncStatus>;
     /** Runs one push-then-pull cycle immediately, outside the periodic schedule. */
     triggerNow(): Promise<SyncStatus>;
   };
@@ -308,7 +310,7 @@ export interface TestcardApi {
   };
 }
 
-export type SyncAccountStatus = "signed-out" | "signed-in";
+export type SyncAccountStatus = "signed-out" | "signed-in" | "needs-password";
 
 export interface SyncStatus {
   readonly account: SyncAccountStatus;

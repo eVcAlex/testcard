@@ -46,6 +46,9 @@ export class SyncController {
       | { account_email: string | null; last_pulled_at: number }
       | undefined;
     if (!row || row.account_email === null) return { account: "signed-out", ...(this.lastError !== undefined ? { lastError: this.lastError } : {}) };
+    if (this.accountPassword === undefined) {
+      return { account: "needs-password", email: row.account_email, ...(this.lastError !== undefined ? { lastError: this.lastError } : {}) };
+    }
     return {
       account: "signed-in",
       email: row.account_email,
@@ -81,12 +84,22 @@ export class SyncController {
   async signOut(): Promise<SyncStatus> {
     await this.client.signOut().catch(() => undefined); // best-effort — sign the device out locally regardless
     this.accountPassword = undefined;
-    this.db.prepare(`UPDATE sync_state SET account_email = NULL, session_token = NULL WHERE id = 1`).run();
+    this.salt = undefined;
+    this.db
+      .prepare(`UPDATE sync_state SET account_email = NULL, session_token = NULL, sync_salt = NULL, last_pulled_at = 0, last_pushed_at = 0 WHERE id = 1`)
+      .run();
     if (this.intervalHandle) clearInterval(this.intervalHandle);
     return this.status();
   }
 
   async triggerNow(): Promise<SyncStatus> {
+    await this.runOnce();
+    return this.status();
+  }
+
+  async reenterPassword(password: string): Promise<SyncStatus> {
+    this.accountPassword = password;
+    this.startPeriodicSync();
     await this.runOnce();
     return this.status();
   }
@@ -112,12 +125,18 @@ export class SyncController {
     try {
       const state = getSyncState(this.db);
       const push = await collectLocalChanges(this.db, state.lastPushedAt, password, salt, (sourceId) => getCredentials(sourceId));
+      const tombstoneCutoff = Math.max(
+        0,
+        ...[...push.movieFavourites, ...push.movieRecents, ...push.seriesFavourites, ...push.seriesRecents, ...push.progress]
+          .map((row) => row.deletedAt)
+          .filter((deletedAt): deletedAt is number => deletedAt !== null),
+      );
       const pushResult = await this.client.push(push);
-      setSyncState(this.db, { lastPushedAt: pushResult.newCursor });
-      clearTombstones(this.db);
+      setSyncState(this.db, { lastPushedAt: Math.max(state.lastPushedAt, pushResult.newCursor) });
+      clearTombstones(this.db, tombstoneCutoff);
 
       const pull = await this.client.pull(state.lastPulledAt);
-      await applyRemoteChanges(this.db, pull, password, salt, async (remoteKey, label, credentials) => {
+      const applyResult = await applyRemoteChanges(this.db, pull, password, salt, async (remoteKey, label, credentials) => {
         const existing = this.db.prepare(`SELECT id FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string } | undefined;
         if (existing) return; // already have this provider configured locally — never overwrite a live source's id
         const id = crypto.randomUUID();
@@ -126,7 +145,9 @@ export class SyncController {
           .prepare(`INSERT INTO sources (id, kind, name, base_url, created_at, remote_key) VALUES (?, 'xtream', ?, ?, ?, ?)`)
           .run(id, label, credentials.host, Date.now(), remoteKey);
       });
-      setSyncState(this.db, { lastPulledAt: pull.serverCursor });
+      const nextPulledAt =
+        applyResult.deferredBeforeMs !== undefined ? Math.min(pull.serverCursor, applyResult.deferredBeforeMs - 1) : pull.serverCursor;
+      setSyncState(this.db, { lastPulledAt: nextPulledAt });
       this.lastError = undefined;
     } catch (error) {
       this.lastError = error instanceof Error ? error.message : "Sync failed.";

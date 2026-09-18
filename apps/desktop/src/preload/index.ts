@@ -95,6 +95,7 @@ const api: TestcardApi = {
     signUp: bind("sync.signUp"),
     signIn: bind("sync.signIn"),
     signOut: bind("sync.signOut"),
+    reenterPassword: bind("sync.reenterPassword"),
     triggerNow: bind("sync.triggerNow"),
   },
   events: {

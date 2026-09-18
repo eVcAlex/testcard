@@ -744,6 +744,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async signOut() {
         return sync.signOut();
       },
+      async reenterPassword(password: string) {
+        return sync.reenterPassword(password);
+      },
       async triggerNow() {
         return sync.triggerNow();
       },

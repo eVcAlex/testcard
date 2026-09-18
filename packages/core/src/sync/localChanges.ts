@@ -135,9 +135,9 @@ export async function collectLocalChanges(
   };
 }
 
-/** Clears tombstones once the push that reported them has succeeded. */
-export function clearTombstones(db: Database.Database): void {
-  db.prepare(`DELETE FROM sync_tombstones`).run();
+/** Clears tombstones with `deleted_at <= beforeMs` — i.e. only ones actually included in a push that just succeeded, not any inserted concurrently during that push's network round-trip. */
+export function clearTombstones(db: Database.Database, beforeMs: number): void {
+  db.prepare(`DELETE FROM sync_tombstones WHERE deleted_at <= ?`).run(beforeMs);
 }
 
 /**
@@ -145,10 +145,14 @@ export function clearTombstones(db: Database.Database): void {
  * `remote_key` (never by local id, which differs per device — see the design spec's "Portable
  * content identity"). A row with no local match yet (this device hasn't imported that title) is
  * skipped for favourites/recents/progress — there's nothing local to attach it to until a
- * catalog refresh imports it, at which point `remote_key` will already be populated (Task 4) and
- * the next pull will match. Xtream source credentials are decrypted here, immediately before
- * being written to `credentials.enc.json` by the caller (Task 14) — this function never touches
- * that file directly, keeping `packages/core` free of Electron's `safeStorage`.
+ * catalog refresh imports it. Skipping a row like this is only safe because the caller is
+ * prevented from advancing its pull cursor past it (via the returned `deferredBeforeMs`, the
+ * minimum `updatedAt` among skipped rows this call): the row stays behind the caller's `since`
+ * value and is therefore redelivered on a future pull, once the missing content has been
+ * imported — at which point the parent lookup succeeds and the row applies normally. Xtream
+ * source credentials are decrypted here, immediately before being written to
+ * `credentials.enc.json` by the caller (Task 14) — this function never touches that file
+ * directly, keeping `packages/core` free of Electron's `safeStorage`.
  */
 export async function applyRemoteChanges(
   db: Database.Database,
@@ -156,7 +160,9 @@ export async function applyRemoteChanges(
   accountPassword: string,
   salt: string,
   onDecryptedSource: (remoteKey: string, label: string, credentials: { host: string; username: string; password: string }) => Promise<void>,
-): Promise<void> {
+): Promise<{ readonly deferredBeforeMs: number | undefined }> {
+  let minDeferred: number | undefined;
+
   for (const source of response.sources) {
     // Removing a source on one device and having that propagate to others (a tombstone on
     // `sources`, mirroring Task 6's favourite tombstones) is out of scope for this plan — see
@@ -175,7 +181,10 @@ export async function applyRemoteChanges(
         continue;
       }
       const movie = db.prepare(`SELECT id FROM movies WHERE remote_key = ?`).get(row.remoteKey) as { id: string } | undefined;
-      if (!movie) continue;
+      if (!movie) {
+        if (minDeferred === undefined || row.updatedAt < minDeferred) minDeferred = row.updatedAt;
+        continue;
+      }
       db.prepare(
         `INSERT INTO movie_favourites (movie_id, added_at, remote_key, updated_at) VALUES (?, ?, ?, ?)
          ON CONFLICT(movie_id) DO UPDATE SET added_at = excluded.added_at, updated_at = excluded.updated_at
@@ -189,7 +198,10 @@ export async function applyRemoteChanges(
         continue;
       }
       const movie = db.prepare(`SELECT id FROM movies WHERE remote_key = ?`).get(row.remoteKey) as { id: string } | undefined;
-      if (!movie) continue;
+      if (!movie) {
+        if (minDeferred === undefined || row.updatedAt < minDeferred) minDeferred = row.updatedAt;
+        continue;
+      }
       db.prepare(
         `INSERT INTO movie_recents (movie_id, played_at, remote_key, updated_at) VALUES (?, ?, ?, ?)
          ON CONFLICT(movie_id) DO UPDATE SET played_at = excluded.played_at, updated_at = excluded.updated_at
@@ -203,7 +215,10 @@ export async function applyRemoteChanges(
         continue;
       }
       const series = db.prepare(`SELECT id FROM series WHERE remote_key = ?`).get(row.remoteKey) as { id: string } | undefined;
-      if (!series) continue;
+      if (!series) {
+        if (minDeferred === undefined || row.updatedAt < minDeferred) minDeferred = row.updatedAt;
+        continue;
+      }
       db.prepare(
         `INSERT INTO series_favourites (series_id, added_at, remote_key, updated_at) VALUES (?, ?, ?, ?)
          ON CONFLICT(series_id) DO UPDATE SET added_at = excluded.added_at, updated_at = excluded.updated_at
@@ -217,7 +232,10 @@ export async function applyRemoteChanges(
         continue;
       }
       const series = db.prepare(`SELECT id FROM series WHERE remote_key = ?`).get(row.remoteKey) as { id: string } | undefined;
-      if (!series) continue;
+      if (!series) {
+        if (minDeferred === undefined || row.updatedAt < minDeferred) minDeferred = row.updatedAt;
+        continue;
+      }
       db.prepare(
         `INSERT INTO series_recents (series_id, played_at, remote_key, updated_at) VALUES (?, ?, ?, ?)
          ON CONFLICT(series_id) DO UPDATE SET played_at = excluded.played_at, updated_at = excluded.updated_at
@@ -228,7 +246,10 @@ export async function applyRemoteChanges(
     for (const row of response.progress) {
       const table = row.itemType === "movie" ? "movies" : "episodes";
       const item = db.prepare(`SELECT id FROM ${table} WHERE remote_key = ?`).get(row.remoteKey) as { id: string } | undefined;
-      if (!item) continue;
+      if (!item) {
+        if (minDeferred === undefined || row.updatedAt < minDeferred) minDeferred = row.updatedAt;
+        continue;
+      }
       db.prepare(
         `INSERT INTO playback_progress (item_type, item_id, position_secs, duration_secs, watched, updated_at, remote_key, deleted_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -240,4 +261,5 @@ export async function applyRemoteChanges(
     }
   });
   applyAll();
+  return { deferredBeforeMs: minDeferred };
 }
