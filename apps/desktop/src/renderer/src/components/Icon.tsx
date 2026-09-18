@@ -33,7 +33,8 @@ export type IconName =
   | "trash"
   | "film"
   | "layers"
-  | "check";
+  | "check"
+  | "user";
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -162,6 +163,12 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   check: <path d="M3.5 8.5l3 3 6-7" />,
+  user: (
+    <>
+      <circle cx="8" cy="5.5" r="2.5" />
+      <path d="M2.5 14c0-3.3 2.6-5.5 5.5-5.5s5.5 2.2 5.5 5.5" />
+    </>
+  ),
 };
 
 const FILLED: Partial<Record<IconName, true>> = {

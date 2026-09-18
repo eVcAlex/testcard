@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "guide" | "movies" | "series" | "favourites" | "recent" | "sources";
+export type BrowseTab = "live" | "guide" | "movies" | "series" | "favourites" | "recent" | "sources" | "account";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "live", label: "Live TV", icon: "tv" },
@@ -12,6 +12,7 @@ const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "favourites", label: "Favourites", icon: "star" },
   { id: "recent", label: "Recent", icon: "clock" },
   { id: "sources", label: "Sources", icon: "signal" },
+  { id: "account", label: "Account", icon: "user" },
 ];
 
 export function Sidebar({

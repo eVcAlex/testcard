@@ -8,9 +8,9 @@ import { MoviesView } from "./MoviesView.js";
 import { SeriesView } from "./SeriesView.js";
 import type { BrowseTab } from "./Sidebar.js";
 
-// "guide", "sources", "movies", and "series" never actually reach this component —
-// PlayerScreen branches to GuideView/SourcesView/MoviesView/SeriesView first — but BrowseTab
-// is one shared union, so this stays total.
+// "guide", "sources", "movies", "series", and "account" never actually reach this component —
+// PlayerScreen branches to GuideView/SourcesView/MoviesView/SeriesView/AccountView first — but
+// BrowseTab is one shared union, so this stays total.
 const TITLES: Record<BrowseTab, string> = {
   live: "Live TV",
   guide: "Guide",
@@ -19,6 +19,7 @@ const TITLES: Record<BrowseTab, string> = {
   favourites: "Favourites",
   recent: "Recently watched",
   sources: "Sources",
+  account: "Account",
 };
 
 export function BrowseView({

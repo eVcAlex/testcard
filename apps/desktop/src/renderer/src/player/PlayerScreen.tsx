@@ -7,6 +7,7 @@ import { GuideView } from "./GuideView.js";
 import { MoviesView } from "./MoviesView.js";
 import { SeriesView } from "./SeriesView.js";
 import { SourcesView } from "./SourcesView.js";
+import { AccountView } from "./AccountView.js";
 import { PlayerView } from "./PlayerView.js";
 import { usePlaybackEvents } from "./usePlaybackEvents.js";
 import { useTheme } from "./useTheme.js";
@@ -111,6 +112,8 @@ export function PlayerScreen() {
         <MoviesView onPlaybackStarted={onPlaybackStarted} />
       ) : tab === "series" ? (
         <SeriesView onPlaybackStarted={onPlaybackStarted} />
+      ) : tab === "account" ? (
+        <AccountView />
       ) : (
         <BrowseView
           tab={tab}
