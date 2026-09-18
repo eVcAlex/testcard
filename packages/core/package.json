@@ -8,7 +8,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "eval:categories": "vitest run --config vitest.eval.config.ts"
   },
   "dependencies": {
     "@testcard/sync-schema": "workspace:*",

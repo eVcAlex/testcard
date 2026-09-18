@@ -36,3 +36,9 @@ pnpm-debug.log*
 # local worktrees / agent scratch workspace — never committed
 .worktrees/
 .superpowers/
+
+# local worker secrets
+.dev.vars
+
+# dev-time TypeSafe/Jev audit cache (category names + Jev's answers; regenerable)
+packages/core/evals/.cache/

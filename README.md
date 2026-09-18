@@ -21,6 +21,15 @@ Not built yet: VOD and series (only live channels import today). See
 [`docs/phase-3-brief.md`](docs/phase-3-brief.md) for the most recent phase close-out and
 [`docs/adr/`](docs/adr) for the decisions behind non-obvious choices along the way.
 
+## Development-time TypeSafe/Jev audit (optional)
+
+Category genres come from deterministic rules in `packages/core` (see
+[ADR 0007](docs/adr/0007-category-classification-and-dev-time-ai.md)); the app never calls an AI
+service. To audit those rules against TypeSafe/Jev while developing, put `TYPESAFE_API_KEY` in your
+*own* environment (never in this repo) and run
+`pnpm --filter @testcard/core eval:categories` with `CATEGORY_NAMES_FILE` pointing at a JSON of
+provider category names.
+
 ## Requirements
 
 - Node.js 22+, pnpm 10+

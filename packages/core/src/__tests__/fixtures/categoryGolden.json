@@ -1,0 +1,612 @@
+[
+  {
+    "name": "|EN| 4K CHILDREN",
+    "kind": "movie",
+    "genre": "kids"
+  },
+  {
+    "name": "|EN| 4K CLASSIC MOVIES",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| 4K MOVIES",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| ACTION/THRILLER",
+    "kind": "movie",
+    "genre": "action"
+  },
+  {
+    "name": "|EN| ACTORS & DIRECTORS",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| ADVENTURE MOVIES",
+    "kind": "movie",
+    "genre": "action"
+  },
+  {
+    "name": "|EN| ANIME",
+    "kind": "movie",
+    "genre": "animation"
+  },
+  {
+    "name": "|EN| BET/ALLBLK MOVIES",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| BROADWAY/MUSICAL",
+    "kind": "movie",
+    "genre": "music"
+  },
+  {
+    "name": "|EN| CHILDREN/FAMILY",
+    "kind": "movie",
+    "genre": "kids"
+  },
+  {
+    "name": "|EN| CHRISTMAS MOVIES",
+    "kind": "movie",
+    "genre": "holiday"
+  },
+  {
+    "name": "|EN| CLASSIC MOVIES COLLECTION",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| COLLECTIONS",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| COMEDY",
+    "kind": "movie",
+    "genre": "comedy"
+  },
+  {
+    "name": "|EN| DISNEY+",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| DOCUMENTARY",
+    "kind": "movie",
+    "genre": "documentary"
+  },
+  {
+    "name": "|EN| DRAMA",
+    "kind": "movie",
+    "genre": "drama"
+  },
+  {
+    "name": "|EN| DRAMA/COMEDY",
+    "kind": "movie",
+    "genre": "drama"
+  },
+  {
+    "name": "|EN| DRAMA/CRIME",
+    "kind": "movie",
+    "genre": "drama"
+  },
+  {
+    "name": "|EN| DRAMA/ROMANCE",
+    "kind": "movie",
+    "genre": "drama"
+  },
+  {
+    "name": "|EN| FOREIGN MOVIES",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| FRENCH MOVIES / ENG SUB",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| HBO MAX",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| HORROR/THRILLER",
+    "kind": "movie",
+    "genre": "horror"
+  },
+  {
+    "name": "|EN| HULU",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| ITALIAN MOVIES / ENG SUB",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| MOVIES 2018-2021",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| MUSIC/CONCERTS",
+    "kind": "movie",
+    "genre": "music"
+  },
+  {
+    "name": "|EN| NETFLIX",
+    "kind": "movie",
+    "genre": null
+  },
+  {
+    "name": "|EN| SCIENCE FICTION/FANTASTY",
+    "kind": "movie",
+    "genre": "scifi"
+  },
+  {
+    "name": "|EN| STAND-UP COMEDY",
+    "kind": "movie",
+    "genre": "comedy"
+  },
+  {
+    "name": "|EN| WAR",
+    "kind": "movie",
+    "genre": "action"
+  },
+  {
+    "name": "|EN| WESTERNS",
+    "kind": "movie",
+    "genre": "action"
+  },
+  {
+    "name": "|SPT| SPORT UFC",
+    "kind": "movie",
+    "genre": "sports"
+  },
+  {
+    "name": "|SPT| SPORT WWE",
+    "kind": "movie",
+    "genre": "sports"
+  },
+  {
+    "name": "⚽️ FIFA+",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "⚽️ MLS Direct Kick",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "⚽️ Sports PPV",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "⚽️ UEFA",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "⚾️ B/R Max Sports",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "⚾️ MILB.tv",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "⚾️ MLB.tv",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "⛳️ Golf",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "🌍| World Sports ⬇️",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "🎶 Music Videos",
+    "kind": "live",
+    "genre": "music"
+  },
+  {
+    "name": "🎾 Tennis",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "🏀 NBA League Pass",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "🏀 WNBA League Pass ",
+    "kind": "live",
+    "genre": "sports"
+  },
+  {
+    "name": "📰 News Networks",
+    "kind": "live",
+    "genre": "news"
+  },
+  {
+    "name": "📻 Music Streaming",
+    "kind": "live",
+    "genre": "music"
+  },
+  {
+    "name": "🤠 Westerns ᴳᴬᴺᴶᴬ",
+    "kind": "live",
+    "genre": "action"
+  },
+  {
+    "name": "🧸 Kids Channels",
+    "kind": "live",
+    "genre": "kids"
+  },
+  {
+    "name": "24/7 ACTION & ADVENTURE VIP",
+    "kind": "live",
+    "genre": "action"
+  },
+  {
+    "name": "24/7 COMEDY VIP",
+    "kind": "live",
+    "genre": "comedy"
+  },
+  {
+    "name": "24/7 DRAMA VIP",
+    "kind": "live",
+    "genre": "drama"
+  },
+  {
+    "name": "24/7 KIDS/FAMILY VIP",
+    "kind": "live",
+    "genre": "kids"
+  },
+  {
+    "name": "24/7 REALITY VIP",
+    "kind": "live",
+    "genre": "reality"
+  },
+  {
+    "name": "AMAZON DOCU-MOVIES",
+    "kind": "movie",
+    "genre": "documentary"
+  },
+  {
+    "name": "AMAZON DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ",
+    "kind": "movie",
+    "genre": "documentary"
+  },
+  {
+    "name": "AMAZON DOCU-SERIES",
+    "kind": "series",
+    "genre": "documentary"
+  },
+  {
+    "name": "AMAZON DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ",
+    "kind": "series",
+    "genre": "documentary"
+  },
+  {
+    "name": "AMAZON KIDS",
+    "kind": "movie",
+    "genre": "kids"
+  },
+  {
+    "name": "AMAZON KIDS",
+    "kind": "series",
+    "genre": "kids"
+  },
+  {
+    "name": "AMAZON KIDS ⁴ᴷ ³⁸⁴⁰ᴾ",
+    "kind": "movie",
+    "genre": "kids"
+  },
+  {
+    "name": "AMAZON KIDS ⁴ᴷ ³⁸⁴⁰ᴾ",
+    "kind": "series",
+    "genre": "kids"
+  },
+  {
+    "name": "AMAZON REALITY",
+    "kind": "series",
+    "genre": "reality"
+  },
+  {
+    "name": "AMAZON REALITY ᴰᴼᴸᴮʸ ᴬᵁᴰᴵᴼ ⁴ᴷ ³⁸⁴⁰ᴾ",
+    "kind": "series",
+    "genre": "reality"
+  },
+  {
+    "name": "APPLE+ DOCU-SERIES",
+    "kind": "series",
+    "genre": "documentary"
+  },
+  {
+    "name": "APPLE+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ",
+    "kind": "series",
+    "genre": "documentary"
+  },
+  {
+    "name": "APPLE+ KIDS",
+    "kind": "movie",
+    "genre": "kids"
+  },
+  {
+    "name": "APPLE+ KIDS",
+    "kind": "series",
+    "genre": "kids"
+  },
+  {
+    "name": "APPLE+ KIDS ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ",
+    "kind": "movie",
+    "genre": "kids"
+  },
+  {
+    "name": "APPLE+ KIDS ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ",
+    "kind": "series",
+    "genre": "kids"
+  },
+  {
+    "name": "CA| DOCUMENTARY EN",
+    "kind": "live",
+    "genre": "documentary"
+  },
+  {
+    "name": "CA| DOCUMENTARY FR",
+    "kind": "live",
+    "genre": "documentary"
+  },
+  {
+    "name": "CA| Kids",
+    "kind": "live",
+    "genre": "kids"
+  },
+  {
+    "name": "CA| KIDS",
+    "kind": "live",
+    "genre": "kids"
+  },
+  {
+    "name": "CA| MUSIC FR",
+    "kind": "live",
+    "genre": "music"
+  },
+  {
+    "name": "CA| News",
+    "kind": "live",
+    "genre": "news"
+  },
+  {
+    "name": "CA| NEWS EN",
+    "kind": "live",
+    "genre": "news"
+  },
+  {
+    "name": "DISNEY+ DOCU-MOVIES",
+    "kind": "movie",
+    "genre": "documentary"
+  },
+  {
+    "name": "DISNEY+ DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ",
+    "kind": "movie",
+    "genre": "documentary"
+  },
+  {
+    "name": "DISNEY+ DOCU-SERIES",
+    "kind": "series",
+    "genre": "documentary"
+  },
+  {
+    "name": "DISNEY+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ",
+    "kind": "series",
+    "genre": "documentary"
+  },
+  {
+    "name": "DISNEY+ REALITY",
+    "kind": "series",
+    "genre": "reality"
+  },
+  {
+    "name": "DISNEY+ STAND-UP COMEDY",
+    "kind": "movie",
+    "genre": "comedy"
+  },
+  {
+    "name": "DREAMWORKS ANIMATION",
+    "kind": "movie",
+    "genre": "animation"
+  },
+  {
+    "name": "EN - ACTION",
+    "kind": "movie",
+    "genre": "action"
+  },
+  {
+    "name": "EN - ADVENTURE",
+    "kind": "movie",
+    "genre": "action"
+  },
+  {
+    "name": "EN - CHRISTMAS",
+    "kind": "movie",
+    "genre": "holiday"
+  },
+  {
+    "name": "EN - COMEDY",
+    "kind": "movie",
+    "genre": "comedy"
+  },
+  {
+    "name": "EN - CONCERTS",
+    "kind": "movie",
+    "genre": "music"
+  },
+  {
+    "name": "EN - DOCUMENTARIES",
+    "kind": "movie",
+    "genre": "documentary"
+  },
+  {
+    "name": "EN - DRAMA",
+    "kind": "movie",
+    "genre": "drama"
+  },
+  {
+    "name": "EN - HORROR",
+    "kind": "movie",
+    "genre": "horror"
+  },
+  {
+    "name": "EN - MANGA/ANIME",
+    "kind": "movie",
+    "genre": "animation"
+  },
+  {
+    "name": "EN - MUSICAL",
+    "kind": "movie",
+    "genre": "music"
+  },
+  {
+    "name": "EN - ROMANCE",
+    "kind": "movie",
+    "genre": "romance"
+  },
+  {
+    "name": "EN - SCIENCE FICTION",
+    "kind": "movie",
+    "genre": "scifi"
+  },
+  {
+    "name": "EN - THRILLER",
+    "kind": "movie",
+    "genre": "horror"
+  },
+  {
+    "name": "EN - WESTERNS",
+    "kind": "movie",
+    "genre": "action"
+  },
+  {
+    "name": "ENGLISH REALITY SERIES",
+    "kind": "series",
+    "genre": "reality"
+  },
+  {
+    "name": "JAMES BOND 007",
+    "kind": "movie",
+    "genre": "action"
+  },
+  {
+    "name": "NETFLIX ANIME",
+    "kind": "series",
+    "genre": "animation"
+  },
+  {
+    "name": "NETFLIX ANIMI",
+    "kind": "movie",
+    "genre": "animation"
+  },
+  {
+    "name": "NETFLIX MUSIC",
+    "kind": "movie",
+    "genre": "music"
+  },
+  {
+    "name": "NETFLIX REALITY",
+    "kind": "series",
+    "genre": "reality"
+  },
+  {
+    "name": "NETFLIX STAND-UP COMEDY",
+    "kind": "movie",
+    "genre": "comedy"
+  },
+  {
+    "name": "NETFLIX STAND-UP COMEDY",
+    "kind": "series",
+    "genre": "comedy"
+  },
+  {
+    "name": "UK| MUSIC",
+    "kind": "live",
+    "genre": "music"
+  },
+  {
+    "name": "UK| MUSIC ᴴᴰ/ᴿᴬᵂ",
+    "kind": "live",
+    "genre": "music"
+  },
+  {
+    "name": "UK| News",
+    "kind": "live",
+    "genre": "news"
+  },
+  {
+    "name": "UK| NEWS",
+    "kind": "live",
+    "genre": "news"
+  },
+  {
+    "name": "UK| NEWS ᴴᴰ/ᴿᴬᵂ",
+    "kind": "live",
+    "genre": "news"
+  },
+  {
+    "name": "UK| NEWS ʰᵉᵛᶜ",
+    "kind": "live",
+    "genre": "news"
+  },
+  {
+    "name": "UK| REALITY SHOW TV",
+    "kind": "live",
+    "genre": "reality"
+  },
+  {
+    "name": "UK| REALITY SHOW TV ᴿᴬᵂ",
+    "kind": "live",
+    "genre": "reality"
+  },
+  {
+    "name": "US| 24/7 ACTION/ADVENTURE ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+    "kind": "live",
+    "genre": "action"
+  },
+  {
+    "name": "US| 24/7 COMEDY ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+    "kind": "live",
+    "genre": "comedy"
+  },
+  {
+    "name": "US| 24/7 REALITY ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+    "kind": "live",
+    "genre": "reality"
+  },
+  {
+    "name": "US| NEWS ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+    "kind": "live",
+    "genre": "news"
+  },
+  {
+    "name": "US| NEWS NETWORK",
+    "kind": "live",
+    "genre": "news"
+  }
+]
