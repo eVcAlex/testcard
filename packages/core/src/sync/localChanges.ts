@@ -1,6 +1,14 @@
 import type Database from "better-sqlite3";
 import { decryptCredentials, encryptCredentials } from "./credentialCrypto.js";
-import type { SyncFavourite, SyncPullResponse, SyncPushRequest, SyncRecent, SyncSource } from "@testcard/sync-schema";
+import { remoteKeyFor, remoteKeyForPlaylist } from "./remoteKey.js";
+import type {
+  SourceCredentialsPayload,
+  SyncFavourite,
+  SyncPullResponse,
+  SyncPushRequest,
+  SyncRecent,
+  SyncSource,
+} from "@testcard/sync-schema";
 
 export interface SyncState {
   readonly lastPulledAt: number;
@@ -50,6 +58,30 @@ function collectFavouritesOrRecents(
 export type SyncCredentialsLookup = (sourceId: string) => Promise<{ baseUrl: string; username: string; password: string }>;
 
 /**
+ * Sources added before they were syncable (M3U ones never were) have no `remote_key` /
+ * `sync_updated_at`; give them one so the next push picks them up.
+ */
+async function backfillSourceKeys(db: Database.Database, getCredentials: SyncCredentialsLookup): Promise<void> {
+  const rows = db
+    .prepare(`SELECT id, kind, playlist_url AS playlistUrl FROM sources WHERE remote_key IS NULL OR sync_updated_at IS NULL`)
+    .all() as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null }[];
+  for (const row of rows) {
+    let remoteKey: string;
+    if (row.kind === "m3u") {
+      if (row.playlistUrl === null || row.playlistUrl === "") continue;
+      remoteKey = await remoteKeyForPlaylist(row.playlistUrl);
+    } else {
+      remoteKey = await remoteKeyFor((await getCredentials(row.id)).baseUrl, "source");
+    }
+    db.prepare(`UPDATE sources SET remote_key = COALESCE(remote_key, ?), sync_updated_at = COALESCE(sync_updated_at, ?) WHERE id = ?`).run(
+      remoteKey,
+      Date.now(),
+      row.id,
+    );
+  }
+}
+
+/**
  * Builds this device's `SyncPushRequest`: every row changed since `sinceMs`, plus every tombstone
  * recorded since the last push (a local delete, e.g. an unfavourite — see Task 6). Xtream source
  * credentials are fetched via `getCredentials` (the actual username/password live in Electron's
@@ -63,21 +95,25 @@ export async function collectLocalChanges(
   salt: string,
   getCredentials: SyncCredentialsLookup,
 ): Promise<SyncPushRequest> {
+  await backfillSourceKeys(db, getCredentials);
   const sourceRows = db
     .prepare(
-      `SELECT id, remote_key, name, sync_updated_at FROM sources
-       WHERE kind = 'xtream' AND remote_key IS NOT NULL AND sync_updated_at > ?`,
+      `SELECT id, kind, playlist_url AS playlistUrl, remote_key, name, sync_updated_at FROM sources
+       WHERE kind IN ('xtream', 'm3u') AND remote_key IS NOT NULL AND sync_updated_at > ?`,
     )
-    .all(sinceMs) as { id: string; remote_key: string; name: string; sync_updated_at: number }[];
+    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; remote_key: string; name: string; sync_updated_at: number }[];
 
   const sources: SyncSource[] = [];
   for (const row of sourceRows) {
-    const credentials = await getCredentials(row.id);
-    const encrypted = await encryptCredentials(
-      { host: credentials.baseUrl, username: credentials.username, password: credentials.password },
-      accountPassword,
-      salt,
-    );
+    let payload: SourceCredentialsPayload;
+    if (row.kind === "m3u") {
+      if (row.playlistUrl === null || row.playlistUrl === "") continue;
+      payload = { playlistUrl: row.playlistUrl };
+    } else {
+      const credentials = await getCredentials(row.id);
+      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password };
+    }
+    const encrypted = await encryptCredentials(payload, accountPassword, salt);
     sources.push({ remoteKey: row.remote_key, label: row.name, credentialsBlob: encrypted.blob, credentialsIv: encrypted.iv, updatedAt: row.sync_updated_at, deletedAt: null });
   }
 
@@ -159,7 +195,7 @@ export async function applyRemoteChanges(
   response: SyncPullResponse,
   accountPassword: string,
   salt: string,
-  onDecryptedSource: (remoteKey: string, label: string, credentials: { host: string; username: string; password: string }) => Promise<void>,
+  onDecryptedSource: (remoteKey: string, label: string, payload: SourceCredentialsPayload) => Promise<void>,
 ): Promise<{ readonly deferredBeforeMs: number | undefined }> {
   let minDeferred: number | undefined;
 

@@ -10,7 +10,7 @@ export default defineWorkersConfig(async () => {
       poolOptions: {
         workers: {
           wrangler: { configPath: "./wrangler.toml" },
-          miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+          miniflare: { bindings: { TEST_MIGRATIONS: migrations, SYNC_AUTH_SECRET: "test-only-secret-not-a-real-one" } },
         },
       },
     },

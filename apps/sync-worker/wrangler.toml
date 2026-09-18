@@ -3,16 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# better-auth's signing/encryption secret. This placeholder exists so `wrangler dev`, the local
-# D1 migration flow and the Worker tests run with no manual setup step. It is NOT a real secret and
-# must never be one: before any real deploy, override it with
-#   wrangler secret put SYNC_AUTH_SECRET
-# (a secret binding of the same name shadows this var), using e.g. `openssl rand -base64 32`.
-[vars]
-SYNC_AUTH_SECRET = "REPLACE_WITH_WRANGLER_SECRET_PUT_SYNC_AUTH_SECRET"
+# SYNC_AUTH_SECRET (better-auth signing/encryption secret) is deliberately NOT declared here: a [vars]
+# entry is deployed as a plain var and replaces the real secret. Deployed: `wrangler secret put
+# SYNC_AUTH_SECRET`. Local `wrangler dev`: .dev.vars (gitignored). Worker tests: vitest.config.ts.
 
 [[d1_databases]]
 binding = "DB"
 database_name = "testcard-sync"
-database_id = "REPLACE_WITH_WRANGLER_D1_CREATE_OUTPUT"
+database_id = "41722575-4662-49c5-8fd6-01b7cb47132b"
 migrations_dir = "migrations"

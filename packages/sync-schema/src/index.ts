@@ -1,14 +1,20 @@
 import { z } from "zod";
 
 /**
- * An Xtream login as it exists client-side, before encryption. Never crosses the wire in this
- * shape — see `SyncSourceSchema`, which carries only its ciphertext.
+ * A source's secret as it exists client-side, before encryption: an Xtream login, or an M3U
+ * playlist URL (which routinely embeds a username/password in its query string, so it is as
+ * sensitive as a login). Never crosses the wire in this shape — see `SyncSourceSchema`, which
+ * carries only its ciphertext. The two shapes are told apart by which keys they have.
  */
-export const SourceCredentialsPayloadSchema = z.object({
+export const XtreamCredentialsPayloadSchema = z.object({
   host: z.string().min(1),
   username: z.string().min(1),
   password: z.string().min(1),
 });
+export const PlaylistPayloadSchema = z.object({
+  playlistUrl: z.string().min(1),
+});
+export const SourceCredentialsPayloadSchema = z.union([XtreamCredentialsPayloadSchema, PlaylistPayloadSchema]);
 export type SourceCredentialsPayload = z.infer<typeof SourceCredentialsPayloadSchema>;
 
 /**

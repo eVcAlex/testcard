@@ -10,18 +10,55 @@ import {
 } from "@testcard/core";
 import type { SyncStatus } from "../shared/ipc.js";
 import { getCredentials, saveCredentials } from "./credentials.js";
+import { clearAccountPassword, loadAccountPassword, saveAccountPassword } from "./accountSecret.js";
 
-const SYNC_WORKER_URL = process.env.TESTCARD_SYNC_URL ?? "https://sync.testcard.app";
-const PERIODIC_INTERVAL_MS = 5 * 60 * 1000;
+const SYNC_WORKER_URL = process.env.TESTCARD_SYNC_URL ?? "https://testcard-sync.evcalex.workers.dev";
+const PERIODIC_INTERVAL_MS = 60 * 1000;
+// Local edits (favourites, progress, sources...) sync shortly after they happen, but never more
+// often than this - playback progress is written every few seconds while watching.
+const CHANGE_SYNC_DELAY_MS = 3000;
+const CHANGE_SYNC_MIN_GAP_MS = 15_000;
+
+/** The server's own message from a JSON error body ({"message": ...} / {"error": ...}), if it sent one. */
+function serverMessage(error: unknown): string | undefined {
+  const text = error instanceof Error ? error.message : undefined;
+  if (text === undefined) return undefined;
+  try {
+    const body = JSON.parse(text) as { message?: unknown; error?: unknown };
+    if (typeof body.message === "string") return body.message;
+    if (typeof body.error === "string") return body.error;
+  } catch {
+    /* not JSON */
+  }
+  return undefined;
+}
+
+/** Sign-in / sign-up failures, in words a person can act on. Thrown to the renderer as the Error message. */
+function authFailure(error: unknown, action: "signIn" | "signUp"): Error {
+  const status = (error as { status?: number } | null)?.status;
+  if (status === undefined) return new Error("Can't reach the sync server. Check your connection and try again.");
+  const detail = serverMessage(error);
+  if (action === "signIn" && (status === 401 || status === 400)) return new Error("That email and password don't match an account.");
+  if (action === "signUp" && (status === 422 || status === 409)) return new Error("An account with that email already exists. Sign in instead.");
+  if (status >= 500) return new Error("The sync server had a problem. Try again in a moment.");
+  return new Error(detail ?? "That didn't work. Check your details and try again.");
+}
+
+/** Turns a transport/HTTP error into something a person can act on (never raw JSON). */
+function describeSyncError(error: unknown): string {
+  const status = (error as { status?: number } | null)?.status;
+  if (status === 401) return "Sync isn't authorised. Sign in again.";
+  if (status !== undefined && status >= 500) return "The sync server had a problem. It will retry shortly.";
+  if (status === undefined) return "Can't reach the sync server. It will retry shortly.";
+  return error instanceof Error && error.message !== "" ? error.message : "Sync failed.";
+}
 
 /**
- * Owns the one in-memory secret this feature needs: the account password, used to derive the
- * credential-encryption key (Task 7's `credentialCrypto.ts`). It is never persisted — only the
- * resulting session token, account email, and PBKDF2 salt live in `sync_state` (Task 2), so a
- * relaunch always needs a fresh sign-in to sync again. That's the direct consequence of the
- * design spec's "Credential encryption" trade-off: no password, no decrypting synced sources.
- * The salt itself isn't secret (see Task 9's `/sync/salt`) and is safe to persist — it's what
- * lets a *second* device, after signing in, derive the exact same key the first device used.
+ * Owns the account password, used to derive the credential-encryption key (Task 7's
+ * `credentialCrypto.ts`). The password is kept in memory and also stored encrypted with the OS
+ * keystore (accountSecret.ts) so a relaunch resumes syncing without a new sign-in. The session
+ * token, account email and PBKDF2 salt live in `sync_state`. The salt isn't secret (see Task 9's
+ * `/sync/salt`) - it's what lets a *second* device derive the same key the first one used.
  */
 export class SyncController {
   private client: SyncClient;
@@ -29,11 +66,42 @@ export class SyncController {
   private salt: string | undefined;
   private intervalHandle: ReturnType<typeof setInterval> | undefined;
   private lastError: string | undefined;
+  // Wall-clock time of the last successful sync run. Not `sync_state.last_pulled_at`: that's the
+  // newest *data* timestamp pulled, so it stays put whenever there's nothing new to pull.
+  private lastSyncedAt: number | undefined;
+  private running: Promise<void> | undefined;
+  private rerunRequested = false;
+  private changeTimer: ReturnType<typeof setTimeout> | undefined;
+  private lastRunStartedAt = 0;
 
-  constructor(private readonly db: Database.Database) {
+  constructor(
+    private readonly db: Database.Database,
+    /** Called with the ids of sources that arrived from another device, so they can be refreshed (imported) right away. */
+    private readonly onSourcesAdded: (sourceIds: readonly string[]) => void = () => undefined,
+  ) {
     this.client = new SyncClient({ baseUrl: SYNC_WORKER_URL, getSessionToken: () => this.sessionToken() });
-    const row = this.db.prepare(`SELECT sync_salt FROM sync_state WHERE id = 1`).get() as { sync_salt: string | null } | undefined;
+    const row = this.db.prepare(`SELECT sync_salt, account_email FROM sync_state WHERE id = 1`).get() as
+      | { sync_salt: string | null; account_email: string | null }
+      | undefined;
     this.salt = row?.sync_salt ?? undefined;
+    if (row?.account_email) {
+      // Resume the previous session: no re-login needed after a relaunch.
+      this.accountPassword = loadAccountPassword();
+      if (this.accountPassword !== undefined && this.salt !== undefined) {
+        this.startPeriodicSync();
+        void this.runOnce();
+      }
+    }
+  }
+
+  /** Call after any local change to synced data. Coalesced: one sync shortly after, rate-limited. */
+  notifyLocalChange(): void {
+    if (this.accountPassword === undefined || this.changeTimer !== undefined) return;
+    const wait = Math.max(CHANGE_SYNC_DELAY_MS, this.lastRunStartedAt + CHANGE_SYNC_MIN_GAP_MS - Date.now());
+    this.changeTimer = setTimeout(() => {
+      this.changeTimer = undefined;
+      void this.runOnce();
+    }, wait);
   }
 
   private sessionToken(): string | undefined {
@@ -42,9 +110,7 @@ export class SyncController {
   }
 
   status(): SyncStatus {
-    const row = this.db.prepare(`SELECT account_email, last_pulled_at FROM sync_state WHERE id = 1`).get() as
-      | { account_email: string | null; last_pulled_at: number }
-      | undefined;
+    const row = this.db.prepare(`SELECT account_email FROM sync_state WHERE id = 1`).get() as { account_email: string | null } | undefined;
     if (!row || row.account_email === null) return { account: "signed-out", ...(this.lastError !== undefined ? { lastError: this.lastError } : {}) };
     if (this.accountPassword === undefined) {
       return { account: "needs-password", email: row.account_email, ...(this.lastError !== undefined ? { lastError: this.lastError } : {}) };
@@ -52,22 +118,32 @@ export class SyncController {
     return {
       account: "signed-in",
       email: row.account_email,
-      ...(row.last_pulled_at ? { lastSyncedAt: row.last_pulled_at } : {}),
+      ...(this.lastSyncedAt !== undefined ? { lastSyncedAt: this.lastSyncedAt } : {}),
       ...(this.lastError !== undefined ? { lastError: this.lastError } : {}),
     };
   }
 
   async signUp(email: string, password: string): Promise<SyncStatus> {
-    const result = await this.client.signUp(email, password);
+    const result = await this.client.signUp(email, password).catch((error: unknown) => {
+      throw authFailure(error, "signUp");
+    });
+    // Persist the token before any authenticated call: getSessionToken() (passed to SyncClient
+    // above) reads it back out of sync_state, so setSalt below would otherwise go out with no
+    // Bearer token and 401.
+    this.persistToken(email, result.sessionToken);
     const salt = generateSalt();
     await this.client.setSalt(salt); // set-once; safe even if a retry races, see handleSetSalt's ON CONFLICT DO NOTHING
-    this.persistSession(email, result.sessionToken, password, salt);
+    this.finaliseSession(password, salt);
     this.startPeriodicSync();
+    await this.runOnce();
     return this.status();
   }
 
   async signIn(email: string, password: string): Promise<SyncStatus> {
-    const result = await this.client.signIn(email, password);
+    const result = await this.client.signIn(email, password).catch((error: unknown) => {
+      throw authFailure(error, "signIn");
+    });
+    this.persistToken(email, result.sessionToken); // see signUp's comment — getSalt/setSalt below need it in the DB first
     let salt = await this.client.getSalt();
     if (salt === undefined) {
       // Defensive fallback only: every account should have set one during signUp. Recovering
@@ -75,7 +151,7 @@ export class SyncController {
       salt = generateSalt();
       await this.client.setSalt(salt);
     }
-    this.persistSession(email, result.sessionToken, password, salt);
+    this.finaliseSession(password, salt);
     this.startPeriodicSync();
     await this.runOnce();
     return this.status();
@@ -83,13 +159,23 @@ export class SyncController {
 
   async signOut(): Promise<SyncStatus> {
     await this.client.signOut().catch(() => undefined); // best-effort — sign the device out locally regardless
+    this.lastError = undefined;
+    this.forgetSession();
+    return this.status();
+  }
+
+  /** Drops the local session (token, password, salt, cursors) without telling the server. */
+  private forgetSession(): void {
     this.accountPassword = undefined;
     this.salt = undefined;
+    this.lastSyncedAt = undefined;
+    clearAccountPassword();
+    if (this.changeTimer) clearTimeout(this.changeTimer);
+    this.changeTimer = undefined;
     this.db
       .prepare(`UPDATE sync_state SET account_email = NULL, session_token = NULL, sync_salt = NULL, last_pulled_at = 0, last_pushed_at = 0 WHERE id = 1`)
       .run();
     if (this.intervalHandle) clearInterval(this.intervalHandle);
-    return this.status();
   }
 
   async triggerNow(): Promise<SyncStatus> {
@@ -99,14 +185,20 @@ export class SyncController {
 
   async reenterPassword(password: string): Promise<SyncStatus> {
     this.accountPassword = password;
+    saveAccountPassword(password);
     this.startPeriodicSync();
     await this.runOnce();
     return this.status();
   }
 
-  private persistSession(email: string, sessionToken: string, password: string, salt: string): void {
+  private persistToken(email: string, sessionToken: string): void {
     getSyncState(this.db); // ensures the singleton row exists
-    this.db.prepare(`UPDATE sync_state SET account_email = ?, session_token = ?, sync_salt = ? WHERE id = 1`).run(email, sessionToken, salt);
+    this.db.prepare(`UPDATE sync_state SET account_email = ?, session_token = ? WHERE id = 1`).run(email, sessionToken);
+  }
+
+  private finaliseSession(password: string, salt: string): void {
+    this.db.prepare(`UPDATE sync_state SET sync_salt = ? WHERE id = 1`).run(salt);
+    saveAccountPassword(password);
     this.accountPassword = password;
     this.salt = salt;
   }
@@ -118,8 +210,44 @@ export class SyncController {
     }, PERIODIC_INTERVAL_MS);
   }
 
-  private async runOnce(): Promise<void> {
-    if (this.accountPassword === undefined || this.salt === undefined) return; // signed out, or a fresh launch with no re-entered password yet
+  /** One sync at a time; a request that arrives mid-run triggers exactly one follow-up run. */
+  private runOnce(): Promise<void> {
+    if (this.running) {
+      this.rerunRequested = true;
+      return this.running;
+    }
+    this.running = (async () => {
+      try {
+        do {
+          this.rerunRequested = false;
+          this.lastRunStartedAt = Date.now();
+          await this.syncCycle(true);
+        } while (this.rerunRequested);
+      } finally {
+        this.running = undefined;
+      }
+    })();
+    return this.running;
+  }
+
+  /** Session tokens expire; with the stored password we can quietly sign in again instead of asking. */
+  private async reauthenticate(): Promise<"ok" | "rejected" | "unreachable"> {
+    const row = this.db.prepare(`SELECT account_email FROM sync_state WHERE id = 1`).get() as { account_email: string | null } | undefined;
+    if (!row?.account_email || this.accountPassword === undefined) return "rejected";
+    try {
+      const result = await this.client.signIn(row.account_email, this.accountPassword);
+      this.persistToken(row.account_email, result.sessionToken);
+      return "ok";
+    } catch (error) {
+      // The server answered and said no (unknown account, wrong password): the session is gone for
+      // good. No answer at all (offline) is temporary — keep the session and retry next tick.
+      const status = (error as { status?: number }).status;
+      return status !== undefined && status >= 400 && status < 500 ? "rejected" : "unreachable";
+    }
+  }
+
+  private async syncCycle(allowReauth: boolean): Promise<void> {
+    if (this.accountPassword === undefined || this.salt === undefined) return; // signed out, or no stored password available
     const password = this.accountPassword;
     const salt = this.salt;
     try {
@@ -136,21 +264,42 @@ export class SyncController {
       clearTombstones(this.db, tombstoneCutoff);
 
       const pull = await this.client.pull(state.lastPulledAt);
-      const applyResult = await applyRemoteChanges(this.db, pull, password, salt, async (remoteKey, label, credentials) => {
+      const addedSourceIds: string[] = [];
+      const applyResult = await applyRemoteChanges(this.db, pull, password, salt, async (remoteKey, label, payload) => {
         const existing = this.db.prepare(`SELECT id FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string } | undefined;
         if (existing) return; // already have this provider configured locally — never overwrite a live source's id
         const id = crypto.randomUUID();
-        await saveCredentials(id, { baseUrl: credentials.host, username: credentials.username, password: credentials.password });
-        this.db
-          .prepare(`INSERT INTO sources (id, kind, name, base_url, created_at, remote_key) VALUES (?, 'xtream', ?, ?, ?, ?)`)
-          .run(id, label, credentials.host, Date.now(), remoteKey);
+        if ("playlistUrl" in payload) {
+          this.db
+            .prepare(`INSERT INTO sources (id, kind, name, playlist_url, created_at, remote_key) VALUES (?, 'm3u', ?, ?, ?, ?)`)
+            .run(id, label, payload.playlistUrl, Date.now(), remoteKey);
+        } else {
+          await saveCredentials(id, { baseUrl: payload.host, username: payload.username, password: payload.password });
+          this.db
+            .prepare(`INSERT INTO sources (id, kind, name, base_url, created_at, remote_key) VALUES (?, 'xtream', ?, ?, ?, ?)`)
+            .run(id, label, payload.host, Date.now(), remoteKey);
+        }
+        addedSourceIds.push(id);
       });
       const nextPulledAt =
         applyResult.deferredBeforeMs !== undefined ? Math.min(pull.serverCursor, applyResult.deferredBeforeMs - 1) : pull.serverCursor;
       setSyncState(this.db, { lastPulledAt: nextPulledAt });
+      this.lastSyncedAt = Date.now();
       this.lastError = undefined;
+      if (addedSourceIds.length > 0) this.onSourcesAdded(addedSourceIds);
     } catch (error) {
-      this.lastError = error instanceof Error ? error.message : "Sync failed.";
+      if (allowReauth && (error as { status?: number }).status === 401) {
+        const outcome = await this.reauthenticate();
+        if (outcome === "ok") return this.syncCycle(false);
+        if (outcome === "rejected") {
+          // The account this device was signed in to no longer exists (or the password changed).
+          // Say so and go back to the sign-in form instead of failing forever.
+          this.forgetSession();
+          this.lastError = "Your session expired. Sign in again to keep syncing.";
+          return;
+        }
+      }
+      this.lastError = describeSyncError(error);
       // Best-effort: a failed sync never blocks playback/browsing — see the design spec's
       // "Error handling". The next periodic tick (or a manual triggerNow) retries.
     }
@@ -158,5 +307,6 @@ export class SyncController {
 
   dispose(): void {
     if (this.intervalHandle) clearInterval(this.intervalHandle);
+    if (this.changeTimer) clearTimeout(this.changeTimer);
   }
 }

@@ -6,11 +6,7 @@ import { handleGetSalt, handleSetSalt } from "./routes/salt.js";
 
 export interface Env {
   readonly DB: D1Database;
-  /**
-   * Signing/encryption secret for better-auth. Declared with a placeholder under `[vars]` in
-   * `wrangler.toml` so local dev and tests work with no manual step; a real deploy must override
-   * it with `wrangler secret put SYNC_AUTH_SECRET`.
-   */
+  /** Signing/encryption secret for better-auth. Never in source: `wrangler secret put SYNC_AUTH_SECRET` when deployed, `.dev.vars` locally. */
   readonly SYNC_AUTH_SECRET: string;
 }
 

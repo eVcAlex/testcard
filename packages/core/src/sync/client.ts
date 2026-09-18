@@ -33,7 +33,12 @@ export class SyncClient {
   private readonly api: Wretch;
 
   constructor(private readonly config: SyncClientConfig) {
-    this.api = wretch(config.baseUrl);
+    // Electron's main process runs fetch() outside any browsing context, so Chromium's network
+    // stack sends a literal `Origin: null` rather than omitting the header. better-auth's CSRF
+    // check treats a present-but-null Origin as suspicious and rejects it ("Missing or null
+    // Origin"), even though it accepts requests with no Origin header at all (e.g. curl). Setting
+    // a real Origin matching this client's own baseUrl satisfies the check.
+    this.api = wretch(config.baseUrl).headers({ Origin: config.baseUrl });
   }
 
   private authed(): Wretch {
@@ -42,7 +47,9 @@ export class SyncClient {
   }
 
   async signUp(email: string, password: string): Promise<AuthResult> {
-    const res = (await this.api.url("/auth/sign-up/email").post({ email, password }).json()) as BetterAuthEmailResponse;
+    // better-auth's core user schema requires `name`; this app has no display-name concept
+    // (AccountView only collects email/password), so the email itself stands in for it.
+    const res = (await this.api.url("/auth/sign-up/email").post({ email, password, name: email }).json()) as BetterAuthEmailResponse;
     return { userId: res.user.id, sessionToken: res.token };
   }
 
