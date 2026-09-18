@@ -14,8 +14,8 @@ type Row = Record<string, unknown>;
 function namedTokens(sql: string): Map<string, string> {
   const tokens = new Map<string, string>();
   for (const match of sql.matchAll(/([@:$])([A-Za-z_][A-Za-z0-9_]*)/g)) {
-    const [token, , name] = match;
-    if (token !== undefined && name !== undefined) tokens.set(name, token);
+    const [, prefix, name] = match;
+    if (prefix !== undefined && name !== undefined) tokens.set(name, prefix);
   }
   return tokens;
 }
