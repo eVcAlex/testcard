@@ -17,6 +17,8 @@ import { GenreBar } from "./GenreBar.js";
 import { genreOptions } from "../lib/genres.js";
 import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
+import { PosterShelf } from "./PosterShelf.js";
+import { categoryLabel } from "../lib/categoryLabel.js";
 
 type MovieListRow = Awaited<ReturnType<typeof window.testcard.movies.browse>>[number];
 
@@ -50,6 +52,7 @@ export function MoviesView({
   const queryClient = useQueryClient();
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [genre, setGenre] = useState<string | null>(null);
+  const [browseAll, setBrowseAll] = useState(false);
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
@@ -63,6 +66,11 @@ export function MoviesView({
   const pickGenre = useCallback((next: string | null) => {
     setGenre(next);
     setCategoryId(null); // a category belongs to one genre; keeping it would silently override the filter
+    setBrowseAll(false);
+  }, []);
+  const pickCategory = useCallback((next: string | null) => {
+    setCategoryId(next);
+    setBrowseAll(false);
   }, []);
   const plainBrowse = scope === "browse" && !searching && categoryId === null && genre === null;
 
@@ -72,6 +80,11 @@ export function MoviesView({
     staleTime: 60_000,
     enabled: scope === "browse",
   });
+
+  // Home shows category rows instead of one long grid. "Browse all", any filter or a search switches to
+  // the grid, and so does a catalogue with no category big enough to fill a row.
+  const [noShelves, setNoShelves] = useState(false);
+  const landing = plainBrowse && !browseAll && !noShelves;
 
   const list = useQuery({
     queryKey: ["movies", scope, categoryId, genre, searching ? debounced : null, searching, sourceId],
@@ -86,7 +99,24 @@ export function MoviesView({
       });
     },
     placeholderData: (prev) => prev,
+    enabled: !landing,
   });
+
+  const shelves = useQuery({
+    queryKey: ["movies", "shelves", sourceId],
+    queryFn: () => window.testcard.movies.shelves(sourceId ?? undefined),
+    staleTime: 60_000,
+    enabled: landing,
+  });
+  const myList = useQuery({
+    queryKey: ["movies", "favourites", "shelf"],
+    queryFn: () => window.testcard.movies.favourites(),
+    enabled: landing,
+  });
+  useEffect(() => {
+    if (shelves.data !== undefined) setNoShelves(shelves.data.length === 0);
+  }, [shelves.data]);
+  const myListRows = (myList.data ?? []).filter((movie) => sourceId === null || movie.source_id === sourceId).slice(0, 20);
 
   // Started-but-unfinished movies, for the row above the catalogue.
   const started = useQuery({
@@ -173,12 +203,12 @@ export function MoviesView({
             onChange={pickGenre}
           />
           <CategoryBar
-            allLabel="All movies"
+            allLabel="Home"
             categories={(categories.data ?? [])
               .filter((c) => genre === null || c.genre === genre)
               .map((c) => ({ id: c.id, name: c.name, count: c.movie_count }))}
             value={categoryId}
-            onChange={setCategoryId}
+            onChange={pickCategory}
           />
         </>
       )}
@@ -195,11 +225,31 @@ export function MoviesView({
           </section>
         )}
 
-        {rows.length === 0 ? (
-          empty
+        {landing ? (
+          <>
+            <PosterShelf title="My list" items={myListRows.map(toPoster)} onSelect={setSelectedMovieId} />
+            {(shelves.data ?? []).map((shelf) => (
+              <PosterShelf
+                key={shelf.category.id}
+                title={categoryLabel(shelf.category.name)}
+                items={shelf.items.map(toPoster)}
+                onSelect={setSelectedMovieId}
+                onSeeAll={() => pickCategory(shelf.category.id)}
+              />
+            ))}
+            {shelves.data !== undefined && shelves.data.length > 0 && (
+              <div className="pw-browse-all">
+                <button type="button" className="btn btn--ghost" onClick={() => setBrowseAll(true)}>
+                  Browse all movies
+                </button>
+              </div>
+            )}
+          </>
+        ) : rows.length === 0 ? (
+          list.isFetching || list.isPending ? null : empty
         ) : (
           <>
-            {plainBrowse && continueRows.length > 0 && <h3 className="pw-shelf-title">All movies</h3>}
+            {plainBrowse && <h3 className="pw-shelf-title">All movies</h3>}
             <PosterGrid items={rows.map(toPoster)} onSelect={setSelectedMovieId} />
           </>
         )}

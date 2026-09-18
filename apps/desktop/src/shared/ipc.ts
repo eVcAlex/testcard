@@ -16,10 +16,12 @@ import type {
   CountryNode,
   MovieCategoryRow,
   MovieRow,
+  MovieShelf,
   PlaybackProgressRow,
   SeriesCategoryRow,
   SeriesDetail,
   SeriesRow,
+  SeriesShelf,
   Source,
 } from "@testcard/core";
 
@@ -270,6 +272,8 @@ export interface TestcardApi {
     categoryList(sourceId?: string): Promise<readonly MovieCategoryRow[]>;
     /** The default poster grid: all movies, optionally one category, paginated. */
     browse(opts?: { categoryId?: string; sourceId?: string; genre?: string; limit?: number; offset?: number }): Promise<readonly MovieRow[]>;
+    /** The landing page's category rows: the biggest categories, best-rated titles first. */
+    shelves(sourceId?: string): Promise<readonly MovieShelf[]>;
     search(query: string, sourceId?: string): Promise<readonly MovieRow[]>;
     favourites(): Promise<readonly MovieRow[]>;
     recent(): Promise<readonly MovieRow[]>;
@@ -280,6 +284,8 @@ export interface TestcardApi {
   series: {
     categoryList(sourceId?: string): Promise<readonly SeriesCategoryRow[]>;
     browse(opts?: { categoryId?: string; sourceId?: string; genre?: string; limit?: number; offset?: number }): Promise<readonly SeriesRow[]>;
+    /** The landing page's category rows: the biggest categories, best-rated titles first. */
+    shelves(sourceId?: string): Promise<readonly SeriesShelf[]>;
     search(query: string, sourceId?: string): Promise<readonly SeriesRow[]>;
     favourites(): Promise<readonly SeriesRow[]>;
     recent(): Promise<readonly SeriesRow[]>;

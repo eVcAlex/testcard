@@ -29,6 +29,7 @@ import {
   listRecentMovies,
   listRecentSeries,
   listSeriesCategories,
+  movieShelves,
   nowNextForChannels,
   probeXtream,
   programmesInWindow,
@@ -38,6 +39,7 @@ import {
   searchChannels,
   searchMovies,
   searchSeries,
+  seriesShelves,
   setPlaybackProgress,
   listCountries,
   toggleFavourite,
@@ -762,6 +764,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async browse(opts) {
         return browseMovies(db, opts ?? {});
       },
+      async shelves(sourceId) {
+        return movieShelves(db, sourceId !== undefined ? { sourceId } : {});
+      },
       async search(query, sourceId) {
         return searchMovies(db, query, undefined, sourceId);
       },
@@ -789,6 +794,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
       async browse(opts) {
         return browseSeries(db, opts ?? {});
+      },
+      async shelves(sourceId) {
+        return seriesShelves(db, sourceId !== undefined ? { sourceId } : {});
       },
       async search(query, sourceId) {
         return searchSeries(db, query, undefined, sourceId);

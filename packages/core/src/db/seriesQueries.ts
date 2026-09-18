@@ -251,3 +251,29 @@ export function getEpisodePlaybackTarget(db: Database.Database, episodeId: strin
     source,
   };
 }
+
+export interface SeriesShelf {
+  readonly category: SeriesCategoryRow;
+  readonly items: SeriesRow[];
+}
+
+/** Category tags that mark a row as not worth a landing-page shelf (adult is still browsable by name). */
+const HIDDEN_FROM_SHELVES: ReadonlySet<string> = new Set(["junk", "separator", "adult"]);
+
+/** The landing page's category rows for series; see `movieShelves` for the selection and ordering. */
+export function seriesShelves(
+  db: Database.Database,
+  opts: { sourceId?: string; shelves?: number; perShelf?: number; minTitles?: number } = {},
+): SeriesShelf[] {
+  const perShelf = opts.perShelf ?? 20;
+  const minTitles = opts.minTitles ?? 6;
+  const chosen = listSeriesCategories(db, opts.sourceId)
+    .filter((category) => category.series_count >= minTitles && !category.tags.split(" ").some((tag) => HIDDEN_FROM_SHELVES.has(tag)))
+    .sort((a, b) => b.series_count - a.series_count)
+    .slice(0, opts.shelves ?? 12);
+  const select = db.prepare(
+    `SELECT ${SERIES_COLUMNS} FROM series sr WHERE sr.category_id = ?
+     ORDER BY (sr.poster_url IS NULL OR sr.poster_url = ''), CAST(sr.rating AS REAL) DESC, sr.rowid LIMIT ?`,
+  );
+  return chosen.map((category) => ({ category, items: select.all(category.id, perShelf) as SeriesRow[] }));
+}

@@ -190,3 +190,34 @@ export function getMoviePlaybackTarget(db: Database.Database, movieId: string): 
     source,
   };
 }
+
+export interface MovieShelf {
+  readonly category: MovieCategoryRow;
+  readonly items: MovieRow[];
+}
+
+/** Category tags that mark a row as not worth a landing-page shelf (adult is still browsable by name). */
+const HIDDEN_FROM_SHELVES: ReadonlySet<string> = new Set(["junk", "separator", "adult"]);
+
+/**
+ * The landing page's category rows: the biggest categories that have enough titles to fill a row,
+ * each with its best-rated titles first (those with a poster ahead of those without). Divider,
+ * junk and adult categories are skipped. One indexed query per shelf, so it stays cheap on a
+ * catalogue of tens of thousands.
+ */
+export function movieShelves(
+  db: Database.Database,
+  opts: { sourceId?: string; shelves?: number; perShelf?: number; minTitles?: number } = {},
+): MovieShelf[] {
+  const perShelf = opts.perShelf ?? 20;
+  const minTitles = opts.minTitles ?? 6;
+  const chosen = listMovieCategories(db, opts.sourceId)
+    .filter((category) => category.movie_count >= minTitles && !category.tags.split(" ").some((tag) => HIDDEN_FROM_SHELVES.has(tag)))
+    .sort((a, b) => b.movie_count - a.movie_count)
+    .slice(0, opts.shelves ?? 12);
+  const select = db.prepare(
+    `SELECT ${MOVIE_COLUMNS} FROM movies m WHERE m.category_id = ?
+     ORDER BY (m.poster_url IS NULL OR m.poster_url = ''), CAST(m.rating AS REAL) DESC, m.rowid LIMIT ?`,
+  );
+  return chosen.map((category) => ({ category, items: select.all(category.id, perShelf) as MovieRow[] }));
+}

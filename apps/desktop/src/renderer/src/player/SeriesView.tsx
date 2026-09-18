@@ -14,7 +14,15 @@ import { CategoryBar } from "./CategoryBar.js";
 import { GenreBar } from "./GenreBar.js";
 import { genreOptions } from "../lib/genres.js";
 import { useSources } from "./useSources.js";
-import { PosterGrid } from "./PosterGrid.js";
+import { PosterGrid, type PosterItem } from "./PosterGrid.js";
+import { PosterShelf } from "./PosterShelf.js";
+import { categoryLabel } from "../lib/categoryLabel.js";
+
+type SeriesListRow = Awaited<ReturnType<typeof window.testcard.series.browse>>[number];
+
+function toPoster(row: SeriesListRow): PosterItem {
+  return { id: row.id, name: row.name, posterUrl: row.poster_url, favourite: row.is_favourite === 1 };
+}
 
 function EpisodeItem({ episode, onPlay }: { episode: EpisodeRow; onPlay: (episodeId: string, resume: boolean) => void }) {
   const inProgress = episode.position_secs !== null && shouldPromptResume(episode.position_secs, episode.duration_secs);
@@ -69,6 +77,7 @@ export function SeriesView({
   const queryClient = useQueryClient();
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [genre, setGenre] = useState<string | null>(null);
+  const [browseAll, setBrowseAll] = useState(false);
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
   const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
@@ -83,7 +92,17 @@ export function SeriesView({
   const pickGenre = useCallback((next: string | null) => {
     setGenre(next);
     setCategoryId(null); // a category belongs to one genre; keeping it would silently override the filter
+    setBrowseAll(false);
   }, []);
+  const pickCategory = useCallback((next: string | null) => {
+    setCategoryId(next);
+    setBrowseAll(false);
+  }, []);
+  const plainBrowse = scope === "browse" && !searching && categoryId === null && genre === null;
+  // Home shows category rows instead of one long grid. "Browse all", any filter or a search switches to
+  // the grid, and so does a catalogue with no category big enough to fill a row.
+  const [noShelves, setNoShelves] = useState(false);
+  const landing = plainBrowse && !browseAll && !noShelves;
 
   const categories = useQuery({
     queryKey: ["series", "categories", sourceId],
@@ -105,7 +124,31 @@ export function SeriesView({
       });
     },
     placeholderData: (prev) => prev,
+    enabled: !landing,
   });
+
+  const shelves = useQuery({
+    queryKey: ["series", "shelves", sourceId],
+    queryFn: () => window.testcard.series.shelves(sourceId ?? undefined),
+    staleTime: 60_000,
+    enabled: landing,
+  });
+  const myList = useQuery({
+    queryKey: ["series", "favourites", "shelf"],
+    queryFn: () => window.testcard.series.favourites(),
+    enabled: landing,
+  });
+  const recentlyWatched = useQuery({
+    queryKey: ["series", "recent", "shelf"],
+    queryFn: () => window.testcard.series.recent(),
+    enabled: landing,
+  });
+  useEffect(() => {
+    if (shelves.data !== undefined) setNoShelves(shelves.data.length === 0);
+  }, [shelves.data]);
+  const inSource = (row: SeriesListRow) => sourceId === null || row.source_id === sourceId;
+  const myListRows = (myList.data ?? []).filter(inSource).slice(0, 20);
+  const recentRows = (recentlyWatched.data ?? []).filter(inSource).slice(0, 20);
 
   const detail = useQuery({
     queryKey: ["series", "episodes", selectedSeriesId],
@@ -195,19 +238,40 @@ export function SeriesView({
             onChange={pickGenre}
           />
           <CategoryBar
-            allLabel="All series"
+            allLabel="Home"
             categories={(categories.data ?? [])
               .filter((c) => genre === null || c.genre === genre)
               .map((c) => ({ id: c.id, name: c.name, count: c.series_count }))}
             value={categoryId}
-            onChange={setCategoryId}
+            onChange={pickCategory}
           />
         </>
       )}
 
       <div className="pw-scroll">
-        {rows.length === 0 ? (
-          empty
+        {landing ? (
+          <>
+            <PosterShelf title="Recently watched" items={recentRows.map(toPoster)} onSelect={setSelectedSeriesId} />
+            <PosterShelf title="My list" items={myListRows.map(toPoster)} onSelect={setSelectedSeriesId} />
+            {(shelves.data ?? []).map((shelf) => (
+              <PosterShelf
+                key={shelf.category.id}
+                title={categoryLabel(shelf.category.name)}
+                items={shelf.items.map(toPoster)}
+                onSelect={setSelectedSeriesId}
+                onSeeAll={() => pickCategory(shelf.category.id)}
+              />
+            ))}
+            {shelves.data !== undefined && shelves.data.length > 0 && (
+              <div className="pw-browse-all">
+                <button type="button" className="btn btn--ghost" onClick={() => setBrowseAll(true)}>
+                  Browse all series
+                </button>
+              </div>
+            )}
+          </>
+        ) : rows.length === 0 ? (
+          list.isFetching || list.isPending ? null : empty
         ) : (
           <PosterGrid
             items={rows.map((row) => ({ id: row.id, name: row.name, posterUrl: row.poster_url, favourite: row.is_favourite === 1 }))}

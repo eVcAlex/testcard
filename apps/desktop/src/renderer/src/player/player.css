@@ -1235,11 +1235,46 @@
   letter-spacing: var(--track-tight);
 }
 
+.pw-shelf-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.pw-shelf-head .pw-shelf-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-shelf-all {
+  flex: none;
+}
+
 .pw-shelf-row {
   display: flex;
   gap: var(--s-4);
   padding-bottom: var(--s-3);
   overflow-x: auto;
+}
+
+/* Posters in a row keep one width instead of stretching like the grid's columns do. */
+.pw-shelf-row--posters {
+  gap: var(--s-5);
+  padding-bottom: var(--s-4);
+}
+
+.pw-shelf-row--posters .pw-poster-card {
+  flex: none;
+  width: 150px;
+}
+
+.pw-browse-all {
+  display: flex;
+  justify-content: center;
+  padding: var(--s-4) 0 var(--s-2);
 }
 
 .pw-continue {

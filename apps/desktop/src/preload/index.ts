@@ -51,6 +51,7 @@ const api: TestcardApi = {
   movies: {
     categoryList: bind("movies.categoryList"),
     browse: bind("movies.browse"),
+    shelves: bind("movies.shelves"),
     search: bind("movies.search"),
     favourites: bind("movies.favourites"),
     recent: bind("movies.recent"),
@@ -60,6 +61,7 @@ const api: TestcardApi = {
   series: {
     categoryList: bind("series.categoryList"),
     browse: bind("series.browse"),
+    shelves: bind("series.shelves"),
     search: bind("series.search"),
     favourites: bind("series.favourites"),
     recent: bind("series.recent"),
