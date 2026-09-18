@@ -51,10 +51,29 @@ not automated on purpose).
 ```
 packages/core/     pure TypeScript: source adapters (Xtream, M3U), name normalisation,
                     XMLTV/EPG parsing, SQLite schema + import. Zero Electron, zero React —
-                    the only part of this codebase a future Android/Firestick app reuses.
+                    shared by the desktop and Android apps.
 apps/desktop/       the Electron app: main process (SQLite, credentials, mpv bridge, IPC),
                     preload (typed bridge), renderer (React UI).
+apps/mobile/        the Fire TV / Android app (Expo + react-native-tvos), sharing packages/core.
+apps/sync-worker/   the Cloudflare Worker behind account sync.
 docs/adr/           decisions worth recording — see CONTEXT.md's own note on when we write one.
+```
+
+## Fire TV / Android
+
+The Android app lives in `apps/mobile` (see ADR 0009). Sign in to the same account as the desktop
+app and your sources, favourites and progress arrive; sources are added on the desktop.
+
+To get it on a Fire Stick: in GitHub, open the repo's **Actions** tab, run **Android APK**, then
+download `testcard-firetv` from the finished run. Install it with Downloader (enter the file's
+address) or `adb install testcard-firetv.apk`; on the stick, allow "Install unknown apps" first.
+`testcard-phone` is the same app for an Android phone.
+
+Working on it locally needs no Android SDK for the checks that matter here:
+
+```sh
+pnpm --filter @testcard/mobile typecheck
+pnpm --filter @testcard/mobile bundle:check    # builds the Android JS bundle, catches import problems
 ```
 
 ## Known gotcha: better-sqlite3's native binary targets one runtime at a time

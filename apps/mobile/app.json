@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Testcard",
+    "slug": "testcard",
+    "version": "0.1.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#14171a",
+    "android": {
+      "package": "com.evcalex.testcard",
+      "adaptiveIcon": {
+        "backgroundColor": "#14171a",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "@react-native-tvos/config-tv",
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-video",
+      "react-native-quick-crypto",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
+  }
+}

@@ -19,13 +19,34 @@ export interface M3UHeader {
 const ATTRIBUTE = /([a-zA-Z0-9-]+)="([^"]*)"/g;
 
 /**
+ * Node and browsers make a fetch body async-iterable; React Native's streaming fetch only gives
+ * a reader. Accept either.
+ */
+async function* chunksOf(source: AsyncIterable<string | Uint8Array>): AsyncGenerator<string | Uint8Array> {
+  if (Symbol.asyncIterator in source) {
+    yield* source;
+    return;
+  }
+  const reader = (source as unknown as ReadableStream<string | Uint8Array>).getReader();
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return;
+      yield value;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/**
  * Async line reader over any async-iterable of string/Uint8Array chunks. Handles chunk
  * boundaries splitting a line in two, and both \n and \r\n line endings.
  */
 async function* toLines(source: AsyncIterable<string | Uint8Array>): AsyncGenerator<string> {
   const decoder = new TextDecoder();
   let buffer = "";
-  for await (const chunk of source) {
+  for await (const chunk of chunksOf(source)) {
     buffer += typeof chunk === "string" ? chunk : decoder.decode(chunk, { stream: true });
     let newlineIndex: number;
     while ((newlineIndex = buffer.indexOf("\n")) !== -1) {

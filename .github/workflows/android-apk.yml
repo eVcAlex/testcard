@@ -1,0 +1,56 @@
+name: Android APK
+
+# Builds sideloadable APKs of the Android app: one for Fire TV / Android TV and one for phones.
+# Run it from the Actions tab ("Run workflow"), then download the APKs from the run's artifacts.
+# The APKs are signed with Expo's debug key, which is fine for sideloading but not for a store.
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: firetv
+            tv: "1"
+          - target: phone
+            tv: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Only the mobile app and what it depends on. Scripts are skipped because the desktop app's
+      # postinstall rebuilds better-sqlite3 for Electron, which this job does not need.
+      - run: pnpm install --frozen-lockfile --ignore-scripts --filter "@testcard/mobile..."
+
+      - name: Generate the native project
+        working-directory: apps/mobile
+        env:
+          EXPO_TV: ${{ matrix.tv }}
+        run: pnpm exec expo prebuild --platform android --no-install --clean
+
+      - name: Build the release APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Name the APK
+        run: cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk testcard-${{ matrix.target }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: testcard-${{ matrix.target }}
+          path: testcard-${{ matrix.target }}.apk
+          if-no-files-found: error

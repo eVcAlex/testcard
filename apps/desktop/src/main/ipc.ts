@@ -15,10 +15,7 @@ import {
   getSeriesDetail,
   getSeriesSource,
   importEpg,
-  importM3UVod,
-  importSeries,
-  importSource,
-  importVod,
+  importCatalogue,
   listCategories,
   listChannelCountries,
   listFavouriteChannels,
@@ -33,7 +30,6 @@ import {
   nowNextForChannels,
   probeXtream,
   programmesInWindow,
-  removeVodFromLive,
   remoteKeyFor,
   remoteKeyForPlaylist,
   searchChannels,
@@ -46,7 +42,6 @@ import {
   toggleMovieFavourite,
   toggleSeriesFavourite,
   type Channel,
-  type M3UPlaylist,
   type ProgrammeRow,
   type Source,
   type SourceAdapter,
@@ -288,69 +283,12 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       if (!row) throw new Error(`Unknown source: ${sourceId}`);
 
       const adapter = row.kind === "xtream" ? xtreamAdapter : m3uAdapter;
-      const noLive = { categories: 0, channels: 0, variants: 0, durationMs: 0 };
 
-      // An M3U playlist is fetched and parsed once; its films and episodes go to Movies/Series and
-      // only the rest is imported as live channels. Xtream has a separate API per content type.
-      let playlist: M3UPlaylist | undefined;
-      let result: Awaited<ReturnType<typeof importSource>>;
-      if (row.kind === "m3u") {
-        const loaded = await m3uAdapter.loadPlaylist(row);
-        playlist = loaded;
-        result =
-          row.includeLive === 0
-            ? noLive
-            : await importSource(db, row, {
-                async *importAll() {
-                  yield* loaded.livePages;
-                },
-              });
-      } else {
-        result = row.includeLive === 0 ? noLive : await importSource(db, row, adapter);
-      }
-
-      // Movies/series are Xtream-only (design spec "Scope") — imported right after channels,
-      // same cost profile as live import. Best-effort, same as EPG below: a provider without a
-      // VOD/series catalog (or a transient API hiccup) must not fail the whole refresh when
-      // channel import already succeeded.
-      let vod: { categories: number; movies: number; durationMs: number } | undefined;
-      let series: { categories: number; series: number; durationMs: number } | undefined;
-      if (playlist !== undefined) {
-        const imported = await importM3UVod(db, row, playlist.vod, {
-          movies: row.includeMovies !== 0,
-          series: row.includeSeries !== 0,
-        });
-        removeVodFromLive(db, row.id, playlist.vod);
-        if (row.includeMovies !== 0) vod = { categories: 0, movies: imported.movies, durationMs: 0 };
-        if (row.includeSeries !== 0) series = { categories: 0, series: imported.series, durationMs: 0 };
-      }
-      if (row.kind === "xtream" && row.includeMovies !== 0) {
-        emitTask({ type: "vod", sourceId, phase: "fetching" });
-        vod = await importVod(db, row, getCredentials).catch((error: unknown) => {
-          emitTask({
-            type: "vod",
-            sourceId,
-            phase: "error",
-            message: error instanceof Error ? error.message : "The movie catalog could not be updated.",
-          });
-          return undefined;
-        });
-        if (vod !== undefined) emitTask({ type: "vod", sourceId, phase: "done", movies: vod.movies });
-      }
-
-      if (row.kind === "xtream" && row.includeSeries !== 0) {
-        emitTask({ type: "series", sourceId, phase: "fetching" });
-        series = await importSeries(db, row, getCredentials).catch((error: unknown) => {
-          emitTask({
-            type: "series",
-            sourceId,
-            phase: "error",
-            message: error instanceof Error ? error.message : "The series catalog could not be updated.",
-          });
-          return undefined;
-        });
-        if (series !== undefined) emitTask({ type: "series", sourceId, phase: "done", series: series.series });
-      }
+      // Live channels, movies and series (the same import the Android apps run); only the guide is left to do here.
+      const catalogue = await importCatalogue(db, row, { xtreamAdapter, m3uAdapter, getCredentials }, {
+        vod: (event) => emitTask({ type: "vod", sourceId, ...event }),
+        series: (event) => emitTask({ type: "series", sourceId, ...event }),
+      });
 
       // EPG is best-effort: a bad or missing guide URL must not fail the playlist refresh.
       const programmes = row.includeLive === 0 ? undefined : await refreshEpg(db, row, adapter, row.epgUrl ?? null, emitTask).catch((error: unknown) => {
@@ -363,12 +301,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         return undefined;
       });
 
-      return {
-        ...result,
-        ...(programmes !== undefined ? { programmes } : {}),
-        ...(vod !== undefined ? { movies: vod.movies } : {}),
-        ...(series !== undefined ? { series: series.series } : {}),
-      };
+      return { ...catalogue, ...(programmes !== undefined ? { programmes } : {}) };
     } finally {
       refreshingSourceIds.delete(sourceId);
     }

@@ -13,7 +13,8 @@ const coreRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const FORBIDDEN = [
   /^electron($|\/)/,
   /^react($|-|\/)/,
-  /^@testcard\/desktop/,
+  /^expo($|-|\/)/,
+  /^@testcard\/(desktop|mobile)/,
   /^apps\//,
   /^@electron/,
   /typesafe/i,

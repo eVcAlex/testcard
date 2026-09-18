@@ -353,14 +353,8 @@ export interface TestcardApi {
   };
 }
 
-export type SyncAccountStatus = "signed-out" | "signed-in" | "needs-password";
-
-export interface SyncStatus {
-  readonly account: SyncAccountStatus;
-  readonly email?: string;
-  readonly lastSyncedAt?: number;
-  readonly lastError?: string;
-}
+import type { SyncStatus } from "@testcard/core";
+export type { SyncAccountStatus, SyncStatus } from "@testcard/core";
 
 /** IPC channel name for request/response calls. */
 export const IPC_CHANNEL = "testcard:invoke" as const;

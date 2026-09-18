@@ -1,0 +1,40 @@
+{
+  "name": "@testcard/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "typecheck": "tsc --noEmit",
+    "bundle:check": "expo export --platform android --output-dir .expo/export-check"
+  },
+  "dependencies": {
+    "@testcard/core": "workspace:*",
+    "@testcard/sync-schema": "workspace:*",
+    "expo": "~57.0.24",
+    "expo-build-properties": "~57.0.21",
+    "expo-crypto": "~57.0.3",
+    "expo-keep-awake": "~57.0.2",
+    "expo-secure-store": "~57.0.4",
+    "expo-sqlite": "~57.0.3",
+    "expo-status-bar": "~57.0.1",
+    "expo-video": "~57.0.4",
+    "react": "19.2.3",
+    "react-native": "npm:react-native-tvos@0.86-stable",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-quick-crypto": "^1.1.7"
+  },
+  "devDependencies": {
+    "@react-native-tvos/config-tv": "^0.1.6",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "react-native"
+      ]
+    }
+  }
+}
