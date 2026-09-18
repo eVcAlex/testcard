@@ -1,3 +1,4 @@
+import { categoryClassificationParams } from "./categoryClassification.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
 import type { Category, Channel, Source, SourceAdapter } from "../source/types.js";
@@ -16,15 +17,16 @@ import type { Category, Channel, Source, SourceAdapter } from "../source/types.j
 export async function importSource(
   db: Database.Database,
   source: Source,
-  adapter: SourceAdapter,
+  adapter: Pick<SourceAdapter, "importAll">,
 ): Promise<{ categories: number; channels: number; variants: number; durationMs: number }> {
   const startedAt = Date.now();
   const now = Date.now();
 
   const upsertCategory = db.prepare(`
-    INSERT INTO categories (id, source_id, provider_id, raw_name, country)
-    VALUES (@id, @sourceId, @providerId, @rawName, @country)
-    ON CONFLICT(id) DO UPDATE SET raw_name = excluded.raw_name, country = excluded.country
+    INSERT INTO categories (id, source_id, provider_id, raw_name, country, genre, language, service, tags)
+    VALUES (@id, @sourceId, @providerId, @rawName, @country, @genre, @language, @service, @tags)
+    ON CONFLICT(id) DO UPDATE SET raw_name = excluded.raw_name, country = excluded.country,
+      genre = excluded.genre, language = excluded.language, service = excluded.service, tags = excluded.tags
   `);
 
   // `country` is not a field on the Category domain type (see CONTEXT.md — it's a
@@ -32,7 +34,7 @@ export async function importSource(
   // query-time-only value derived here purely so the sidebar tree can be built with a
   // single indexed query instead of parsing 171 category names on every render.
   function categoryParams(category: Category) {
-    return { ...category, country: parseName(category.rawName).country ?? null };
+    return { ...category, country: parseName(category.rawName).country ?? null, ...categoryClassificationParams(category.rawName) };
   }
 
   const upsertChannel = db.prepare(`
