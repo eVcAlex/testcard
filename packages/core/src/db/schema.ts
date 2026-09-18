@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 7;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -31,7 +31,10 @@ CREATE TABLE IF NOT EXISTS sources (
   last_refreshed_at INTEGER,
   remote_key    TEXT,           -- sha1(normalizedHost) — xtream only, see sync/remoteKey.ts
   sync_updated_at INTEGER,      -- sync clock; NULL until first pushed
-  sync_deleted_at INTEGER       -- sync tombstone; NULL = live
+  sync_deleted_at INTEGER,      -- sync tombstone; NULL = live
+  include_live    INTEGER NOT NULL DEFAULT 1,  -- per-source content switches (xtream); m3u is live-only
+  include_movies  INTEGER NOT NULL DEFAULT 1,
+  include_series  INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS idx_sources_remote_key ON sources(remote_key);
 
@@ -40,7 +43,11 @@ CREATE TABLE IF NOT EXISTS categories (
   source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
   provider_id   TEXT NOT NULL,
   raw_name      TEXT NOT NULL,
-  country       TEXT            -- parsed "UK", "CA", ... or NULL; drives the sidebar tree
+  country       TEXT,           -- parsed "UK", "CA", ... or NULL; drives the sidebar tree
+  genre         TEXT,           -- classifyCategory(): advisory canonical genre, NULL = unrecognised
+  language      TEXT,           -- ISO 639-1, "multi", or NULL
+  service       TEXT,           -- streaming brand ("netflix", "disney+", ...) or NULL
+  tags          TEXT NOT NULL DEFAULT ''   -- space-separated: ppv 4k 8k vip raw adult separator junk
 );
 CREATE INDEX IF NOT EXISTS idx_categories_source ON categories(source_id);
 CREATE INDEX IF NOT EXISTS idx_categories_country ON categories(country);
@@ -119,7 +126,11 @@ CREATE TABLE IF NOT EXISTS movie_categories (
   source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
   provider_id   TEXT NOT NULL,
   raw_name      TEXT NOT NULL,
-  country       TEXT
+  country       TEXT,
+  genre         TEXT,           -- classifyCategory(): advisory canonical genre, NULL = unrecognised
+  language      TEXT,           -- ISO 639-1, "multi", or NULL
+  service       TEXT,           -- streaming brand ("netflix", "disney+", ...) or NULL
+  tags          TEXT NOT NULL DEFAULT ''   -- space-separated: ppv 4k 8k vip raw adult separator junk
 );
 CREATE INDEX IF NOT EXISTS idx_movie_categories_source ON movie_categories(source_id);
 
@@ -162,7 +173,11 @@ CREATE TABLE IF NOT EXISTS series_categories (
   source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
   provider_id   TEXT NOT NULL,
   raw_name      TEXT NOT NULL,
-  country       TEXT
+  country       TEXT,
+  genre         TEXT,           -- classifyCategory(): advisory canonical genre, NULL = unrecognised
+  language      TEXT,           -- ISO 639-1, "multi", or NULL
+  service       TEXT,           -- streaming brand ("netflix", "disney+", ...) or NULL
+  tags          TEXT NOT NULL DEFAULT ''   -- space-separated: ppv 4k 8k vip raw adult separator junk
 );
 CREATE INDEX IF NOT EXISTS idx_series_categories_source ON series_categories(source_id);
 

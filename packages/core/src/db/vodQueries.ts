@@ -17,13 +17,14 @@ export interface MovieRow {
 }
 
 const MOVIE_COLUMNS = `m.id, m.source_id, m.category_id, m.name, m.poster_url, m.rating, m.plot,
-  m.duration_secs, m.details_fetched_at,
+  COALESCE(m.duration_secs, (SELECT duration_secs FROM playback_progress pp WHERE pp.item_type = 'movie' AND pp.item_id = m.id)) AS duration_secs,
+  m.details_fetched_at,
   (SELECT 1 FROM movie_favourites f WHERE f.movie_id = m.id) IS NOT NULL AS is_favourite,
   (SELECT position_secs FROM playback_progress pp WHERE pp.item_type = 'movie' AND pp.item_id = m.id) AS position_secs,
   COALESCE((SELECT watched FROM playback_progress pp WHERE pp.item_type = 'movie' AND pp.item_id = m.id), 0) AS watched`;
 
 /** FTS5 search over movie titles. Same prefix-query shape as `searchChannels`. */
-export function searchMovies(db: Database.Database, query: string, limit = 200): MovieRow[] {
+export function searchMovies(db: Database.Database, query: string, limit = 200, sourceId?: string): MovieRow[] {
   const trimmed = query.trim();
   if (trimmed.length === 0) return [];
   const ftsQuery = trimmed.split(/\s+/).map((token) => `${token.replace(/["*]/g, "")}*`).join(" ");
@@ -32,19 +33,35 @@ export function searchMovies(db: Database.Database, query: string, limit = 200):
       `SELECT ${MOVIE_COLUMNS}
        FROM movies_fts
        JOIN movies m ON m.rowid = movies_fts.rowid
-       WHERE movies_fts MATCH ?
+       WHERE movies_fts MATCH ?${sourceId !== undefined ? " AND m.source_id = ?" : ""}
        ORDER BY rank
        LIMIT ?`,
     )
-    .all(ftsQuery, limit) as MovieRow[];
+    .all(...(sourceId !== undefined ? [ftsQuery, sourceId] : [ftsQuery]), limit) as MovieRow[];
 }
 
 /** The default poster grid: every movie, optionally narrowed to one category. Provider order. */
-export function browseMovies(db: Database.Database, opts: { categoryId?: string; limit?: number; offset?: number } = {}): MovieRow[] {
+export function browseMovies(
+  db: Database.Database,
+  opts: { categoryId?: string; sourceId?: string; genre?: string; limit?: number; offset?: number } = {},
+): MovieRow[] {
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
-  const where = opts.categoryId !== undefined ? "WHERE m.category_id = ?" : "";
-  const filters = opts.categoryId !== undefined ? [opts.categoryId] : [];
+  const clauses: string[] = [];
+  const filters: unknown[] = [];
+  if (opts.categoryId !== undefined) {
+    clauses.push("m.category_id = ?");
+    filters.push(opts.categoryId);
+  }
+  if (opts.sourceId !== undefined) {
+    clauses.push("m.source_id = ?");
+    filters.push(opts.sourceId);
+  }
+  if (opts.genre !== undefined) {
+    clauses.push("m.category_id IN (SELECT id FROM movie_categories WHERE genre = ?)");
+    filters.push(opts.genre);
+  }
+  const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
   return db
     .prepare(`SELECT ${MOVIE_COLUMNS} FROM movies m ${where} ORDER BY m.rowid LIMIT ? OFFSET ?`)
     .all(...filters, limit, offset) as MovieRow[];
@@ -55,19 +72,25 @@ export interface MovieCategoryRow {
   readonly name: string;
   readonly country: string | null;
   readonly movie_count: number;
+  /** Advisory classification (see normalise/classifyCategory.ts): null/'' when unrecognised. */
+  readonly genre: string | null;
+  readonly language: string | null;
+  readonly service: string | null;
+  readonly tags: string;
 }
 
 /** Every movie category that still has movies, for `MoviesView`'s category tree. */
-export function listMovieCategories(db: Database.Database): MovieCategoryRow[] {
+export function listMovieCategories(db: Database.Database, sourceId?: string): MovieCategoryRow[] {
   return db
     .prepare(
-      `SELECT cat.id, cat.raw_name AS name, cat.country, COUNT(m.id) AS movie_count
+      `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(m.id) AS movie_count
        FROM movie_categories cat
        JOIN movies m ON m.category_id = cat.id
+       ${sourceId !== undefined ? "WHERE cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )
-    .all() as MovieCategoryRow[];
+    .all(...(sourceId !== undefined ? [sourceId] : [])) as MovieCategoryRow[];
 }
 
 export function listFavouriteMovies(db: Database.Database): MovieRow[] {

@@ -43,7 +43,7 @@ export function NoSignal({
       <div className="pw-nosignal-title">Channel didn&rsquo;t respond</div>
       <p className="pw-nosignal-detail">
         {channelName ? `${channelName} ` : "This channel "}
-        {message ?? "sent no video within 10 seconds. Provider channels drop in and out — it may work on a retry, or another player may handle the stream."}
+        {message ?? "sent no video within 10 seconds. Provider channels drop in and out. It may work on a retry, or another player may handle the stream."}
       </p>
       <div className="pw-nosignal-actions">
         <button type="button" className="btn btn--primary" onClick={onRetry}>

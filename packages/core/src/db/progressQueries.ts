@@ -1,20 +1,7 @@
 import type Database from "better-sqlite3";
+import { isWatched, shouldPromptResume } from "../playback/progressPolicy.js";
 
-const RESUME_FLOOR_SECS = 30;
-const WATCHED_THRESHOLD = 0.95;
-
-/** Crossing 95% of duration counts as watched — design spec "Playback, resume, watched state". */
-export function isWatched(positionSecs: number, durationSecs: number | null | undefined): boolean {
-  if (durationSecs === null || durationSecs === undefined || durationSecs <= 0) return false;
-  return positionSecs / durationSecs >= WATCHED_THRESHOLD;
-}
-
-/** Whether a load should prompt "Resume from ..." vs. "Start over" rather than just starting at 0. */
-export function shouldPromptResume(positionSecs: number, durationSecs: number | null | undefined): boolean {
-  if (durationSecs === null || durationSecs === undefined || durationSecs <= 0) return false;
-  if (positionSecs < RESUME_FLOOR_SECS) return false;
-  return positionSecs / durationSecs < WATCHED_THRESHOLD;
-}
+export { isWatched, shouldPromptResume };
 
 export interface PlaybackProgressRow {
   readonly item_type: "movie" | "episode";

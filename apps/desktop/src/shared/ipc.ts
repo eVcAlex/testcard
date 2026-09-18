@@ -29,8 +29,17 @@ import type {
  * detects that from the URL, as it always has); `"xtream"` is the form's own tab for a provider
  * that only gave a host/username/password, so there's nothing to hand-assemble into a URL for.
  */
+/** Which kinds of content a source loads. For an M3U playlist, films and episodes are recognised from the URL and title. */
+export interface SourceContent {
+  readonly live: boolean;
+  readonly movies: boolean;
+  readonly series: boolean;
+}
+
 export type AddSourceInput = {
   readonly name: string;
+  /** Absent means everything. */
+  readonly content?: SourceContent;
   /**
    * Optional explicit XMLTV/EPG URL. When absent, main auto-detects one on refresh (the M3U
    * `url-tvg` header, or Xtream `xmltv.php`).
@@ -63,14 +72,15 @@ export type AddSourceInput = {
  */
 export interface UpdateSourceInput {
   readonly name: string;
+  /** Omit to leave unchanged. Turning a type off removes it from this device; turning it on imports it. */
+  readonly content?: SourceContent;
   /** Omit to leave unchanged; `""` clears the stored EPG URL. */
   readonly epgUrl?: string;
   /** M3U only: a replacement playlist URL. Omit to keep the current one. */
   readonly playlistUrl?: string;
   /**
-   * Xtream only: omit any field to keep its current value. `password` sent blank (or omitted)
-   * means "unchanged" — the stored password is never sent to the renderer to prefill, so this
-   * is the only way an edit form can represent "leave it alone."
+   * Xtream only: omit any field to keep its current value. A blank `username`/`password` also
+   * means "unchanged".
    */
   readonly xtream?: {
     readonly baseUrl?: string;
@@ -83,6 +93,11 @@ export interface UpdateSourceInput {
 
 /** A source as listed in the sidebar — the domain `Source` plus desktop-only bookkeeping. */
 export type SourceListItem = Source & {
+  readonly content: SourceContent;
+  /** True while main is importing this source (a manual refresh, the first import after adding, a scheduled one). */
+  readonly refreshing?: boolean;
+  /** Why the last background import failed. Cleared when the next one starts. */
+  readonly refreshError?: string;
   readonly createdAt: number;
   readonly lastRefreshedAt?: number;
   readonly refreshIntervalHours?: number;
@@ -165,9 +180,14 @@ export interface PlaybackTrack {
  * request/response pattern the rest of this API uses — playback state changes on its own,
  * e.g. a stream dying after 10s with no frame).
  */
+/** Live channel vs. on-demand movie/episode — VOD gets a seek bar, live doesn't. */
+export type PlaybackKind = "channel" | "movie" | "episode";
+
 export type PlaybackEvent =
-  | { readonly type: "loading"; readonly channelId: string; readonly channelName: string }
+  | { readonly type: "loading"; readonly channelId: string; readonly channelName: string; readonly kind?: PlaybackKind }
   | { readonly type: "playing"; readonly channelId: string }
+  // VOD only (movie/episode): ~2Hz playhead updates for the overlay's seek bar.
+  | { readonly type: "position"; readonly positionSecs: number; readonly durationSecs: number | null }
   | { readonly type: "tracks"; readonly channelId: string; readonly tracks: readonly PlaybackTrack[] }
   | { readonly type: "timeout"; readonly channelId: string }
   | { readonly type: "error"; readonly channelId: string; readonly message: string }
@@ -196,11 +216,19 @@ export interface PlaybackSnapshot {
   readonly volume: number;
   readonly aspect: AspectMode;
   readonly fullscreen: boolean;
+  readonly kind: PlaybackKind | null;
+  readonly positionSecs: number;
+  readonly durationSecs: number | null;
 }
 
 export interface TestcardApi {
   sources: {
     list(): Promise<readonly SourceListItem[]>;
+    /**
+     * The stored Xtream username and password, fetched only when the user opens "Edit connection"
+     * so the form can show them. Never part of `list()`; null for an M3U source (its login lives in the URL).
+     */
+    login(sourceId: string): Promise<{ readonly username: string; readonly password: string } | null>;
     /** Adds an Xtream or M3U source — see `AddSourceInput["via"]` for the two entry paths. */
     add(input: AddSourceInput): Promise<Source>;
     /** Edits a source in place — same id, so favourites/recents survive. Kind cannot change. */
@@ -212,20 +240,23 @@ export interface TestcardApi {
   channels: {
     listByCategory(categoryId: string): Promise<readonly Channel[]>;
     countries(sourceId: string): Promise<readonly CountryNode[]>;
-    search(query: string): Promise<readonly ChannelRow[]>;
-    /** The default grid: all channels, optionally one category or country, paginated. */
+    search(query: string, sourceId?: string): Promise<readonly ChannelRow[]>;
+    /** The default grid: all channels, optionally one category, country or source, paginated. */
     browse(opts?: {
       categoryId?: string;
       country?: string;
+      sourceId?: string;
+      /** Advisory canonical genre (see core's classifyCategory). */
+      genre?: string;
       limit?: number;
       offset?: number;
     }): Promise<readonly ChannelRow[]>;
     recent(): Promise<readonly ChannelRow[]>;
     favourites(): Promise<readonly ChannelRow[]>;
     /** Every category (provider group-title) with channels, for the sidebar list. */
-    categoryList(): Promise<readonly CategoryRow[]>;
+    categoryList(sourceId?: string): Promise<readonly CategoryRow[]>;
     /** Distinct channel countries with counts, for the filter chips. */
-    countryList(): Promise<readonly ChannelCountry[]>;
+    countryList(sourceId?: string): Promise<readonly ChannelCountry[]>;
     toggleFavourite(channelId: string): Promise<boolean>;
   };
   epg: {
@@ -236,10 +267,10 @@ export interface TestcardApi {
   };
   movies: {
     /** Every movie category that still has movies, for MoviesView's category tree. */
-    categoryList(): Promise<readonly MovieCategoryRow[]>;
+    categoryList(sourceId?: string): Promise<readonly MovieCategoryRow[]>;
     /** The default poster grid: all movies, optionally one category, paginated. */
-    browse(opts?: { categoryId?: string; limit?: number; offset?: number }): Promise<readonly MovieRow[]>;
-    search(query: string): Promise<readonly MovieRow[]>;
+    browse(opts?: { categoryId?: string; sourceId?: string; genre?: string; limit?: number; offset?: number }): Promise<readonly MovieRow[]>;
+    search(query: string, sourceId?: string): Promise<readonly MovieRow[]>;
     favourites(): Promise<readonly MovieRow[]>;
     recent(): Promise<readonly MovieRow[]>;
     toggleFavourite(movieId: string): Promise<boolean>;
@@ -247,9 +278,9 @@ export interface TestcardApi {
     details(movieId: string): Promise<MovieRow>;
   };
   series: {
-    categoryList(): Promise<readonly SeriesCategoryRow[]>;
-    browse(opts?: { categoryId?: string; limit?: number; offset?: number }): Promise<readonly SeriesRow[]>;
-    search(query: string): Promise<readonly SeriesRow[]>;
+    categoryList(sourceId?: string): Promise<readonly SeriesCategoryRow[]>;
+    browse(opts?: { categoryId?: string; sourceId?: string; genre?: string; limit?: number; offset?: number }): Promise<readonly SeriesRow[]>;
+    search(query: string, sourceId?: string): Promise<readonly SeriesRow[]>;
     favourites(): Promise<readonly SeriesRow[]>;
     recent(): Promise<readonly SeriesRow[]>;
     toggleFavourite(seriesId: string): Promise<boolean>;
@@ -274,6 +305,12 @@ export interface TestcardApi {
     channelStep(delta: number): Promise<void>;
     /** Overlay → main window: leave the player and stop playback. */
     exitPlayer(): Promise<void>;
+    /** VOD: jump to an absolute position. */
+    seekTo(positionSecs: number): Promise<void>;
+    /** VOD: skip forward (+) or back (-) by a number of seconds. */
+    seekBy(deltaSecs: number): Promise<void>;
+    /** Episode playback: play the next (+1) or previous (-1) episode of the same series. No-op at either end. */
+    stepEpisode(delta: number): Promise<void>;
     /** Tells main where the picture well currently is, so the mpv window can be positioned over it. */
     setVideoRegion(rect: VideoRegionRect): Promise<void>;
     setVolume(volume: number): Promise<void>;

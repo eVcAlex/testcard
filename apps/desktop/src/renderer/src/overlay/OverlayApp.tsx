@@ -1,7 +1,8 @@
 import { useEffect, useReducer, useState } from "react";
 import { Icon } from "../components/Icon.js";
+import { formatDuration } from "../lib/time.js";
 import { useOverlayVisibility } from "./useOverlayVisibility.js";
-import type { AspectMode, PlaybackEvent, PlaybackTrack } from "../../../shared/ipc.js";
+import type { AspectMode, PlaybackEvent, PlaybackKind, PlaybackTrack } from "../../../shared/ipc.js";
 
 interface OverlayState {
   readonly status: "idle" | "loading" | "playing" | "dead";
@@ -11,6 +12,9 @@ interface OverlayState {
   readonly aspect: AspectMode;
   readonly fullscreen: boolean;
   readonly tracks: readonly PlaybackTrack[];
+  readonly kind: PlaybackKind;
+  readonly positionSecs: number;
+  readonly durationSecs: number | null;
 }
 
 const INITIAL: OverlayState = {
@@ -21,6 +25,9 @@ const INITIAL: OverlayState = {
   aspect: "fit",
   fullscreen: false,
   tracks: [],
+  kind: "channel",
+  positionSecs: 0,
+  durationSecs: null,
 };
 
 const ASPECT_ORDER: readonly AspectMode[] = ["fit", "fill", "16:9", "4:3"];
@@ -29,7 +36,17 @@ const ASPECT_LABEL: Record<AspectMode, string> = { fit: "FIT", fill: "FILL", "16
 function reduce(state: OverlayState, event: PlaybackEvent): OverlayState {
   switch (event.type) {
     case "loading":
-      return { ...state, status: "loading", channelName: event.channelName, tracks: [] };
+      return {
+        ...state,
+        status: "loading",
+        channelName: event.channelName,
+        tracks: [],
+        kind: event.kind ?? state.kind,
+        positionSecs: 0,
+        durationSecs: null,
+      };
+    case "position":
+      return { ...state, positionSecs: event.positionSecs, durationSecs: event.durationSecs };
     case "playing":
       return { ...state, status: "playing" };
     case "tracks":
@@ -74,7 +91,8 @@ export function OverlayApp() {
 
     void window.testcard.playback.snapshot().then((snap) => {
       if (snap.channelName) {
-        dispatch({ type: "loading", channelId: snap.channelId ?? "", channelName: snap.channelName });
+        dispatch({ type: "loading", channelId: snap.channelId ?? "", channelName: snap.channelName, ...(snap.kind ? { kind: snap.kind } : {}) });
+        dispatch({ type: "position", positionSecs: snap.positionSecs, durationSecs: snap.durationSecs });
       }
       if (snap.status === "playing") dispatch({ type: "playing", channelId: snap.channelId ?? "" });
       if (snap.tracks.length > 0) {
@@ -93,6 +111,7 @@ export function OverlayApp() {
   // hover and a slider drag emit no mousemove, so movement alone isn't enough — see the hook).
   const [hovering, setHovering] = useState(false);
   const [pressing, setPressing] = useState(false);
+  const [scrubSecs, setScrubSecs] = useState<number | null>(null);
   const { revealed, bump } = useOverlayVisibility(state.paused || hovering || pressing);
 
   useEffect(() => {
@@ -113,6 +132,13 @@ export function OverlayApp() {
   const audioTracks = state.tracks.filter((t) => t.type === "audio");
   const currentAudio = audioTracks.find((t) => t.selected) ?? audioTracks[0];
   const fmt = formatLine(state.tracks);
+  const vod = state.kind !== "channel";
+  const shownPosition = scrubSecs ?? state.positionSecs;
+  const commitScrub = () => {
+    if (scrubSecs === null) return;
+    void api().playback.seekTo(scrubSecs);
+    setScrubSecs(null);
+  };
   const togglePause = () => void api().playback.setPaused(!state.paused);
   const toggleSubtitles = () => {
     const first = subtitleTracks[0];
@@ -139,28 +165,54 @@ export function OverlayApp() {
       )}
 
       <div
-        className="ov-bar"
+        className={vod ? "ov-bar ov-bar--vod" : "ov-bar"}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
         onPointerDown={() => setPressing(true)}
       >
+        {vod && (
+          <div className="ov-seek">
+            <span className="tnum">{formatDuration(shownPosition)}</span>
+            <input
+              type="range"
+              min={0}
+              max={Math.max(state.durationSecs ?? 0, 1)}
+              step={1}
+              value={Math.min(shownPosition, Math.max(state.durationSecs ?? 0, 1))}
+              disabled={state.durationSecs === null}
+              aria-label="Seek"
+              onChange={(event) => setScrubSecs(Number(event.target.value))}
+              onPointerUp={commitScrub}
+              onKeyUp={commitScrub}
+            />
+            <span className="tnum">{state.durationSecs !== null ? formatDuration(state.durationSecs) : "--:--"}</span>
+          </div>
+        )}
         <button
           type="button"
           className="ov-btn ov-btn--ghost"
-          aria-label="Back to channels"
+          aria-label={vod ? "Back" : "Back to channels"}
           onClick={() => void api().playback.exitPlayer()}
         >
           <Icon name="back" size={18} />
         </button>
 
-        <button
-          type="button"
-          className="ov-btn ov-btn--ghost"
-          aria-label="Previous channel"
-          onClick={() => void api().playback.channelStep(-1)}
-        >
-          <Icon name="skip-back" size={18} />
-        </button>
+        {state.kind !== "movie" && (
+          <button
+            type="button"
+            className="ov-btn ov-btn--ghost"
+            aria-label={state.kind === "episode" ? "Previous episode" : "Previous channel"}
+            onClick={() => void (state.kind === "episode" ? api().playback.stepEpisode(-1) : api().playback.channelStep(-1))}
+          >
+            <Icon name="skip-back" size={18} />
+          </button>
+        )}
+
+        {vod && (
+          <button type="button" className="ov-btn ov-btn--ghost ov-skip" aria-label="Back 10 seconds" onClick={() => void api().playback.seekBy(-10)}>
+            −10s
+          </button>
+        )}
 
         <button
           type="button"
@@ -171,14 +223,22 @@ export function OverlayApp() {
           <Icon name={state.paused ? "play" : "pause"} size={18} />
         </button>
 
-        <button
-          type="button"
-          className="ov-btn ov-btn--ghost"
-          aria-label="Next channel"
-          onClick={() => void api().playback.channelStep(1)}
-        >
-          <Icon name="skip-forward" size={18} />
-        </button>
+        {vod && (
+          <button type="button" className="ov-btn ov-btn--ghost ov-skip" aria-label="Forward 30 seconds" onClick={() => void api().playback.seekBy(30)}>
+            +30s
+          </button>
+        )}
+
+        {state.kind !== "movie" && (
+          <button
+            type="button"
+            className="ov-btn ov-btn--ghost"
+            aria-label={state.kind === "episode" ? "Next episode" : "Next channel"}
+            onClick={() => void (state.kind === "episode" ? api().playback.stepEpisode(1) : api().playback.channelStep(1))}
+          >
+            <Icon name="skip-forward" size={18} />
+          </button>
+        )}
 
         <div className="ov-vol">
           <Icon name={state.volume === 0 ? "volume-x" : "volume"} size={16} />
@@ -193,13 +253,15 @@ export function OverlayApp() {
         </div>
 
         <div className="ov-id">
-          <span className="ov-name">{state.channelName || "—"}</span>
+          <span className="ov-name">{state.channelName || "Untitled"}</span>
           {fmt && <span className="ov-fmt tnum">{fmt}</span>}
         </div>
 
-        <span className="ov-live" data-live={state.status === "playing"}>
-          {state.status === "playing" ? "LIVE" : "TUNING"}
-        </span>
+        {!vod && (
+          <span className="ov-live" data-live={state.status === "playing"}>
+            {state.status === "playing" ? "LIVE" : "TUNING"}
+          </span>
+        )}
 
         {audioTracks.length > 1 && (
           <button

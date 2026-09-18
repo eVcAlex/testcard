@@ -24,6 +24,7 @@ export type MpvEvent =
   | { readonly type: "error"; readonly message: string }
   | { readonly type: "exited"; readonly code: number | null }
   | { readonly type: "time-pos"; readonly seconds: number }
+  | { readonly type: "duration"; readonly seconds: number }
   | { readonly type: "end-file"; readonly reason: string };
 
 interface RawMpvTrack {
@@ -95,6 +96,7 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
     await this.ipc.observeProperty("video-params");
     await this.ipc.observeProperty("track-list");
     await this.ipc.observeProperty("time-pos");
+    await this.ipc.observeProperty("duration");
 
     // track-list is process-lifetime, not per-load: the list first populates a beat before
     // the first frame decodes (so before a load "settles"), and it also changes afterwards
@@ -107,6 +109,9 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
     // playback_progress persistence for movies/episodes; live channels ignore this event.
     this.ipc.onPropertyChange("time-pos", (value) => {
       if (typeof value === "number") this.emit("event", { type: "time-pos", seconds: value });
+    });
+    this.ipc.onPropertyChange("duration", (value) => {
+      if (typeof value === "number" && value > 0) this.emit("event", { type: "duration", seconds: value });
     });
     // Also process-lifetime: play()'s own end-file listener below is per-load and only cares
     // whether a stream failed to *start*. This one tells the controller a title actually
@@ -199,6 +204,10 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
   /** Absolute seek, used to resume a movie/episode at its saved `playback_progress` position. */
   async seek(seconds: number): Promise<void> {
     await this.ipc?.command(["seek", seconds, "absolute"]);
+  }
+
+  async seekBy(deltaSecs: number): Promise<void> {
+    await this.ipc?.command(["seek", deltaSecs, "relative"]);
   }
 
   /**

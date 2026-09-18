@@ -97,4 +97,26 @@ describe("mapSeriesDetailsDto", () => {
       },
     ]);
   });
+
+  it("synthesizes a season for episodes whose season number is absent from `seasons` (e.g. specials)", () => {
+    const { seasons, episodes } = mapSeriesDetailsDto(
+      {
+        seasons: [{ season_number: 1, name: "Season 1" }],
+        episodes: {
+          "0": [{ id: 2001, episode_num: 1, title: "Behind the scenes", season: 0 }],
+          "1": [{ id: 1001, episode_num: 1, title: "Pilot", season: 1 }],
+        },
+      },
+      series,
+    );
+
+    expect(seasons).toEqual([
+      { id: "src1:900:1", seriesId: "src1:900", seasonNumber: 1, name: "Season 1" },
+      { id: "src1:900:0", seriesId: "src1:900", seasonNumber: 0 },
+    ]);
+    // Every episode's seasonId must match a season that was actually returned — the DB FK on
+    // episodes.season_id requires it.
+    const seasonIds = new Set(seasons.map((s) => s.id));
+    for (const episode of episodes) expect(seasonIds.has(episode.seasonId)).toBe(true);
+  });
 });

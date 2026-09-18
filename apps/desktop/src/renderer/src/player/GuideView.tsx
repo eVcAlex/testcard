@@ -24,11 +24,13 @@ function windowStart(nowMs: number): number {
  * the full 18k grid.
  */
 export function GuideView({
+  sourceId,
   categoryId,
   activeChannelId,
   onPlay,
   onListChange,
 }: {
+  sourceId: string | null;
   categoryId: string | null;
   activeChannelId: string | null;
   onPlay: (channel: ChannelRow) => void;
@@ -45,11 +47,13 @@ export function GuideView({
   const trackWidth = WINDOW_MIN * PX_PER_MIN;
 
   const channelsQuery = useQuery({
-    queryKey: ["channels", "guide", categoryId],
+    queryKey: ["channels", "guide", categoryId, sourceId],
     queryFn: () =>
-      window.testcard.channels.browse(
-        categoryId !== null ? { categoryId, limit: MAX_CHANNELS } : { limit: MAX_CHANNELS },
-      ),
+      window.testcard.channels.browse({
+        limit: MAX_CHANNELS,
+        ...(categoryId !== null ? { categoryId } : {}),
+        ...(sourceId !== null ? { sourceId } : {}),
+      }),
     placeholderData: (prev) => prev,
   });
   const channels = useMemo(() => channelsQuery.data ?? [], [channelsQuery.data]);
@@ -95,7 +99,7 @@ export function GuideView({
       <div className="pw-guide-head">
         <h2>Guide</h2>
         {!hasEpg && channels.length > 0 && !epgQuery.isLoading && (
-          <p className="pw-guide-note">No guide data — add an XMLTV URL to the source and refresh.</p>
+          <p className="pw-guide-note">No guide data. Add an XMLTV URL to the source and refresh.</p>
         )}
       </div>
 
@@ -140,7 +144,7 @@ export function GuideView({
                       className="pw-guide-prog"
                       style={{ left, width: Math.max(2, right - left) }}
                       onClick={() => onPlay(channel)}
-                      title={`${formatClock(programme.startMs)}–${formatClock(programme.endMs)}  ${programme.title}`}
+                      title={`${formatClock(programme.startMs)} to ${formatClock(programme.endMs)}  ${programme.title}`}
                     >
                       <span className="pw-guide-prog-name">{programme.title}</span>
                     </button>

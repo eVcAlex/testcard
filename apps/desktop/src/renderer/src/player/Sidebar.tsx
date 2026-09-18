@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
+import { useSyncStatus } from "./AccountView.js";
+import { useSources } from "./useSources.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "guide" | "movies" | "series" | "favourites" | "recent" | "sources" | "account";
+export type BrowseTab = "live" | "guide" | "movies" | "series" | "favourites" | "recent" | "account";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "live", label: "Live TV", icon: "tv" },
@@ -11,7 +13,6 @@ const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "series", label: "Series", icon: "layers" },
   { id: "favourites", label: "Favourites", icon: "star" },
   { id: "recent", label: "Recent", icon: "clock" },
-  { id: "sources", label: "Sources", icon: "signal" },
   { id: "account", label: "Account", icon: "user" },
 ];
 
@@ -20,6 +21,8 @@ export function Sidebar({
   onTab,
   categoryId,
   onCategory,
+  sourceId,
+  onSource,
   theme,
   onToggleTheme,
 }: {
@@ -27,17 +30,21 @@ export function Sidebar({
   onTab: (tab: BrowseTab) => void;
   categoryId: string | null;
   onCategory: (categoryId: string | null) => void;
+  sourceId: string | null;
+  onSource: (sourceId: string | null) => void;
   theme: Theme;
   onToggleTheme: () => void;
 }) {
-  const sources = useQuery({
-    queryKey: ["sources"],
-    queryFn: () => window.testcard.sources.list(),
-  });
+  const sync = useSyncStatus();
+  const sourceCount = useSources();
+
+  // Live categories only mean something while browsing channels; on Movies/Series/Account they
+  // would just be a second, unrelated list beside the page's own filters.
+  const showCategories = tab === "live" || tab === "guide";
 
   const categories = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => window.testcard.channels.categoryList(),
+    queryKey: ["categories", sourceId],
+    queryFn: () => window.testcard.channels.categoryList(sourceId ?? undefined),
     staleTime: 60_000,
   });
 
@@ -53,6 +60,25 @@ export function Sidebar({
         TEST<span>CARD</span>
       </h1>
 
+      {(sourceCount.data?.length ?? 0) > 1 && (
+        <label className="pw-source-pick">
+          <span>Source</span>
+          <select
+            className="input"
+            value={sourceId ?? ""}
+            onChange={(event) => onSource(event.target.value === "" ? null : event.target.value)}
+            aria-label="Show content from"
+          >
+            <option value="">All sources</option>
+            {sourceCount.data?.map((source) => (
+              <option key={source.id} value={source.id}>
+                {source.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
       <nav className="pw-nav">
         {TABS.map((t) => (
           <button
@@ -67,13 +93,12 @@ export function Sidebar({
           >
             <Icon name={t.icon} filled={t.id === "favourites" && tab === "favourites"} />
             {t.label}
-            {t.id === "sources" && sources.data !== undefined && (
-              <span className="pw-nav-count">{sources.data.length}</span>
-            )}
           </button>
         ))}
       </nav>
 
+      {showCategories ? (
+        <>
       <p className="pw-nav-group">Categories</p>
       <div className="pw-cats">
         <button
@@ -99,8 +124,29 @@ export function Sidebar({
           </button>
         ))}
       </div>
+        </>
+      ) : (
+        <div className="pw-sidebar-fill" />
+      )}
 
       <div className="pw-sidebar-foot">
+        <button
+          type="button"
+          className="pw-account-chip"
+          data-active={tab === "account"}
+          onClick={() => onTab("account")}
+          title="Account and sources"
+        >
+          <span className="pw-account-dot" data-state={sync.data?.account === "signed-in" ? (sync.data.lastError ? "error" : "ok") : "off"} aria-hidden="true" />
+          <span className="pw-account-chip-text">
+            {sync.data?.account === "signed-in" ? sync.data.email : "Not signed in"}
+            <small>
+              {sourceCount.data === undefined
+                ? ""
+                : `${sourceCount.data.length} ${sourceCount.data.length === 1 ? "source" : "sources"}`}
+            </small>
+          </span>
+        </button>
         <button
           type="button"
           className="btn btn--ghost btn--icon"

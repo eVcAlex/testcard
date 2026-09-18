@@ -1,3 +1,4 @@
+import { categoryClassificationParams } from "./categoryClassification.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
 import { remoteKeyFor } from "../sync/remoteKey.js";
@@ -22,12 +23,13 @@ export async function importSeries(
   const categories = await fetchSeriesCategories(source, getCredentials);
 
   const upsertCategory = db.prepare(`
-    INSERT INTO series_categories (id, source_id, provider_id, raw_name, country)
-    VALUES (@id, @sourceId, @providerId, @rawName, @country)
-    ON CONFLICT(id) DO UPDATE SET raw_name = excluded.raw_name, country = excluded.country
+    INSERT INTO series_categories (id, source_id, provider_id, raw_name, country, genre, language, service, tags)
+    VALUES (@id, @sourceId, @providerId, @rawName, @country, @genre, @language, @service, @tags)
+    ON CONFLICT(id) DO UPDATE SET raw_name = excluded.raw_name, country = excluded.country,
+      genre = excluded.genre, language = excluded.language, service = excluded.service, tags = excluded.tags
   `);
   function categoryParams(category: Category) {
-    return { ...category, country: parseName(category.rawName).country ?? null };
+    return { ...category, country: parseName(category.rawName).country ?? null, ...categoryClassificationParams(category.rawName) };
   }
 
   const upsertSeries = db.prepare(`

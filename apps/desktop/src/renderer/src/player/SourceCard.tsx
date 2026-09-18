@@ -10,7 +10,15 @@ import type { SourceListItem } from "../../../shared/ipc.js";
  * kebab menu (Refresh / Edit / Remove). Each card owns its own refresh/remove mutation state —
  * a slow refresh on one source doesn't disable the others.
  */
-export function SourceCard({ source, onEdit }: { source: SourceListItem; onEdit: () => void }) {
+export function SourceCard({
+  source,
+  onEdit,
+  onSettings,
+}: {
+  source: SourceListItem;
+  onEdit: () => void;
+  onSettings: () => void;
+}) {
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
@@ -69,12 +77,29 @@ export function SourceCard({ source, onEdit }: { source: SourceListItem; onEdit:
       void queryClient.invalidateQueries({ queryKey: ["channels"] });
       void queryClient.invalidateQueries({ queryKey: ["categories"] });
       void queryClient.invalidateQueries({ queryKey: ["epg"] });
+      void queryClient.invalidateQueries({ queryKey: ["movies"] });
+      void queryClient.invalidateQueries({ queryKey: ["series"] });
       void queryClient.invalidateQueries({ queryKey: ["sources"] });
     },
     onError: (error: unknown) => {
       setRefreshMsg(error instanceof Error ? error.message : "Refresh failed.");
     },
   });
+
+  // A source can be importing without this card having asked (first import after adding it, a
+  // scheduled refresh, arriving from another device); main reports it via the source list.
+  const importing = refresh.isPending || source.refreshing === true;
+  const wasRefreshing = useRef(false);
+  useEffect(() => {
+    const now = source.refreshing === true;
+    if (now && !wasRefreshing.current) setRefreshMsg(null);
+    if (!now && wasRefreshing.current) {
+      for (const key of ["channels", "categories", "epg", "movies", "series"]) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    }
+    wasRefreshing.current = now;
+  }, [source.refreshing, queryClient]);
 
   const remove = useMutation({
     mutationFn: () => window.testcard.sources.remove(source.id),
@@ -112,8 +137,11 @@ export function SourceCard({ source, onEdit }: { source: SourceListItem; onEdit:
           )}
         </div>
 
-        {refresh.isPending && <p className="pw-refresh-note">Fetching playlist…</p>}
-        {!refresh.isPending && refreshMsg !== null && <p className="pw-refresh-note">{refreshMsg}</p>}
+        {importing && <p className="pw-refresh-note">{refreshMsg ?? "Fetching playlist…"}</p>}
+        {!importing && refreshMsg !== null && <p className="pw-refresh-note">{refreshMsg}</p>}
+        {!importing && refreshMsg === null && source.refreshError !== undefined && (
+          <p className="msg msg--error">{source.refreshError}</p>
+        )}
         {remove.isError && <p className="msg msg--error">{(remove.error as Error).message}</p>}
       </div>
 
@@ -132,14 +160,26 @@ export function SourceCard({ source, onEdit }: { source: SourceListItem; onEdit:
             <button
               type="button"
               role="menuitem"
-              disabled={refresh.isPending}
+              disabled={importing}
               onClick={() => {
                 setMenuOpen(false);
+                setRefreshMsg(null);
                 refresh.mutate();
               }}
             >
               <Icon name="refresh" />
-              {refresh.isPending ? "Refreshing…" : "Refresh"}
+              {importing ? "Refreshing…" : "Refresh"}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                onSettings();
+              }}
+            >
+              <Icon name="grid" />
+              Settings
             </button>
             <button
               type="button"
@@ -150,7 +190,7 @@ export function SourceCard({ source, onEdit }: { source: SourceListItem; onEdit:
               }}
             >
               <Icon name="edit" />
-              Edit
+              Edit connection
             </button>
             <button
               type="button"

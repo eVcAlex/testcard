@@ -224,6 +224,28 @@ export const MIGRATIONS: readonly Migration[] = [
       `);
     },
   },
+  {
+    version: 6,
+    up: (db) => {
+      // Per-source content switches: which of live TV / movies / series a source loads.
+      addColumn(db, "sources", "include_live INTEGER NOT NULL DEFAULT 1");
+      addColumn(db, "sources", "include_movies INTEGER NOT NULL DEFAULT 1");
+      addColumn(db, "sources", "include_series INTEGER NOT NULL DEFAULT 1");
+    },
+  },
+  {
+    version: 7,
+    up: (db) => {
+      // Advisory category classification (genre/language/service/tags). Columns only: the values are
+      // filled by reclassifyCategories() on open, keyed by schema_meta.classifier_version.
+      for (const table of ["categories", "movie_categories", "series_categories"]) {
+        addColumn(db, table, "genre TEXT");
+        addColumn(db, table, "language TEXT");
+        addColumn(db, table, "service TEXT");
+        addColumn(db, table, "tags TEXT NOT NULL DEFAULT ''");
+      }
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

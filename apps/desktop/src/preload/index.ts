@@ -27,6 +27,7 @@ function bind<T>(path: string): T {
 const api: TestcardApi = {
   sources: {
     list: bind("sources.list"),
+    login: bind("sources.login"),
     add: bind("sources.add"),
     update: bind("sources.update"),
     refresh: bind("sources.refresh"),
@@ -77,6 +78,9 @@ const api: TestcardApi = {
     snapshot: bind("playback.snapshot"),
     channelStep: bind("playback.channelStep"),
     exitPlayer: bind("playback.exitPlayer"),
+    seekTo: bind("playback.seekTo"),
+    seekBy: bind("playback.seekBy"),
+    stepEpisode: bind("playback.stepEpisode"),
     setVideoRegion: bind("playback.setVideoRegion"),
     setVolume: bind("playback.setVolume"),
     setPaused: bind("playback.setPaused"),
@@ -120,4 +124,9 @@ const api: TestcardApi = {
   },
 };
 
-contextBridge.exposeInMainWorld("testcard", api);
+try {
+  contextBridge.exposeInMainWorld("testcard", api);
+  console.log("[preload] testcard bridge exposed OK");
+} catch (error) {
+  console.error("[preload] exposeInMainWorld FAILED:", error);
+}

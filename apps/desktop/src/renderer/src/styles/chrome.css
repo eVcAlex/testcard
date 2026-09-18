@@ -113,7 +113,20 @@
 
 .form-actions {
   display: flex;
+  justify-content: flex-end;
   gap: var(--s-3);
+  margin-top: var(--s-2);
+}
+
+/* A text input with a small button on its right edge (show/hide password). */
+.input-reveal {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.input-reveal .input {
+  flex: 1;
+  min-width: 0;
 }
 
 /* ---- section heading -------------------------------------------------- */

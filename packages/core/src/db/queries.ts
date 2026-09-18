@@ -19,7 +19,7 @@ const CHANNEL_COLUMNS = `c.id, c.source_id, c.category_id, c.normalised_name, c.
   (SELECT 1 FROM favourites f WHERE f.channel_id = c.id) IS NOT NULL AS is_favourite`;
 
 /** FTS5 search over the normalised channel name. Instant at 18k rows — see schema.ts. */
-export function searchChannels(db: Database.Database, query: string, limit = 200): ChannelRow[] {
+export function searchChannels(db: Database.Database, query: string, limit = 200, sourceId?: string): ChannelRow[] {
   const trimmed = query.trim();
   if (trimmed.length === 0) return [];
 
@@ -35,11 +35,11 @@ export function searchChannels(db: Database.Database, query: string, limit = 200
       `SELECT ${CHANNEL_COLUMNS}
        FROM channels_fts
        JOIN channels c ON c.rowid = channels_fts.rowid
-       WHERE channels_fts MATCH ?
+       WHERE channels_fts MATCH ?${sourceId !== undefined ? " AND c.source_id = ?" : ""}
        ORDER BY rank
        LIMIT ?`,
     )
-    .all(ftsQuery, limit) as ChannelRow[];
+    .all(...(sourceId !== undefined ? [ftsQuery, sourceId] : [ftsQuery]), limit) as ChannelRow[];
 }
 
 /**
@@ -55,7 +55,7 @@ export function searchChannels(db: Database.Database, query: string, limit = 200
  */
 export function browseChannels(
   db: Database.Database,
-  opts: { categoryId?: string; country?: string; limit?: number; offset?: number } = {},
+  opts: { categoryId?: string; country?: string; sourceId?: string; genre?: string; limit?: number; offset?: number } = {},
 ): ChannelRow[] {
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
@@ -68,6 +68,14 @@ export function browseChannels(
   } else if (opts.country !== undefined) {
     where.push("c.country IS ?");
     filters.push(opts.country);
+  }
+  if (opts.sourceId !== undefined) {
+    where.push("c.source_id = ?");
+    filters.push(opts.sourceId);
+  }
+  if (opts.genre !== undefined) {
+    where.push("c.category_id IN (SELECT id FROM categories WHERE genre = ?)");
+    filters.push(opts.genre);
   }
 
   return db
@@ -85,6 +93,11 @@ export interface CategoryRow {
   readonly id: string;
   readonly name: string;
   readonly country: string | null;
+  /** Advisory classification (see normalise/classifyCategory.ts): null/'' when unrecognised. */
+  readonly genre: string | null;
+  readonly language: string | null;
+  readonly service: string | null;
+  readonly tags: string;
   readonly channel_count: number;
 }
 
@@ -98,16 +111,17 @@ export interface CategoryRow {
  * appears on a later refresh sorts to the end rather than its true playlist position — a
  * proper fix needs an explicit sort_order column.
  */
-export function listCategories(db: Database.Database): CategoryRow[] {
+export function listCategories(db: Database.Database, sourceId?: string): CategoryRow[] {
   return db
     .prepare(
-      `SELECT cat.id, cat.raw_name AS name, cat.country, COUNT(ch.id) AS channel_count
+      `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(ch.id) AS channel_count
        FROM categories cat
        JOIN channels ch ON ch.category_id = cat.id
+       ${sourceId !== undefined ? "WHERE cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )
-    .all() as CategoryRow[];
+    .all(...(sourceId !== undefined ? [sourceId] : [])) as CategoryRow[];
 }
 
 /** Recently played channels, most recent first — backs the "Recently watched" strip and view. */
@@ -141,16 +155,16 @@ export interface ChannelCountry {
 }
 
 /** Distinct channel countries with a count, for the filter chip row. "No country" is dropped. */
-export function listChannelCountries(db: Database.Database): ChannelCountry[] {
+export function listChannelCountries(db: Database.Database, sourceId?: string): ChannelCountry[] {
   return db
     .prepare(
       `SELECT country, COUNT(*) AS count
        FROM channels
-       WHERE country IS NOT NULL AND country <> ''
+       WHERE country IS NOT NULL AND country <> ''${sourceId !== undefined ? " AND source_id = ?" : ""}
        GROUP BY country
        ORDER BY count DESC, country ASC`,
     )
-    .all() as ChannelCountry[];
+    .all(...(sourceId !== undefined ? [sourceId] : [])) as ChannelCountry[];
 }
 
 export interface CountryNode {

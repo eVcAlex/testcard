@@ -130,6 +130,15 @@ export function mapSeriesDetailsDto(dto: XtreamSeriesInfoDTO, series: Series): {
     ...(s.name !== undefined && s.name !== "" ? { name: s.name } : {}),
     ...(s.cover !== undefined && s.cover !== "" ? { posterUrl: s.cover } : {}),
   }));
+  // Providers don't always list every season an episode references (e.g. season 0 "specials"
+  // often has episodes but no `seasons` entry). `episodes.season_id` is a NOT NULL FK into
+  // `seasons`, so any season number missing here would otherwise fail that insert.
+  const knownSeasonNumbers = new Set(seasons.map((s) => s.seasonNumber));
+  for (const e of Object.values(dto.episodes ?? {}).flat()) {
+    if (knownSeasonNumbers.has(e.season)) continue;
+    knownSeasonNumbers.add(e.season);
+    seasons.push({ id: idFor(series.id, String(e.season)), seriesId: series.id, seasonNumber: e.season });
+  }
 
   const episodes: Episode[] = Object.values(dto.episodes ?? {})
     .flat()

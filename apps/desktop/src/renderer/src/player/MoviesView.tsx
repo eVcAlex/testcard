@@ -1,22 +1,55 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { shouldPromptResume } from "@testcard/core";
+// Deep import, not the "@testcard/core" barrel — the barrel wildcard-re-exports db/sync modules
+// that `import Database from "better-sqlite3"` as a value, and a bundler evaluates a module's
+// entire re-export graph when anything is imported from it. A renderer-side value import of
+// ANYTHING from the barrel drags that native Node addon into the browser context and crashes at
+// runtime. `progressPolicy.ts` has no such import, so it's safe to reach directly.
+import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { Icon } from "../components/Icon.js";
+import { Drawer } from "../components/Drawer.js";
+import { EmptyState } from "../components/EmptyState.js";
 import { formatDuration } from "../lib/time.js";
 import { logoSrc } from "../lib/logo.js";
-import { PosterGrid } from "./PosterGrid.js";
+import { splitTitle } from "../lib/title.js";
+import { CategoryBar } from "./CategoryBar.js";
+import { GenreBar } from "./GenreBar.js";
+import { genreOptions } from "../lib/genres.js";
+import { useSources } from "./useSources.js";
+import { PosterGrid, type PosterItem } from "./PosterGrid.js";
+
+type MovieListRow = Awaited<ReturnType<typeof window.testcard.movies.browse>>[number];
+
+function toPoster(movie: MovieListRow): PosterItem {
+  const progress =
+    movie.position_secs !== null && movie.duration_secs !== null && movie.duration_secs > 0
+      ? movie.position_secs / movie.duration_secs
+      : null;
+  return {
+    id: movie.id,
+    name: movie.name,
+    posterUrl: movie.poster_url,
+    watched: movie.watched === 1,
+    favourite: movie.is_favourite === 1,
+    progress,
+  };
+}
 
 export function MoviesView({
+  sourceId = null,
   scope = "browse",
   onPlaybackStarted,
   headerExtra,
 }: {
+  /** Narrow to one source. null = every source. */
+  sourceId?: string | null;
   scope?: "browse" | "favourites" | "recent";
   onPlaybackStarted?: () => void;
   headerExtra?: ReactNode;
 }) {
   const queryClient = useQueryClient();
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [genre, setGenre] = useState<string | null>(null);
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
@@ -27,24 +60,43 @@ export function MoviesView({
   }, [term]);
 
   const searching = scope === "browse" && debounced.length > 0;
+  const pickGenre = useCallback((next: string | null) => {
+    setGenre(next);
+    setCategoryId(null); // a category belongs to one genre; keeping it would silently override the filter
+  }, []);
+  const plainBrowse = scope === "browse" && !searching && categoryId === null && genre === null;
 
   const categories = useQuery({
-    queryKey: ["movies", "categories"],
-    queryFn: () => window.testcard.movies.categoryList(),
+    queryKey: ["movies", "categories", sourceId],
+    queryFn: () => window.testcard.movies.categoryList(sourceId ?? undefined),
     staleTime: 60_000,
     enabled: scope === "browse",
   });
 
   const list = useQuery({
-    queryKey: ["movies", scope, categoryId, searching ? debounced : null, searching],
+    queryKey: ["movies", scope, categoryId, genre, searching ? debounced : null, searching, sourceId],
     queryFn: () => {
       if (scope === "favourites") return window.testcard.movies.favourites();
       if (scope === "recent") return window.testcard.movies.recent();
-      if (searching) return window.testcard.movies.search(debounced);
-      return window.testcard.movies.browse(categoryId !== null ? { categoryId } : {});
+      if (searching) return window.testcard.movies.search(debounced, sourceId ?? undefined);
+      return window.testcard.movies.browse({
+        ...(categoryId !== null ? { categoryId } : {}),
+        ...(genre !== null ? { genre } : {}),
+        ...(sourceId !== null ? { sourceId } : {}),
+      });
     },
     placeholderData: (prev) => prev,
   });
+
+  // Started-but-unfinished movies, for the row above the catalogue.
+  const started = useQuery({
+    queryKey: ["movies", "continue"],
+    queryFn: () => window.testcard.movies.recent(),
+    enabled: plainBrowse,
+  });
+  const continueRows = (started.data ?? []).filter(
+    (movie) => (sourceId === null || movie.source_id === sourceId) && movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs),
+  );
 
   const detail = useQuery({
     queryKey: ["movies", "details", selectedMovieId],
@@ -66,23 +118,33 @@ export function MoviesView({
     [selectedMovieId, onPlaybackStarted],
   );
 
+  const closeDrawer = useCallback(() => setSelectedMovieId(null), []);
+
   const rows = list.data ?? [];
-  // Same source `SeriesView` reads for episodes: the movies.details catalog row already carries
-  // both fields, so there's no need for a separate progress query (and one resolving `undefined`
-  // for an unplayed movie would break TanStack Query v5, which retries `undefined` as an error).
+  // The movies.details catalog row already carries both fields, so there's no separate progress
+  // query (and one resolving `undefined` for an unplayed movie would break TanStack Query v5,
+  // which retries `undefined` as an error).
   const resumePositionSecs = detail.data?.position_secs ?? null;
   const promptResume = resumePositionSecs !== null && shouldPromptResume(resumePositionSecs, detail.data?.duration_secs ?? null);
 
   const heading = scope === "favourites" ? "Favourite movies" : scope === "recent" ? "Recently watched movies" : "Movies";
-  const emptyText = list.isError
-    ? "Couldn't load movies. Try refreshing the source."
-    : searching
-      ? `Nothing matches "${debounced}".`
-      : scope === "favourites"
-        ? "No favourite movies yet."
-        : scope === "recent"
-          ? "Nothing played yet."
-          : "No movies. Add an Xtream source and refresh it.";
+
+  const empty = list.isError ? (
+    <EmptyState icon="film" title="Couldn't load movies" hint="Refresh your source from Account, then try again." />
+  ) : searching ? (
+    <EmptyState icon="search" title={`Nothing matches “${debounced}”`} hint="Check the spelling or clear the search." />
+  ) : scope === "favourites" ? (
+    <EmptyState icon="star" title="No favourite movies yet" hint="Open a movie and press the star to keep it here." />
+  ) : scope === "recent" ? (
+    <EmptyState icon="clock" title="Nothing watched yet" hint="Movies you play show up here." />
+  ) : (
+    <EmptyState icon="film" title="No movies" hint="Add a source with movies in Account, or turn Movies on for one, then refresh it." />
+  );
+
+  const sources = useSources().data ?? [];
+  const sourceName = sources.length > 1 ? sources.find((source) => source.id === detail.data?.source_id)?.name : undefined;
+  const detailTitle = detail.data !== undefined ? splitTitle(detail.data.name) : null;
+  const rating = detail.data?.rating && Number(detail.data.rating) > 0 ? Number(detail.data.rating).toFixed(1) : null;
 
   return (
     <main className="pw-main">
@@ -103,52 +165,74 @@ export function MoviesView({
         )}
       </div>
 
+      {scope === "browse" && (
+        <>
+          <GenreBar
+            options={genreOptions((categories.data ?? []).map((c) => ({ genre: c.genre, count: c.movie_count })))}
+            value={genre}
+            onChange={pickGenre}
+          />
+          <CategoryBar
+            allLabel="All movies"
+            categories={(categories.data ?? [])
+              .filter((c) => genre === null || c.genre === genre)
+              .map((c) => ({ id: c.id, name: c.name, count: c.movie_count }))}
+            value={categoryId}
+            onChange={setCategoryId}
+          />
+        </>
+      )}
+
       <div className="pw-scroll">
-        {scope === "browse" && (
-          <div className="pw-cats pw-cats--inline">
-            <button type="button" className="pw-cat" data-active={categoryId === null} onClick={() => setCategoryId(null)}>
-              <span className="pw-cat-name">All movies</span>
-            </button>
-            {categories.data?.map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                className="pw-cat"
-                data-active={categoryId === category.id}
-                onClick={() => setCategoryId(category.id)}
-                title={category.name}
-              >
-                <span className="pw-cat-name">{category.name}</span>
-                <span className="pw-cat-count">{category.movie_count}</span>
-              </button>
-            ))}
-          </div>
+        {plainBrowse && continueRows.length > 0 && (
+          <section className="pw-shelf">
+            <h3 className="pw-shelf-title">Continue watching</h3>
+            <div className="pw-shelf-row">
+              {continueRows.slice(0, 12).map((movie) => (
+                <ContinueTile key={movie.id} movie={movie} onSelect={setSelectedMovieId} />
+              ))}
+            </div>
+          </section>
         )}
 
-        <PosterGrid
-          items={rows.map((movie) => ({ id: movie.id, name: movie.name, posterUrl: movie.poster_url, watched: movie.watched === 1 }))}
-          onSelect={setSelectedMovieId}
-          empty={emptyText}
-        />
+        {rows.length === 0 ? (
+          empty
+        ) : (
+          <>
+            {plainBrowse && continueRows.length > 0 && <h3 className="pw-shelf-title">All movies</h3>}
+            <PosterGrid items={rows.map(toPoster)} onSelect={setSelectedMovieId} />
+          </>
+        )}
       </div>
 
       {selectedMovieId !== null && (
-        <div className="pw-detail-pane">
-          <button type="button" className="pw-detail-close" aria-label="Close" onClick={() => setSelectedMovieId(null)}>
-            <Icon name="x" />
-          </button>
-          {detail.data !== undefined ? (
+        <Drawer label="Movie details" backdropUrl={detail.data?.poster_url ? logoSrc(detail.data.poster_url) : null} onClose={closeDrawer}>
+          {detail.data !== undefined && detailTitle !== null ? (
             <>
-              {detail.data.poster_url && (
-                <img className="pw-detail-poster" src={logoSrc(detail.data.poster_url)} alt="" referrerPolicy="no-referrer" />
-              )}
-              <h3>{detail.data.name}</h3>
-              {detail.data.plot && <p className="pw-detail-plot">{detail.data.plot}</p>}
+              <div className="pw-detail-top">
+                {detail.data.poster_url && (
+                  <img className="pw-detail-poster" src={logoSrc(detail.data.poster_url)} alt="" referrerPolicy="no-referrer" />
+                )}
+                <div className="pw-detail-heading">
+                  <h3>{detailTitle.title}</h3>
+                  <p className="pw-detail-meta">
+                    {[
+                      detailTitle.year,
+                      detail.data.duration_secs ? formatDuration(detail.data.duration_secs) : null,
+                      rating !== null ? `Rated ${rating}` : null,
+                      detailTitle.is4k ? "4K" : null,
+                      sourceName ?? null,
+                    ]
+                      .filter((part): part is string => part !== null)
+                      .join("   ")}
+                  </p>
+                </div>
+              </div>
               <div className="pw-detail-actions">
                 {promptResume ? (
                   <>
                     <button type="button" className="btn btn--primary" onClick={() => play(true)}>
-                      Resume from {formatDuration(resumePositionSecs!)}
+                      <Icon name="play" /> Resume from {formatDuration(resumePositionSecs!)}
                     </button>
                     <button type="button" className="btn btn--ghost" onClick={() => play(false)}>
                       Start over
@@ -161,19 +245,44 @@ export function MoviesView({
                 )}
                 <button
                   type="button"
-                  className="btn btn--ghost btn--icon"
-                  aria-label={detail.data.is_favourite === 1 ? "Remove favourite" : "Add favourite"}
+                  className="btn btn--ghost"
                   onClick={() => favourite.mutate(detail.data!.id)}
+                  aria-pressed={detail.data.is_favourite === 1}
                 >
                   <Icon name="star" filled={detail.data.is_favourite === 1} />
+                  {detail.data.is_favourite === 1 ? "In favourites" : "Add to favourites"}
                 </button>
               </div>
+              {detail.data.plot ? <p className="pw-detail-plot">{detail.data.plot}</p> : <p className="pw-detail-plot pw-detail-plot--none">No description from the provider.</p>}
             </>
           ) : (
-            <p className="pw-empty">Loading…</p>
+            <p className="pw-detail-loading">Loading…</p>
           )}
-        </div>
+        </Drawer>
       )}
     </main>
+  );
+}
+
+function ContinueTile({ movie, onSelect }: { movie: MovieListRow; onSelect: (id: string) => void }) {
+  const { title } = splitTitle(movie.name);
+  const progress = movie.position_secs !== null && movie.duration_secs ? movie.position_secs / movie.duration_secs : 0;
+  return (
+    <button type="button" className="pw-continue" onClick={() => onSelect(movie.id)} title={movie.name}>
+      <span className="pw-continue-art">
+        {movie.poster_url ? <img src={logoSrc(movie.poster_url)} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Icon name="film" />}
+        <span className="pw-poster-progress" aria-hidden="true">
+          <i style={{ width: `${Math.min(1, progress) * 100}%` }} />
+        </span>
+      </span>
+      <span className="pw-continue-text">
+        <span className="pw-continue-title">{title}</span>
+        <span className="pw-continue-left">
+          {movie.position_secs !== null && movie.duration_secs
+            ? `${formatDuration(Math.max(0, movie.duration_secs - movie.position_secs))} left`
+            : "Resume"}
+        </span>
+      </span>
+    </button>
   );
 }

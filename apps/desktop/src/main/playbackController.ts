@@ -65,8 +65,10 @@ export class PlaybackController {
   private current: CurrentPlayback | null = null;
   private lastKnownPositionSecs = 0;
   private lastProgressWriteMs = 0;
+  private lastPositionEmitMs = 0;
   private pendingResumeSecs: number | null = null;
   private static readonly PROGRESS_WRITE_INTERVAL_MS = 5000;
+  private static readonly POSITION_EMIT_INTERVAL_MS = 500;
 
   private status: PlaybackSnapshot["status"] = "idle";
   private tracks: PlaybackTrack[] = [];
@@ -84,6 +86,8 @@ export class PlaybackController {
     private readonly mainWindow: BrowserWindow,
     private readonly adapters: Adapters,
     private readonly getCredentials: CredentialsLookup,
+    /** Fired after playback data that syncs (progress, recents) is written. */
+    private readonly onLocalChange: () => void = () => undefined,
   ) {
     this.volume = clampVolume(this.conf.get("volume", 100));
     this.aspect = this.conf.get("aspect", "fit");
@@ -136,7 +140,7 @@ export class PlaybackController {
     await this.ensureStarted();
     this.status = "loading";
     this.syncOverlay();
-    this.emit({ type: "loading", channelId, channelName: target.channelName });
+    this.emit({ type: "loading", channelId, channelName: target.channelName, kind: "channel" });
     await this.mpv!.setVolume(this.volume);
     await this.mpv!.setPaused(false);
     await this.mpv!.setAspect(this.aspect);
@@ -146,18 +150,22 @@ export class PlaybackController {
   async playMovie(movieId: string, opts: { resume?: boolean } = {}): Promise<void> {
     let target = getMoviePlaybackTarget(this.db, movieId);
     if (!target) throw new Error("That movie could not be found.");
-    if (target.source.kind !== "xtream") throw new Error("Movies are only available on Xtream sources.");
 
-    if (target.containerExtension === null || target.containerExtension === "") {
-      await ensureMovieDetails(this.db, target.source, movieId, this.getCredentials);
-      target = getMoviePlaybackTarget(this.db, movieId) ?? target;
+    let streamUrl: string;
+    if (target.source.kind === "m3u") {
+      // An M3U film's providerStreamId is its direct stream URL.
+      streamUrl = target.providerStreamId;
+    } else {
+      if (target.containerExtension === null || target.containerExtension === "") {
+        await ensureMovieDetails(this.db, target.source, movieId, this.getCredentials);
+        target = getMoviePlaybackTarget(this.db, movieId) ?? target;
+      }
+      streamUrl = await buildMovieStreamUrl(
+        target.source,
+        { providerStreamId: target.providerStreamId, ...(target.containerExtension !== null ? { containerExtension: target.containerExtension } : {}) },
+        this.getCredentials,
+      );
     }
-
-    const streamUrl = await buildMovieStreamUrl(
-      target.source,
-      { providerStreamId: target.providerStreamId, ...(target.containerExtension !== null ? { containerExtension: target.containerExtension } : {}) },
-      this.getCredentials,
-    );
 
     // Fetched unconditionally (cheap primary-key lookup) — not just for resume — because it's
     // also the fallback source for durationSecs when the catalog doesn't have one yet.
@@ -176,7 +184,7 @@ export class PlaybackController {
     await this.ensureStarted();
     this.status = "loading";
     this.syncOverlay();
-    this.emit({ type: "loading", channelId: movieId, channelName: target.movieName });
+    this.emit({ type: "loading", channelId: movieId, channelName: target.movieName, kind: "movie" });
     await this.mpv!.setVolume(this.volume);
     await this.mpv!.setPaused(false);
     await this.mpv!.setAspect(this.aspect);
@@ -186,16 +194,19 @@ export class PlaybackController {
   async playEpisode(episodeId: string, opts: { resume?: boolean } = {}): Promise<void> {
     const target = getEpisodePlaybackTarget(this.db, episodeId);
     if (!target) throw new Error("That episode could not be found.");
-    if (target.source.kind !== "xtream") throw new Error("Series are only available on Xtream sources.");
 
-    const streamUrl = await buildEpisodeStreamUrl(
-      target.source,
-      {
-        providerEpisodeId: target.providerEpisodeId,
-        ...(target.containerExtension !== null ? { containerExtension: target.containerExtension } : {}),
-      },
-      this.getCredentials,
-    );
+    // An M3U episode's providerEpisodeId is its direct stream URL.
+    const streamUrl =
+      target.source.kind === "m3u"
+        ? target.providerEpisodeId
+        : await buildEpisodeStreamUrl(
+            target.source,
+            {
+              providerEpisodeId: target.providerEpisodeId,
+              ...(target.containerExtension !== null ? { containerExtension: target.containerExtension } : {}),
+            },
+            this.getCredentials,
+          );
 
     // Fetched unconditionally (cheap primary-key lookup) — not just for resume — because it's
     // also the fallback source for durationSecs when the catalog doesn't have one yet.
@@ -221,7 +232,7 @@ export class PlaybackController {
     await this.ensureStarted();
     this.status = "loading";
     this.syncOverlay();
-    this.emit({ type: "loading", channelId: episodeId, channelName: target.episodeName });
+    this.emit({ type: "loading", channelId: episodeId, channelName: target.episodeName, kind: "episode" });
     await this.mpv!.setVolume(this.volume);
     await this.mpv!.setPaused(false);
     await this.mpv!.setAspect(this.aspect);
@@ -300,7 +311,49 @@ export class PlaybackController {
       volume: this.volume,
       aspect: this.aspect,
       fullscreen: this.mainWindow.isFullScreen(),
+      kind: this.current ? this.current.kind : null,
+      positionSecs: this.lastKnownPositionSecs,
+      durationSecs: this.current && this.current.kind !== "channel" ? this.current.durationSecs : null,
     };
+  }
+
+  async seekTo(positionSecs: number): Promise<void> {
+    if (!this.current || this.current.kind === "channel") return;
+    const duration = this.current.durationSecs;
+    const target = Math.max(0, duration !== null ? Math.min(positionSecs, duration) : positionSecs);
+    this.lastKnownPositionSecs = target;
+    await this.mpv?.seek(target);
+    this.emitPosition(target, true);
+  }
+
+  async seekBy(deltaSecs: number): Promise<void> {
+    if (!this.current || this.current.kind === "channel") return;
+    await this.seekTo(this.lastKnownPositionSecs + deltaSecs);
+  }
+
+  /** Plays the neighbouring episode of the current series, in season/episode order. No-op at either end. */
+  async stepEpisode(delta: number): Promise<void> {
+    if (!this.current || this.current.kind !== "episode") return;
+    const { seriesId, episodeId } = this.current;
+    const ordered = this.db
+      .prepare(
+        `SELECT e.id AS id FROM episodes e JOIN seasons s ON s.id = e.season_id
+         WHERE e.series_id = ? ORDER BY s.season_number, e.episode_number`,
+      )
+      .all(seriesId) as { id: string }[];
+    const index = ordered.findIndex((row) => row.id === episodeId);
+    const next = index === -1 ? undefined : ordered[index + delta];
+    if (!next) return;
+    this.persistProgress(this.current, this.lastKnownPositionSecs);
+    await this.playEpisode(next.id, { resume: false });
+  }
+
+  private emitPosition(positionSecs: number, force = false): void {
+    const now = Date.now();
+    if (!force && now - this.lastPositionEmitMs < PlaybackController.POSITION_EMIT_INTERVAL_MS) return;
+    this.lastPositionEmitMs = now;
+    const durationSecs = this.current && this.current.kind !== "channel" ? this.current.durationSecs : null;
+    this.emit({ type: "position", positionSecs, durationSecs });
   }
 
   /** Overlay → main window. The main window owns the browse list, so it does the stepping. */
@@ -317,6 +370,7 @@ export class PlaybackController {
   }
 
   dispose(): void {
+    if (this.current && this.current.kind !== "channel") this.persistProgress(this.current, this.lastKnownPositionSecs);
     if (!this.mainWindow.isDestroyed()) {
       this.mainWindow.off("enter-full-screen", this.onEnterFullscreen);
       this.mainWindow.off("leave-full-screen", this.onLeaveFullscreen);
@@ -356,6 +410,7 @@ export class PlaybackController {
     const itemType = current.kind === "movie" ? "movie" : "episode";
     const itemId = current.kind === "movie" ? current.movieId : current.episodeId;
     setPlaybackProgress(this.db, itemType, itemId, positionSecs, current.durationSecs);
+    this.onLocalChange();
   }
 
   private async ensureStarted(): Promise<void> {
@@ -380,6 +435,7 @@ export class PlaybackController {
         if (current.kind === "channel") recordRecent(this.db, current.target.channelId);
         else if (current.kind === "movie") recordMovieRecent(this.db, current.movieId);
         else recordSeriesRecent(this.db, current.seriesId);
+        this.onLocalChange();
         this.region?.show();
         this.syncOverlay();
         this.emit({ type: "playing", channelId: this.currentId() });
@@ -427,6 +483,14 @@ export class PlaybackController {
         if (!current || current.kind === "channel") return;
         this.lastKnownPositionSecs = event.seconds;
         this.maybePersistProgress(current, event.seconds);
+        this.emitPosition(event.seconds);
+        break;
+      case "duration":
+        // mpv's own figure is authoritative: the catalog often has none (or a stale one), and
+        // without a duration a saved position can never trigger the "Resume from…" prompt.
+        if (!current || current.kind === "channel") return;
+        this.current = { ...current, durationSecs: Math.round(event.seconds) };
+        this.emitPosition(this.lastKnownPositionSecs, true);
         break;
       case "end-file":
         if (!current || current.kind === "channel") return;

@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChannelRow } from "@testcard/core";
 import { Icon } from "../components/Icon.js";
+import { genreOptions } from "../lib/genres.js";
+import { GenreBar } from "./GenreBar.js";
 import { ChannelGrid } from "./ChannelGrid.js";
 import { logoSrc } from "../lib/logo.js";
 import { MoviesView } from "./MoviesView.js";
 import { SeriesView } from "./SeriesView.js";
 import type { BrowseTab } from "./Sidebar.js";
 
-// "guide", "sources", "movies", "series", and "account" never actually reach this component —
-// PlayerScreen branches to GuideView/SourcesView/MoviesView/SeriesView/AccountView first — but
+// "guide", "movies", "series", and "account" never actually reach this component —
+// PlayerScreen branches to GuideView/MoviesView/SeriesView/AccountView first — but
 // BrowseTab is one shared union, so this stays total.
 const TITLES: Record<BrowseTab, string> = {
   live: "Live TV",
@@ -18,11 +20,11 @@ const TITLES: Record<BrowseTab, string> = {
   series: "Series",
   favourites: "Favourites",
   recent: "Recently watched",
-  sources: "Sources",
   account: "Account",
 };
 
 export function BrowseView({
+  sourceId,
   tab,
   categoryId,
   activeChannelId,
@@ -30,6 +32,7 @@ export function BrowseView({
   onListChange,
   onPlaybackStarted,
 }: {
+  sourceId: string | null;
   tab: BrowseTab;
   categoryId: string | null;
   activeChannelId: string | null;
@@ -42,6 +45,7 @@ export function BrowseView({
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
   const [country, setCountry] = useState<string | null>(null);
+  const [genre, setGenre] = useState<string | null>(null);
   const [contentType, setContentType] = useState<"live" | "movies" | "series">("live");
   const showSwitcher = tab === "favourites" || tab === "recent";
 
@@ -54,8 +58,8 @@ export function BrowseView({
   const inCategory = categoryId !== null;
 
   const categories = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => window.testcard.channels.categoryList(),
+    queryKey: ["categories", sourceId],
+    queryFn: () => window.testcard.channels.categoryList(sourceId ?? undefined),
     staleTime: 60_000,
     enabled: !showSwitcher || contentType === "live",
   });
@@ -65,20 +69,21 @@ export function BrowseView({
   );
 
   const countries = useQuery({
-    queryKey: ["channels", "countries"],
-    queryFn: () => window.testcard.channels.countryList(),
+    queryKey: ["channels", "countries", sourceId],
+    queryFn: () => window.testcard.channels.countryList(sourceId ?? undefined),
     staleTime: 60_000,
     enabled: !showSwitcher || contentType === "live",
   });
 
   const list = useQuery({
-    queryKey: ["channels", tab, categoryId, searching ? debounced : country, searching],
+    queryKey: ["channels", tab, categoryId, searching ? debounced : country, searching, sourceId, genre],
     queryFn: () => {
-      if (searching) return window.testcard.channels.search(debounced);
+      const scope = { ...(sourceId !== null ? { sourceId } : {}), ...(genre !== null ? { genre } : {}) };
+      if (searching) return window.testcard.channels.search(debounced, sourceId ?? undefined);
       if (tab === "favourites") return window.testcard.channels.favourites();
       if (tab === "recent") return window.testcard.channels.recent();
-      if (inCategory) return window.testcard.channels.browse({ categoryId });
-      return window.testcard.channels.browse(country !== null ? { country } : {});
+      if (inCategory) return window.testcard.channels.browse({ categoryId, ...scope });
+      return window.testcard.channels.browse({ ...(country !== null ? { country } : {}), ...scope });
     },
     enabled: !showSwitcher || contentType === "live",
     placeholderData: (prev) => prev,
@@ -117,6 +122,12 @@ export function BrowseView({
   const showChips = tab === "live" && !searching && !inCategory && (countries.data?.length ?? 0) > 0;
   const showRecentStrip =
     tab === "live" && !searching && !inCategory && (recent.data?.length ?? 0) > 0;
+
+  const genres = useMemo(
+    () => genreOptions((categories.data ?? []).map((c) => ({ genre: c.genre, count: c.channel_count }))),
+    [categories.data],
+  );
+  const showGenres = tab === "live" && !searching && !inCategory && genres.length > 0;
 
   const heading = searching ? "Search" : inCategory && tab === "live" ? categoryName : TITLES[tab];
 
@@ -202,6 +213,8 @@ export function BrowseView({
           ))}
         </div>
       )}
+
+      {showGenres && <GenreBar options={genres} value={genre} onChange={setGenre} />}
 
       <div className="pw-scroll">
         {showRecentStrip && (

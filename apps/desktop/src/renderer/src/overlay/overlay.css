@@ -188,3 +188,36 @@ body,
     transform: none;
   }
 }
+
+/* ---- VOD: seek row above the controls ---- */
+
+.ov-bar--vod {
+  height: auto;
+  flex-wrap: wrap;
+  padding-block: var(--s-3);
+  row-gap: var(--s-2);
+}
+
+.ov-seek {
+  flex: 0 0 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--t-micro);
+  color: var(--muted-foreground);
+}
+
+.ov-seek input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.ov-skip {
+  flex: none;
+  min-width: 44px;
+  height: 34px;
+  padding: 0 var(--s-2);
+  font-size: var(--t-micro);
+  font-weight: var(--wght-semibold);
+}

@@ -25,6 +25,19 @@ plays back through an embedded `mpv`, stores everything locally.
 - **Category** — a provider's `group-title` (Xtream: `get_live_categories`), e.g.
   `UK| TNT Sports`. Raw categories are flat strings; the sidebar tree in the UI is a
   presentation-layer grouping by parsed **Country** prefix, not a separate domain concept.
+- **Category classification** — advisory metadata (`genre`, `language`, `service`, `tags`) derived
+  from a Category's name by the pure `classifyCategory` rules and stored beside the untouched
+  provider name. Never authoritative: unknown is `null`, and flags like `junk`/`separator` mark
+  rather than hide. Recomputed on open when `CLASSIFIER_VERSION` changes. TypeSafe/Jev is used
+  only by the developer to audit these rules — never at runtime. See
+  `docs/adr/0007-category-classification-and-dev-time-ai.md`.
+- **M3U films and episodes** — an M3U playlist is flat, so `classifyEntry` (`source/m3u/classifyEntry.ts`)
+  decides per entry whether it is live, a film or an episode from the stream URL (`/movie/`,
+  `/series/`, a video-file extension, never `/live/`) and an `S01E02` / `1x02` marker in the title.
+  Films and episodes are stored in the same `movies` / `series` / `seasons` / `episodes` tables as
+  Xtream VOD, with the direct stream URL as `provider_stream_id` / `provider_episode_id`, ids derived
+  from the title (so a rotating token never orphans a favourite) and no lazy detail fetch. Anything
+  unrecognised stays a live channel. See `docs/adr/0008-m3u-films-and-episodes.md`.
 - **Country** — parsed from a leading `XX|` prefix on a category name (`UK|`, `CA|`), when
   present. Absent for categories with no such prefix — those sit outside the country tree.
 - **Normalised name** — a Channel's display name with unicode styling stripped (`ᵁᴴᴰ`,

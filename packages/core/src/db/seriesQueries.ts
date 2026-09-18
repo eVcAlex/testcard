@@ -16,7 +16,7 @@ export interface SeriesRow {
 const SERIES_COLUMNS = `sr.id, sr.source_id, sr.category_id, sr.name, sr.poster_url, sr.rating, sr.plot, sr.episodes_fetched_at,
   (SELECT 1 FROM series_favourites f WHERE f.series_id = sr.id) IS NOT NULL AS is_favourite`;
 
-export function searchSeries(db: Database.Database, query: string, limit = 200): SeriesRow[] {
+export function searchSeries(db: Database.Database, query: string, limit = 200, sourceId?: string): SeriesRow[] {
   const trimmed = query.trim();
   if (trimmed.length === 0) return [];
   const ftsQuery = trimmed.split(/\s+/).map((token) => `${token.replace(/["*]/g, "")}*`).join(" ");
@@ -25,18 +25,34 @@ export function searchSeries(db: Database.Database, query: string, limit = 200):
       `SELECT ${SERIES_COLUMNS}
        FROM series_fts
        JOIN series sr ON sr.rowid = series_fts.rowid
-       WHERE series_fts MATCH ?
+       WHERE series_fts MATCH ?${sourceId !== undefined ? " AND sr.source_id = ?" : ""}
        ORDER BY rank
        LIMIT ?`,
     )
-    .all(ftsQuery, limit) as SeriesRow[];
+    .all(...(sourceId !== undefined ? [ftsQuery, sourceId] : [ftsQuery]), limit) as SeriesRow[];
 }
 
-export function browseSeries(db: Database.Database, opts: { categoryId?: string; limit?: number; offset?: number } = {}): SeriesRow[] {
+export function browseSeries(
+  db: Database.Database,
+  opts: { categoryId?: string; sourceId?: string; genre?: string; limit?: number; offset?: number } = {},
+): SeriesRow[] {
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
-  const where = opts.categoryId !== undefined ? "WHERE sr.category_id = ?" : "";
-  const filters = opts.categoryId !== undefined ? [opts.categoryId] : [];
+  const clauses: string[] = [];
+  const filters: unknown[] = [];
+  if (opts.categoryId !== undefined) {
+    clauses.push("sr.category_id = ?");
+    filters.push(opts.categoryId);
+  }
+  if (opts.sourceId !== undefined) {
+    clauses.push("sr.source_id = ?");
+    filters.push(opts.sourceId);
+  }
+  if (opts.genre !== undefined) {
+    clauses.push("sr.category_id IN (SELECT id FROM series_categories WHERE genre = ?)");
+    filters.push(opts.genre);
+  }
+  const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
   return db
     .prepare(`SELECT ${SERIES_COLUMNS} FROM series sr ${where} ORDER BY sr.rowid LIMIT ? OFFSET ?`)
     .all(...filters, limit, offset) as SeriesRow[];
@@ -47,18 +63,24 @@ export interface SeriesCategoryRow {
   readonly name: string;
   readonly country: string | null;
   readonly series_count: number;
+  /** Advisory classification (see normalise/classifyCategory.ts): null/'' when unrecognised. */
+  readonly genre: string | null;
+  readonly language: string | null;
+  readonly service: string | null;
+  readonly tags: string;
 }
 
-export function listSeriesCategories(db: Database.Database): SeriesCategoryRow[] {
+export function listSeriesCategories(db: Database.Database, sourceId?: string): SeriesCategoryRow[] {
   return db
     .prepare(
-      `SELECT cat.id, cat.raw_name AS name, cat.country, COUNT(sr.id) AS series_count
+      `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(sr.id) AS series_count
        FROM series_categories cat
        JOIN series sr ON sr.category_id = cat.id
+       ${sourceId !== undefined ? "WHERE cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )
-    .all() as SeriesCategoryRow[];
+    .all(...(sourceId !== undefined ? [sourceId] : [])) as SeriesCategoryRow[];
 }
 
 export function listFavouriteSeries(db: Database.Database): SeriesRow[] {
@@ -132,7 +154,9 @@ export interface SeriesDetail {
   readonly seasons: readonly SeasonWithEpisodes[];
 }
 
-const EPISODE_COLUMNS = `e.id, e.season_id, e.series_id, e.episode_number, e.name, e.container_extension, e.duration_secs, e.plot,
+const EPISODE_COLUMNS = `e.id, e.season_id, e.series_id, e.episode_number, e.name, e.container_extension,
+  COALESCE(e.duration_secs, (SELECT duration_secs FROM playback_progress pp WHERE pp.item_type = 'episode' AND pp.item_id = e.id)) AS duration_secs,
+  e.plot,
   (SELECT position_secs FROM playback_progress pp WHERE pp.item_type = 'episode' AND pp.item_id = e.id) AS position_secs,
   COALESCE((SELECT watched FROM playback_progress pp WHERE pp.item_type = 'episode' AND pp.item_id = e.id), 0) AS watched`;
 
