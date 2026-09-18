@@ -90,6 +90,13 @@ const api: TestcardApi = {
     toggleFullscreen: bind("view.toggleFullscreen"),
     isFullscreen: bind("view.isFullscreen"),
   },
+  sync: {
+    status: bind("sync.status"),
+    signUp: bind("sync.signUp"),
+    signIn: bind("sync.signIn"),
+    signOut: bind("sync.signOut"),
+    triggerNow: bind("sync.triggerNow"),
+  },
   events: {
     onPlayback(listener: (event: PlaybackEvent) => void): () => void {
       const handler = (_event: IpcRendererEvent, payload: PlaybackEvent) => {

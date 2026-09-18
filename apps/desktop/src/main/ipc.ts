@@ -60,6 +60,7 @@ import {
 import { deleteCredentials, getCredentials, saveCredentials } from "./credentials.js";
 import { purgeCachedLogos } from "./logoCache.js";
 import { PlaybackController } from "./playbackController.js";
+import { SyncController } from "./syncController.js";
 import { isVlcAvailable } from "./externalPlayer.js";
 import { startRefreshScheduler } from "./refreshScheduler.js";
 import { randomUUID } from "node:crypto";
@@ -212,6 +213,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
     if (activeController === playback) activeController = null;
     playback.dispose();
   });
+
+  const sync = new SyncController(db);
+  mainWindow.on("closed", () => sync.dispose());
 
   const emitTask = (event: TaskEvent): void => {
     if (!mainWindow.isDestroyed()) mainWindow.webContents.send(IPC_TASK_CHANNEL, event);
@@ -724,6 +728,24 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
       async isFullscreen() {
         return playback.isFullscreen();
+      },
+    },
+
+    sync: {
+      async status() {
+        return sync.status();
+      },
+      async signUp(email: string, password: string) {
+        return sync.signUp(email, password);
+      },
+      async signIn(email: string, password: string) {
+        return sync.signIn(email, password);
+      },
+      async signOut() {
+        return sync.signOut();
+      },
+      async triggerNow() {
+        return sync.triggerNow();
       },
     },
   };

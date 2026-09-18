@@ -292,12 +292,29 @@ export interface TestcardApi {
     toggleFullscreen(): Promise<void>;
     isFullscreen(): Promise<boolean>;
   };
+  sync: {
+    status(): Promise<SyncStatus>;
+    signUp(email: string, password: string): Promise<SyncStatus>;
+    signIn(email: string, password: string): Promise<SyncStatus>;
+    signOut(): Promise<SyncStatus>;
+    /** Runs one push-then-pull cycle immediately, outside the periodic schedule. */
+    triggerNow(): Promise<SyncStatus>;
+  };
   events: {
     /** Subscribes to playback lifecycle events. Returns an unsubscribe function. */
     onPlayback(listener: (event: PlaybackEvent) => void): () => void;
     /** Subscribes to background-task progress (EPG import). Returns an unsubscribe function. */
     onTask(listener: (event: TaskEvent) => void): () => void;
   };
+}
+
+export type SyncAccountStatus = "signed-out" | "signed-in";
+
+export interface SyncStatus {
+  readonly account: SyncAccountStatus;
+  readonly email?: string;
+  readonly lastSyncedAt?: number;
+  readonly lastError?: string;
 }
 
 /** IPC channel name for request/response calls. */

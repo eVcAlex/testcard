@@ -23,3 +23,4 @@ export * from "./db/progressQueries.js";
 export * from "./sync/remoteKey.js";
 export * from "./sync/credentialCrypto.js";
 export * from "./sync/client.js";
+export * from "./sync/localChanges.js";
