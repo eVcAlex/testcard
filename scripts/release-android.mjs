@@ -19,7 +19,7 @@ run("gh", ["run", "download", runId, "-D", dir]);
 const build = JSON.parse(readFileSync(join(dir, "testcard-firetv", "build.json"), "utf8"));
 
 const put = (key, file, contentType) =>
-  run("pnpm", ["--filter", "@testcard/sync-worker", "exec", "wrangler", "r2", "object", "put", `${BUCKET}/${key}`, "--file", file, "--content-type", contentType, "--remote"]);
+  run("pnpm", ["--filter", "@testcard/sync-worker", "exec", "wrangler", "r2", "object", "put", `${BUCKET}/${key}`, "--file", file, "--content-type", contentType]);
 
 // The APKs first, so a device never sees a manifest that points at a file that is not there yet.
 for (const target of ["firetv", "phone"]) {
