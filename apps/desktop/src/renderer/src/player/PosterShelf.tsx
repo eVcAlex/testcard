@@ -1,4 +1,4 @@
-import { PosterCard, type PosterItem } from "./PosterGrid.js";
+import { PosterTile, type PosterItem } from "./PosterGrid.js";
 
 /** One landing-page row: a title, an optional "See all", and posters that scroll sideways. */
 export function PosterShelf({
@@ -6,11 +6,14 @@ export function PosterShelf({
   items,
   onSelect,
   onSeeAll,
+  onRemove,
 }: {
   title: string;
   items: readonly PosterItem[];
   onSelect: (id: string) => void;
   onSeeAll?: () => void;
+  /** When set, each poster gets a remove button (used for history). */
+  onRemove?: (id: string) => void;
 }) {
   if (items.length === 0) return null;
   return (
@@ -25,7 +28,7 @@ export function PosterShelf({
       </div>
       <div className="pw-shelf-row pw-shelf-row--posters">
         {items.map((item) => (
-          <PosterCard key={item.id} item={item} onSelect={onSelect} />
+          <PosterTile key={item.id} item={item} onSelect={onSelect} {...(onRemove !== undefined ? { onRemove } : {})} />
         ))}
       </div>
     </section>

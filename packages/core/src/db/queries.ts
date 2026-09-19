@@ -202,6 +202,11 @@ export function recordRecent(db: Database.Database, channelId: string): void {
   ).run(channelId, Date.now());
 }
 
+/** Takes a channel out of Recently watched. Channel history is local only, so there is nothing to sync. */
+export function removeChannelFromRecents(db: Database.Database, channelId: string): void {
+  db.prepare(`DELETE FROM recents WHERE channel_id = ?`).run(channelId);
+}
+
 export interface ProgrammeRow {
   readonly channel_id: string;
   readonly title: string;

@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import type { Source } from "../source/types.js";
+import { clearPlaybackProgress } from "./progressQueries.js";
 
 export interface SeriesRow {
   readonly id: string;
@@ -122,6 +123,17 @@ export function recordSeriesRecent(db: Database.Database, seriesId: string): voi
     `INSERT INTO series_recents (series_id, played_at, remote_key, updated_at) VALUES (?, ?, ?, ?)
      ON CONFLICT(series_id) DO UPDATE SET played_at = excluded.played_at, remote_key = excluded.remote_key, updated_at = excluded.updated_at`,
   ).run(seriesId, Date.now(), series?.remote_key ?? null, Date.now());
+}
+
+/** Takes a series out of Recently watched and forgets its episodes' resume positions and watched marks. */
+export function removeSeriesFromHistory(db: Database.Database, seriesId: string): void {
+  const row = db.prepare(`SELECT remote_key FROM series_recents WHERE series_id = ?`).get(seriesId) as { remote_key: string | null } | undefined;
+  db.prepare(`DELETE FROM series_recents WHERE series_id = ?`).run(seriesId);
+  if (row?.remote_key != null) {
+    db.prepare(`INSERT INTO sync_tombstones (table_name, remote_key, deleted_at) VALUES ('series_recents', ?, ?)`).run(row.remote_key, Date.now());
+  }
+  const episodes = db.prepare(`SELECT id FROM episodes WHERE series_id = ?`).all(seriesId) as { id: string }[];
+  clearPlaybackProgress(db, "episode", episodes.map((episode) => episode.id));
 }
 
 export interface SeasonRow {

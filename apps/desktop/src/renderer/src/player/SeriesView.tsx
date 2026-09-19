@@ -161,6 +161,11 @@ export function SeriesView({
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["series"] }),
   });
 
+  const removeFromHistory = useMutation({
+    mutationFn: (seriesId: string) => window.testcard.series.removeFromHistory(seriesId),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["series"] }),
+  });
+
   const playEpisode = useCallback(
     (episodeId: string, resume: boolean) => {
       onPlaybackStarted?.();
@@ -251,7 +256,12 @@ export function SeriesView({
       <div className="pw-scroll">
         {landing ? (
           <>
-            <PosterShelf title="Recently watched" items={recentRows.map(toPoster)} onSelect={setSelectedSeriesId} />
+            <PosterShelf
+              title="Recently watched"
+              items={recentRows.map(toPoster)}
+              onSelect={setSelectedSeriesId}
+              onRemove={(id) => removeFromHistory.mutate(id)}
+            />
             <PosterShelf title="My list" items={myListRows.map(toPoster)} onSelect={setSelectedSeriesId} />
             {(shelves.data ?? []).map((shelf) => (
               <PosterShelf
@@ -276,6 +286,7 @@ export function SeriesView({
           <PosterGrid
             items={rows.map((row) => ({ id: row.id, name: row.name, posterUrl: row.poster_url, favourite: row.is_favourite === 1 }))}
             onSelect={setSelectedSeriesId}
+            {...(scope === "recent" ? { onRemove: (id: string) => removeFromHistory.mutate(id) } : {})}
           />
         )}
       </div>

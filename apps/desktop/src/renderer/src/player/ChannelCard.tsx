@@ -18,6 +18,7 @@ export function ChannelCard({
   nowMs,
   onPlay,
   onToggleFavourite,
+  onRemove,
 }: {
   channel: ChannelRow;
   active: boolean;
@@ -25,6 +26,8 @@ export function ChannelCard({
   nowMs: number;
   onPlay: (channel: ChannelRow) => void;
   onToggleFavourite: (channelId: string) => void;
+  /** When set (the Recently watched list), the card offers to drop the channel from history. */
+  onRemove?: (channelId: string) => void;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
@@ -81,6 +84,11 @@ export function ChannelCard({
       >
         <Icon name="star" filled={fav} />
       </button>
+      {onRemove !== undefined && (
+        <button type="button" className="pw-card-star" aria-label="Remove from history" title="Remove from history" onClick={() => onRemove(channel.id)}>
+          <Icon name="x" />
+        </button>
+      )}
     </div>
   );
 }

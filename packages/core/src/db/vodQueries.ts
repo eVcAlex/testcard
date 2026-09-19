@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import type { Source } from "../source/types.js";
+import { clearPlaybackProgress } from "./progressQueries.js";
 
 export interface MovieRow {
   readonly id: string;
@@ -131,6 +132,16 @@ export function recordMovieRecent(db: Database.Database, movieId: string): void 
     `INSERT INTO movie_recents (movie_id, played_at, remote_key, updated_at) VALUES (?, ?, ?, ?)
      ON CONFLICT(movie_id) DO UPDATE SET played_at = excluded.played_at, remote_key = excluded.remote_key, updated_at = excluded.updated_at`,
   ).run(movieId, Date.now(), movie?.remote_key ?? null, Date.now());
+}
+
+/** Takes a movie out of Recently watched and Continue watching, and forgets its resume position. */
+export function removeMovieFromHistory(db: Database.Database, movieId: string): void {
+  const row = db.prepare(`SELECT remote_key FROM movie_recents WHERE movie_id = ?`).get(movieId) as { remote_key: string | null } | undefined;
+  db.prepare(`DELETE FROM movie_recents WHERE movie_id = ?`).run(movieId);
+  if (row?.remote_key != null) {
+    db.prepare(`INSERT INTO sync_tombstones (table_name, remote_key, deleted_at) VALUES ('movie_recents', ?, ?)`).run(row.remote_key, Date.now());
+  }
+  clearPlaybackProgress(db, "movie", [movieId]);
 }
 
 /** A single movie row by id, for the detail pane after `ensureMovieDetails` has run. */

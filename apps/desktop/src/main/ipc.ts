@@ -32,6 +32,9 @@ import {
   programmesInWindow,
   remoteKeyFor,
   remoteKeyForPlaylist,
+  removeChannelFromRecents,
+  removeMovieFromHistory,
+  removeSeriesFromHistory,
   searchChannels,
   searchMovies,
   searchSeries,
@@ -202,6 +205,8 @@ const SYNCED_MUTATIONS: ReadonlySet<string> = new Set([
   "channels.toggleFavourite",
   "movies.toggleFavourite",
   "series.toggleFavourite",
+  "movies.removeFromHistory",
+  "series.removeFromHistory",
   "sources.add",
   "sources.update",
   "progress.set",
@@ -657,6 +662,10 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         return listRecentChannels(db);
       },
 
+      async removeFromHistory(channelId) {
+        removeChannelFromRecents(db, channelId);
+      },
+
       async favourites() {
         return listFavouriteChannels(db);
       },
@@ -709,6 +718,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async recent() {
         return listRecentMovies(db);
       },
+      async removeFromHistory(movieId) {
+        removeMovieFromHistory(db, movieId);
+      },
       async toggleFavourite(movieId) {
         return toggleMovieFavourite(db, movieId);
       },
@@ -739,6 +751,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
       async recent() {
         return listRecentSeries(db);
+      },
+      async removeFromHistory(seriesId) {
+        removeSeriesFromHistory(db, seriesId);
       },
       async toggleFavourite(seriesId) {
         return toggleSeriesFavourite(db, seriesId);

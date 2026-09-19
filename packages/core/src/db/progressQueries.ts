@@ -37,6 +37,28 @@ export function setPlaybackProgress(
        duration_secs = excluded.duration_secs,
        watched       = excluded.watched,
        updated_at    = excluded.updated_at,
-       remote_key    = excluded.remote_key`,
+       remote_key    = excluded.remote_key,
+       deleted_at    = NULL`,
   ).run(itemType, itemId, Math.round(positionSecs), durationSecs, watched, Date.now(), item?.remote_key ?? null);
+}
+
+/**
+ * Forgets where the user was in these items ("remove from history"). A row that has synced is kept as
+ * position 0 / unwatched with a deleted_at stamp, so the clear reaches the account's other devices;
+ * one that never synced has nothing to tell anyone and is simply dropped.
+ */
+export function clearPlaybackProgress(db: Database.Database, itemType: "movie" | "episode", itemIds: readonly string[]): void {
+  const now = Date.now();
+  const clear = db.transaction(() => {
+    for (const itemId of itemIds) {
+      const row = db.prepare(`SELECT remote_key FROM playback_progress WHERE item_type = ? AND item_id = ?`).get(itemType, itemId) as { remote_key: string | null } | undefined;
+      if (row === undefined) continue;
+      if (row.remote_key === null) {
+        db.prepare(`DELETE FROM playback_progress WHERE item_type = ? AND item_id = ?`).run(itemType, itemId);
+      } else {
+        db.prepare(`UPDATE playback_progress SET position_secs = 0, watched = 0, updated_at = ?, deleted_at = ? WHERE item_type = ? AND item_id = ?`).run(now, now, itemType, itemId);
+      }
+    }
+  });
+  clear();
 }

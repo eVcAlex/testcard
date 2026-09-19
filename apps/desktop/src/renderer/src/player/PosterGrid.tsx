@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Icon } from "../components/Icon.js";
 import { logoSrc } from "../lib/logo.js";
 import { splitTitle } from "../lib/title.js";
+import { Removable } from "./Removable.js";
 
 /** The minimal shape `PosterGrid` needs — `MoviesView`/`SeriesView` map their rows into this. */
 export interface PosterItem {
@@ -69,15 +70,30 @@ export function PosterCard({ item, onSelect }: { item: PosterItem; onSelect: (id
 export function PosterGrid({
   items,
   onSelect,
+  onRemove,
 }: {
   items: readonly PosterItem[];
   onSelect: (id: string) => void;
+  /** When set, each poster gets a remove button (used for history). */
+  onRemove?: (id: string) => void;
 }) {
   return (
     <div className="pw-poster-grid">
       {items.map((item) => (
-        <PosterCard key={item.id} item={item} onSelect={onSelect} />
+        <PosterTile key={item.id} item={item} onSelect={onSelect} {...(onRemove !== undefined ? { onRemove } : {})} />
       ))}
     </div>
+  );
+}
+
+/** A poster, with a remove button when the caller can remove it. */
+export function PosterTile({ item, onSelect, onRemove }: { item: PosterItem; onSelect: (id: string) => void; onRemove?: (id: string) => void }) {
+  const card = <PosterCard item={item} onSelect={onSelect} />;
+  return onRemove === undefined ? (
+    card
+  ) : (
+    <Removable label="Remove from history" onRemove={() => onRemove(item.id)}>
+      {card}
+    </Removable>
   );
 }

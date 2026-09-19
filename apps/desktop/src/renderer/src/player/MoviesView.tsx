@@ -18,6 +18,7 @@ import { genreOptions } from "../lib/genres.js";
 import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
 import { PosterShelf } from "./PosterShelf.js";
+import { Removable } from "./Removable.js";
 import { categoryLabel } from "../lib/categoryLabel.js";
 
 type MovieListRow = Awaited<ReturnType<typeof window.testcard.movies.browse>>[number];
@@ -139,6 +140,11 @@ export function MoviesView({
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["movies"] }),
   });
 
+  const removeFromHistory = useMutation({
+    mutationFn: (movieId: string) => window.testcard.movies.removeFromHistory(movieId),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["movies"] }),
+  });
+
   const play = useCallback(
     (resume: boolean) => {
       if (selectedMovieId === null) return;
@@ -219,7 +225,9 @@ export function MoviesView({
             <h3 className="pw-shelf-title">Continue watching</h3>
             <div className="pw-shelf-row">
               {continueRows.slice(0, 12).map((movie) => (
-                <ContinueTile key={movie.id} movie={movie} onSelect={setSelectedMovieId} />
+                <Removable key={movie.id} label="Remove from continue watching" onRemove={() => removeFromHistory.mutate(movie.id)}>
+                  <ContinueTile movie={movie} onSelect={setSelectedMovieId} />
+                </Removable>
               ))}
             </div>
           </section>
@@ -250,7 +258,11 @@ export function MoviesView({
         ) : (
           <>
             {plainBrowse && <h3 className="pw-shelf-title">All movies</h3>}
-            <PosterGrid items={rows.map(toPoster)} onSelect={setSelectedMovieId} />
+            <PosterGrid
+              items={rows.map(toPoster)}
+              onSelect={setSelectedMovieId}
+              {...(scope === "recent" ? { onRemove: (id: string) => removeFromHistory.mutate(id) } : {})}
+            />
           </>
         )}
       </div>

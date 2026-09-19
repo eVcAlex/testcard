@@ -4,6 +4,7 @@ import type { ChannelRow } from "@testcard/core";
 import { Icon } from "../components/Icon.js";
 import { genreOptions } from "../lib/genres.js";
 import { GenreBar } from "./GenreBar.js";
+import { Removable } from "./Removable.js";
 import { ChannelGrid } from "./ChannelGrid.js";
 import { logoSrc } from "../lib/logo.js";
 import { MoviesView } from "./MoviesView.js";
@@ -97,6 +98,11 @@ export function BrowseView({
 
   const favourite = useMutation({
     mutationFn: (channelId: string) => window.testcard.channels.toggleFavourite(channelId),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["channels"] }),
+  });
+
+  const removeFromHistory = useMutation({
+    mutationFn: (channelId: string) => window.testcard.channels.removeFromHistory(channelId),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["channels"] }),
   });
 
@@ -222,19 +228,15 @@ export function BrowseView({
             <p className="pw-section-label">Recently watched</p>
             <div className="pw-recent-strip">
               {recent.data?.map((channel) => (
-                <button
-                  key={channel.id}
-                  type="button"
-                  className="pw-recent-tile"
-                  aria-label={channel.normalised_name}
-                  onClick={() => onPlay(channel)}
-                >
-                  {channel.logo_url ? (
-                    <img src={logoSrc(channel.logo_url)} alt="" loading="lazy" referrerPolicy="no-referrer" />
-                  ) : (
-                    <Icon name="tv" />
-                  )}
-                </button>
+                <Removable key={channel.id} label="Remove from history" onRemove={() => removeFromHistory.mutate(channel.id)}>
+                  <button type="button" className="pw-recent-tile" aria-label={channel.normalised_name} onClick={() => onPlay(channel)}>
+                    {channel.logo_url ? (
+                      <img src={logoSrc(channel.logo_url)} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                    ) : (
+                      <Icon name="tv" />
+                    )}
+                  </button>
+                </Removable>
               ))}
             </div>
             <p className="pw-section-label">Channels</p>
@@ -248,6 +250,7 @@ export function BrowseView({
           nowMs={nowMs}
           onPlay={onPlay}
           onToggleFavourite={(id) => favourite.mutate(id)}
+          {...(tab === "recent" ? { onRemove: (id: string) => removeFromHistory.mutate(id) } : {})}
           empty={emptyText}
         />
       </div>

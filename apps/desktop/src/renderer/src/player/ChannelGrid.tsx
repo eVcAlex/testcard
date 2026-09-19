@@ -9,6 +9,7 @@ export function ChannelGrid({
   nowMs,
   onPlay,
   onToggleFavourite,
+  onRemove,
   empty,
 }: {
   channels: readonly ChannelRow[];
@@ -17,6 +18,7 @@ export function ChannelGrid({
   nowMs: number;
   onPlay: (channel: ChannelRow) => void;
   onToggleFavourite: (channelId: string) => void;
+  onRemove?: (channelId: string) => void;
   empty: string;
 }) {
   if (channels.length === 0) {
@@ -33,6 +35,7 @@ export function ChannelGrid({
           nowMs={nowMs}
           onPlay={onPlay}
           onToggleFavourite={onToggleFavourite}
+          {...(onRemove !== undefined ? { onRemove } : {})}
         />
       ))}
     </div>

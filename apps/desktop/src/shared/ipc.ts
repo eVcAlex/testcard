@@ -254,6 +254,8 @@ export interface TestcardApi {
       offset?: number;
     }): Promise<readonly ChannelRow[]>;
     recent(): Promise<readonly ChannelRow[]>;
+    /** Takes a channel out of Recently watched. */
+    removeFromHistory(channelId: string): Promise<void>;
     favourites(): Promise<readonly ChannelRow[]>;
     /** Every category (provider group-title) with channels, for the sidebar list. */
     categoryList(sourceId?: string): Promise<readonly CategoryRow[]>;
@@ -277,6 +279,8 @@ export interface TestcardApi {
     search(query: string, sourceId?: string): Promise<readonly MovieRow[]>;
     favourites(): Promise<readonly MovieRow[]>;
     recent(): Promise<readonly MovieRow[]>;
+    /** Takes a movie out of Recently watched and Continue watching, and forgets its resume position. */
+    removeFromHistory(movieId: string): Promise<void>;
     toggleFavourite(movieId: string): Promise<boolean>;
     /** Triggers the lazy plot/duration (get_vod_info) fetch if not already cached, then returns the row. */
     details(movieId: string): Promise<MovieRow>;
@@ -289,6 +293,8 @@ export interface TestcardApi {
     search(query: string, sourceId?: string): Promise<readonly SeriesRow[]>;
     favourites(): Promise<readonly SeriesRow[]>;
     recent(): Promise<readonly SeriesRow[]>;
+    /** Takes a series out of Recently watched and forgets its episodes' progress and watched marks. */
+    removeFromHistory(seriesId: string): Promise<void>;
     toggleFavourite(seriesId: string): Promise<boolean>;
     /** Lazy-fetches (or returns cached) seasons/episodes for a series. */
     episodes(seriesId: string): Promise<SeriesDetail>;

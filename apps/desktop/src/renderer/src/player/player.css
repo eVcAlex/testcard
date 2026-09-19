@@ -2051,3 +2051,53 @@
   height: var(--control-h);
   font-size: var(--t-body);
 }
+
+/* ---- remove from history ---- */
+
+.pw-removable {
+  position: relative;
+  flex: none;
+  min-width: 0;
+}
+
+.pw-shelf-row--posters .pw-removable {
+  width: 150px;
+}
+
+.pw-removable > .pw-poster-card {
+  width: 100%;
+}
+
+.pw-remove {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: rgb(0 0 0 / 0.7);
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease-out);
+}
+
+.pw-remove:hover {
+  background: var(--danger, #c0392b);
+}
+
+.pw-removable:hover .pw-remove,
+.pw-remove:focus-visible {
+  opacity: 1;
+}
+
+/* A channel tile in the small Recently watched strip is only 46px wide. */
+.pw-removable > .pw-recent-tile + .pw-remove {
+  top: -6px;
+  right: -6px;
+}
