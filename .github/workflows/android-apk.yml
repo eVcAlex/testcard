@@ -53,6 +53,18 @@ jobs:
           EXPO_TV: ${{ matrix.tv }}
         run: pnpm exec expo prebuild --platform android --no-install --clean
 
+      # The runner has two cores: let Gradle use both and reuse cached task outputs.
+      - name: Tune Gradle
+        working-directory: apps/mobile/android
+        run: |
+          {
+            echo "org.gradle.parallel=true"
+            echo "org.gradle.caching=true"
+            echo "org.gradle.workers.max=2"
+            echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC"
+            echo "kotlin.daemon.jvmargs=-Xmx2g"
+          } >> gradle.properties
+
       - name: Build the release APK
         working-directory: apps/mobile/android
         run: ./gradlew ${{ matrix.task }} --no-daemon
