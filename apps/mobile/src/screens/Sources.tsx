@@ -1,11 +1,15 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useApp } from "../state/app";
+import { useUpdate } from "../update/UpdateProvider";
+import { installedVersion } from "../update/update";
 import { colors, space, type } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
 
 /** What this device has loaded from each source, with a manual refresh. Sources themselves are managed on the computer. */
 export function SourcesScreen() {
   const { sources, refreshSource, status, sync, updateStatus } = useApp();
+  const update = useUpdate();
+  const version = installedVersion();
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
@@ -32,6 +36,33 @@ export function SourcesScreen() {
           <Button label={source.refreshing ? "Refreshing" : "Refresh"} disabled={source.refreshing} onPress={() => void refreshSource(source.id)} />
         </View>
       ))}
+
+      <View style={styles.card}>
+        <View style={styles.cardText}>
+          <Text style={styles.name}>Testcard {version.name}</Text>
+          <Text style={styles.meta}>
+            {!update.configured
+              ? "Updates are not set up for this build."
+              : update.phase === "downloading"
+                ? `Downloading ${Math.round(update.progress * 100)}%`
+                : update.phase === "checking"
+                  ? "Checking for updates..."
+                  : update.available !== null
+                    ? `Version ${update.available.versionName} is available.`
+                    : update.checked
+                      ? "You are up to date."
+                      : "Not checked yet."}
+          </Text>
+          {update.error !== undefined && <Text style={styles.error}>{update.error}</Text>}
+        </View>
+        {update.configured && (
+          <Button
+            label={update.available !== null ? "Update now" : "Check for updates"}
+            disabled={update.phase === "downloading" || update.phase === "checking"}
+            onPress={update.available !== null ? update.install : update.check}
+          />
+        )}
+      </View>
 
       <View style={styles.actions}>
         <Button

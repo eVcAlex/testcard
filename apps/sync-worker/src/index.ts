@@ -2,10 +2,13 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { createAuth } from "./auth.js";
 import { handlePull } from "./routes/pull.js";
 import { handlePush } from "./routes/push.js";
+import { handleRelease } from "./routes/release.js";
 import { handleGetSalt, handleSetSalt } from "./routes/salt.js";
 
 export interface Env {
   readonly DB: D1Database;
+  /** Release files for the in-app updater (the manifest and the APKs). */
+  readonly RELEASES: R2Bucket;
   /** Signing/encryption secret for better-auth. Never in source: `wrangler secret put SYNC_AUTH_SECRET` when deployed, `.dev.vars` locally. */
   readonly SYNC_AUTH_SECRET: string;
 }
@@ -27,6 +30,8 @@ const requireSession: MiddlewareHandler<AppEnv> = async (c, next) => {
   c.set("userId", session.user.id);
   await next();
 };
+
+app.get("/app/:file", handleRelease);
 
 app.get("/sync/pull", requireSession, handlePull);
 app.post("/sync/push", requireSession, handlePush);

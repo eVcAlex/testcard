@@ -36,6 +36,12 @@ jobs:
       # postinstall rebuilds better-sqlite3 for Electron, which this job does not need.
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter "@testcard/mobile..."
 
+      # Android refuses an update that is not a higher versionCode, so every build gets the run number.
+      - name: Stamp the version
+        working-directory: apps/mobile
+        run: |
+          node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('app.json','utf8'));c.expo.android.versionCode=${{ github.run_number }};c.expo.version='0.1.${{ github.run_number }}';fs.writeFileSync('app.json',JSON.stringify(c,null,2));fs.writeFileSync('../../build.json',JSON.stringify({versionCode:${{ github.run_number }},versionName:'0.1.${{ github.run_number }}'}))"
+
       - name: Generate the native project
         working-directory: apps/mobile
         env:
@@ -52,5 +58,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: testcard-${{ matrix.target }}
-          path: testcard-${{ matrix.target }}.apk
+          path: |
+            testcard-${{ matrix.target }}.apk
+            build.json
           if-no-files-found: error

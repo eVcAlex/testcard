@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "./src/state/app";
+import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
 import { colors, space, type } from "./src/theme";
 import { Focusable } from "./src/ui/Focusable";
 import { MoviesScreen, SeriesScreen } from "./src/screens/Catalogue";
@@ -28,14 +29,17 @@ const SECTIONS: { key: Section; label: string }[] = [
 export default function App() {
   return (
     <AppProvider>
-      <StatusBar style="light" />
-      <Root />
+      <UpdateProvider>
+        <StatusBar style="light" />
+        <Root />
+      </UpdateProvider>
     </AppProvider>
   );
 }
 
 function Root() {
   const { status } = useApp();
+  const { available } = useUpdate();
   const [section, setSection] = useState<Section>("movies");
   const [route, setRoute] = useState<Route>({ name: "home" });
 
@@ -68,7 +72,7 @@ function Root() {
           </Text>
           {SECTIONS.map((entry, index) => (
             <Focusable key={entry.key} preferred={index === 0} onPress={() => setSection(entry.key)} style={[styles.railItem, section === entry.key && styles.railItemActive]}>
-              <Text style={[styles.railLabel, section === entry.key && styles.railLabelActive]}>{entry.label}</Text>
+              <Text style={[styles.railLabel, section === entry.key && styles.railLabelActive]}>{entry.key === "sources" && available !== null ? `${entry.label} (update)` : entry.label}</Text>
             </Focusable>
           ))}
         </View>

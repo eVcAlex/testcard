@@ -12,3 +12,9 @@ binding = "DB"
 database_name = "testcard-sync"
 database_id = "41722575-4662-49c5-8fd6-01b7cb47132b"
 migrations_dir = "migrations"
+
+# Build output only: the update manifest and the APKs the app downloads. Files are put with
+# scripts/release-android.mjs; the worker serves them read-only at /app/<file>.
+[[r2_buckets]]
+binding = "RELEASES"
+bucket_name = "testcard-releases"
