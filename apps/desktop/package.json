@@ -3,7 +3,7 @@
   "productName": "Testcard",
   "version": "0.1.0",
   "private": true,
-  "description": "A dark, watermark-free IPTV player for Windows.",
+  "description": "Testcard",
   "author": "Alex McGuiness",
   "main": "./out/main/index.js",
   "scripts": {
