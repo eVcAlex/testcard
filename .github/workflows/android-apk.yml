@@ -14,16 +14,11 @@ on:
 
 jobs:
   apk:
-    if: ${{ inputs.target == 'both' || inputs.target == matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - target: firetv
-            tv: "1"
-          - target: phone
-            tv: "0"
+        include: ${{ fromJSON(inputs.target == 'both' && '[{"target":"firetv","tv":"1"},{"target":"phone","tv":"0"}]' || inputs.target == 'phone' && '[{"target":"phone","tv":"0"}]' || '[{"target":"firetv","tv":"1"}]') }}
     steps:
       - uses: actions/checkout@v4
 
