@@ -2,6 +2,7 @@
 //   pnpm android:emulator   start the "tv1080" Android TV emulator (1080p, the same 960 dp as a Fire Stick)
 //   pnpm android:install    fetch the newest debug APK built by CI ("debug" target) and install it
 //   pnpm android:run        start the dev server, point the device at it and launch the app
+//   pnpm android:type "text"   type into the focused field (a PC keyboard may not reach the emulator)
 //   pnpm android:log        show the app's log (JS errors, native crashes) from the device
 // Native code is built by CI, not here: pnpm's deep node_modules paths break CMake on Windows (250 chars).
 // The device can be the emulator or a Fire Stick over the network (adb connect <ip>).
@@ -43,9 +44,11 @@ if (command === "emulator") {
   await run("adb", ["reverse", "tcp:8081", "tcp:8081"]);
   await run("adb", ["shell", "am", "start", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LEANBACK_LAUNCHER", "-n", "com.evcalex.testcard/.MainActivity"]).catch(() => undefined);
   await run("pnpm", ["exec", "expo", "start", "--port", "8081"], { cwd: join(root, "apps", "mobile"), env: { ...env, EXPO_TV: "1" } });
+} else if (command === "type") {
+  await run("adb", ["shell", "input", "text", `'${process.argv.slice(3).join(" ").replace(/ /g, "%s")}'`]);
 } else if (command === "log") {
   await run("adb", ["logcat", "-v", "time", "ReactNativeJS:V", "AndroidRuntime:E", "*:S"]);
 } else {
-  console.log("usage: node scripts/android-dev.mjs emulator | install | run | log");
+  console.log("usage: node scripts/android-dev.mjs emulator | install | run | type | log");
   process.exit(1);
 }

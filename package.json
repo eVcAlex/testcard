@@ -24,6 +24,7 @@
     "release:android": "node scripts/release-android.mjs",
     "android:emulator": "node scripts/android-dev.mjs emulator",
     "android:run": "node scripts/android-dev.mjs run",
+    "android:type": "node scripts/android-dev.mjs type",
     "android:log": "node scripts/android-dev.mjs log",
     "android:install": "node scripts/android-dev.mjs install"
   },
