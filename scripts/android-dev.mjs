@@ -50,9 +50,18 @@ if (command === "emulator") {
     process.exit(1);
   }
   await run("adb", ["shell", "input", "text", `'${process.argv.slice(3).join(" ").replace(/ /g, "%s")}'`]);
+} else if (command === "key") {
+  // Remote-control buttons, for when the emulator window does not take the PC keyboard.
+  const keys = { up: "DPAD_UP", down: "DPAD_DOWN", left: "DPAD_LEFT", right: "DPAD_RIGHT", select: "DPAD_CENTER", enter: "ENTER", back: "BACK", home: "HOME", play: "MEDIA_PLAY_PAUSE" };
+  const wanted = process.argv.slice(3);
+  if (wanted.length === 0 || wanted.some((name) => keys[name] === undefined)) {
+    console.log("usage: pnpm android:key " + Object.keys(keys).join("|") + " [more keys...]");
+    process.exit(1);
+  }
+  for (const name of wanted) await run("adb", ["shell", "input", "keyevent", "KEYCODE_" + keys[name]]);
 } else if (command === "log") {
   await run("adb", ["logcat", "-v", "time", "ReactNativeJS:V", "AndroidRuntime:E", "*:S"]);
 } else {
-  console.log("usage: node scripts/android-dev.mjs emulator | install | run | type | log");
+  console.log("usage: node scripts/android-dev.mjs emulator | install | run | type | key | log");
   process.exit(1);
 }
