@@ -18,6 +18,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
 publish:
-  provider: github
-  # owner/repo are read from the root package.json's "repository" field once this repo has
-  # been pushed to GitHub — see README "Publishing a release".
+  # The private GitHub repo cannot serve downloads, so releases live in the sync worker's release
+  # bucket (ADR 0010): latest.yml and the installer are served from /app/.
+  provider: generic
+  url: https://testcard-sync.evcalex.workers.dev/app
