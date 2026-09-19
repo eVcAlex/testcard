@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: Which APK to build (the Fire TV one is the one in daily use)
+        description: Which APK to build. firetv is the release; debug loads its JavaScript from a dev server (pnpm android:run)
         type: choice
-        options: [firetv, phone, both]
+        options: [firetv, phone, both, debug]
         default: firetv
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(inputs.target == 'both' && '[{"target":"firetv","tv":"1"},{"target":"phone","tv":"0"}]' || inputs.target == 'phone' && '[{"target":"phone","tv":"0"}]' || '[{"target":"firetv","tv":"1"}]') }}
+        include: ${{ fromJSON(inputs.target == 'debug' && '[{"target":"debug","tv":"1","task":"assembleDebug -PreactNativeArchitectures=x86_64,arm64-v8a","apk":"debug/app-debug.apk"}]' || inputs.target == 'both' && '[{"target":"firetv","tv":"1","task":"assembleRelease","apk":"release/app-release.apk"},{"target":"phone","tv":"0","task":"assembleRelease","apk":"release/app-release.apk"}]' || inputs.target == 'phone' && '[{"target":"phone","tv":"0","task":"assembleRelease","apk":"release/app-release.apk"}]' || '[{"target":"firetv","tv":"1","task":"assembleRelease","apk":"release/app-release.apk"}]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -55,10 +55,10 @@ jobs:
 
       - name: Build the release APK
         working-directory: apps/mobile/android
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew ${{ matrix.task }} --no-daemon
 
       - name: Name the APK
-        run: cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk testcard-${{ matrix.target }}.apk
+        run: cp apps/mobile/android/app/build/outputs/apk/${{ matrix.apk }} testcard-${{ matrix.target }}.apk
 
       - uses: actions/upload-artifact@v4
         with:
