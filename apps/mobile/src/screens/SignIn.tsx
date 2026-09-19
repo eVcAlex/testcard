@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Keyboard, Text, View } from "react-native";
 import { useApp } from "../state/app";
 import { colors, space, type, styleSheet } from "../theme";
 import { Button, Field, Heading, Muted } from "../ui/controls";
@@ -13,6 +13,16 @@ export function SignInScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState<"signIn" | "signUp" | undefined>();
+  // The on-screen keyboard covers the lower half of the screen, so the form moves to the top while it is open.
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    const shown = Keyboard.addListener("keyboardDidShow", () => setTyping(true));
+    const hidden = Keyboard.addListener("keyboardDidHide", () => setTyping(false));
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
   const [error, setError] = useState<string | undefined>(status.lastError);
 
   async function submit(mode: "signIn" | "signUp") {
@@ -30,7 +40,7 @@ export function SignInScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, typing && styles.screenTyping]}>
       <View style={styles.panel}>
         <Text style={styles.brand}>
           TEST<Text style={styles.brandAccent}>CARD</Text>
@@ -79,6 +89,7 @@ export function SignInScreen() {
 
 const styles = styleSheet({
   screen: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" },
+  screenTyping: { justifyContent: "flex-start", paddingTop: 24 },
   panel: { width: "60%", maxWidth: 820, gap: space.l, padding: space.xl, backgroundColor: colors.raised, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   brand: { color: colors.foreground, fontSize: type.lead, fontWeight: "700" },
   brandAccent: { color: colors.accent },
