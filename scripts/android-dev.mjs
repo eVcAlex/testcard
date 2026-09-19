@@ -45,6 +45,10 @@ if (command === "emulator") {
   await run("adb", ["shell", "am", "start", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LEANBACK_LAUNCHER", "-n", "com.evcalex.testcard/.MainActivity"]).catch(() => undefined);
   await run("pnpm", ["exec", "expo", "start", "--port", "8081"], { cwd: join(root, "apps", "mobile"), env: { ...env, EXPO_TV: "1" } });
 } else if (command === "type") {
+  if (process.argv.length < 4) {
+    console.log('usage: pnpm android:type "text to type"   (click the field and press select first)');
+    process.exit(1);
+  }
   await run("adb", ["shell", "input", "text", `'${process.argv.slice(3).join(" ").replace(/ /g, "%s")}'`]);
 } else if (command === "log") {
   await run("adb", ["logcat", "-v", "time", "ReactNativeJS:V", "AndroidRuntime:E", "*:S"]);
