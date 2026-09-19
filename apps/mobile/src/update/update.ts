@@ -9,7 +9,7 @@ import * as IntentLauncher from "expo-intent-launcher";
  * that names a newer build, downloads the APK and hands it to Android's installer (ADR 0010).
  * The sync worker serves the files from its RELEASES bucket. Leave empty to switch updates off.
  */
-export const UPDATE_BASE_URL = "https://testcard-sync.evcalex.workers.dev/app";
+export const UPDATE_BASE_URL: string = "https://testcard-sync.evcalex.workers.dev/app";
 
 export interface UpdateInfo {
   readonly versionCode: number;
