@@ -11,6 +11,9 @@ importers:
       oxlint:
         specifier: ^1.24.0
         version: 1.81.0
+      sharp:
+        specifier: 0.33.5
+        version: 0.33.5
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

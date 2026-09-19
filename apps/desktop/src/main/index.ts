@@ -16,6 +16,8 @@ function createMainWindow(): BrowserWindow {
     minHeight: 640,
     show: false,
     autoHideMenuBar: true,
+    // Packaged builds take the icon from the executable (build/icon.ico); dev runs need it set here.
+    ...(is.dev ? { icon: join(app.getAppPath(), "build", "icon.png") } : {}),
     // The resize-gutter colour: what shows for a frame when the window grows before the
     // renderer paints. Must equal --background (styles/tokens.css). Not --picture #000000
     // (that's the video hole only) and not the child windows' #00000000 (load-bearing

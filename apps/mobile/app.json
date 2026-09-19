@@ -17,7 +17,12 @@
       "predictiveBackGestureEnabled": false
     },
     "plugins": [
-      "@react-native-tvos/config-tv",
+      [
+        "@react-native-tvos/config-tv",
+        {
+          "androidTVBanner": "./assets/tv-banner.png"
+        }
+      ],
       "expo-sqlite",
       "expo-secure-store",
       "expo-video",
