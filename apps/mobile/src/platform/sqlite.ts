@@ -23,6 +23,10 @@ function namedTokens(sql: string): Map<string, string> {
 function toBindValue(value: unknown): SQLiteBindValue {
   if (value === undefined || value === null) return null;
   if (typeof value === "boolean") return value ? 1 : 0;
+  // Channel and variant ids use a NUL as their key separator. Android's SQLite binding treats text as a C
+  // string and stops at the first NUL, so every id of a source would collapse to the same prefix (and the
+  // second variant insert fails as a UNIQUE violation). Ids are local to a device, so swap it for U+0001.
+  if (typeof value === "string" && value.includes("\0")) return value.replaceAll("\0", "\u0001");
   return value as SQLiteBindValue;
 }
 
