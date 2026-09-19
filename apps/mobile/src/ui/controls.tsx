@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Text, TextInput, View, type TextInputProps } from "react-native";
+import { useRef, useState } from "react";
+import { Platform, Text, TextInput, View, type TextInputProps } from "react-native";
 import { colors, space, type, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
 
@@ -28,25 +28,42 @@ export function Button({
   );
 }
 
-/** A text field that is also a focus stop: selecting it with the remote opens the on-screen keyboard. */
-export function Field({ label, ...input }: TextInputProps & { label: string }) {
+/**
+ * A text field that is also a focus stop. On a TV the field is a plain focus stop and the keyboard
+ * opens only when the remote's select is pressed, so landing on a screen (or moving past a field)
+ * never throws the keyboard up over the form. On a phone the input is used directly.
+ */
+export function Field({ label, preferred = false, ...input }: TextInputProps & { label: string; preferred?: boolean }) {
   const [focused, setFocused] = useState(false);
+  const ref = useRef<TextInput>(null);
+  const tv = Platform.isTV;
+  const field = (ringed: boolean) => (
+    <TextInput
+      {...input}
+      ref={ref}
+      focusable={!tv}
+      placeholderTextColor={colors.faint}
+      onFocus={(event) => {
+        setFocused(true);
+        input.onFocus?.(event);
+      }}
+      onBlur={(event) => {
+        setFocused(false);
+        input.onBlur?.(event);
+      }}
+      style={[styles.input, (focused || ringed) && styles.inputFocused]}
+    />
+  );
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        {...input}
-        placeholderTextColor={colors.faint}
-        onFocus={(event) => {
-          setFocused(true);
-          input.onFocus?.(event);
-        }}
-        onBlur={(event) => {
-          setFocused(false);
-          input.onBlur?.(event);
-        }}
-        style={[styles.input, focused && styles.inputFocused]}
-      />
+      {tv ? (
+        <Focusable onPress={() => ref.current?.focus()} preferred={preferred} style={styles.stop} focusedStyle={styles.stopFocused}>
+          {({ focused: ringed }) => field(ringed)}
+        </Focusable>
+      ) : (
+        field(false)
+      )}
     </View>
   );
 }
@@ -78,6 +95,8 @@ const styles = styleSheet({
     borderWidth: 3,
     borderColor: colors.border,
   },
+  stop: { borderWidth: 0 },
+  stopFocused: { transform: [{ scale: 1 }] },
   inputFocused: { borderColor: colors.accent },
   heading: { color: colors.foreground, fontSize: type.title, fontWeight: "700" },
   muted: { color: colors.muted, fontSize: type.body },

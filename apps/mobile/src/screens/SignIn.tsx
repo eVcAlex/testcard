@@ -10,14 +10,13 @@ import { Button, Field, Heading, Muted } from "../ui/controls";
  */
 export function SignInScreen() {
   const { sync, status, updateStatus } = useApp();
-  const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"signIn" | "signUp" | undefined>();
   const [error, setError] = useState<string | undefined>(status.lastError);
 
-  async function submit() {
-    setBusy(true);
+  async function submit(mode: "signIn" | "signUp") {
+    setBusy(mode);
     setError(undefined);
     try {
       if (mode === "signIn") await sync.signIn(email.trim(), password);
@@ -25,7 +24,7 @@ export function SignInScreen() {
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "That didn't work. Try again.");
     } finally {
-      setBusy(false);
+      setBusy(undefined);
       updateStatus();
     }
   }
@@ -36,11 +35,12 @@ export function SignInScreen() {
         <Text style={styles.brand}>
           TEST<Text style={styles.brandAccent}>CARD</Text>
         </Text>
-        <Heading>{mode === "signIn" ? "Sign in" : "Create account"}</Heading>
+        <Heading>Sign in</Heading>
         <Muted>Use the same account as Testcard on your computer. Your sources and favourites will follow you here.</Muted>
 
         <Field
           label="Email"
+          preferred
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -60,12 +60,16 @@ export function SignInScreen() {
         {error !== undefined && <Text style={styles.error}>{error}</Text>}
 
         <View style={styles.actions}>
-          <Button label={mode === "signIn" ? "Create an account instead" : "I already have an account"} onPress={() => setMode(mode === "signIn" ? "signUp" : "signIn")} />
+          <Button
+            label={busy === "signUp" ? "Working..." : "Sign up"}
+            disabled={busy !== undefined || email.trim() === "" || password === ""}
+            onPress={() => void submit("signUp")}
+          />
           <Button
             primary
-            label={busy ? "Working..." : mode === "signIn" ? "Sign in" : "Create account"}
-            disabled={busy || email.trim() === "" || password === ""}
-            onPress={() => void submit()}
+            label={busy === "signIn" ? "Working..." : "Sign in"}
+            disabled={busy !== undefined || email.trim() === "" || password === ""}
+            onPress={() => void submit("signIn")}
           />
         </View>
       </View>
