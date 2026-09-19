@@ -42,3 +42,4 @@ pnpm-debug.log*
 
 # dev-time TypeSafe/Jev audit cache (category names + Jev's answers; regenerable)
 packages/core/evals/.cache/
+.android-device

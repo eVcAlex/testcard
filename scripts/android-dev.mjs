@@ -1,4 +1,5 @@
 // Local Android TV development: an emulator, plus a debug build whose JavaScript loads from this PC.
+//   pnpm android:stick <ip>   point every command at a Fire Stick over the network (or "emulator" to go back)
 //   pnpm android:emulator   start the "tv1080" Android TV emulator (1080p, the same 960 dp as a Fire Stick)
 //   pnpm android:install    fetch the newest debug APK built by CI ("debug" target) and install it
 //   pnpm android:run        start the dev server, point the device at it and launch the app
@@ -8,7 +9,7 @@
 // The device can be the emulator or a Fire Stick over the network (adb connect <ip>).
 // The SDK lives in C:/Android; override with ANDROID_HOME / JAVA_HOME.
 import { execFileSync, spawn } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,8 +17,12 @@ import { fileURLToPath } from "node:url";
 const root = join(fileURLToPath(import.meta.url), "..", "..");
 const sdk = process.env.ANDROID_HOME ?? "C:/Android/sdk";
 const jdk = process.env.JAVA_HOME ?? "C:/Android/jdk17";
+// `pnpm android:stick <ip>` remembers a Fire Stick here so every command below targets it, not the emulator.
+const deviceFile = join(root, ".android-device");
+const device = existsSync(deviceFile) ? readFileSync(deviceFile, "utf8").trim() : "";
 const env = {
   ...process.env,
+  ...(device !== "" ? { ANDROID_SERIAL: device } : {}),
   ANDROID_HOME: sdk,
   ANDROID_SDK_ROOT: sdk,
   JAVA_HOME: jdk,
@@ -34,6 +39,21 @@ const command = process.argv[2];
 if (command === "emulator") {
   // -gpu host uses the PC's graphics card; -no-snapshot-save keeps every start a clean boot.
   await run("emulator", ["-avd", "tv1080", "-gpu", "host", "-no-snapshot-save"]);
+} else if (command === "stick") {
+  const target = process.argv[3];
+  if (target === undefined) {
+    console.log("usage: pnpm android:stick <fire-stick-ip>   |   pnpm android:stick emulator");
+    process.exit(1);
+  }
+  if (target === "emulator") {
+    rmSync(deviceFile, { force: true });
+    console.log("Commands now target the emulator.");
+  } else {
+    const serial = target.includes(":") ? target : target + ":5555";
+    await run("adb", ["connect", serial]);
+    writeFileSync(deviceFile, serial);
+    console.log("Commands now target " + serial + ". If the stick shows an 'Allow USB debugging' prompt, choose Always allow.");
+  }
 } else if (command === "install") {
   const runId = execFileSync("gh", ["api", "repos/eVcAlex/testcard/actions/artifacts?name=testcard-debug", "--jq", ".artifacts[0].workflow_run.id"], { encoding: "utf8", env, shell: true }).trim();
   if (runId === "" || runId === "null") throw new Error('No debug APK yet: run the "Android APK" workflow with target "debug".');
@@ -62,6 +82,6 @@ if (command === "emulator") {
 } else if (command === "log") {
   await run("adb", ["logcat", "-v", "time", "ReactNativeJS:V", "AndroidRuntime:E", "*:S"]);
 } else {
-  console.log("usage: node scripts/android-dev.mjs emulator | install | run | type | key | log");
+  console.log("usage: node scripts/android-dev.mjs stick | emulator | install | run | type | key | log");
   process.exit(1);
 }
