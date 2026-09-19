@@ -3,6 +3,7 @@ name: Android APK
 # Builds sideloadable APKs of the Android app: one for Fire TV / Android TV and one for phones.
 # Run it from the Actions tab ("Run workflow"), then download the APKs from the run's artifacts.
 # The APKs are signed with Expo's debug key, which is fine for sideloading but not for a store.
+# The Fire TV build is 32-bit ARM only (every Fire stick runs it, and it halves the native compile time).
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(inputs.target == 'debug' && '[{"target":"debug","tv":"1","task":"assembleDebug -PreactNativeArchitectures=x86_64,arm64-v8a","apk":"debug/app-debug.apk"}]' || inputs.target == 'both' && '[{"target":"firetv","tv":"1","task":"assembleRelease","apk":"release/app-release.apk"},{"target":"phone","tv":"0","task":"assembleRelease","apk":"release/app-release.apk"}]' || inputs.target == 'phone' && '[{"target":"phone","tv":"0","task":"assembleRelease","apk":"release/app-release.apk"}]' || '[{"target":"firetv","tv":"1","task":"assembleRelease","apk":"release/app-release.apk"}]') }}
+        include: ${{ fromJSON(inputs.target == 'debug' && '[{"target":"debug","tv":"1","task":"assembleDebug -PreactNativeArchitectures=x86_64,arm64-v8a","apk":"debug/app-debug.apk"}]' || inputs.target == 'both' && '[{"target":"firetv","tv":"1","task":"assembleRelease -PreactNativeArchitectures=armeabi-v7a","apk":"release/app-release.apk"},{"target":"phone","tv":"0","task":"assembleRelease","apk":"release/app-release.apk"}]' || inputs.target == 'phone' && '[{"target":"phone","tv":"0","task":"assembleRelease","apk":"release/app-release.apk"}]' || '[{"target":"firetv","tv":"1","task":"assembleRelease -PreactNativeArchitectures=armeabi-v7a","apk":"release/app-release.apk"}]') }}
     steps:
       - uses: actions/checkout@v4
 
