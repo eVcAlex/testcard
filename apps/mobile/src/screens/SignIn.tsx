@@ -26,6 +26,7 @@ export function SignInScreen() {
   const [error, setError] = useState<string | undefined>(status.lastError);
 
   async function submit(mode: "signIn" | "signUp") {
+    Keyboard.dismiss();
     setBusy(mode);
     setError(undefined);
     try {
