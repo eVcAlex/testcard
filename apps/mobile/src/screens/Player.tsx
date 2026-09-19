@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BackHandler, StyleSheet, Text, View } from "react-native";
+import { BackHandler, Text, View, StyleSheet } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
@@ -7,7 +7,7 @@ import { recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
 import { recordSeriesRecent } from "@testcard/core/src/db/seriesQueries.js";
 import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
 import { useApp } from "../state/app";
-import { colors, space, type } from "../theme";
+import { colors, space, type, styleSheet } from "../theme";
 import { Button } from "../ui/controls";
 
 const SEEK_STEP_SECS = 10;
@@ -132,7 +132,7 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   centre: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: space.l },
   player: { flex: 1, backgroundColor: "#000" },
   surface: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center" },

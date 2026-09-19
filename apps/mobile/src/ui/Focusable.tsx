@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Pressable, StyleSheet, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
-import { colors } from "../theme";
+import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
+import { colors, styleSheet } from "../theme";
 
 /**
  * The one interactive primitive. On a Fire TV remote there is no pointer: the D-pad moves focus
@@ -40,7 +40,7 @@ export function Focusable({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   base: { borderWidth: 3, borderColor: "transparent", borderRadius: 10 },
   focused: { borderColor: colors.accent, transform: [{ scale: 1.04 }] },
 });

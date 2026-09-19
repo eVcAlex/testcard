@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "./src/state/app";
 import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
-import { colors, space, type } from "./src/theme";
+import { colors, space, type, styleSheet } from "./src/theme";
 import { Focusable } from "./src/ui/Focusable";
 import { MoviesScreen, SeriesScreen } from "./src/screens/Catalogue";
 import { LiveScreen } from "./src/screens/Live";
@@ -92,7 +92,7 @@ function Root() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   shell: { flex: 1, flexDirection: "row", backgroundColor: colors.background },
   rail: { width: 260, backgroundColor: colors.raised, padding: space.l, gap: space.s, borderRightWidth: 1, borderRightColor: colors.border },
   brand: { color: colors.foreground, fontSize: type.lead, fontWeight: "700", marginBottom: space.l },

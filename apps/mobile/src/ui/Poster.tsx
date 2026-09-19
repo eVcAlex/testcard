@@ -1,7 +1,7 @@
 import { memo } from "react";
-import { FlatList, Image, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, Text, View } from "react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { colors, space, type } from "../theme";
+import { colors, space, type, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
 
 export interface PosterItem {
@@ -60,7 +60,7 @@ export function PosterRow({ title, items, onPress }: { title: string; items: rea
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   row: { gap: space.m, marginBottom: space.l },
   rowTitle: { color: colors.foreground, fontSize: type.lead, fontWeight: "600", paddingLeft: space.s },
   rowList: { gap: space.m, paddingVertical: space.s, paddingHorizontal: space.s },

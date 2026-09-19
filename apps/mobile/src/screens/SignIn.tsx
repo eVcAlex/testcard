@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useApp } from "../state/app";
-import { colors, space, type } from "../theme";
+import { colors, space, type, styleSheet } from "../theme";
 import { Button, Field, Heading, Muted } from "../ui/controls";
 
 /**
@@ -73,7 +73,7 @@ export function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   screen: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" },
   panel: { width: "60%", maxWidth: 820, gap: space.l, padding: space.xl, backgroundColor: colors.raised, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   brand: { color: colors.foreground, fontSize: type.lead, fontWeight: "700" },

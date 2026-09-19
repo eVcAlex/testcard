@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
 import { listFavouriteMovies, listRecentMovies, movieShelves, type MovieRow } from "@testcard/core/src/db/vodQueries.js";
 import { listFavouriteSeries, listRecentSeries, seriesShelves, type SeriesRow } from "@testcard/core/src/db/seriesQueries.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { useApp } from "../state/app";
-import { colors, space, type } from "../theme";
+import { colors, space, type, styleSheet } from "../theme";
 import { Muted } from "../ui/controls";
 import { PosterRow, type PosterItem } from "../ui/Poster";
 
@@ -91,7 +91,7 @@ function EmptyCatalogue({ what }: { what: "movies" | "series" }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   page: { paddingVertical: space.l, paddingRight: space.l },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: space.m, padding: space.xl },
   emptyTitle: { color: colors.foreground, fontSize: type.lead, fontWeight: "600" },

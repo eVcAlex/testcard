@@ -36,7 +36,11 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
     const response = await fetch(url.toString());
-    if (!response.ok) throw new Error(`Xtream ${action} failed: HTTP ${response.status}`);
+    if (!response.ok) {
+      // The provider's own words ("blocked", "too many connections") are what tell a user why. Never the URL: it carries the login.
+      const reason = (await response.text().catch(() => "")).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+      throw new Error(`Xtream ${action} failed: HTTP ${response.status}${reason === "" ? "" : ` (${reason})`}`);
+    }
     return (await response.json()) as T;
   }
 

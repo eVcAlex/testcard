@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
-import { colors, space, type } from "../theme";
+import { Text, TextInput, View, type TextInputProps } from "react-native";
+import { colors, space, type, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
 
 export function Button({
@@ -59,7 +59,7 @@ export function Muted({ children }: { children: string }) {
   return <Text style={styles.muted}>{children}</Text>;
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   button: { paddingVertical: space.m, paddingHorizontal: space.xl, alignItems: "center" },
   primary: { backgroundColor: colors.accent },
   secondary: { backgroundColor: colors.card },

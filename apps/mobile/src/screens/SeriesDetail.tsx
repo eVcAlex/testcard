@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { BackHandler, FlatList, StyleSheet, Text, View } from "react-native";
+import { BackHandler, FlatList, Text, View } from "react-native";
 import { getSeriesDetail, getSeriesSource, type EpisodeRow } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { getCredentials } from "../platform/secrets";
 import { useApp } from "../state/app";
-import { colors, space, type } from "../theme";
+import { colors, space, type, styleSheet } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
 import { Focusable } from "../ui/Focusable";
 
@@ -109,7 +109,7 @@ export function SeriesDetailScreen({ seriesId, title, onPlay, onBack }: { series
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   screen: { flex: 1, backgroundColor: colors.background, padding: space.xl, gap: space.l },
   head: { flexDirection: "row", alignItems: "center", gap: space.l },
   seasons: { gap: space.m, paddingVertical: space.s },

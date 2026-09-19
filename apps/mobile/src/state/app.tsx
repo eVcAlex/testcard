@@ -49,8 +49,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const bump = useCallback(() => setVersion((current) => current + 1), []);
 
+  // A second import of a source that is already importing would interleave with the first.
+  const inFlight = useRef(new Set<string>());
+
   const refreshSource = useCallback(
     async (sourceId: string) => {
+      if (inFlight.current.has(sourceId)) return;
       const row = db
         .prepare(
           `SELECT id, kind, name, base_url AS baseUrl, playlist_url AS playlistUrl, epg_url AS epgUrl,
@@ -59,6 +63,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         )
         .get(sourceId) as unknown as CatalogueSource | undefined;
       if (row === undefined) return;
+      inFlight.current.add(sourceId);
       setRefreshing((current) => new Set(current).add(sourceId));
       setErrors(({ [sourceId]: _cleared, ...rest }) => rest);
       try {
@@ -67,6 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const message = error instanceof Error ? error.message : "The import failed.";
         setErrors((current) => ({ ...current, [sourceId]: message }));
       } finally {
+        inFlight.current.delete(sourceId);
         setRefreshing((current) => {
           const next = new Set(current);
           next.delete(sourceId);

@@ -1,8 +1,8 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { useApp } from "../state/app";
 import { useUpdate } from "../update/UpdateProvider";
 import { installedVersion } from "../update/update";
-import { colors, space, type } from "../theme";
+import { colors, space, type, styleSheet } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
 
 /** What this device has loaded from each source, with a manual refresh. Sources themselves are managed on the computer. */
@@ -82,7 +82,7 @@ export function SourcesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   page: { padding: space.xl, gap: space.l },
   card: { flexDirection: "row", alignItems: "center", gap: space.l, padding: space.l, backgroundColor: colors.card, borderRadius: 12 },
   cardText: { flex: 1, gap: 4 },

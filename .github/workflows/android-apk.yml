@@ -5,9 +5,16 @@ name: Android APK
 # The APKs are signed with Expo's debug key, which is fine for sideloading but not for a store.
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Which APK to build (the Fire TV one is the one in daily use)
+        type: choice
+        options: [firetv, phone, both]
+        default: firetv
 
 jobs:
   apk:
+    if: ${{ inputs.target == 'both' || inputs.target == matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -31,6 +38,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+
+      # Reuses Gradle's downloads and build cache between runs, which is most of a rebuild's time.
+      - uses: gradle/actions/setup-gradle@v4
 
       # Only the mobile app and what it depends on. Scripts are skipped because the desktop app's
       # postinstall rebuilds better-sqlite3 for Electron, which this job does not need.

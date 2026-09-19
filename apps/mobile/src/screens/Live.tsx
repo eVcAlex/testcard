@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { FlatList, Image, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, Text, View } from "react-native";
 import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
 import { browseChannels, listCategories, type ChannelRow } from "@testcard/core/src/db/queries.js";
 import { useApp } from "../state/app";
-import { colors, space, type } from "../theme";
+import { colors, space, type, styleSheet } from "../theme";
 import { Muted } from "../ui/controls";
 import { Focusable } from "../ui/Focusable";
 
@@ -73,7 +73,7 @@ function ChannelTile({ channel, onPress }: { channel: ChannelRow; onPress: () =>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = styleSheet({
   screen: { flex: 1, gap: space.m },
   chips: { gap: space.m, paddingVertical: space.s, paddingHorizontal: space.s },
   chip: { paddingVertical: space.s, paddingHorizontal: space.l, backgroundColor: colors.card },
