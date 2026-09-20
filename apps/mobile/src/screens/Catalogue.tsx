@@ -1,98 +1,104 @@
 import { useMemo } from "react";
-import { ScrollView, Text, View } from "react-native";
 import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
-import { listFavouriteMovies, listRecentMovies, movieShelves, type MovieRow } from "@testcard/core/src/db/vodQueries.js";
-import { listFavouriteSeries, listRecentSeries, seriesShelves, type SeriesRow } from "@testcard/core/src/db/seriesQueries.js";
+import { browseMovies, listFavouriteMovies, listMovieCategories, listRecentMovies, type MovieRow } from "@testcard/core/src/db/vodQueries.js";
+import { browseSeries, listFavouriteSeries, listSeriesCategories, type SeriesRow } from "@testcard/core/src/db/seriesQueries.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { useApp } from "../state/app";
-import { colors, space, type, styleSheet } from "../theme";
-import { Muted } from "../ui/controls";
-import { PosterRow, type PosterItem } from "../ui/Poster";
+import { memoByVersion } from "../state/memoByVersion";
+import { BrowseScreen, type BrowseItem, type BrowseSource } from "./Browse";
 
-const toMoviePoster = (movie: MovieRow): PosterItem => ({
+/** Category tags that are dividers or decoration rather than something to browse (adult ones stay out of the way too). */
+/** Providers write quality tags in superscript letters ("⁴ᴷ ³⁸⁴⁰ᴾ"); NFKC turns them into ordinary text. */
+const tidy = (name: string) => categoryLabel(name.normalize("NFKC"));
+const hidden = (tags: string) => tags.split(" ").some((tag) => tag === "junk" || tag === "separator" || tag === "adult");
+
+const toMovieItem = (movie: MovieRow): BrowseItem => ({
   id: movie.id,
-  name: movie.name,
-  posterUrl: movie.poster_url,
+  title: movie.name,
+  imageUrl: movie.poster_url,
   progress: movie.position_secs !== null && movie.duration_secs !== null && movie.duration_secs > 0 ? movie.position_secs / movie.duration_secs : null,
+  resume: movie.position_secs !== null && shouldPromptResume(movie.position_secs, movie.duration_secs),
 });
-const toSeriesPoster = (series: SeriesRow): PosterItem => ({ id: series.id, name: series.name, posterUrl: series.poster_url });
+const toSeriesItem = (series: SeriesRow): BrowseItem => ({ id: series.id, title: series.name, imageUrl: series.poster_url });
 
-export interface PlayRequest {
-  readonly kind: "movie";
-  readonly id: string;
-  readonly title: string;
-  readonly resume: boolean;
-}
+// Counting every category walks the whole catalogue, so it is done once per sync rather than on every visit.
+const movieCategories = memoByVersion((db: Parameters<typeof listMovieCategories>[0]) =>
+  listMovieCategories(db)
+    .filter((category) => !hidden(category.tags))
+    .map((category) => ({ id: category.id, label: tidy(category.name), count: category.movie_count, genre: category.genre })),
+);
+const seriesCategories = memoByVersion((db: Parameters<typeof listSeriesCategories>[0]) =>
+  listSeriesCategories(db)
+    .filter((category) => !hidden(category.tags))
+    .map((category) => ({ id: category.id, label: tidy(category.name), count: category.series_count, genre: category.genre })),
+);
 
-/** Movies home: continue watching, My list, then a row per large category. Selecting a poster plays it. */
-export function MoviesScreen({ onPlay }: { onPlay: (request: PlayRequest) => void }) {
+/** Movies: continue watching and my list first, then every category the provider ships. Selecting a poster opens the film's page. */
+export function MoviesScreen({ onOpen }: { onOpen: (movie: { id: string; title: string }) => void }) {
   const { db, version } = useApp();
-  const rows = useMemo(() => {
-    void version;
-    const recent = listRecentMovies(db, 40);
-    const favourites = listFavouriteMovies(db);
-    const shelves = movieShelves(db);
-    const inProgress = recent.filter((movie) => movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs));
+  const source = useMemo<BrowseSource>(() => {
+    const categories = movieCategories(db, version);
+    const history = listRecentMovies(db, 60);
+    const continuing = history.filter((movie) => movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs));
+    const myList = listFavouriteMovies(db);
     return {
-      continueWatching: inProgress,
-      myList: favourites.slice(0, 20),
-      shelves,
-      byId: new Map([...recent, ...favourites, ...shelves.flatMap((shelf) => shelf.items)].map((movie) => [movie.id, movie])),
+      layout: "poster",
+      noun: "movies",
+      single: "movie",
+      specials: [
+        { key: "continue", label: "Continue watching", count: continuing.length },
+        { key: "my-list", label: "My list", count: myList.length },
+        { key: "all", label: "All movies", count: categories.reduce((total, category) => total + category.count, 0) },
+      ],
+      categories,
+      load: (selection, limit) => {
+        if (selection.kind === "category") return browseMovies(db, { categoryId: selection.key, limit }).map(toMovieItem);
+        if (selection.kind === "genre") return browseMovies(db, { genre: selection.key, limit }).map(toMovieItem);
+        if (selection.key === "continue") return continuing.map(toMovieItem);
+        if (selection.key === "my-list") return myList.slice(0, limit).map(toMovieItem);
+        return browseMovies(db, { limit }).map(toMovieItem);
+      },
     };
   }, [db, version]);
 
-  const play = (item: PosterItem) => {
-    const movie = rows.byId.get(item.id);
-    const resume = movie !== undefined && movie.position_secs !== null && shouldPromptResume(movie.position_secs, movie.duration_secs);
-    onPlay({ kind: "movie", id: item.id, title: item.name, resume });
-  };
-
-  if (rows.shelves.length === 0 && rows.myList.length === 0 && rows.continueWatching.length === 0) {
-    return <EmptyCatalogue what="movies" />;
-  }
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <PosterRow title="Continue watching" items={rows.continueWatching.map(toMoviePoster)} onPress={play} />
-      <PosterRow title="My list" items={rows.myList.map(toMoviePoster)} onPress={play} />
-      {rows.shelves.map((shelf) => (
-        <PosterRow key={shelf.category.id} title={categoryLabel(shelf.category.name)} items={shelf.items.map(toMoviePoster)} onPress={play} />
-      ))}
-    </ScrollView>
+    <BrowseScreen
+      source={source}
+      empty="Sign in to the account your computer uses and its sources will load here. Open Sources to see progress."
+      onSelect={(item) => onOpen({ id: item.id, title: item.title })}
+    />
   );
 }
 
-/** Series home: recently watched, My list, then a row per large category. Selecting a poster opens its episodes. */
+/** Series: my list first, then every category. Selecting a poster opens its episodes. */
 export function SeriesScreen({ onOpen }: { onOpen: (series: { id: string; title: string }) => void }) {
   const { db, version } = useApp();
-  const rows = useMemo(() => {
-    void version;
-    return { recent: listRecentSeries(db, 20), myList: listFavouriteSeries(db).slice(0, 20), shelves: seriesShelves(db) };
+  const source = useMemo<BrowseSource>(() => {
+    const categories = seriesCategories(db, version);
+    const myList = listFavouriteSeries(db);
+    return {
+      layout: "poster",
+      noun: "series",
+      single: "series",
+      specials: [
+        { key: "my-list", label: "My list", count: myList.length },
+        { key: "all", label: "All series", count: categories.reduce((total, category) => total + category.count, 0) },
+      ],
+      categories,
+      load: (selection, limit) => {
+        if (selection.kind === "category") return browseSeries(db, { categoryId: selection.key, limit }).map(toSeriesItem);
+        if (selection.kind === "genre") return browseSeries(db, { genre: selection.key, limit }).map(toSeriesItem);
+        if (selection.key === "my-list") return myList.slice(0, limit).map(toSeriesItem);
+        return browseSeries(db, { limit }).map(toSeriesItem);
+      },
+    };
   }, [db, version]);
-  const open = (item: PosterItem) => onOpen({ id: item.id, title: item.name });
 
-  if (rows.shelves.length === 0 && rows.myList.length === 0 && rows.recent.length === 0) return <EmptyCatalogue what="series" />;
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <PosterRow title="Recently watched" items={rows.recent.map(toSeriesPoster)} onPress={open} />
-      <PosterRow title="My list" items={rows.myList.map(toSeriesPoster)} onPress={open} />
-      {rows.shelves.map((shelf) => (
-        <PosterRow key={shelf.category.id} title={categoryLabel(shelf.category.name)} items={shelf.items.map(toSeriesPoster)} onPress={open} />
-      ))}
-    </ScrollView>
+    <BrowseScreen
+      source={source}
+      empty="Sign in to the account your computer uses and its sources will load here. Open Sources to see progress."
+      onSelect={(item) => onOpen({ id: item.id, title: item.title })}
+    />
   );
 }
-
-function EmptyCatalogue({ what }: { what: "movies" | "series" }) {
-  return (
-    <View style={styles.empty}>
-      <Text style={styles.emptyTitle}>{`No ${what} yet`}</Text>
-      <Muted>{`Sign in to the account your computer uses and its sources will load here. Open Sources to see progress.`}</Muted>
-    </View>
-  );
-}
-
-const styles = styleSheet({
-  page: { paddingVertical: space.l, paddingRight: space.l },
-  empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: space.m, padding: space.xl },
-  emptyTitle: { color: colors.foreground, fontSize: type.lead, fontWeight: "600" },
-});

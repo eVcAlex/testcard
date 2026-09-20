@@ -92,8 +92,8 @@ export async function ensureSeriesEpisodes(
   const deleteSeasons = db.prepare(`DELETE FROM seasons WHERE series_id = ?`);
   const insertSeason = db.prepare(`INSERT INTO seasons (id, series_id, season_number, name, poster_url) VALUES (?, ?, ?, ?, ?)`);
   const insertEpisode = db.prepare(`
-    INSERT INTO episodes (id, season_id, series_id, provider_episode_id, episode_number, name, container_extension, duration_secs, plot, remote_key)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO episodes (id, season_id, series_id, provider_episode_id, episode_number, name, container_extension, duration_secs, plot, image_url, remote_key)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const stamp = db.prepare(`UPDATE series SET episodes_fetched_at = ? WHERE id = ?`);
 
@@ -114,6 +114,7 @@ export async function ensureSeriesEpisodes(
         episode.containerExtension ?? null,
         episode.durationSecs ?? null,
         episode.plot ?? null,
+        episode.imageUrl ?? null,
         episodeRemoteKeys.get(episode.id) ?? null,
       );
     }

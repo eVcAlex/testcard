@@ -6,18 +6,20 @@ import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
 import { recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
 import { recordSeriesRecent } from "@testcard/core/src/db/seriesQueries.js";
+import { playerTitle } from "../ui/titles";
 import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
 import { useApp } from "../state/app";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button } from "../ui/controls";
 
 const SEEK_STEP_SECS = 10;
-const SEEK_HELD_SECS = 30;
-const HELD_WITHIN_MS = 350;
+/** Presses in a row (each within this of the last) reach further: 10 s, then 30 s, 1 min, 2 min. */
+const STREAK_WITHIN_MS = 600;
+const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4 ? 30 : count < 7 ? 60 : 120);
 const CHROME_HIDES_AFTER_MS = 4000;
 const PROGRESS_EVERY_MS = 5000;
 
-type Control = "close" | "seek" | "back" | "play" | "forward";
+type Control = "exit" | "seek" | "back" | "play" | "forward";
 
 /** A length written in 1920 px design units, for the shapes below that are sized in code. */
 const u = (n: number) => Math.round(n * uiScale);
@@ -27,7 +29,7 @@ const u = (n: number) => Math.round(n * uiScale);
  * Back leaves. On a phone: tap the picture for the controls. Position is saved every few seconds so
  * "continue watching" and sync have something to carry.
  */
-export function PlayerScreen({ item, seriesId, resume, onExit }: { item: PlayItem; seriesId?: string; resume: boolean; onExit: () => void }) {
+export function PlayerScreen({ item, seriesId, resume, channels, onZap, onExit }: { item: PlayItem; seriesId?: string; resume: boolean; channels?: readonly PlayItem[] | undefined; onZap?: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db, sync, updateStatus } = useApp();
   const [stream, setStream] = useState<ResolvedStream>();
   const [error, setError] = useState<string>();
@@ -64,6 +66,8 @@ export function PlayerScreen({ item, seriesId, resume, onExit }: { item: PlayIte
     <Playing
       item={item}
       stream={stream}
+      channels={channels}
+      onZap={onZap}
       onExit={() => {
         sync.notifyLocalChange();
         updateStatus();
@@ -77,9 +81,15 @@ export function PlayerScreen({ item, seriesId, resume, onExit }: { item: PlayIte
 function Failure({ title, message, detail, onRetry, onExit }: { title: string; message: string; detail?: string; onRetry?: () => void; onExit: () => void }) {
   return (
     <View style={styles.centre}>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title} numberOfLines={2}>
+        {title}
+      </Text>
       <Text style={styles.error}>{message}</Text>
-      {detail !== undefined && detail !== "" ? <Text style={styles.detail}>{detail}</Text> : null}
+      {detail !== undefined && detail !== "" ? (
+        <Text style={styles.detail} numberOfLines={2}>
+          {detail}
+        </Text>
+      ) : null}
       <View style={styles.row}>
         {onRetry !== undefined ? <Button label="Try again" onPress={onRetry} /> : null}
         <Button preferred label="Back" onPress={onExit} />
@@ -107,7 +117,7 @@ function clock(seconds: number): string {
   return h > 0 ? `${h}:${two(m)}:${two(s)}` : `${m}:${two(s)}`;
 }
 
-function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: ResolvedStream; seriesId?: string; onExit: () => void }) {
+function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: PlayItem; stream: ResolvedStream; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db } = useApp();
   const vod = item.kind !== "channel";
   const started = useRef(false);
@@ -158,14 +168,14 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
   }, []);
   useEffect(() => () => clearTimeout(flashTimer.current), []);
 
-  const lastSeek = useRef({ at: 0, direction: 0 });
+  const lastSeek = useRef({ at: 0, direction: 0, count: 0 });
   const seek = useCallback(
     (direction: 1 | -1) => {
       if (!vod) return;
       const now = Date.now();
-      const held = lastSeek.current.direction === direction && now - lastSeek.current.at < HELD_WITHIN_MS;
-      lastSeek.current = { at: now, direction };
-      const target = Math.min(duration > 0 ? duration - 1 : Infinity, Math.max(0, player.currentTime + direction * (held ? SEEK_HELD_SECS : SEEK_STEP_SECS)));
+      const streak = lastSeek.current.direction === direction && now - lastSeek.current.at < STREAK_WITHIN_MS ? lastSeek.current.count + 1 : 0;
+      lastSeek.current = { at: now, direction, count: streak };
+      const target = Math.min(duration > 0 ? duration - 1 : Infinity, Math.max(0, player.currentTime + direction * stepForStreak(streak)));
       player.currentTime = target;
       setSeekedTo(target);
       pulse(direction === 1 ? "forward" : "back");
@@ -173,6 +183,30 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
     },
     [duration, player, pulse, vod, wake],
   );
+  // A tap or click on the progress bar jumps to that point.
+  const [barWidth, setBarWidth] = useState(0);
+  const seekToRatio = useCallback(
+    (ratio: number) => {
+      if (!vod || duration <= 0) return;
+      const target = Math.min(duration - 1, Math.max(0, ratio * duration));
+      player.currentTime = target;
+      setSeekedTo(target);
+      wake();
+    },
+    [duration, player, vod, wake],
+  );
+  // Live TV: step through the channels of the list the viewer came from.
+  const at = channels !== undefined ? channels.findIndex((channel) => channel.id === item.id) : -1;
+  const zapping = !vod && at >= 0 && channels !== undefined && channels.length > 1 && onZap !== undefined;
+  const zap = useCallback(
+    (direction: 1 | -1) => {
+      if (!zapping || channels === undefined || onZap === undefined) return;
+      const next = channels[(at + direction + channels.length) % channels.length];
+      if (next !== undefined) onZap(next);
+    },
+    [at, channels, onZap, zapping],
+  );
+  const step = useCallback((direction: 1 | -1) => (vod ? seek(direction) : zap(direction)), [seek, vod, zap]);
   const togglePause = useCallback(() => {
     if (player.playing) player.pause();
     else player.play();
@@ -182,16 +216,17 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
 
   // The D-pad drives a highlight (`selected`) over the controls: up/down change row, left/right change
   // control (or scrub, on the bar), OK presses. With the controls hidden, left/right seek and OK pauses.
-  const rows: Control[][] = vod ? [["close"], ["seek"], ["back", "play", "forward"]] : [["close"], ["play"]];
+  // Live keeps up/down for changing channel, so its way out sits at the left end of the transport row.
+  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward"]] : zapping ? [["exit", "back", "play", "forward"]] : [["exit"], ["play"]];
   const [selected, setSelected] = useState<Control>("play");
   const press = useCallback(
     (control: Control) => {
-      if (control === "close") onExit();
-      else if (control === "back") seek(-1);
-      else if (control === "forward") seek(1);
+      if (control === "exit") onExit();
+      else if (control === "back") step(-1);
+      else if (control === "forward") step(1);
       else togglePause();
     },
-    [onExit, seek, togglePause],
+    [onExit, step, togglePause],
   );
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
   useTVEventHandler(
@@ -200,8 +235,13 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
         if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
         const key = event.eventType;
         if (key === "playPause") return togglePause();
-        if (key === "rewind") return seek(-1);
-        if (key === "fastForward") return seek(1);
+        if (key === "rewind") return step(-1);
+        if (key === "fastForward") return step(1);
+        // Live: up and down change channel, as on any TV.
+        if (zapping && (key === "up" || key === "down")) {
+          wake();
+          return zap(key === "down" ? 1 : -1);
+        }
         if (!chrome) {
           if (key === "left") return seek(-1);
           if (key === "right") return seek(1);
@@ -225,7 +265,7 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [chrome, press, selected, seek, togglePause, vod, wake],
+      [chrome, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
     ),
   );
 
@@ -252,15 +292,22 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
 
   if (status === "error") {
     const raw = error?.message ?? "";
+    const message = explain(raw);
+    const known = message !== "This couldn't be played.";
+    const undecodable = /EXCEEDS_CAPABILITIES|MediaCodec|Decoder|decoder/i.test(raw);
     return (
       <Failure
-        title={stream.title}
-        message={explain(raw)}
-        detail={raw}
-        onRetry={() => {
-          player.replace(stream.url);
-          player.play();
-        }}
+        title={vod ? playerTitle(stream.title) : stream.title}
+        message={message}
+        {...(known ? {} : { detail: raw })}
+        {...(undecodable
+          ? {}
+          : {
+              onRetry: () => {
+                player.replace(stream.url);
+                player.play();
+              },
+            })}
         onExit={onExit}
       />
     );
@@ -275,6 +322,7 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
   const tv = Platform.isTV;
   // The highlight is only drawn for a remote; a phone just taps.
   const lit = (control: Control) => tv && chrome && selected === control;
+  const now = new Date();
 
   return (
     <View style={styles.player}>
@@ -284,62 +332,82 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
 
       {loading ? (
         <View style={styles.centreLayer} pointerEvents="none">
-          <ActivityIndicator size={u(110)} color={colors.accent} />
+          <ActivityIndicator size={u(64)} color={colors.foreground} />
         </View>
       ) : null}
 
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]} pointerEvents={chrome ? "box-none" : "none"}>
         <View style={styles.top} pointerEvents="box-none">
           <Scrim from="top" />
-          <RoundButton small selected={lit("close")} onPress={onExit}>
-            <ChevronGlyph />
-          </RoundButton>
-          <View style={styles.titleBlock} pointerEvents="none">
-            <Text style={styles.heading} numberOfLines={2}>
-              {stream.title}
-            </Text>
+          <Pressable style={[styles.phoneBack, lit("exit") && styles.backLit]} onPress={onExit}>
+            <ChevronGlyph color={lit("exit") ? INK : colors.foreground} />
+          </Pressable>
+          <Text style={styles.wallClock}>
+            {two(now.getHours())}:{two(now.getMinutes())}
+          </Text>
+        </View>
+
+        <View style={styles.bottom} pointerEvents="box-none">
+          <Scrim from="bottom" />
+          <View style={styles.info} pointerEvents="none">
             {vod ? null : (
               <View style={styles.livePill}>
                 <View style={styles.liveDot} />
                 <Text style={styles.liveText}>LIVE</Text>
               </View>
             )}
-          </View>
-          {vod && duration > 0 ? (
-            <Text style={styles.endsAt} pointerEvents="none">
-              Ends at {two(endsAt.getHours())}:{two(endsAt.getMinutes())}
+            <Text style={styles.heading} numberOfLines={1}>
+              {vod ? playerTitle(stream.title) : stream.title}
             </Text>
-          ) : null}
-        </View>
+          </View>
 
-        <View style={styles.bottom} pointerEvents="box-none">
-          <Scrim from="bottom" />
           {vod ? (
-            <View style={styles.timeline} pointerEvents="none">
-              <Text style={styles.clock}>{clock(position)}</Text>
-              <View style={[styles.track, lit("seek") && styles.trackLit]}>
+            <Pressable
+              focusable={false}
+              style={styles.barHit}
+              onLayout={(event) => setBarWidth(event.nativeEvent.layout.width)}
+              onPress={(event) => barWidth > 0 && seekToRatio(event.nativeEvent.locationX / barWidth)}
+            >
+              <View style={[styles.track, lit("seek") && styles.trackLit]} pointerEvents="none">
                 <View style={[styles.fillBuffered, { width: `${buffered * 100}%` }]} />
-                <View style={[styles.fillPlayed, { width: `${ratio * 100}%` }]} />
+                <View style={[styles.fillPlayed, lit("seek") && styles.fillLit, { width: `${ratio * 100}%` }]} />
                 <View style={[styles.knob, lit("seek") && styles.knobLit, { left: `${ratio * 100}%` }]} />
               </View>
-              <Text style={[styles.clock, styles.clockRight]}>-{clock(remaining)}</Text>
-            </View>
+            </Pressable>
           ) : null}
 
-          <View style={styles.transport} pointerEvents="box-none">
-            {vod ? (
-              <RoundButton selected={lit("back")} active={flash === "back"} onPress={() => seek(-1)}>
-                <SkipGlyph direction="back" />
-              </RoundButton>
-            ) : null}
-            <RoundButton big selected={lit("play")} active={flash === "play"} onPress={togglePause}>
-              {isPlaying ? <PauseGlyph /> : <PlayGlyph />}
-            </RoundButton>
-            {vod ? (
-              <RoundButton selected={lit("forward")} active={flash === "forward"} onPress={() => seek(1)}>
-                <SkipGlyph direction="forward" />
-              </RoundButton>
-            ) : null}
+          <View style={styles.controls} pointerEvents="box-none">
+            <View style={styles.side} pointerEvents="none">
+              {zapping ? <Text style={styles.clockDim}>{`${at + 1} of ${channels?.length ?? 0}`}</Text> : null}
+              {vod ? (
+                <Text style={styles.clock}>
+                  {clock(position)}
+                  <Text style={styles.clockDim}>{duration > 0 ? ` / ${clock(duration)}` : ""}</Text>
+                </Text>
+              ) : null}
+            </View>
+            <View style={styles.transport} pointerEvents="box-none">
+              {vod || zapping ? (
+                <Key selected={lit("back")} active={flash === "back"} onPress={() => step(-1)}>
+                  {(ink) => (vod ? <SkipGlyph direction="back" color={ink} /> : <ChannelGlyph direction="back" color={ink} />)}
+                </Key>
+              ) : null}
+              <Key big selected={lit("play")} active={flash === "play"} onPress={togglePause}>
+                {(ink) => (isPlaying ? <PauseGlyph color={ink} /> : <PlayGlyph color={ink} />)}
+              </Key>
+              {vod || zapping ? (
+                <Key selected={lit("forward")} active={flash === "forward"} onPress={() => step(1)}>
+                  {(ink) => (vod ? <SkipGlyph direction="forward" color={ink} /> : <ChannelGlyph direction="forward" color={ink} />)}
+                </Key>
+              ) : null}
+            </View>
+            <View style={[styles.side, styles.sideRight]} pointerEvents="none">
+              {vod && duration > 0 ? (
+                <Text style={styles.clockDim}>
+                  Ends {two(endsAt.getHours())}:{two(endsAt.getMinutes())}
+                </Text>
+              ) : null}
+            </View>
           </View>
         </View>
       </Animated.View>
@@ -347,111 +415,122 @@ function Playing({ item, stream, seriesId, onExit }: { item: PlayItem; stream: R
   );
 }
 
-/** A round button. On a TV the remote's highlight (`selected`) presses it; on a phone it is tapped. */
-function RoundButton({
-  big = false,
-  small = false,
-  selected = false,
-  active = false,
-  onPress,
-  children,
-}: {
-  big?: boolean;
-  small?: boolean;
-  selected?: boolean;
-  active?: boolean;
-  onPress: () => void;
-  children: ReactNode;
-}) {
+const INK = "#0b0e10";
+
+/** A transport key: a bare glyph at rest, a solid white disc with a dark glyph when the remote's highlight is on it. */
+function Key({ big = false, selected = false, active = false, onPress, children }: { big?: boolean; selected?: boolean; active?: boolean; onPress: () => void; children: (ink: string) => ReactNode }) {
+  const filled = selected || active;
   return (
     <Pressable
       focusable={false}
       onPress={onPress}
-      style={[
-        styles.round,
-        big ? styles.roundBig : small ? styles.roundTiny : styles.roundSmall,
-        active && styles.roundActive,
-        selected && styles.roundSelected,
-        (selected || active) && { transform: [{ scale: big ? 1.08 : 1.14 }] },
-      ]}
+      style={[styles.key, big ? styles.keyBig : styles.keySmall, filled && styles.keyFilled, filled && { transform: [{ scale: 1.08 }] }]}
     >
-      {children}
+      {children(filled ? INK : colors.foreground)}
     </Pressable>
   );
 }
 
-/** A darkening that fades out, built from stacked bands (no gradient library in the app). */
+/** A darkening that fades out from one edge, built from stacked bands (no gradient library in the app). */
 function Scrim({ from }: { from: "top" | "bottom" }) {
-  const bands = 20;
+  const bands = 32;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {Array.from({ length: bands }, (_, index) => {
         const strength = from === "top" ? 1 - index / (bands - 1) : index / (bands - 1);
-        return <View key={index} style={{ flex: 1, backgroundColor: `rgba(0,0,0,${(0.88 * strength ** 1.5).toFixed(3)})` }} />;
+        return <View key={index} style={{ flex: 1, backgroundColor: `rgba(5,7,9,${(0.9 * strength ** 1.5).toFixed(3)})` }} />;
       })}
     </View>
   );
 }
 
-function ChevronGlyph() {
+function ChevronGlyph({ color }: { color: string }) {
   return (
     <View
       style={{
-        width: u(24),
-        height: u(24),
-        marginLeft: u(9),
-        borderLeftWidth: u(6),
-        borderBottomWidth: u(6),
-        borderColor: colors.foreground,
+        width: u(18),
+        height: u(18),
+        marginLeft: u(6),
+        borderLeftWidth: u(4),
+        borderBottomWidth: u(4),
+        borderColor: color,
         transform: [{ rotate: "45deg" }],
       }}
     />
   );
 }
 
-function PauseGlyph() {
+/** "|<" / ">|": previous and next channel. */
+function ChannelGlyph({ direction, color }: { direction: "back" | "forward"; color: string }) {
+  const back = direction === "back";
+  const bar = <View key="bar" style={{ width: u(5), height: u(30), backgroundColor: color, borderRadius: u(2) }} />;
+  const head = (
+    <View
+      key="head"
+      style={{
+        width: 0,
+        height: 0,
+        borderTopWidth: u(15),
+        borderBottomWidth: u(15),
+        borderTopColor: "transparent",
+        borderBottomColor: "transparent",
+        ...(back ? { borderRightWidth: u(24), borderRightColor: color } : { borderLeftWidth: u(24), borderLeftColor: color }),
+      }}
+    />
+  );
+  return <View style={{ flexDirection: "row", alignItems: "center", gap: u(4) }}>{back ? [bar, head] : [head, bar]}</View>;
+}
+
+function PauseGlyph({ color }: { color: string }) {
   return (
-    <View style={{ flexDirection: "row", gap: u(14) }}>
-      <View style={{ width: u(16), height: u(54), backgroundColor: colors.accentInk, borderRadius: u(4) }} />
-      <View style={{ width: u(16), height: u(54), backgroundColor: colors.accentInk, borderRadius: u(4) }} />
+    <View style={{ flexDirection: "row", gap: u(9) }}>
+      <View style={{ width: u(11), height: u(32), backgroundColor: color, borderRadius: u(3) }} />
+      <View style={{ width: u(11), height: u(32), backgroundColor: color, borderRadius: u(3) }} />
     </View>
   );
 }
 
-function PlayGlyph() {
+function PlayGlyph({ color }: { color: string }) {
   return (
     <View
       style={{
-        marginLeft: u(10),
+        marginLeft: u(6),
         width: 0,
         height: 0,
-        borderTopWidth: u(30),
-        borderBottomWidth: u(30),
-        borderLeftWidth: u(50),
+        borderTopWidth: u(18),
+        borderBottomWidth: u(18),
+        borderLeftWidth: u(30),
         borderTopColor: "transparent",
         borderBottomColor: "transparent",
-        borderLeftColor: colors.accentInk,
+        borderLeftColor: color,
       }}
     />
   );
 }
 
-/** "<10" / "10>": a small arrowhead and the number of seconds. */
-function SkipGlyph({ direction }: { direction: "back" | "forward" }) {
-  const head = (
-    <View
-      style={
-        direction === "back"
-          ? { width: 0, height: 0, borderTopWidth: u(14), borderBottomWidth: u(14), borderRightWidth: u(20), borderTopColor: "transparent", borderBottomColor: "transparent", borderRightColor: colors.foreground }
-          : { width: 0, height: 0, borderTopWidth: u(14), borderBottomWidth: u(14), borderLeftWidth: u(20), borderTopColor: "transparent", borderBottomColor: "transparent", borderLeftColor: colors.foreground }
-      }
-    />
-  );
-  const label = <Text style={{ color: colors.foreground, fontSize: u(38), fontWeight: "700" }}>{SEEK_STEP_SECS}</Text>;
+/** An open ring with an arrowhead where it is open and the number of seconds inside: the usual "replay 10". */
+function SkipGlyph({ direction, color }: { direction: "back" | "forward"; color: string }) {
+  const size = u(54);
+  const head = u(8);
+  const forward = direction === "forward";
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: u(8) }}>
-      {direction === "back" ? head : label}
-      {direction === "back" ? label : head}
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ position: "absolute", width: size, height: size, borderRadius: size / 2, borderWidth: u(4), borderColor: color, borderTopColor: "transparent" }} />
+      <View
+        style={{
+          position: "absolute",
+          top: u(2) - head,
+          left: size / 2 - (forward ? u(6) : u(9)),
+          width: 0,
+          height: 0,
+          borderTopWidth: head,
+          borderBottomWidth: head,
+          borderTopColor: "transparent",
+          borderBottomColor: "transparent",
+          ...(forward ? { borderLeftWidth: u(13), borderLeftColor: color } : { borderRightWidth: u(13), borderRightColor: color }),
+        }}
+      />
+      <Text style={{ color, fontSize: u(20), fontFamily: "Inter_600SemiBold" }}>{SEEK_STEP_SECS}</Text>
     </View>
   );
 }
@@ -462,35 +541,40 @@ const styles = styleSheet({
   player: { flex: 1, backgroundColor: "#000" },
   centreLayer: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center" },
 
-  top: { position: "absolute", left: 0, right: 0, top: 0, paddingHorizontal: 96, paddingTop: 56, paddingBottom: 130, flexDirection: "row", alignItems: "center", gap: 32 },
-  titleBlock: { flex: 1, gap: 12 },
-  heading: { color: colors.foreground, fontSize: 46, fontWeight: "700" },
-  endsAt: { color: colors.muted, fontSize: 30, fontWeight: "500" },
-  livePill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#000a", paddingHorizontal: 20, paddingVertical: 8, borderRadius: 10 },
-  liveDot: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.live },
-  liveText: { color: colors.foreground, fontSize: 28, fontWeight: "700", letterSpacing: 2 },
+  top: { position: "absolute", left: 0, right: 0, top: 0, paddingHorizontal: 96, paddingTop: 48, paddingBottom: 90, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  backLit: { backgroundColor: colors.foreground },
+  phoneBack: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: "#0008" },
+  wallClock: { color: colors.foreground, opacity: 0.9, fontSize: 30, fontWeight: "500" },
 
-  bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 96, paddingBottom: 64, paddingTop: 220, gap: 40 },
-  timeline: { flexDirection: "row", alignItems: "center", gap: 32 },
-  clock: { color: colors.foreground, fontSize: 32, fontWeight: "600", minWidth: 150 },
-  clockRight: { textAlign: "right" },
-  track: { flex: 1, height: 12, borderRadius: 6, backgroundColor: "#ffffff30", justifyContent: "center" },
-  trackLit: { height: 20, borderRadius: 10 },
-  fillBuffered: { position: "absolute", left: 0, top: 0, bottom: 0, borderRadius: 10, backgroundColor: "#ffffff55" },
-  fillPlayed: { position: "absolute", left: 0, top: 0, bottom: 0, borderRadius: 10, backgroundColor: colors.accent },
-  knob: { position: "absolute", width: 32, height: 32, borderRadius: 16, marginLeft: -16, backgroundColor: colors.foreground },
-  knobLit: { width: 48, height: 48, borderRadius: 24, marginLeft: -24, borderWidth: 6, borderColor: colors.accent },
+  bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 96, paddingBottom: 44, paddingTop: 220, gap: 28 },
+  info: { flexDirection: "row", alignItems: "center", gap: 20 },
+  heading: { flexShrink: 1, color: colors.foreground, fontSize: 44, fontWeight: "600", letterSpacing: -0.5 },
+  livePill: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.live, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 7 },
+  liveDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: "#fff" },
+  liveText: { color: "#fff", fontSize: 19, fontWeight: "600", letterSpacing: 1.5 },
 
-  transport: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 64 },
-  round: { alignItems: "center", justifyContent: "center", borderRadius: 100, borderWidth: 6, borderColor: "transparent" },
-  roundTiny: { width: 96, height: 96, backgroundColor: "#ffffff26" },
-  roundSmall: { minWidth: 128, height: 128, paddingHorizontal: 20, backgroundColor: "#ffffff26" },
-  roundBig: { width: 160, height: 160, backgroundColor: colors.foreground },
-  roundActive: { backgroundColor: colors.accent },
-  roundSelected: { borderColor: colors.accent, shadowColor: colors.accent, elevation: 12 },
+  barHit: { height: 44, marginVertical: -16, justifyContent: "center" },
+  track: { height: 6, borderRadius: 3, backgroundColor: "#ffffff30", justifyContent: "center" },
+  trackLit: { height: 10, borderRadius: 5 },
+  fillBuffered: { position: "absolute", left: 0, top: 0, bottom: 0, borderRadius: 5, backgroundColor: "#ffffff40" },
+  fillLit: { backgroundColor: colors.accent },
+  fillPlayed: { position: "absolute", left: 0, top: 0, bottom: 0, borderRadius: 5, backgroundColor: colors.foreground },
+  knob: { position: "absolute", width: 18, height: 18, borderRadius: 9, marginLeft: -9, backgroundColor: colors.foreground },
+  knobLit: { width: 30, height: 30, borderRadius: 15, marginLeft: -15 },
 
-  title: { color: colors.foreground, fontSize: type.lead, fontWeight: "600" },
+  controls: { flexDirection: "row", alignItems: "center" },
+  side: { flex: 1 },
+  sideRight: { alignItems: "flex-end" },
+  clock: { color: colors.foreground, fontSize: 28, fontWeight: "500" },
+  clockDim: { color: colors.foreground, opacity: 0.6, fontSize: 28, fontWeight: "400" },
+  transport: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 24 },
+  key: { alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "transparent" },
+  keySmall: { width: 80, height: 80, borderRadius: 40 },
+  keyBig: { width: 92, height: 92, borderRadius: 46 },
+  keyFilled: { backgroundColor: colors.foreground, borderColor: "transparent" },
+
+  title: { color: colors.foreground, fontSize: 44, fontWeight: "600", letterSpacing: -0.5, textAlign: "center", maxWidth: 1200 },
   muted: { color: colors.muted, fontSize: type.body },
-  error: { color: colors.fault, fontSize: type.body, textAlign: "center", maxWidth: 900 },
-  detail: { color: colors.faint, fontSize: type.small, textAlign: "center", maxWidth: 900 },
+  error: { color: colors.muted, fontSize: 30, textAlign: "center", maxWidth: 1000, lineHeight: 44 },
+  detail: { color: colors.faint, fontSize: 20, textAlign: "center", maxWidth: 1000 },
 });

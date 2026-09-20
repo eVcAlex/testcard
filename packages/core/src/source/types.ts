@@ -177,4 +177,6 @@ export interface Episode {
   readonly containerExtension?: string;
   readonly durationSecs?: number;
   readonly plot?: string;
+  /** The episode's still image, when the provider has one. */
+  readonly imageUrl?: string;
 }

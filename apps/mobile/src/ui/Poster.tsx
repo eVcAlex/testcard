@@ -14,14 +14,17 @@ export interface PosterItem {
 
 const POSTER_WIDTH = 190;
 
-const PosterCard = memo(function PosterCard({ item, onPress }: { item: PosterItem; onPress: (item: PosterItem) => void }) {
+/** A poster and its title. `grid` lets it share a grid row with its neighbours instead of keeping a fixed width. */
+export const PosterCard = memo(function PosterCard({ item, onPress, grid = false }: { item: PosterItem; onPress: (item: PosterItem) => void; grid?: boolean }) {
   const { title } = splitTitle(item.name);
   const progress = item.progress !== undefined && item.progress !== null && item.progress > 0 ? Math.min(1, item.progress) : null;
   return (
-    <Focusable onPress={() => onPress(item)} style={styles.card}>
-      <View style={styles.art}>
+    <Focusable onPress={() => onPress(item)} style={grid ? styles.cardGrid : styles.card} focusedStyle={styles.cardFocused}>
+      {({ focused }) => (
+        <>
+      <View style={[styles.art, focused && styles.artFocused]}>
         {item.posterUrl !== null && item.posterUrl !== "" ? (
-          <Image source={{ uri: item.posterUrl }} style={styles.image} resizeMode="cover" />
+          <Image source={{ uri: item.posterUrl }} style={styles.image} resizeMode="cover" resizeMethod="resize" fadeDuration={0} />
         ) : (
           <Text style={styles.fallback} numberOfLines={4}>
             {title}
@@ -36,6 +39,8 @@ const PosterCard = memo(function PosterCard({ item, onPress }: { item: PosterIte
       <Text style={styles.title} numberOfLines={2}>
         {title}
       </Text>
+        </>
+      )}
     </Focusable>
   );
 });
@@ -64,11 +69,14 @@ const styles = styleSheet({
   row: { gap: space.m, marginBottom: space.l },
   rowTitle: { color: colors.foreground, fontSize: type.lead, fontWeight: "600", paddingLeft: space.s },
   rowList: { gap: space.m, paddingVertical: space.s, paddingHorizontal: space.s },
-  card: { width: POSTER_WIDTH, gap: space.s, padding: 4 },
-  art: { width: "100%", aspectRatio: 2 / 3, borderRadius: 8, backgroundColor: colors.sunken, overflow: "hidden", justifyContent: "center" },
+  card: { width: POSTER_WIDTH, gap: 10, padding: 4 },
+  cardGrid: { flex: 1, gap: 10, padding: 4 },
+  cardFocused: { borderColor: "transparent" },
+  artFocused: { borderColor: colors.foreground },
+  art: { width: "100%", aspectRatio: 2 / 3, borderWidth: 3, borderColor: "transparent", borderRadius: 12, backgroundColor: colors.raised, overflow: "hidden", justifyContent: "center" },
   image: { width: "100%", height: "100%" },
   fallback: { color: colors.muted, fontSize: type.small, padding: space.m, textAlign: "center" },
-  title: { color: colors.foreground, fontSize: type.small },
+  title: { color: colors.muted, fontSize: 20 },
   progress: { position: "absolute", left: 0, right: 0, bottom: 0, height: 5, backgroundColor: "#0008" },
   progressFill: { height: "100%", backgroundColor: colors.accent },
 });

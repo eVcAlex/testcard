@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -232,6 +232,7 @@ CREATE TABLE IF NOT EXISTS episodes (
   container_extension  TEXT,
   duration_secs        INTEGER,
   plot                 TEXT,
+  image_url            TEXT,
   remote_key           TEXT   -- sha1(normalizedHost + providerEpisodeId), see sync/remoteKey.ts
 );
 CREATE INDEX IF NOT EXISTS idx_episodes_season ON episodes(season_id);

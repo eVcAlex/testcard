@@ -246,6 +246,14 @@ export const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    version: 8,
+    up: (db) => {
+      // Episode stills. Episode lists already fetched have none, so mark them stale: each series refetches on next open.
+      addColumn(db, "episodes", "image_url TEXT");
+      db.exec(`UPDATE series SET episodes_fetched_at = NULL`);
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

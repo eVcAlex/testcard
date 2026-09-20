@@ -9,19 +9,23 @@ export function Button({
   primary = false,
   disabled = false,
   preferred = false,
+  wide = false,
 }: {
   label: string;
   onPress: () => void;
   primary?: boolean;
   disabled?: boolean;
   preferred?: boolean;
+  /** A fixed width, so a column of buttons lines up. */
+  wide?: boolean;
 }) {
   return (
     <Focusable
       onPress={onPress}
       disabled={disabled}
       preferred={preferred}
-      style={[styles.button, primary ? styles.primary : styles.secondary, disabled && styles.disabled]}
+      style={[styles.button, primary ? styles.primary : styles.secondary, wide && styles.wide, disabled && styles.disabled]}
+      focusedStyle={primary ? styles.primaryFocused : undefined}
     >
       <Text style={[styles.buttonLabel, primary && styles.primaryLabel]}>{label}</Text>
     </Focusable>
@@ -77,12 +81,14 @@ export function Muted({ children }: { children: string }) {
 }
 
 const styles = styleSheet({
-  button: { paddingVertical: space.m, paddingHorizontal: space.xl, alignItems: "center" },
-  primary: { backgroundColor: colors.accent },
-  secondary: { backgroundColor: colors.card },
+  button: { height: 72, paddingHorizontal: 40, alignItems: "center", justifyContent: "center", borderRadius: 36 },
+  primary: { backgroundColor: colors.foreground },
+  primaryFocused: { borderColor: colors.accent },
+  wide: { width: 560 },
+  secondary: { backgroundColor: "#ffffff1f" },
   disabled: { opacity: 0.5 },
-  buttonLabel: { color: colors.foreground, fontSize: type.body, fontWeight: "600" },
-  primaryLabel: { color: colors.accentInk },
+  buttonLabel: { color: colors.foreground, fontSize: 26, fontWeight: "500" },
+  primaryLabel: { color: colors.background },
   field: { gap: space.s },
   fieldLabel: { color: colors.muted, fontSize: type.small },
   input: {

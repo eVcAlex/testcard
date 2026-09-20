@@ -153,6 +153,7 @@ export interface EpisodeRow {
   readonly container_extension: string | null;
   readonly duration_secs: number | null;
   readonly plot: string | null;
+  readonly image_url: string | null;
   readonly position_secs: number | null;
   readonly watched: 0 | 1;
 }
@@ -168,7 +169,7 @@ export interface SeriesDetail {
 
 const EPISODE_COLUMNS = `e.id, e.season_id, e.series_id, e.episode_number, e.name, e.container_extension,
   COALESCE(e.duration_secs, (SELECT duration_secs FROM playback_progress pp WHERE pp.item_type = 'episode' AND pp.item_id = e.id)) AS duration_secs,
-  e.plot,
+  e.plot, e.image_url,
   (SELECT position_secs FROM playback_progress pp WHERE pp.item_type = 'episode' AND pp.item_id = e.id) AS position_secs,
   COALESCE((SELECT watched FROM playback_progress pp WHERE pp.item_type = 'episode' AND pp.item_id = e.id), 0) AS watched`;
 

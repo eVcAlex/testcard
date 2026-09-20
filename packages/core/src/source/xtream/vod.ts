@@ -40,6 +40,8 @@ interface XtreamSeasonDTO {
 interface XtreamEpisodeInfoDTO {
   readonly duration_secs?: number | string;
   readonly plot?: string;
+  /** The episode's still. */
+  readonly movie_image?: string;
 }
 
 interface XtreamEpisodeDTO {
@@ -155,6 +157,7 @@ export function mapSeriesDetailsDto(dto: XtreamSeriesInfoDTO, series: Series): {
         ...(e.container_extension !== undefined && e.container_extension !== "" ? { containerExtension: e.container_extension } : {}),
         ...(durationSecs !== undefined ? { durationSecs } : {}),
         ...(e.info?.plot !== undefined && e.info.plot !== "" ? { plot: e.info.plot } : {}),
+        ...(e.info?.movie_image !== undefined && e.info.movie_image !== "" ? { imageUrl: e.info.movie_image } : {}),
       };
     });
 

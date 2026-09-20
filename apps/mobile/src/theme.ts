@@ -2,12 +2,12 @@ import { Dimensions, Platform, StyleSheet } from "react-native";
 
 /** The desktop "Mist" palette (apps/desktop/src/renderer/src/styles/tokens.css), dark only, sized for a TV. */
 export const colors = {
-  background: "#14171a",
-  sunken: "#0f1214",
-  raised: "#1a1d21",
-  card: "#1c2024",
-  cardActive: "#2b3138",
-  border: "#262c31",
+  background: "#0c0e11",
+  sunken: "#080a0c",
+  raised: "#14171b",
+  card: "#171b20",
+  cardActive: "#20262c",
+  border: "#1e2329",
   foreground: "#eef1f3",
   muted: "#949ca4",
   faint: "#69727a",
@@ -44,17 +44,35 @@ const SCALED_KEYS = new Set([
   "borderWidth", "borderTopWidth", "borderBottomWidth", "borderLeftWidth", "borderRightWidth",
 ]);
 
-/** `StyleSheet.create` for lengths written in 1920 px design units. */
+/** The app's typeface (Inter, as on the desktop). Android picks a font file per weight, so weights are mapped to families. */
+const FONT_BY_WEIGHT: Record<string, string> = {
+  "400": "Inter_400Regular",
+  normal: "Inter_400Regular",
+  "500": "Inter_500Medium",
+  "600": "Inter_600SemiBold",
+  "700": "Inter_600SemiBold",
+  bold: "Inter_600SemiBold",
+  "800": "Inter_600SemiBold",
+};
+
+/**
+ * `StyleSheet.create` for lengths written in 1920 px design units. Text styles (anything with a
+ * `fontSize` or `fontWeight`) also get the app's typeface for their weight.
+ */
 export function styleSheet<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedStyles<any>>(styles: T): T {
   const scaled: Record<string, unknown> = {};
   for (const [name, style] of Object.entries(styles)) {
-    scaled[name] = Object.fromEntries(
-      Object.entries(style as Record<string, unknown>).map(([key, value]) => {
-        if (typeof value !== "number" || !SCALED_KEYS.has(key)) return [key, value];
-        const result = Math.round(value * uiScale);
-        return [key, key.includes("Width") && value > 0 ? Math.max(1, result) : result];
-      }),
-    );
+    const entries = Object.entries(style as Record<string, unknown>).map(([key, value]): [string, unknown] => {
+      if (typeof value !== "number" || !SCALED_KEYS.has(key)) return [key, value];
+      const result = Math.round(value * uiScale);
+      return [key, key.includes("Width") && value > 0 ? Math.max(1, result) : result];
+    });
+    const out = Object.fromEntries(entries);
+    if ("fontSize" in out || "fontWeight" in out) {
+      out.fontFamily ??= FONT_BY_WEIGHT[String(out.fontWeight ?? "400")] ?? "Inter_400Regular";
+      delete out.fontWeight;
+    }
+    scaled[name] = out;
   }
   return StyleSheet.create(scaled as T);
 }
