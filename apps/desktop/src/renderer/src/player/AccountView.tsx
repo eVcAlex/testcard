@@ -6,6 +6,7 @@ import { EmptyState } from "../components/EmptyState.js";
 import { SourceForm, type SourceSection } from "../SourceForm.js";
 import { formatRelative } from "../lib/time.js";
 import { SourceCard } from "./SourceCard.js";
+import { UpdatePanel } from "./UpdatePanel.js";
 
 /** The sync status, refreshed on a slow poll so "Synced 2m ago" stays honest while the page is open. */
 export function useSyncStatus() {
@@ -285,6 +286,7 @@ export function AccountView() {
       <div className="pw-scroll">
         <div className="pw-account-col">
           <SyncPanel />
+          <UpdatePanel />
           <SourcesPanel />
         </div>
       </div>

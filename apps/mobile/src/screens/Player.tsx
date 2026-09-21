@@ -1,17 +1,20 @@
-import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, StyleSheet, Text, useTVEventHandler, View } from "react-native";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, useTVEventHandler, View } from "react-native";
 import { useEvent } from "expo";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
 import { recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
 import { recordSeriesRecent } from "@testcard/core/src/db/seriesQueries.js";
+import type { CatchupProgramme } from "@testcard/core/src/source/xtream/catchup.js";
 import { playerTitle } from "../ui/titles";
 import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
 import { useApp } from "../state/app";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button } from "../ui/controls";
 import { streamFacts } from "../playback/streamInfo";
+import { channelCatchup, loadCatchupGuide, type CatchupGuide } from "../playback/catchup";
+import { fetchGuide, type Airing } from "../playback/airing";
 
 const SEEK_STEP_SECS = 10;
 /** Presses in a row (each within this of the last) reach further: 10 s, then 30 s, 1 min, 2 min. */
@@ -20,7 +23,7 @@ const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4
 const CHROME_HIDES_AFTER_MS = 4000;
 const PROGRESS_EVERY_MS = 5000;
 
-type Control = "exit" | "seek" | "back" | "play" | "forward" | "info";
+type Control = "exit" | "seek" | "back" | "play" | "forward" | "info" | "live" | "catchup";
 
 /** A length written in 1920 px design units, for the shapes below that are sized in code. */
 const u = (n: number) => Math.round(n * uiScale);
@@ -34,17 +37,21 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onExit }
   const { db, sync, updateStatus } = useApp();
   const [stream, setStream] = useState<ResolvedStream>();
   const [error, setError] = useState<string>();
+  // A past programme the viewer picked from Catch up, for this channel only: changing channel goes back to live.
+  const [picked, setPicked] = useState<{ channelId: string; programme: CatchupProgramme }>();
+  const catchup = picked?.channelId === item.id ? picked.programme : undefined;
 
   useEffect(() => {
     let cancelled = false;
-    resolveStream(db, item, resume).then(
+    setError(undefined);
+    resolveStream(db, item, resume, catchup).then(
       (resolved) => !cancelled && setStream(resolved),
       (failure: unknown) => !cancelled && setError(failure instanceof Error ? failure.message : "This couldn't be played."),
     );
     return () => {
       cancelled = true;
     };
-  }, [db, item, resume]);
+  }, [db, item, resume, catchup]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -65,8 +72,11 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onExit }
   }
   return (
     <Playing
+      key={catchup === undefined ? "live" : catchup.serverStart}
       item={item}
       stream={stream}
+      catchup={catchup}
+      onCatchup={(programme) => setPicked(programme === undefined ? undefined : { channelId: item.id, programme })}
       channels={channels}
       onZap={onZap}
       onExit={() => {
@@ -118,9 +128,36 @@ function clock(seconds: number): string {
   return h > 0 ? `${h}:${two(m)}:${two(s)}` : `${m}:${two(s)}`;
 }
 
-function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: PlayItem; stream: ResolvedStream; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
+const GUIDE_ROW = 64;
+/** A live picture paused for longer than this has fallen behind the broadcast. */
+const BEHIND_AFTER_MS = 2000;
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** One line of the Catch up list: what to call the day, the start time and the programme. */
+interface CatchupEntry {
+  readonly programme: CatchupProgramme;
+  readonly when: string;
+  readonly time: string;
+}
+
+const hourMinute = (date: Date) => `${two(date.getHours())}:${two(date.getMinutes())}`;
+
+function dayLabel(date: Date, now: Date): string {
+  const days = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()) / 86_400_000);
+  return days === 0 ? "Today" : days === 1 ? "Yesterday" : (DAYS[date.getDay()] ?? "");
+}
+
+/** What is on now (to start over) comes first, then the past programmes, newest first. */
+function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
+  const now = new Date();
+  const past = guide.past.map((programme) => ({ programme, when: dayLabel(programme.start, now), time: hourMinute(programme.start) }));
+  return guide.current === undefined ? past : [{ programme: guide.current, when: "Start over", time: hourMinute(guide.current.start) }, ...past];
+}
+
+function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onExit }: { item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db } = useApp();
   const vod = item.kind !== "channel";
+  const timeshift = catchup !== undefined;
   const started = useRef(false);
 
   const player = useVideoPlayer(stream.url, (instance) => {
@@ -146,6 +183,49 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
     if (status === "readyToPlay") everPlayed.current = true;
     else if (status === "loading" && everPlayed.current) setStalls((count) => count + 1);
   }, [status]);
+  // Live TV: pausing lets the picture fall behind the broadcast. Once it has, there is a way back to live.
+  const [behindLive, setBehindLive] = useState(false);
+  const pausedAt = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (vod || timeshift) return;
+    // Only a real pause counts: not the picture still starting up, and not a stall while it refills.
+    if (!isPlaying && status === "readyToPlay" && everPlayed.current) pausedAt.current ??= Date.now();
+    else if (isPlaying && pausedAt.current !== undefined) {
+      if (Date.now() - pausedAt.current > BEHIND_AFTER_MS) setBehindLive(true);
+      pausedAt.current = undefined;
+    }
+  }, [isPlaying, status, timeshift, vod]);
+  const goLive = useCallback(() => {
+    setBehindLive(false);
+    pausedAt.current = undefined;
+    player.replace(stream.url);
+    player.play();
+  }, [player, stream.url]);
+  // Live TV: what is on now, for the programme bar. Asked once, then again when that programme ends.
+  const [airing, setAiring] = useState<Airing | null>(null);
+  useEffect(() => {
+    if (vod || timeshift) return;
+    let live = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = () => {
+      fetchGuide(db, item.id).then(
+        (guide) => {
+          if (!live) return;
+          const found = guide?.now ?? null;
+          setAiring(found);
+          timer = setTimeout(load, found !== null ? Math.min(30 * 60_000, Math.max(30_000, found.end - Date.now() + 2000)) : 5 * 60_000);
+        },
+        () => {
+          if (live) timer = setTimeout(load, 5 * 60_000); // the bar works without the guide
+        },
+      );
+    };
+    load();
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [db, item.id, timeshift, vod]);
   const [statsOn, setStatsOn] = useState(false);
   const time = useEvent(player, "timeUpdate", { currentTime: player.currentTime, currentLiveTimestamp: null, currentOffsetFromLive: null, bufferedPosition: player.bufferedPosition });
   // Seeking moves the shown position straight away instead of waiting for the next time update.
@@ -214,7 +294,7 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
   );
   // Live TV: step through the channels of the list the viewer came from.
   const at = channels !== undefined ? channels.findIndex((channel) => channel.id === item.id) : -1;
-  const zapping = !vod && at >= 0 && channels !== undefined && channels.length > 1 && onZap !== undefined;
+  const zapping = !vod && !timeshift && at >= 0 && channels !== undefined && channels.length > 1 && onZap !== undefined;
   const zap = useCallback(
     (direction: 1 | -1) => {
       if (!zapping || channels === undefined || onZap === undefined) return;
@@ -224,6 +304,38 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
     [at, channels, onZap, zapping],
   );
   const step = useCallback((direction: 1 | -1) => (vod ? seek(direction) : zap(direction)), [seek, vod, zap]);
+
+  // Catch-up: when the provider keeps this channel's past programmes, the viewer can open the list and play one from its start.
+  const archive = useMemo(() => (vod ? undefined : channelCatchup(db, item.id)), [db, item.id, vod]);
+  const [guide, setGuide] = useState<{ state: "loading" } | { state: "failed" } | { state: "ready"; entries: CatchupEntry[] }>();
+  const [guideAt, setGuideAt] = useState(0);
+  const guideOpen = guide !== undefined;
+  const openGuide = useCallback(() => {
+    if (archive === undefined) return;
+    setGuide({ state: "loading" });
+    setGuideAt(0);
+    loadCatchupGuide(archive).then(
+      (loaded) => setGuide({ state: "ready", entries: catchupEntries(loaded) }),
+      () => setGuide({ state: "failed" }),
+    );
+  }, [archive]);
+  const playEntry = useCallback(
+    (entry: CatchupEntry) => {
+      setGuide(undefined);
+      onCatchup(entry.programme);
+    },
+    [onCatchup],
+  );
+  useEffect(() => {
+    if (!guideOpen) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      setGuide(undefined);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [guideOpen]);
+  const guideScroll = useRef<ScrollView>(null);
+  useEffect(() => guideScroll.current?.scrollTo({ y: Math.max(0, guideAt - 3) * u(GUIDE_ROW), animated: false }), [guideAt]);
   const togglePause = useCallback(() => {
     if (player.playing) player.pause();
     else player.play();
@@ -234,7 +346,8 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
   // The D-pad drives a highlight (`selected`) over the controls: up/down change row, left/right change
   // control (or scrub, on the bar), OK presses. With the controls hidden, left/right seek and OK pauses.
   // Live keeps up/down for changing channel, so its way out sits at the left end of the transport row.
-  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", "info"]] : zapping ? [["exit", "back", "play", "forward", "info"]] : [["exit"], ["play", "info"]];
+  const more: Control[] = archive !== undefined ? ["catchup"] : [];
+  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
   const [selected, setSelected] = useState<Control>("play");
   const press = useCallback(
     (control: Control) => {
@@ -242,9 +355,11 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
       else if (control === "back") step(-1);
       else if (control === "forward") step(1);
       else if (control === "info") setStatsOn((on) => !on);
+      else if (control === "catchup") openGuide();
+      else if (control === "live") (timeshift ? onCatchup(undefined) : behindLive ? goLive() : wake());
       else togglePause();
     },
-    [onExit, step, togglePause],
+    [behindLive, goLive, onCatchup, onExit, openGuide, step, timeshift, togglePause, wake],
   );
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
   useTVEventHandler(
@@ -252,6 +367,15 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
       (event: { eventType: string; eventKeyAction?: number | undefined }) => {
         if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
         const key = event.eventType;
+        if (guideOpen) {
+          const count = guide.state === "ready" ? guide.entries.length : 0;
+          if (key === "up" || key === "down") setGuideAt((at) => Math.min(Math.max(0, count - 1), Math.max(0, at + (key === "down" ? 1 : -1))));
+          else if (key === "select" && guide.state === "ready") {
+            const entry = guide.entries[guideAt];
+            if (entry !== undefined) playEntry(entry);
+          } else if (key === "left") setGuide(undefined);
+          return;
+        }
         if (key === "playPause") return togglePause();
         if (key === "rewind") return step(-1);
         if (key === "fastForward") return step(1);
@@ -263,7 +387,7 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
         if (!chrome) {
           if (key === "left") return seek(-1);
           if (key === "right") return seek(1);
-          if (key === "select") return togglePause();
+          // OK brings the controls up; pausing is the play key's job.
           setSelected("play");
           return wake();
         }
@@ -283,7 +407,7 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [chrome, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
+      [chrome, guide, guideAt, guideOpen, playEntry, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
     ),
   );
 
@@ -291,7 +415,9 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
   useEffect(() => {
     if (!started.current) {
       started.current = true;
-      if (item.kind === "channel") recordRecent(db, item.id);
+      if (item.kind === "channel") {
+        if (!timeshift) recordRecent(db, item.id);
+      }
       else if (item.kind === "movie") recordMovieRecent(db, item.id);
       else if (seriesId !== undefined) recordSeriesRecent(db, seriesId);
     }
@@ -306,7 +432,7 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
       clearInterval(timer);
       save();
     };
-  }, [db, item, seriesId, vod]);
+  }, [db, item, seriesId, timeshift, vod]);
 
   if (status === "error") {
     const raw = error?.message ?? "";
@@ -326,7 +452,7 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
                 player.play();
               },
             })}
-        onExit={onExit}
+        onExit={timeshift ? () => onCatchup(undefined) : onExit}
       />
     );
   }
@@ -341,6 +467,16 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
   // The highlight is only drawn for a remote; a phone just taps.
   const lit = (control: Control) => tv && chrome && selected === control;
   const now = new Date();
+  // Live TV's bar is how far through the programme the broadcast is (or, in catch-up, the picture). Films and episodes use their own length.
+  const programme = vod ? null : timeshift ? { title: catchup.title, start: catchup.start.getTime(), end: catchup.end.getTime() } : airing;
+  const programmeRatio =
+    programme === null || programme.end <= programme.start
+      ? null
+      : Math.min(1, Math.max(0, (timeshift ? position * 1000 : Date.now() - programme.start) / (programme.end - programme.start)));
+  // Live TV always has the bar: the programme so far when the provider says what is on, otherwise just the live edge.
+  const showBar = true;
+  const atEdge = !vod && !timeshift && programmeRatio === null;
+  const barRatio = vod ? ratio : atEdge ? 1 : (programmeRatio ?? 0);
 
   return (
     <View style={styles.player}>
@@ -354,7 +490,7 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
         </View>
       ) : null}
 
-      {statsOn ? (
+      {statsOn && vod ? (
         <View style={styles.stats} pointerEvents="none">
           <Text style={styles.statsTitle}>Stream info</Text>
           <Fact label="Quality" value={facts.quality !== null && facts.size !== null ? `${facts.quality}  (${facts.size})` : (facts.size ?? "Waiting for video")} />
@@ -382,20 +518,25 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
           <Scrim from="bottom" />
           <View style={styles.info} pointerEvents="none">
             {vod ? null : (
-              <View style={styles.livePill}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>LIVE</Text>
+              <View style={[styles.livePill, timeshift && styles.catchupPill, behindLive && styles.behindPill]}>
+                {timeshift || behindLive ? null : <View style={styles.liveDot} />}
+                <Text style={[styles.liveText, timeshift && styles.catchupText]}>{timeshift ? "CATCH-UP" : behindLive ? "BEHIND LIVE" : "LIVE"}</Text>
               </View>
             )}
             <Text style={styles.heading} numberOfLines={1}>
               {vod ? playerTitle(stream.title) : stream.title}
             </Text>
           </View>
+          {programme !== null && !timeshift ? (
+            <Text style={styles.programme} numberOfLines={1} pointerEvents="none">
+              {`${programme.title}   ${clock24(programme.start)} to ${clock24(programme.end)}`}
+            </Text>
+          ) : null}
           <View style={styles.chips} pointerEvents="none">
             {[facts.quality, facts.fps, facts.codec, facts.hdr].map((chip) => (chip !== null ? <Chip key={chip} label={chip} /> : null))}
           </View>
 
-          {vod ? (
+          {showBar ? (
             <Pressable
               focusable={false}
               style={styles.barHit}
@@ -403,16 +544,21 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
               onPress={(event) => barWidth > 0 && seekToRatio(event.nativeEvent.locationX / barWidth)}
             >
               <View style={[styles.track, lit("seek") && styles.trackLit]} pointerEvents="none">
-                <View style={[styles.fillBuffered, { width: `${buffered * 100}%` }]} />
-                <View style={[styles.fillPlayed, lit("seek") && styles.fillLit, { width: `${ratio * 100}%` }]} />
-                <View style={[styles.knob, lit("seek") && styles.knobLit, { left: `${ratio * 100}%` }]} />
+                {vod ? <View style={[styles.fillBuffered, { width: `${buffered * 100}%` }]} /> : null}
+                <View style={[styles.fillPlayed, lit("seek") && styles.fillLit, atEdge && !behindLive && styles.fillLive, { width: `${barRatio * 100}%` }]} />
+                <View style={[styles.knob, lit("seek") && styles.knobLit, atEdge && !behindLive && styles.knobLive, { left: `${barRatio * 100}%` }]} />
               </View>
             </Pressable>
           ) : null}
 
           <View style={styles.controls} pointerEvents="box-none">
-            <View style={styles.side} pointerEvents="none">
-              {zapping ? <Text style={styles.clockDim}>{`${at + 1} of ${channels?.length ?? 0}`}</Text> : null}
+            <View style={styles.side} pointerEvents="box-none">
+              {vod ? null : (
+                <View style={styles.liveRow}>
+                  <TextKey label={timeshift ? "Back to live" : "Live"} dot={!timeshift && !behindLive} selected={lit("live")} onPress={() => press("live")} />
+                  {zapping ? <Text style={styles.clockDim}>{`${at + 1} of ${channels?.length ?? 0}`}</Text> : null}
+                </View>
+              )}
               {vod ? (
                 <Text style={styles.clock}>
                   {clock(position)}
@@ -441,18 +587,53 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
                   Ends {two(endsAt.getHours())}:{two(endsAt.getMinutes())}
                 </Text>
               ) : null}
-              <Key selected={lit("info")} active={statsOn} onPress={() => press("info")}>
-                {(ink) => <Text style={{ color: ink, fontSize: u(30), fontFamily: "Inter_600SemiBold" }}>i</Text>}
-              </Key>
+              {archive !== undefined ? <TextKey label="Catch up" selected={lit("catchup")} onPress={() => press("catchup")} /> : null}
+              {vod ? (
+                <Key selected={lit("info")} active={statsOn} onPress={() => press("info")}>
+                  {(ink) => <Text style={{ color: ink, fontSize: u(30), fontFamily: "Inter_600SemiBold" }}>i</Text>}
+                </Key>
+              ) : null}
             </View>
           </View>
         </View>
       </Animated.View>
+
+      {guide !== undefined ? (
+        <View style={styles.guide}>
+          <Text style={styles.statsTitle}>Catch up</Text>
+          {guide.state === "loading" ? (
+            <Text style={styles.guideNote}>Loading...</Text>
+          ) : guide.state === "failed" ? (
+            <Text style={styles.guideNote}>{"Couldn't reach the provider. Try again in a moment."}</Text>
+          ) : guide.entries.length === 0 ? (
+            <Text style={styles.guideNote}>Nothing to play back for this channel right now.</Text>
+          ) : (
+            <ScrollView ref={guideScroll} style={styles.guideList} scrollEnabled={!tv} showsVerticalScrollIndicator={false}>
+              {guide.entries.map((entry, index) => {
+                const lit = tv && index === guideAt;
+                return (
+                  <Pressable key={entry.programme.serverStart} focusable={false} onPress={() => playEntry(entry)} style={[styles.guideRow, lit && styles.guideRowLit]}>
+                    <Text style={[styles.guideWhen, lit && styles.guideInk]}>{entry.when}</Text>
+                    <Text style={[styles.guideTime, lit && styles.guideInk]}>{entry.time}</Text>
+                    <Text style={[styles.guideTitle, lit && styles.guideInk]} numberOfLines={1}>
+                      {entry.programme.title}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+          {tv ? <Text style={styles.guideNote}>Up and down to choose, OK to play, Back to close</Text> : null}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const INK = "#0b0e10";
+
+/** "13:00" from epoch ms. */
+const clock24 = (ms: number): string => `${two(new Date(ms).getHours())}:${two(new Date(ms).getMinutes())}`;
 
 /** A transport key: a bare glyph at rest, a solid white disc with a dark glyph when the remote's highlight is on it. */
 function Key({ big = false, selected = false, active = false, onPress, children }: { big?: boolean; selected?: boolean; active?: boolean; onPress: () => void; children: (ink: string) => ReactNode }) {
@@ -468,15 +649,34 @@ function Key({ big = false, selected = false, active = false, onPress, children 
   );
 }
 
-/** A darkening that fades out from one edge, built from stacked bands (no gradient library in the app). */
+/** A transport key with a word on it, for the few actions that have no familiar symbol. */
+function TextKey({ label, dot = false, selected = false, onPress }: { label: string; /** A red dot: this is the state the viewer is in right now (watching live). */ dot?: boolean; selected?: boolean; onPress: () => void }) {
+  return (
+    <Pressable focusable={false} onPress={onPress} style={[styles.key, styles.textKey, selected && styles.keyFilled, selected && { transform: [{ scale: 1.08 }] }]}>
+      {dot ? <View style={styles.keyDot} /> : null}
+      <Text style={[styles.textKeyLabel, selected && { color: INK }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+/**
+ * A darkening that fades out from one edge. It is layered rather than banded: each layer covers from the edge
+ * to a little further in, so the darkness builds up in many small steps with no seams between them. (Solid
+ * stacked bands showed as stripes across the picture on a big screen.)
+ */
+const SCRIM_LAYERS = 28;
+const SCRIM_ALPHAS = (() => {
+  const darkness = (band: number) => (band >= SCRIM_LAYERS ? 0 : 0.85 * (1 - (band + 0.5) / SCRIM_LAYERS) ** 1.5);
+  // Layer i covers the first i of the bands, so a band under layers i..N is as dark as the product of them says.
+  return Array.from({ length: SCRIM_LAYERS }, (_, index) => 1 - (1 - darkness(index)) / (1 - darkness(index + 1)));
+})();
+
 const Scrim = memo(function Scrim({ from }: { from: "top" | "bottom" }) {
-  const bands = 14;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {Array.from({ length: bands }, (_, index) => {
-        const strength = from === "top" ? 1 - index / (bands - 1) : index / (bands - 1);
-        return <View key={index} style={{ flex: 1, backgroundColor: `rgba(5,7,9,${(0.9 * strength ** 1.5).toFixed(3)})` }} />;
-      })}
+      {SCRIM_ALPHAS.map((alpha, index) => (
+        <View key={index} style={{ position: "absolute", left: 0, right: 0, [from]: 0, height: `${((index + 1) / SCRIM_LAYERS) * 100}%`, backgroundColor: `rgba(5,7,9,${alpha.toFixed(4)})` }} />
+      ))}
     </View>
   );
 });
@@ -606,18 +806,23 @@ const styles = styleSheet({
   livePill: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.live, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 7 },
   liveDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: "#fff" },
   liveText: { color: "#fff", fontSize: 19, fontWeight: "600", letterSpacing: 1.5 },
+  catchupPill: { backgroundColor: colors.accent },
+  behindPill: { backgroundColor: "#ffffff33" },
+  catchupText: { color: colors.accentInk },
 
   barHit: { height: 44, marginVertical: -16, justifyContent: "center" },
   track: { height: 6, borderRadius: 3, backgroundColor: "#ffffff30", justifyContent: "center" },
   trackLit: { height: 10, borderRadius: 5 },
   fillBuffered: { position: "absolute", left: 0, top: 0, bottom: 0, borderRadius: 5, backgroundColor: "#ffffff40" },
   fillLit: { backgroundColor: colors.accent },
+  fillLive: { backgroundColor: colors.live },
+  knobLive: { backgroundColor: colors.live },
   fillPlayed: { position: "absolute", left: 0, top: 0, bottom: 0, borderRadius: 5, backgroundColor: colors.foreground },
   knob: { position: "absolute", width: 18, height: 18, borderRadius: 9, marginLeft: -9, backgroundColor: colors.foreground },
   knobLit: { width: 30, height: 30, borderRadius: 15, marginLeft: -15 },
 
   controls: { flexDirection: "row", alignItems: "center" },
-  side: { flex: 1 },
+  side: { flex: 1, alignItems: "flex-start" },
   sideRight: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 20 },
   chips: { flexDirection: "row", gap: 10, marginTop: -12 },
   chip: { borderRadius: 7, borderWidth: 2, borderColor: "#ffffff66", paddingHorizontal: 12, paddingVertical: 3 },
@@ -634,6 +839,21 @@ const styles = styleSheet({
   keySmall: { width: 80, height: 80, borderRadius: 40 },
   keyBig: { width: 92, height: 92, borderRadius: 46 },
   keyFilled: { backgroundColor: colors.foreground, borderColor: "transparent" },
+  textKey: { height: 80, borderRadius: 40, paddingHorizontal: 32, backgroundColor: "#ffffff24", flexDirection: "row", gap: 12 },
+  keyDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.live },
+  liveRow: { flexDirection: "row", alignItems: "center", gap: 24 },
+  programme: { color: colors.foreground, opacity: 0.75, fontSize: 26, marginTop: -14 },
+  textKeyLabel: { color: colors.foreground, fontSize: 26, fontWeight: "500" },
+
+  guide: { position: "absolute", right: 96, top: 110, bottom: 110, width: 780, gap: 12, padding: 28, borderRadius: 18, backgroundColor: "#000000e0" },
+  guideList: { flex: 1 },
+  guideRow: { height: GUIDE_ROW, flexDirection: "row", alignItems: "center", gap: 20, paddingHorizontal: 18, borderRadius: 12 },
+  guideRowLit: { backgroundColor: colors.foreground },
+  guideWhen: { width: 160, color: colors.muted, fontSize: 24 },
+  guideTime: { width: 90, color: colors.foreground, opacity: 0.8, fontSize: 24 },
+  guideTitle: { flex: 1, color: colors.foreground, fontSize: 26, fontWeight: "500" },
+  guideInk: { color: INK, opacity: 1 },
+  guideNote: { color: colors.muted, fontSize: 22 },
 
   title: { color: colors.foreground, fontSize: 44, fontWeight: "600", letterSpacing: -0.5, textAlign: "center", maxWidth: 1200 },
   muted: { color: colors.muted, fontSize: type.body },

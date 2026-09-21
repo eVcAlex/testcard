@@ -4,6 +4,7 @@ import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, styleSheet } from "../theme";
 import { DetailActions, Facts, type DetailAction } from "../ui/DetailActions";
 import { Fade } from "../ui/Fade";
+import { ChannelShelf } from "../ui/ChannelCard";
 import { PosterCard, PosterRow, type PosterItem } from "../ui/Poster";
 
 /** A poster on the landing page, with what the hero shows when the remote rests on it. */
@@ -14,6 +15,8 @@ export interface HomeItem extends PosterItem {
   readonly favourite: boolean;
   /** Started and worth resuming: the hero's button says Resume. */
   readonly resume: boolean;
+  /** Present on a live channel (null when it has no number): the hero shows its logo instead of art. */
+  readonly channelNumber?: number | null;
 }
 
 export interface HomeRow {
@@ -22,6 +25,8 @@ export interface HomeRow {
   readonly items: readonly HomeItem[];
   /** Draw big rank numbers beside the posters (a top 10). */
   readonly ranked?: boolean;
+  /** Landscape logo cards instead of posters (Live TV). */
+  readonly channels?: boolean;
 }
 
 /** What the hero's buttons do for the highlighted title. */
@@ -102,7 +107,9 @@ export function HomeScreen({
 
   const renderRow = useCallback(
     ({ item: row }: { item: HomeRow }) =>
-      row.ranked === true ? (
+      row.channels === true ? (
+        <ChannelShelf title={row.label} items={row.items} onPress={onSelect} onFocusItem={onFocusItem} />
+      ) : row.ranked === true ? (
         <RankedRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={onFocusItem} />
       ) : (
         <PosterRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={onFocusItem} />
@@ -126,9 +133,11 @@ export function HomeScreen({
           data={rows}
           keyExtractor={(row) => row.key}
           renderItem={renderRow}
-          initialNumToRender={2}
-          maxToRenderPerBatch={2}
-          windowSize={5}
+          // Enough rows drawn ahead that the remote always has a next row to land on; with fewer, the first Down press finds nothing yet.
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={9}
+          removeClippedSubviews={false}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
         />
@@ -138,13 +147,20 @@ export function HomeScreen({
 }
 
 function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem; row: string } | undefined; plot: string | null; durationSecs: number | null; actions: HeroActions | undefined }) {
-  const parts = shown !== undefined ? splitTitle(shown.item.name) : undefined;
+  const channel = shown?.item.channelNumber !== undefined;
+  const parts = shown !== undefined ? (channel ? { title: shown.item.name, year: null, is4k: false } : splitTitle(shown.item.name)) : undefined;
   const rating = shown?.item.rating !== null && shown?.item.rating !== undefined && Number(shown.item.rating) > 0 && Number(shown.item.rating) <= 10 ? Number(shown.item.rating).toFixed(1) : null;
-  const facts = [parts?.year ?? null, durationSecs !== null && durationSecs >= 60 ? runtime(durationSecs) : null, rating !== null ? `${rating} rating` : null, parts?.is4k === true ? "4K" : null].filter((fact): fact is string => fact !== null);
+  const facts = channel
+    ? ["Live", shown?.item.channelNumber !== null && shown?.item.channelNumber !== undefined ? `Channel ${shown.item.channelNumber}` : null].filter((fact): fact is string => fact !== null)
+    : [parts?.year ?? null, durationSecs !== null && durationSecs >= 60 ? runtime(durationSecs) : null, rating !== null ? `${rating} rating` : null, parts?.is4k === true ? "4K" : null].filter((fact): fact is string => fact !== null);
   const art = shown?.item.posterUrl ?? null;
   return (
     <View style={styles.hero}>
-      {art !== null && art !== "" ? (
+      {channel ? (
+        <View style={styles.logoPanel} pointerEvents="none">
+          {art !== null && art !== "" ? <Image source={{ uri: art }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={300} /> : null}
+        </View>
+      ) : art !== null && art !== "" ? (
         <View style={styles.art} pointerEvents="none">
           <Image source={{ uri: art }} style={styles.artImage} resizeMode="cover" resizeMethod="resize" fadeDuration={300} />
           <Fade from="left" />
@@ -214,6 +230,8 @@ const styles = styleSheet({
   hero: { height: 520, backgroundColor: colors.background, overflow: "hidden" },
   art: { position: "absolute", top: 0, right: 0, width: 1180, height: 520, overflow: "hidden" },
   artImage: { position: "absolute", left: 0, top: -270, width: 1180, height: 1770 },
+  logoPanel: { position: "absolute", top: 130, right: 120, width: 440, height: 280, padding: 28, borderRadius: 24, backgroundColor: colors.raised },
+  logoImage: { width: "100%", height: "100%" },
   topFade: { position: "absolute", left: 0, right: 0, top: 0, height: 220 },
   bottomFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 200 },
   heroText: { position: "absolute", left: 52, top: 118, width: 1000, gap: 12 },

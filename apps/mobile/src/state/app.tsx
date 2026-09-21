@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type Database from "better-sqlite3";
 import { SyncController, type SyncStatus } from "@testcard/core/src/sync/syncController.js";
+import { removeSourceRows } from "@testcard/core/src/sync/sourceRemoval.js";
 import { importCatalogue, type CatalogueSource } from "@testcard/core/src/db/importCatalogue.js";
 import { createM3UAdapter } from "@testcard/core/src/source/m3u/adapter.js";
 import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js";
 import { openAppDatabase } from "../platform/sqlite";
-import { getCredentials, syncPlatform } from "../platform/secrets";
+import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 
 export interface SourceSummary {
   readonly id: string;
@@ -27,6 +28,8 @@ interface AppState {
   readonly version: number;
   readonly sources: readonly SourceSummary[];
   refreshSource(sourceId: string): Promise<void>;
+  /** Takes a source off this device and, through sync, off the user's others. */
+  removeSource(sourceId: string): Promise<void>;
   updateStatus(): void;
 }
 
@@ -93,6 +96,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   });
   const sync = syncRef.current;
 
+  const removeSource = useCallback(
+    async (sourceId: string) => {
+      removeSourceRows(db, sourceId, { recordTombstone: true });
+      await deleteCredentials(sourceId).catch(() => undefined);
+      sync.notifyLocalChange();
+      bump();
+    },
+    [db, sync, bump],
+  );
+
   const [status, setStatus] = useState<SyncStatus>(() => sync.status());
   const updateStatus = useCallback(() => {
     setStatus(sync.status());
@@ -132,8 +145,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [db, version, refreshing, errors]);
 
   const value = useMemo<AppState>(
-    () => ({ db, sync, status, version, sources, refreshSource, updateStatus }),
-    [db, sync, status, version, sources, refreshSource, updateStatus],
+    () => ({ db, sync, status, version, sources, refreshSource, removeSource, updateStatus }),
+    [db, sync, status, version, sources, refreshSource, removeSource, updateStatus],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

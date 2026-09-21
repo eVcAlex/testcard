@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { Text, TVFocusGuideView, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
 import { useFonts } from "expo-font";
 import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
 import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
@@ -9,6 +9,7 @@ import { AppProvider, useApp } from "./src/state/app";
 import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
 import { colors, space, type, styleSheet } from "./src/theme";
 import { NavTab } from "./src/ui/NavTab";
+import { SourceNames } from "./src/ui/Poster";
 import { MoviesScreen, SeriesScreen } from "./src/screens/Catalogue";
 import { LiveScreen } from "./src/screens/Live";
 import { PlayerScreen } from "./src/screens/Player";
@@ -27,6 +28,9 @@ type Route =
   | { name: "movie"; id: string; title: string }
   | { name: "episode"; id: string; title: string; seriesId: string; seriesTitle: string }
   | { name: "play"; item: PlayItem; seriesId?: string; channels?: readonly PlayItem[] | undefined; resume: boolean; returnTo: Route };
+
+/** A second back press within this long leaves the app. */
+const EXIT_WINDOW_MS = 2500;
 
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "search", label: "Search" },
@@ -50,7 +54,7 @@ export default function App() {
 }
 
 function Root() {
-  const { status, sources } = useApp();
+  const { status, sources, db, version } = useApp();
   const { available } = useUpdate();
   const [section, setSection] = useState<Section>("live");
   const [route, setRoute] = useState<Route>({ name: "home" });
@@ -62,6 +66,22 @@ function Root() {
     setPickedSource(ids[(ids.indexOf(sourceId) + 1) % ids.length] ?? null);
   }, [sourceId, sources]);
 
+  // Live TV shows one source at a time, never all together: its own pick, among the sources that have channels.
+  const liveSources = useMemo(() => {
+    void version;
+    const withChannels = new Set((db.prepare("SELECT DISTINCT source_id AS id FROM channels").all() as { id: string }[]).map((row) => row.id));
+    return sources.filter((entry) => withChannels.has(entry.id));
+  }, [db, version, sources]);
+  const [pickedLive, setPickedLive] = useState<string | null>(null);
+  const liveSource = liveSources.find((entry) => entry.id === pickedLive) ?? liveSources[0] ?? null;
+  const cycleLive = useCallback(() => {
+    const at = liveSources.findIndex((entry) => entry.id === liveSource?.id);
+    setPickedLive(liveSources[(at + 1) % liveSources.length]?.id ?? null);
+  }, [liveSource, liveSources]);
+
+  // Movies and series may mix sources ("Source: All"); each poster then names its own.
+  const sourceNames = useMemo(() => (sourceId === null && sources.length > 1 ? new Map(sources.map((entry) => [entry.id, entry.name])) : null), [sourceId, sources]);
+
   const goHome = useCallback(() => setRoute({ name: "home" }), []);
   // Movies and Series open on a landing page of rows; "Browse all" in the nav bar swaps it for the full category list.
   const [browsing, setBrowsing] = useState(false);
@@ -71,6 +91,31 @@ function Root() {
   }, []);
   const toggleBrowse = useCallback(() => setBrowsing((value) => !value), []);
   const onBrowseDone = useCallback(() => setBrowsing(false), []);
+
+  // Back on the main screens asks twice before leaving, so a stray press does not close the app. Screens that use
+  // back themselves (the detail pages, the player, the browse-all list) are not the home shell, so they never get here.
+  const [exitHint, setExitHint] = useState(false);
+  const lastBack = useRef(0);
+  const atRoot = route.name === "home" && !browsing;
+  useEffect(() => {
+    if (!atRoot) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      const now = Date.now();
+      if (now - lastBack.current < EXIT_WINDOW_MS) {
+        BackHandler.exitApp();
+        return true;
+      }
+      lastBack.current = now;
+      setExitHint(true);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [atRoot]);
+  useEffect(() => {
+    if (!exitHint) return;
+    const timer = setTimeout(() => setExitHint(false), EXIT_WINDOW_MS);
+    return () => clearTimeout(timer);
+  }, [exitHint]);
 
   // Signed out (or the session ended): only the sign-in screen makes sense.
   if (status.account !== "signed-in") return <SignInScreen />;
@@ -120,6 +165,7 @@ function Root() {
   }
 
   return (
+    <SourceNames.Provider value={sourceNames}>
     <View style={styles.shell}>
         <TVFocusGuideView autoFocus style={styles.nav}>
           <Text style={styles.brand}>
@@ -129,8 +175,9 @@ function Root() {
             <NavTab key={entry.key} id={entry.key} preferred={section === entry.key} active={section === entry.key} label={entry.label} badge={entry.key === "sources" && available !== null} onPressId={pickSection} />
           ))}
           <View style={styles.scope}>
-            {section === "movies" || section === "series" ? <NavTab id="browse" active={browsing} label={browsing ? "Home" : "Browse all"} onPressId={toggleBrowse} /> : null}
-            {sources.length > 1 && section !== "sources" ? <NavTab id="scope" active={false} label={`Source: ${sources.find((entry) => entry.id === sourceId)?.name ?? "All"}`} onPressId={cycleSource} /> : null}
+            {section === "movies" || section === "series" || section === "live" ? <NavTab id="browse" active={browsing} label={browsing ? "Home" : "Browse all"} onPressId={toggleBrowse} /> : null}
+            {section === "live" && liveSources.length > 1 ? <NavTab id="scope" active={false} label={`Source: ${liveSource?.name ?? ""}`} onPressId={cycleLive} /> : null}
+            {section !== "live" && sources.length > 1 && section !== "sources" ? <NavTab id="scope" active={false} label={`Source: ${sources.find((entry) => entry.id === sourceId)?.name ?? "All"}`} onPressId={cycleSource} /> : null}
           </View>
         </TVFocusGuideView>
         <View style={styles.content}>
@@ -145,9 +192,10 @@ function Root() {
           )}
           {section === "series" && <SeriesScreen sourceId={sourceId} browsing={browsing} onBrowseDone={onBrowseDone} onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })} />}
           {section === "live" && (
-            <View style={styles.padded}>
             <LiveScreen
-              sourceId={sourceId}
+              sourceId={liveSource?.id ?? null}
+              browsing={browsing}
+              onBrowseDone={onBrowseDone}
               onPlay={(channel, channels) =>
                 setRoute({
                   name: "play",
@@ -158,7 +206,6 @@ function Root() {
                 })
               }
             />
-            </View>
           )}
           {section === "search" && (
             <View style={styles.padded}>
@@ -184,7 +231,13 @@ function Root() {
             </View>
           )}
         </View>
+        {exitHint && (
+          <View style={styles.toast} pointerEvents="none">
+            <Text style={styles.toastText}>Press back again to exit</Text>
+          </View>
+        )}
     </View>
+    </SourceNames.Provider>
   );
 }
 
@@ -196,5 +249,7 @@ const styles = styleSheet({
   brandAccent: { color: colors.accent },
   scope: { flex: 1, flexDirection: "row", justifyContent: "flex-end", gap: 8 },
   content: { flex: 1 },
+  toast: { position: "absolute", left: 0, right: 0, bottom: 60, alignItems: "center", zIndex: 20 },
+  toastText: { color: colors.foreground, fontSize: 26, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 999, backgroundColor: "#000000d9", overflow: "hidden" },
   padded: { flex: 1, paddingHorizontal: 44, paddingTop: 112 },
 });

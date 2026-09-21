@@ -14,6 +14,10 @@ win:
   # Unsigned for now — see the plan's "Ship" decision. SmartScreen will warn once on install;
   # revisit code signing only if this is ever released publicly.
 nsis:
+  # No spaces: the release bucket only serves plain file names, and latest.yml points at this one.
+  artifactName: Testcard-Setup-${version}.${ext}
+  # The update goes through the bucket as one file; a block map would only be fetched and not served.
+  differentialPackage: false
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { createContext, memo, useContext } from "react";
 import { FlatList, Image, Text, View } from "react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, space, type, styleSheet } from "../theme";
@@ -13,6 +13,13 @@ export interface PosterItem {
 }
 
 const POSTER_WIDTH = 200;
+
+/**
+ * Source names by id, provided while the lists mix more than one source, so each poster can say where it is from.
+ * Null when only one source is showing, where the label would be noise. Item ids start with their source id.
+ */
+export const SourceNames = createContext<ReadonlyMap<string, string> | null>(null);
+const sourceOf = (id: string): string => id.slice(0, Math.max(0, id.indexOf(":")));
 
 export const POSTER_ART_WIDTH = POSTER_WIDTH;
 
@@ -30,6 +37,7 @@ export const PosterCard = memo(function PosterCard({
   grid?: boolean;
 }) {
   const { title, is4k } = splitTitle(item.name);
+  const sourceName = useContext(SourceNames)?.get(sourceOf(item.id));
   const progress = item.progress !== undefined && item.progress !== null && item.progress > 0 ? Math.min(1, item.progress) : null;
   return (
     <Focusable onPress={() => onPress(item)} onFocus={onFocusItem !== undefined ? () => onFocusItem(item) : undefined} style={grid ? styles.cardGrid : styles.card} focusedStyle={styles.cardFocused}>
@@ -46,6 +54,13 @@ export const PosterCard = memo(function PosterCard({
         {is4k && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>4K</Text>
+          </View>
+        )}
+        {sourceName !== undefined && (
+          <View style={styles.source}>
+            <Text style={styles.sourceText} numberOfLines={1}>
+              {sourceName}
+            </Text>
           </View>
         )}
         {progress !== null && (
@@ -108,6 +123,8 @@ const styles = styleSheet({
   titleFocused: { color: colors.foreground },
   badge: { position: "absolute", left: 10, top: 10, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3" },
   badgeText: { color: colors.foreground, fontSize: 17, fontWeight: "600", letterSpacing: 0.5 },
+  source: { position: "absolute", left: 10, bottom: 14, maxWidth: "85%", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3" },
+  sourceText: { color: colors.foreground, fontSize: 17, fontWeight: "600" },
   progress: { position: "absolute", left: 0, right: 0, bottom: 0, height: 5, backgroundColor: "#0008" },
   progressFill: { height: "100%", backgroundColor: colors.accent },
 });

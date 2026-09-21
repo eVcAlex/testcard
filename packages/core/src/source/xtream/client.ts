@@ -140,7 +140,7 @@ export async function fetchShortEpg(
 
 // Xtream base64-encodes EPG text fields. Uses the web-standard atob (available globally in
 // Node 18+ and in the renderer) rather than Buffer, so this file stays portable.
-function base64Decode(value: string): string {
+export function base64Decode(value: string): string {
   try {
     const binary = atob(value);
     const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));

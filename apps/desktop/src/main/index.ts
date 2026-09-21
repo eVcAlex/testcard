@@ -4,6 +4,7 @@ import { is } from "@electron-toolkit/utils";
 import { registerIpcHandlers, stopActiveRefreshScheduler } from "./ipc.js";
 import { getDatabase } from "./database.js";
 import { registerLogoProtocol, registerLogoScheme } from "./logoCache.js";
+import { startUpdateChecks } from "./updater.js";
 
 // Privileged schemes must be declared before the app is ready.
 registerLogoScheme();
@@ -53,6 +54,7 @@ void app.whenReady().then(() => {
   const db = getDatabase();
   const mainWindow = createMainWindow();
   registerIpcHandlers(db, mainWindow);
+  startUpdateChecks();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

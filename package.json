@@ -22,6 +22,7 @@
     "package": "pnpm --filter @testcard/desktop package",
     "icons": "node scripts/brand/make-icons.mjs",
     "release:android": "node scripts/release-android.mjs",
+    "release:desktop": "node scripts/release-desktop.mjs",
     "android:stick": "node scripts/android-dev.mjs stick",
     "android:emulator": "node scripts/android-dev.mjs emulator",
     "android:run": "node scripts/android-dev.mjs run",

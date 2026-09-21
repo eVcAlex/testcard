@@ -43,6 +43,7 @@ import {
   listCountries,
   toggleFavourite,
   toggleMovieFavourite,
+  removeSourceRows,
   toggleSeriesFavourite,
   type Channel,
   type ProgrammeRow,
@@ -66,6 +67,7 @@ import { deleteCredentials, getCredentials, saveCredentials } from "./credential
 import { purgeCachedLogos } from "./logoCache.js";
 import { PlaybackController } from "./playbackController.js";
 import { SyncController } from "./syncController.js";
+import { checkForUpdate, downloadUpdate, installUpdate, updateState } from "./updater.js";
 import { isVlcAvailable } from "./externalPlayer.js";
 import { startRefreshScheduler } from "./refreshScheduler.js";
 import { randomUUID } from "node:crypto";
@@ -587,25 +589,10 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           .prepare(`SELECT DISTINCT poster_url FROM series WHERE source_id = ? AND poster_url IS NOT NULL`)
           .all(sourceId) as { poster_url: string }[];
 
-        // FK cascade takes categories/channels/variants/programmes/movie_categories/movies/
-        // series_categories/series/seasons/episodes with it.
-        db.prepare(`DELETE FROM sources WHERE id = ?`).run(sourceId);
-
-        // favourites/recents have no FK by design (a title missing from one refresh shouldn't
-        // silently drop a favourite) — a source delete is permanent, so this is the one place
-        // stale rows are actually pruned rather than just left to go dark.
-        db.prepare(`DELETE FROM favourites WHERE channel_id NOT IN (SELECT id FROM channels)`).run();
-        db.prepare(`DELETE FROM recents WHERE channel_id NOT IN (SELECT id FROM channels)`).run();
-        db.prepare(`DELETE FROM movie_favourites WHERE movie_id NOT IN (SELECT id FROM movies)`).run();
-        db.prepare(`DELETE FROM movie_recents WHERE movie_id NOT IN (SELECT id FROM movies)`).run();
-        db.prepare(`DELETE FROM series_favourites WHERE series_id NOT IN (SELECT id FROM series)`).run();
-        db.prepare(`DELETE FROM series_recents WHERE series_id NOT IN (SELECT id FROM series)`).run();
-        // Polymorphic (item_type + item_id, no FK) — the cascade above can't reach it.
-        db.prepare(
-          `DELETE FROM playback_progress
-           WHERE (item_type = 'movie'   AND item_id NOT IN (SELECT id FROM movies))
-              OR (item_type = 'episode' AND item_id NOT IN (SELECT id FROM episodes))`,
-        ).run();
+        // The cascade takes what hangs off the source, the rest is pruned, and the removal is recorded so it
+        // reaches the other devices (core/sync/sourceRemoval.ts).
+        removeSourceRows(db, sourceId, { recordTombstone: true });
+        notifyLocalChange();
 
         await deleteCredentials(sourceId);
         await purgeCachedLogos([
@@ -861,6 +848,21 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
       async triggerNow() {
         return sync.triggerNow();
+      },
+    },
+
+    update: {
+      async state() {
+        return updateState();
+      },
+      async check() {
+        return checkForUpdate();
+      },
+      async download() {
+        return downloadUpdate();
+      },
+      async install() {
+        installUpdate();
       },
     },
   };

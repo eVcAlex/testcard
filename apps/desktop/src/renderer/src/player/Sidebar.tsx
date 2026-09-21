@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
 import { useSyncStatus } from "./AccountView.js";
+import { useUpdateState } from "./UpdatePanel.js";
 import { useSources } from "./useSources.js";
 import type { Theme } from "./useTheme.js";
 
@@ -36,6 +37,8 @@ export function Sidebar({
   onToggleTheme: () => void;
 }) {
   const sync = useSyncStatus();
+  const update = useUpdateState();
+  const updateWaiting = update?.status === "available" || update?.status === "downloading" || update?.status === "ready";
   const sourceCount = useSources();
 
   // Live categories only mean something while browsing channels; on Movies/Series/Account they
@@ -141,7 +144,7 @@ export function Sidebar({
           <span className="pw-account-chip-text">
             {sync.data?.account === "signed-in" ? sync.data.email : "Not signed in"}
             <small>
-              {sourceCount.data === undefined
+              {updateWaiting ? "Update available" : sourceCount.data === undefined
                 ? ""
                 : `${sourceCount.data.length} ${sourceCount.data.length === 1 ? "source" : "sources"}`}
             </small>

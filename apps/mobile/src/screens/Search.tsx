@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Image, Platform, Text, TVFocusGuideView, View } from "react-native";
+import { FlatList, Image, Text, TVFocusGuideView, View } from "react-native";
 import { MIN_SEARCH_LENGTH, searchAll, type SearchResults } from "@testcard/core/src/db/searchQueries.js";
 import type { ChannelRow } from "@testcard/core/src/db/queries.js";
 import { useApp } from "../state/app";
 import { colors, styleSheet } from "../theme";
 import { Field } from "../ui/controls";
 import { Focusable } from "../ui/Focusable";
-import { Keyboard } from "../ui/Keyboard";
 import { PosterRow, type PosterItem } from "../ui/Poster";
 
 /** What was typed last, so coming back from a film's page lands on the same results. */
@@ -15,8 +14,8 @@ let remembered = "";
 type Section = { key: "movies"; items: PosterItem[] } | { key: "series"; items: PosterItem[] } | { key: "channels"; items: ChannelRow[] };
 
 /**
- * One search box for everything: films, series and live channels, updating as you type. On a TV the keyboard
- * is drawn beside the results and driven by the remote; on a phone it is the normal text field.
+ * One search box for everything: films, series and live channels, updating as you type. Select on the box opens
+ * the system keyboard, on the TV as on a phone.
  */
 export function SearchScreen({
   sourceId,
@@ -87,18 +86,7 @@ export function SearchScreen({
   return (
     <View style={styles.screen}>
       <View style={styles.left}>
-        <View style={styles.box}>
-          <Text style={[styles.query, query === "" && styles.placeholder]} numberOfLines={1}>
-            {query === "" ? "Search everything" : query}
-          </Text>
-        </View>
-        {Platform.isTV ? (
-          <TVFocusGuideView autoFocus>
-            <Keyboard onType={(char) => setQuery(query + char)} onSpace={() => setQuery(query.endsWith(" ") || query === "" ? query : `${query} `)} onDelete={() => setQuery(query.slice(0, -1))} onClear={() => setQuery("")} />
-          </TVFocusGuideView>
-        ) : (
-          <Field label="Search" value={query} onChangeText={setQuery} autoCapitalize="none" autoCorrect={false} />
-        )}
+        <Field label="Search" preferred value={query} onChangeText={setQuery} autoCapitalize="none" autoCorrect={false} returnKeyType="search" />
       </View>
       <TVFocusGuideView autoFocus style={styles.right}>
         {sections.length > 0 ? (
@@ -148,9 +136,6 @@ function ChannelTile({ channel, onPress }: { channel: ChannelRow; onPress: (chan
 const styles = styleSheet({
   screen: { flex: 1, flexDirection: "row", gap: 40 },
   left: { width: 570, gap: 22 },
-  box: { height: 84, justifyContent: "center", paddingHorizontal: 26, borderRadius: 16, backgroundColor: colors.raised, borderWidth: 2, borderColor: colors.border },
-  query: { color: colors.foreground, fontSize: 38, fontWeight: "500" },
-  placeholder: { color: colors.faint },
   right: { flex: 1 },
   list: { paddingBottom: 80 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },

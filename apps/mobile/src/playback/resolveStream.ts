@@ -6,6 +6,7 @@ import { getPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { createM3UAdapter } from "@testcard/core/src/source/m3u/adapter.js";
 import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js";
 import { buildEpisodeStreamUrl, buildMovieStreamUrl } from "@testcard/core/src/source/xtream/vod.js";
+import { buildTimeshiftUrl, type CatchupProgramme } from "@testcard/core/src/source/xtream/catchup.js";
 import { getCredentials } from "../platform/secrets";
 
 export type PlayKind = "channel" | "movie" | "episode";
@@ -29,12 +30,17 @@ const m3u = createM3UAdapter();
 /**
  * Turns a channel, film or episode id into a playable URL. As on desktop, an M3U film or episode
  * stores its direct URL as the provider id; Xtream URLs are built from the stored login. The URL
- * goes straight to the player and is never shown or logged.
+ * goes straight to the player and is never shown or logged. With `catchup`, a channel plays that past programme
+ * from its start instead of the live picture.
  */
-export async function resolveStream(db: Database.Database, item: PlayItem, resume: boolean): Promise<ResolvedStream> {
+export async function resolveStream(db: Database.Database, item: PlayItem, resume: boolean, catchup?: CatchupProgramme): Promise<ResolvedStream> {
   if (item.kind === "channel") {
     const target = getPlaybackTarget(db, item.id);
     if (target === undefined) throw new Error("That channel is no longer available.");
+    if (catchup !== undefined) {
+      const url = await buildTimeshiftUrl(target.source, target.variant.providerStreamId, catchup, getCredentials);
+      return { url, title: `${catchup.title} on ${item.title}`, resumeSecs: null };
+    }
     const adapter = target.source.kind === "xtream" ? xtream : m3u;
     return { url: await adapter.buildStreamUrl(target.source, target.variant), title: item.title, resumeSecs: null };
   }

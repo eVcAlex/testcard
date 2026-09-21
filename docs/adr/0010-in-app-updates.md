@@ -31,6 +31,6 @@ release assets without a token, and a token must never ship inside the app.
 
 - The first build with the updater has to be installed by hand; later ones arrive in the app.
 - Builds made before this change have versionCode 1 and no updater.
-- The desktop app can use the same bucket (`electron-updater` generic provider) later.
+- The desktop app uses the same bucket through `electron-updater` (generic provider). `pnpm release:desktop` uploads the installer and `latest.yml` after `pnpm package`; the Account page has an Updates panel that checks, downloads on request and restarts to install. It never downloads on its own. Installers before 0.1.1 have no updater, so that one is installed by hand once. The installer is unsigned, so Windows SmartScreen can warn on that first install.
 - The update path has not been exercised on a Fire Stick: the package-installer hand-off is the
   part most likely to need a fix.

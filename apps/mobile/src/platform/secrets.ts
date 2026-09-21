@@ -29,6 +29,7 @@ export const syncPlatform: SyncPlatform = {
   baseUrl: SYNC_WORKER_URL,
   getCredentials,
   saveCredentials,
+  deleteCredentials,
   loadAccountPassword: () => SecureStore.getItem(ACCOUNT_PASSWORD_KEY) ?? undefined,
   saveAccountPassword: (password) => SecureStore.setItem(ACCOUNT_PASSWORD_KEY, password),
   clearAccountPassword: () => {

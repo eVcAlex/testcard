@@ -149,7 +149,7 @@ function useBuilt<T>(memo: Memo<T>, db: AppDb, version: number, sourceId: string
 }
 
 /** Back from the category browser returns to the landing page instead of leaving the section. */
-function useBackTo(active: boolean, back: () => void) {
+export function useBackTo(active: boolean, back: () => void) {
   useEffect(() => {
     if (!active) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {

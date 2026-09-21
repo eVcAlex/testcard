@@ -5,6 +5,7 @@ import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Muted } from "../ui/controls";
 import { Focusable } from "../ui/Focusable";
 import { MenuRow, ROW_HEIGHT, withCommas } from "../ui/MenuRow";
+import { Pill } from "../ui/Pill";
 import { PosterCard, type PosterItem } from "../ui/Poster";
 
 /** Something to pick in the grid: a film or series poster, or a channel. */
@@ -49,6 +50,10 @@ export interface BrowseSource {
   readonly load: (selection: Selection, limit: number) => BrowseItem[];
   /** What is on a channel right now. Asked of the provider, so only for the channel the remote rests on. */
   readonly guide?: (id: string) => Promise<Guide | null>;
+  /** Whether the list offers the Genres group. On by default; Live TV turns it off. */
+  readonly genres?: boolean;
+  /** Where the categories sit: a list down the left (default) or a row of pills across the top. */
+  readonly menu?: "list" | "pills";
 }
 
 type Entry =
@@ -117,7 +122,7 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
           indent: false,
         });
     }
-    if (genres.length > 0) {
+    if (source.genres !== false && genres.length > 0) {
       list.push({
         kind: "genres",
         id: GENRES_ID,
@@ -234,7 +239,13 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
   }, [guideOf, previewId]);
 
   const poster = source.layout === "poster";
-  const columns = poster ? 7 : 3;
+  const pills = source.menu === "pills";
+  const columns = poster ? 7 : pills ? 4 : 3;
+  const pillEntries = useMemo(() => entries.filter((entry) => entry.kind === "row"), [entries]);
+  const renderPill = useCallback(
+    ({ item: entry }: { item: Entry }) => (entry.kind === "row" ? <Pill id={entry.id} label={entry.label} active={entry.id === activeId} onPressId={onPressId} onFocusId={onFocusId} /> : null),
+    [activeId, onFocusId, onPressId],
+  );
   const cells = useMemo<(BrowseItem | undefined)[]>(() => {
     // Pad the last row so its tiles keep the same width as the rest.
     const padding = (columns - (items.length % columns)) % columns;
@@ -249,6 +260,51 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
       </View>
     );
   }
+
+  const pane = (
+        <TVFocusGuideView autoFocus style={pills ? styles.paneWide : styles.pane}>
+          <View style={styles.paneHead}>
+            <Text style={styles.paneTitle} numberOfLines={1}>
+              {shownEntry?.label ?? ""}
+            </Text>
+            {shownEntry !== undefined ? <Text style={styles.paneCount}>{`${withCommas(shownEntry.count)} ${shownEntry.count === 1 ? source.single : source.noun}`}</Text> : null}
+          </View>
+          {guideOf !== undefined && preview !== undefined ? <OnNow hero={pills} item={preview} loaded={guides.has(preview.id)} guide={guides.get(preview.id)?.guide ?? null} /> : null}
+          {items.length === 0 ? (
+            <View style={styles.empty}>
+              <Muted>{`Nothing in here yet.`}</Muted>
+            </View>
+          ) : (
+            <FlatList
+              key={columns}
+              data={cells}
+              numColumns={columns}
+              keyExtractor={(cell, index) => cell?.id ?? `pad${index}`}
+              columnWrapperStyle={poster ? styles.posterColumns : styles.channelColumns}
+              contentContainerStyle={styles.grid}
+              initialNumToRender={columns * 2}
+              maxToRenderPerBatch={columns}
+              windowSize={5}
+              showsVerticalScrollIndicator={false}
+              onEndReachedThreshold={1.5}
+              onEndReached={() => setLimit((value) => (value < MAX_ITEMS && items.length >= value ? value + PAGE : value))}
+              renderItem={({ item: cell }) =>
+                cell === undefined ? <View style={styles.pad} /> : poster ? <PosterTile item={cell} onSelect={(picked) => onSelect(picked, items)} /> : <ChannelTile card={pills} item={cell} onSelect={(picked) => onSelect(picked, items)} onFocusItem={onFocusItem} />
+              }
+            />
+          )}
+        </TVFocusGuideView>
+  );
+
+  if (pills)
+    return (
+      <View style={styles.column}>
+        <TVFocusGuideView autoFocus style={styles.pills}>
+          <FlatList horizontal data={pillEntries} keyExtractor={(entry) => entry.id} renderItem={renderPill} extraData={activeId} showsHorizontalScrollIndicator={false} initialNumToRender={10} windowSize={5} contentContainerStyle={styles.pillList} />
+        </TVFocusGuideView>
+        {pane}
+      </View>
+    );
 
   return (
     <View style={styles.screen}>
@@ -269,38 +325,7 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
           renderItem={renderMenuItem}
         />
       </TVFocusGuideView>
-      <TVFocusGuideView autoFocus style={styles.pane}>
-        <View style={styles.paneHead}>
-          <Text style={styles.paneTitle} numberOfLines={1}>
-            {shownEntry?.label ?? ""}
-          </Text>
-          {shownEntry !== undefined ? <Text style={styles.paneCount}>{`${withCommas(shownEntry.count)} ${shownEntry.count === 1 ? source.single : source.noun}`}</Text> : null}
-        </View>
-        {guideOf !== undefined && preview !== undefined ? <OnNow item={preview} loaded={guides.has(preview.id)} guide={guides.get(preview.id)?.guide ?? null} /> : null}
-        {items.length === 0 ? (
-          <View style={styles.empty}>
-            <Muted>{`Nothing in here yet.`}</Muted>
-          </View>
-        ) : (
-          <FlatList
-            key={columns}
-            data={cells}
-            numColumns={columns}
-            keyExtractor={(cell, index) => cell?.id ?? `pad${index}`}
-            columnWrapperStyle={poster ? styles.posterColumns : styles.channelColumns}
-            contentContainerStyle={styles.grid}
-            initialNumToRender={columns * 2}
-            maxToRenderPerBatch={columns}
-            windowSize={5}
-            showsVerticalScrollIndicator={false}
-            onEndReachedThreshold={1.5}
-            onEndReached={() => setLimit((value) => (value < MAX_ITEMS && items.length >= value ? value + PAGE : value))}
-            renderItem={({ item: cell }) =>
-              cell === undefined ? <View style={styles.pad} /> : poster ? <PosterTile item={cell} onSelect={(picked) => onSelect(picked, items)} /> : <ChannelTile item={cell} onSelect={(picked) => onSelect(picked, items)} onFocusItem={onFocusItem} />
-            }
-          />
-        )}
-      </TVFocusGuideView>
+      {pane}
     </View>
   );
 }
@@ -316,14 +341,14 @@ const PosterTile = memo(function PosterTile({ item, onSelect }: { item: BrowseIt
 });
 
 /** The channel the remote rests on, with what is airing and what follows, above the grid. */
-const OnNow = memo(function OnNow({ item, guide, loaded }: { item: BrowseItem; guide: Guide | null; loaded: boolean }) {
+const OnNow = memo(function OnNow({ item, guide, loaded, hero = false }: { item: BrowseItem; guide: Guide | null; loaded: boolean; hero?: boolean }) {
   const now = guide?.now ?? null;
   const next = guide?.next ?? null;
   const span = now !== null ? now.end - now.start : 0;
   const progress = now !== null && span > 0 ? Math.min(1, Math.max(0, (Date.now() - now.start) / span)) : 0;
   return (
-    <View style={styles.onNow}>
-      <View style={styles.onNowLogo}>
+    <View style={[styles.onNow, hero && styles.onNowHero]}>
+      <View style={[styles.onNowLogo, hero && styles.onNowLogoHero]}>
         {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
       </View>
       <View style={styles.onNowText}>
@@ -332,7 +357,7 @@ const OnNow = memo(function OnNow({ item, guide, loaded }: { item: BrowseItem; g
         </Text>
         {now !== null ? (
           <>
-            <Text style={styles.onNowTitle} numberOfLines={1}>
+            <Text style={[styles.onNowTitle, hero && styles.onNowTitleHero]} numberOfLines={1}>
               {now.title}
             </Text>
             <View style={styles.onNowMeta}>
@@ -361,16 +386,27 @@ const OnNow = memo(function OnNow({ item, guide, loaded }: { item: BrowseItem; g
   );
 });
 
-const ChannelTile = memo(function ChannelTile({ item, onSelect, onFocusItem }: { item: BrowseItem; onSelect: (item: BrowseItem) => void; onFocusItem: (item: BrowseItem) => void }) {
+const ChannelTile = memo(function ChannelTile({ item, onSelect, onFocusItem, card = false }: { item: BrowseItem; onSelect: (item: BrowseItem) => void; onFocusItem: (item: BrowseItem) => void; card?: boolean }) {
   return (
-    <Focusable onPress={() => onSelect(item)} onFocus={() => onFocusItem(item)} style={styles.channel} focusedStyle={styles.channelFocused}>
-      <View style={styles.logo}>
+    <Focusable onPress={() => onSelect(item)} onFocus={() => onFocusItem(item)} style={card ? styles.channelCard : styles.channel} focusedStyle={styles.channelFocused}>
+      <View style={card ? styles.logoCard : styles.logo}>
         {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
       </View>
-      <Text style={styles.channelName} numberOfLines={1}>
-        {item.title}
-      </Text>
-      {item.number !== undefined && item.number !== null ? <Text style={styles.channelNumber}>{item.number}</Text> : null}
+      {card ? (
+        <View style={styles.cardLine}>
+          <Text style={styles.channelName} numberOfLines={1}>
+            {item.title}
+          </Text>
+          {item.number !== undefined && item.number !== null ? <Text style={styles.channelNumber}>{item.number}</Text> : null}
+        </View>
+      ) : (
+        <>
+          <Text style={styles.channelName} numberOfLines={1}>
+            {item.title}
+          </Text>
+          {item.number !== undefined && item.number !== null ? <Text style={styles.channelNumber}>{item.number}</Text> : null}
+        </>
+      )}
     </Focusable>
   );
 });
@@ -379,10 +415,17 @@ const styles = styleSheet({
   screen: { flex: 1, flexDirection: "row" },
   menu: { width: 380, flexGrow: 0, paddingRight: 20 },
   pane: { flex: 1, paddingLeft: 12 },
+  paneWide: { flex: 1 },
+  column: { flex: 1 },
+  pills: { flexGrow: 0, paddingBottom: 8 },
+  pillList: { gap: 12, paddingHorizontal: 8, paddingVertical: 4 },
   paneHead: { flexDirection: "row", alignItems: "baseline", gap: 20, paddingTop: 12, paddingBottom: 24, paddingHorizontal: 8 },
   paneTitle: { flexShrink: 1, color: colors.foreground, fontSize: 38, fontWeight: "600", letterSpacing: -0.5 },
   paneCount: { color: colors.faint, fontSize: 24 },
   onNow: { flexDirection: "row", alignItems: "center", gap: 24, marginHorizontal: 8, marginBottom: 22, padding: 20, borderRadius: 20, backgroundColor: "#ffffff0d" },
+  onNowHero: { gap: 32, padding: 28, marginBottom: 26 },
+  onNowLogoHero: { width: 200, height: 132 },
+  onNowTitleHero: { fontSize: 46, letterSpacing: -0.8 },
   onNowLogo: { width: 132, height: 88, borderRadius: 12, backgroundColor: colors.sunken, overflow: "hidden" },
   onNowText: { flex: 1, gap: 4, height: 118, justifyContent: "center" },
   onNowChannel: { color: colors.accent, fontSize: 22, fontWeight: "600", letterSpacing: 0.5 },
@@ -398,6 +441,9 @@ const styles = styleSheet({
   pad: { flex: 1 },
   channelFocused: { backgroundColor: "#ffffff24", borderColor: "transparent", transform: [{ scale: 1.02 }] },
   channel: { flex: 1, flexDirection: "row", alignItems: "center", gap: 18, paddingVertical: 12, paddingHorizontal: 18, backgroundColor: colors.raised, borderRadius: 16, marginBottom: 14 },
+  channelCard: { flex: 1, gap: 12, padding: 14, backgroundColor: colors.raised, borderRadius: 16, marginBottom: 14 },
+  logoCard: { height: 110, borderRadius: 10, backgroundColor: colors.sunken, overflow: "hidden" },
+  cardLine: { flexDirection: "row", alignItems: "center", gap: 10 },
   logo: { width: 84, height: 56, borderRadius: 10, backgroundColor: colors.sunken, overflow: "hidden" },
   logoImage: { width: "100%", height: "100%" },
   channelName: { flex: 1, color: colors.foreground, fontSize: 24, fontWeight: "500" },

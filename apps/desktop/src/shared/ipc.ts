@@ -132,6 +132,23 @@ export interface NowNextLite {
   readonly next?: ProgrammeLite;
 }
 
+/**
+ * Where the desktop app is with updating itself. `dev` means an unpackaged run, which has nothing to
+ * update. The released app's versions come from the release bucket (ADR 0010).
+ */
+export interface UpdateState {
+  readonly status: "dev" | "idle" | "checking" | "available" | "downloading" | "ready" | "error";
+  /** The version that is running. */
+  readonly current: string;
+  /** The newer version, once one has been found. */
+  readonly latest?: string;
+  /** 0 to 100 while downloading. */
+  readonly percent?: number;
+  readonly message?: string;
+  /** When the last check finished (unix ms). Undefined until one has. */
+  readonly checkedAt?: number;
+}
+
 /** Background-task progress, pushed on `IPC_TASK_CHANNEL` (kept off the playback event stream). */
 export type TaskEvent =
   | {
@@ -351,7 +368,19 @@ export interface TestcardApi {
     /** Runs one push-then-pull cycle immediately, outside the periodic schedule. */
     triggerNow(): Promise<SyncStatus>;
   };
+  update: {
+    /** Where the app is with updating: the installed version and whether a newer one is out. */
+    state(): Promise<UpdateState>;
+    /** Asks the release bucket whether a newer version exists. Never downloads anything. */
+    check(): Promise<UpdateState>;
+    /** Downloads the newer version found by `check`. Progress arrives as `update` events. */
+    download(): Promise<UpdateState>;
+    /** Closes the app and runs the downloaded installer, which reopens it. */
+    install(): Promise<void>;
+  };
   events: {
+    /** Subscribes to update progress. Returns an unsubscribe function. */
+    onUpdate(listener: (state: UpdateState) => void): () => void;
     /** Subscribes to playback lifecycle events. Returns an unsubscribe function. */
     onPlayback(listener: (event: PlaybackEvent) => void): () => void;
     /** Subscribes to background-task progress (EPG import). Returns an unsubscribe function. */
@@ -366,5 +395,7 @@ export type { SyncAccountStatus, SyncStatus } from "@testcard/core";
 export const IPC_CHANNEL = "testcard:invoke" as const;
 /** IPC channel name for main-initiated playback events (webContents.send -> ipcRenderer.on). */
 export const IPC_EVENT_CHANNEL = "testcard:event" as const;
+/** IPC channel name for main-initiated update progress. */
+export const IPC_UPDATE_CHANNEL = "testcard:update" as const;
 /** IPC channel name for main-initiated background-task progress. */
 export const IPC_TASK_CHANNEL = "testcard:task" as const;

@@ -6,13 +6,21 @@ import { z } from "zod";
  * sensitive as a login). Never crosses the wire in this shape — see `SyncSourceSchema`, which
  * carries only its ciphertext. The two shapes are told apart by which keys they have.
  */
+/**
+ * Which kinds of content a source loads on this account's devices. Optional: an older device leaves it out
+ * (and ignores it), and a device that gets none keeps what it has.
+ */
+export const SourceContentSchema = z.object({ live: z.boolean(), movies: z.boolean(), series: z.boolean() });
+export type SourceContent = z.infer<typeof SourceContentSchema>;
 export const XtreamCredentialsPayloadSchema = z.object({
   host: z.string().min(1),
   username: z.string().min(1),
   password: z.string().min(1),
+  content: SourceContentSchema.optional(),
 });
 export const PlaylistPayloadSchema = z.object({
   playlistUrl: z.string().min(1),
+  content: SourceContentSchema.optional(),
 });
 export const SourceCredentialsPayloadSchema = z.union([XtreamCredentialsPayloadSchema, PlaylistPayloadSchema]);
 export type SourceCredentialsPayload = z.infer<typeof SourceCredentialsPayloadSchema>;

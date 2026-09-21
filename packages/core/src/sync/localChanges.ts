@@ -98,20 +98,21 @@ export async function collectLocalChanges(
   await backfillSourceKeys(db, getCredentials);
   const sourceRows = db
     .prepare(
-      `SELECT id, kind, playlist_url AS playlistUrl, remote_key, name, sync_updated_at FROM sources
+      `SELECT id, kind, playlist_url AS playlistUrl, remote_key, name, sync_updated_at,
+              include_live AS live, include_movies AS movies, include_series AS series FROM sources
        WHERE kind IN ('xtream', 'm3u') AND remote_key IS NOT NULL AND sync_updated_at > ?`,
     )
-    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; remote_key: string; name: string; sync_updated_at: number }[];
+    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; remote_key: string; name: string; sync_updated_at: number; live: number; movies: number; series: number }[];
 
   const sources: SyncSource[] = [];
   for (const row of sourceRows) {
     let payload: SourceCredentialsPayload;
     if (row.kind === "m3u") {
       if (row.playlistUrl === null || row.playlistUrl === "") continue;
-      payload = { playlistUrl: row.playlistUrl };
+      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 } };
     } else {
       const credentials = await getCredentials(row.id);
-      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password };
+      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 } };
     }
     const encrypted = await encryptCredentials(payload, accountPassword, salt);
     sources.push({ remoteKey: row.remote_key, label: row.name, credentialsBlob: encrypted.blob, credentialsIv: encrypted.iv, updatedAt: row.sync_updated_at, deletedAt: null });
@@ -144,6 +145,11 @@ export async function collectLocalChanges(
       (t) => ({ remoteKey: t.remoteKey, updatedAt: t.deletedAt, deletedAt: t.deletedAt, [timestampField]: t.deletedAt }) as unknown as T,
     );
     return [...rows, ...tombstones];
+  }
+
+  // A source removed on this device: tell the others (no credentials go with it).
+  for (const tombstone of tombstonesByTable.get("sources") ?? []) {
+    sources.push({ remoteKey: tombstone.remoteKey, label: null, credentialsBlob: null, credentialsIv: null, updatedAt: tombstone.deletedAt, deletedAt: tombstone.deletedAt });
   }
 
   const progressRows = db
@@ -195,19 +201,20 @@ export async function applyRemoteChanges(
   response: SyncPullResponse,
   accountPassword: string,
   salt: string,
-  onDecryptedSource: (remoteKey: string, label: string, payload: SourceCredentialsPayload) => Promise<void>,
+  onDecryptedSource: (remoteKey: string, label: string, payload: SourceCredentialsPayload, updatedAt: number) => Promise<void>,
+  onRemovedSource: (remoteKey: string, deletedAt: number) => Promise<void> = async () => undefined,
 ): Promise<{ readonly deferredBeforeMs: number | undefined }> {
   let minDeferred: number | undefined;
 
   for (const source of response.sources) {
-    // Removing a source on one device and having that propagate to others (a tombstone on
-    // `sources`, mirroring Task 6's favourite tombstones) is out of scope for this plan — see
-    // Task 16 Step 8's regression note. A deleted-remotely source is simply never pulled again;
-    // it isn't retroactively removed from a device that already has it.
-    if (source.deletedAt !== null) continue;
+    // Removed on another device: the caller decides whether this device's copy goes too.
+    if (source.deletedAt !== null) {
+      await onRemovedSource(source.remoteKey, source.deletedAt);
+      continue;
+    }
     if (source.label === null || source.credentialsBlob === null || source.credentialsIv === null) continue; // live row always has all three per SyncSourceSchema's refine; defensive skip if ever violated
     const decrypted = await decryptCredentials({ blob: source.credentialsBlob, iv: source.credentialsIv }, accountPassword, salt);
-    await onDecryptedSource(source.remoteKey, source.label, decrypted);
+    await onDecryptedSource(source.remoteKey, source.label, decrypted, source.updatedAt);
   }
 
   const applyAll = db.transaction(() => {

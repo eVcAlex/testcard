@@ -2,6 +2,8 @@ import type Database from "better-sqlite3";
 import type { XtreamCredentials } from "../source/xtream/detect.js";
 import { generateSalt } from "./credentialCrypto.js";
 import { SyncClient } from "./client.js";
+import { removeSourceRows } from "./sourceRemoval.js";
+import { applySourceContent } from "./sourceContent.js";
 import { applyRemoteChanges, clearTombstones, collectLocalChanges, getSyncState, setSyncState } from "./localChanges.js";
 
 export type SyncAccountStatus = "signed-out" | "signed-in" | "needs-password";
@@ -21,6 +23,8 @@ export interface SyncPlatform {
   readonly baseUrl: string;
   getCredentials(sourceId: string): Promise<XtreamCredentials>;
   saveCredentials(sourceId: string, credentials: XtreamCredentials): Promise<void>;
+  /** Forgets a source's stored login, when the source is removed here because another device removed it. */
+  deleteCredentials?(sourceId: string): Promise<void>;
   /** Synchronous: the controller reads it in its constructor to resume a session after a relaunch. */
   loadAccountPassword(): string | undefined;
   saveAccountPassword(password: string): void;
@@ -271,7 +275,7 @@ export class SyncController {
       const push = await collectLocalChanges(this.db, state.lastPushedAt, password, salt, (sourceId) => this.platform.getCredentials(sourceId));
       const tombstoneCutoff = Math.max(
         0,
-        ...[...push.movieFavourites, ...push.movieRecents, ...push.seriesFavourites, ...push.seriesRecents, ...push.progress]
+        ...[...push.sources, ...push.movieFavourites, ...push.movieRecents, ...push.seriesFavourites, ...push.seriesRecents, ...push.progress]
           .map((row) => row.deletedAt)
           .filter((deletedAt): deletedAt is number => deletedAt !== null),
       );
@@ -279,11 +283,25 @@ export class SyncController {
       setSyncState(this.db, { lastPushedAt: Math.max(state.lastPushedAt, pushResult.newCursor) });
       clearTombstones(this.db, tombstoneCutoff);
 
-      const pull = await this.client.pull(state.lastPulledAt);
+      // Devices before this change ignored a source edited elsewhere (a rename, new login, content switches). Read the
+      // account's sources once from the start so edits already made are picked up; applying them again is harmless.
+      const reread = this.db.prepare(`SELECT 1 FROM schema_meta WHERE key = 'sync_source_edits_reread'`).get() === undefined;
+      const pull = await this.client.pull(reread ? 0 : state.lastPulledAt);
       const addedSourceIds: string[] = [];
-      const applyResult = await applyRemoteChanges(this.db, pull, password, salt, async (remoteKey, label, payload) => {
-        const existing = this.db.prepare(`SELECT id FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string } | undefined;
-        if (existing) return; // already have this provider configured locally — never overwrite a live source's id
+      const applyResult = await applyRemoteChanges(this.db, pull, password, salt, async (remoteKey, label, payload, updatedAt) => {
+        const existing = this.db.prepare(`SELECT id, sync_updated_at AS updatedAt FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string; updatedAt: number | null } | undefined;
+        if (existing) {
+          // Already configured here: the id stays, but a newer edit made elsewhere (a rename, new login, content switches) is taken.
+          if (existing.updatedAt !== null && existing.updatedAt >= updatedAt) return;
+          if ("playlistUrl" in payload) {
+            this.db.prepare(`UPDATE sources SET name = ?, playlist_url = ?, sync_updated_at = ? WHERE id = ?`).run(label, payload.playlistUrl, updatedAt, existing.id);
+          } else {
+            await this.platform.saveCredentials(existing.id, { baseUrl: payload.host, username: payload.username, password: payload.password });
+            this.db.prepare(`UPDATE sources SET name = ?, base_url = ?, sync_updated_at = ? WHERE id = ?`).run(label, payload.host, updatedAt, existing.id);
+          }
+          if (payload.content !== undefined && applySourceContent(this.db, existing.id, payload.content)) addedSourceIds.push(existing.id);
+          return;
+        }
         const id = this.platform.randomId();
         if ("playlistUrl" in payload) {
           this.db
@@ -296,10 +314,18 @@ export class SyncController {
             .run(id, label, payload.host, Date.now(), remoteKey);
         }
         addedSourceIds.push(id);
+      }, async (remoteKey, deletedAt) => {
+        const existing = this.db.prepare(`SELECT id, sync_updated_at AS updatedAt FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string; updatedAt: number | null } | undefined;
+        if (existing === undefined) return;
+        // A source added again here after it was removed elsewhere is newer than the removal: keep it.
+        if (existing.updatedAt !== null && existing.updatedAt > deletedAt) return;
+        removeSourceRows(this.db, existing.id, { recordTombstone: false });
+        await this.platform.deleteCredentials?.(existing.id);
       });
       const nextPulledAt =
         applyResult.deferredBeforeMs !== undefined ? Math.min(pull.serverCursor, applyResult.deferredBeforeMs - 1) : pull.serverCursor;
       setSyncState(this.db, { lastPulledAt: nextPulledAt });
+      if (reread) this.db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('sync_source_edits_reread', '1')`).run();
       this.lastSyncedAt = Date.now();
       this.lastError = undefined;
       if (addedSourceIds.length > 0) this.onSourcesAdded(addedSourceIds);

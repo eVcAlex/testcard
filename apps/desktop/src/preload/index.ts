@@ -3,9 +3,11 @@ import {
   IPC_CHANNEL,
   IPC_EVENT_CHANNEL,
   IPC_TASK_CHANNEL,
+  IPC_UPDATE_CHANNEL,
   type PlaybackEvent,
   type TaskEvent,
   type TestcardApi,
+  type UpdateState,
 } from "../shared/ipc.js";
 
 /**
@@ -107,7 +109,22 @@ const api: TestcardApi = {
     reenterPassword: bind("sync.reenterPassword"),
     triggerNow: bind("sync.triggerNow"),
   },
+  update: {
+    state: bind("update.state"),
+    check: bind("update.check"),
+    download: bind("update.download"),
+    install: bind("update.install"),
+  },
   events: {
+    onUpdate(listener: (state: UpdateState) => void): () => void {
+      const handler = (_event: IpcRendererEvent, payload: UpdateState) => {
+        listener(payload);
+      };
+      ipcRenderer.on(IPC_UPDATE_CHANNEL, handler);
+      return () => {
+        ipcRenderer.off(IPC_UPDATE_CHANNEL, handler);
+      };
+    },
     onPlayback(listener: (event: PlaybackEvent) => void): () => void {
       const handler = (_event: IpcRendererEvent, payload: PlaybackEvent) => {
         listener(payload);

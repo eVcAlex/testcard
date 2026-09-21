@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { SyncController as CoreSyncController } from "@testcard/core";
-import { getCredentials, saveCredentials } from "./credentials.js";
+import { deleteCredentials, getCredentials, saveCredentials } from "./credentials.js";
 import { clearAccountPassword, loadAccountPassword, saveAccountPassword } from "./accountSecret.js";
 
 const SYNC_WORKER_URL = process.env.TESTCARD_SYNC_URL ?? "https://testcard-sync.evcalex.workers.dev";
@@ -21,6 +21,7 @@ export class SyncController extends CoreSyncController {
         baseUrl: SYNC_WORKER_URL,
         getCredentials,
         saveCredentials,
+        deleteCredentials,
         loadAccountPassword,
         saveAccountPassword,
         clearAccountPassword,
