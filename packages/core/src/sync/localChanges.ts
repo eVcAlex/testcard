@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 import { decryptCredentials, encryptCredentials } from "./credentialCrypto.js";
 import { remoteKeyFor, remoteKeyForPlaylist } from "./remoteKey.js";
+import { pinsForSource } from "./sourcePins.js";
 import type {
   SourceCredentialsPayload,
   SyncFavourite,
@@ -109,10 +110,10 @@ export async function collectLocalChanges(
     let payload: SourceCredentialsPayload;
     if (row.kind === "m3u") {
       if (row.playlistUrl === null || row.playlistUrl === "") continue;
-      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}) };
+      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), pins: pinsForSource(db, row.id) };
     } else {
       const credentials = await getCredentials(row.id);
-      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}) };
+      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), pins: pinsForSource(db, row.id) };
     }
     const encrypted = await encryptCredentials(payload, accountPassword, salt);
     sources.push({ remoteKey: row.remote_key, label: row.name, credentialsBlob: encrypted.blob, credentialsIv: encrypted.iv, updatedAt: row.sync_updated_at, deletedAt: null });

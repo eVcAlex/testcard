@@ -5,6 +5,7 @@ import { SyncClient } from "./client.js";
 import { removeSourceRows } from "./sourceRemoval.js";
 import { applySourceContent } from "./sourceContent.js";
 import { applySourcePosition } from "./sourceOrder.js";
+import { applySourcePins } from "./sourcePins.js";
 import { applyRemoteChanges, clearTombstones, collectLocalChanges, getSyncState, setSyncState } from "./localChanges.js";
 
 export type SyncAccountStatus = "signed-out" | "signed-in" | "needs-password";
@@ -307,6 +308,7 @@ export class SyncController {
           }
           if (payload.content !== undefined && applySourceContent(this.db, existing.id, payload.content)) addedSourceIds.push(existing.id);
           if (payload.position !== undefined) applySourcePosition(this.db, existing.id, payload.position);
+          if (payload.pins !== undefined) applySourcePins(this.db, existing.id, payload.pins);
           return;
         }
         const id = this.platform.randomId();
@@ -323,6 +325,7 @@ export class SyncController {
         // Taken with the source's own clock, so this device does not push it back as if it had just edited it.
         if (payload.content !== undefined) applySourceContent(this.db, id, payload.content);
         if (payload.position !== undefined) applySourcePosition(this.db, id, payload.position);
+        if (payload.pins !== undefined) applySourcePins(this.db, id, payload.pins);
         addedSourceIds.push(id);
       }, async (remoteKey, deletedAt) => {
         const existing = this.db.prepare(`SELECT id, sync_updated_at AS updatedAt FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string; updatedAt: number | null } | undefined;

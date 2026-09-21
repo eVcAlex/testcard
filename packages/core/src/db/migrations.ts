@@ -269,6 +269,21 @@ export const MIGRATIONS: readonly Migration[] = [
       `);
     },
   },
+  {
+    version: 10,
+    up: (db) => {
+      // Categories pinned to the Home page.
+      db.exec(`CREATE TABLE IF NOT EXISTS home_pins (
+  source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  kind          TEXT NOT NULL CHECK (kind IN ('live', 'movies', 'series')),
+  category_key  TEXT NOT NULL,   -- the category's provider_id: the same on every device, unlike the local category id
+  label         TEXT NOT NULL,
+  pinned_at     INTEGER NOT NULL,
+  PRIMARY KEY (source_id, kind, category_key)
+);
+`);
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

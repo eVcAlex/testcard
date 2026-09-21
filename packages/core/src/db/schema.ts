@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -310,5 +310,15 @@ CREATE TABLE IF NOT EXISTS sync_state (
 CREATE TABLE IF NOT EXISTS schema_meta (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
+);
+
+-- Categories pinned to the Home page. Synced inside the source's encrypted record, not as a table of their own.
+CREATE TABLE IF NOT EXISTS home_pins (
+  source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  kind          TEXT NOT NULL CHECK (kind IN ('live', 'movies', 'series')),
+  category_key  TEXT NOT NULL,   -- the category's provider_id: the same on every device, unlike the local category id
+  label         TEXT NOT NULL,
+  pinned_at     INTEGER NOT NULL,
+  PRIMARY KEY (source_id, kind, category_key)
 );
 `;

@@ -12,17 +12,26 @@ import { z } from "zod";
  */
 export const SourceContentSchema = z.object({ live: z.boolean(), movies: z.boolean(), series: z.boolean() });
 export type SourceContent = z.infer<typeof SourceContentSchema>;
+/**
+ * A category pinned to the Home page. It rides inside the source's encrypted record, so the server learns nothing
+ * about what is pinned and needs no table for it. Optional: an older device leaves it out (and ignores it).
+ * `key` is the category's provider id, which every device shares for a given source.
+ */
+export const SourcePinSchema = z.object({ kind: z.enum(["live", "movies", "series"]), key: z.string().min(1), label: z.string().min(1) });
+export type SourcePin = z.infer<typeof SourcePinSchema>;
 export const XtreamCredentialsPayloadSchema = z.object({
   host: z.string().min(1),
   username: z.string().min(1),
   password: z.string().min(1),
   content: SourceContentSchema.optional(),
   position: z.number().int().optional(),
+  pins: z.array(SourcePinSchema).optional(),
 });
 export const PlaylistPayloadSchema = z.object({
   playlistUrl: z.string().min(1),
   content: SourceContentSchema.optional(),
   position: z.number().int().optional(),
+  pins: z.array(SourcePinSchema).optional(),
 });
 export const SourceCredentialsPayloadSchema = z.union([XtreamCredentialsPayloadSchema, PlaylistPayloadSchema]);
 export type SourceCredentialsPayload = z.infer<typeof SourceCredentialsPayloadSchema>;
