@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BackHandler, Text, View } from "react-native";
 import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
 import { movieHome, seriesHome } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { getCredentials } from "../platform/secrets";
 import { browseMovies, getMovieById, getMoviePlaybackTarget, listFavouriteMovies, listMovieCategories, listRecentMovies, toggleMovieFavourite, type MovieRow } from "@testcard/core/src/db/vodQueries.js";
-import { browseSeries, listFavouriteSeries, listRecentSeries, listSeriesCategories, toggleSeriesFavourite, type SeriesRow } from "@testcard/core/src/db/seriesQueries.js";
+import { browseSeries, listFavouriteSeries, listRecentSeries, listSeriesCategories, removeSeriesFromRecents, toggleSeriesFavourite, type SeriesRow } from "@testcard/core/src/db/seriesQueries.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { useApp } from "../state/app";
 import { colors, type, styleSheet } from "../theme";
@@ -253,10 +253,12 @@ export function SeriesScreen({ sourceId, browsing, onBrowseDone, onOpen }: { sou
   const [tick, setTick] = useState(0);
   useBackTo(browsing, onBrowseDone);
   const shelves = useBuilt(seriesRows, db, version, sourceId);
+  const recentIds = useRef(new Set<string>());
   const rows = useMemo<HomeRow[] | null>(() => {
     if (shelves === null) return null;
     const recent = listRecentSeries(db, 20);
     const myList = listFavouriteSeries(db);
+    recentIds.current = new Set(recent.map((show) => show.id));
     return [
       ...(recent.length > 0 ? [{ key: "recent-watched", label: "Recently watched", items: recent.map(homeSeries) }] : []),
       ...(myList.length > 0 ? [{ key: "my-list", label: "My list", items: myList.slice(0, 30).map(homeSeries) }] : []),
@@ -277,6 +279,20 @@ export function SeriesScreen({ sourceId, browsing, onBrowseDone, onOpen }: { sou
             setTick((value) => value + 1);
           },
         },
+        ...(recentIds.current.has(item.id)
+          ? [
+              {
+                key: "forget",
+                label: "Remove from Recently watched",
+                glyph: "cross" as const,
+                onPress: () => {
+                  removeSeriesFromRecents(db, item.id);
+                  sync.notifyLocalChange();
+                  setTick((value) => value + 1);
+                },
+              },
+            ]
+          : []),
       ],
     }),
     [db, sync, onOpen],

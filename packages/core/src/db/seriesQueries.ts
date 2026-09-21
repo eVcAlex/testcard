@@ -96,6 +96,16 @@ export function listRecentSeries(db: Database.Database, limit = 24): SeriesRow[]
     .all(limit) as SeriesRow[];
 }
 
+/** Takes a series out of Recently watched. Synced, so the removal follows to the user's other devices. */
+export function removeSeriesFromRecents(db: Database.Database, seriesId: string): void {
+  const row = db.prepare(`SELECT remote_key FROM series_recents WHERE series_id = ?`).get(seriesId) as { remote_key: string | null } | undefined;
+  if (row === undefined) return;
+  db.prepare(`DELETE FROM series_recents WHERE series_id = ?`).run(seriesId);
+  if (row.remote_key !== null) {
+    db.prepare(`INSERT INTO sync_tombstones (table_name, remote_key, deleted_at) VALUES ('series_recents', ?, ?)`).run(row.remote_key, Date.now());
+  }
+}
+
 export function toggleSeriesFavourite(db: Database.Database, seriesId: string): boolean {
   const existing = db.prepare(`SELECT 1 FROM series_favourites WHERE series_id = ?`).get(seriesId);
   if (existing) {
