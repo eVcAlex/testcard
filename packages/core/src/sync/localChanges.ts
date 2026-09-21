@@ -99,20 +99,20 @@ export async function collectLocalChanges(
   const sourceRows = db
     .prepare(
       `SELECT id, kind, playlist_url AS playlistUrl, remote_key, name, sync_updated_at,
-              include_live AS live, include_movies AS movies, include_series AS series FROM sources
+              include_live AS live, include_movies AS movies, include_series AS series, sort_order AS position FROM sources
        WHERE kind IN ('xtream', 'm3u') AND remote_key IS NOT NULL AND sync_updated_at > ?`,
     )
-    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; remote_key: string; name: string; sync_updated_at: number; live: number; movies: number; series: number }[];
+    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; remote_key: string; name: string; sync_updated_at: number; live: number; movies: number; series: number; position: number | null }[];
 
   const sources: SyncSource[] = [];
   for (const row of sourceRows) {
     let payload: SourceCredentialsPayload;
     if (row.kind === "m3u") {
       if (row.playlistUrl === null || row.playlistUrl === "") continue;
-      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 } };
+      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}) };
     } else {
       const credentials = await getCredentials(row.id);
-      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 } };
+      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}) };
     }
     const encrypted = await encryptCredentials(payload, accountPassword, salt);
     sources.push({ remoteKey: row.remote_key, label: row.name, credentialsBlob: encrypted.blob, credentialsIv: encrypted.iv, updatedAt: row.sync_updated_at, deletedAt: null });

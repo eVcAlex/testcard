@@ -130,7 +130,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const sources = useMemo<SourceSummary[]>(() => {
     void version;
     const rows = db
-      .prepare(`SELECT id, kind, name, last_refreshed_at AS lastRefreshedAt FROM sources ORDER BY created_at`)
+      .prepare(`SELECT id, kind, name, last_refreshed_at AS lastRefreshedAt FROM sources ORDER BY sort_order IS NULL, sort_order, created_at`)
       .all() as unknown as { id: string; kind: "xtream" | "m3u"; name: string; lastRefreshedAt: number | null }[];
     const count = (table: string, id: string) =>
       (db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE source_id = ?`).get(id) as unknown as { n: number }).n;

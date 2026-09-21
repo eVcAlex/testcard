@@ -34,6 +34,8 @@ export type IconName =
   | "film"
   | "layers"
   | "check"
+  | "arrow-up"
+  | "arrow-down"
   | "user";
 
 const PATHS: Record<IconName, ReactNode> = {
@@ -108,6 +110,8 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   back: <path d="M10 3.5 5.5 8l4.5 4.5" />,
   "chevron-right": <path d="M6 3.5 10.5 8 6 12.5" />,
+  "arrow-up": <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />,
+  "arrow-down": <path d="M8 3v10M3.5 8.5 8 13l4.5-4.5" />,
   sun: (
     <>
       <circle cx="8" cy="8" r="3.2" />

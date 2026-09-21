@@ -254,6 +254,21 @@ export const MIGRATIONS: readonly Migration[] = [
       db.exec(`UPDATE series SET episodes_fetched_at = NULL`);
     },
   },
+  {
+    version: 9,
+    up: (db) => {
+      // Source order. Also a one-off clean-up: content switched off before switching it off removed anything left its rows behind.
+      addColumn(db, "sources", "sort_order INTEGER");
+      db.exec(`
+        DELETE FROM channels WHERE source_id IN (SELECT id FROM sources WHERE include_live = 0);
+        DELETE FROM categories WHERE source_id IN (SELECT id FROM sources WHERE include_live = 0);
+        DELETE FROM movies WHERE source_id IN (SELECT id FROM sources WHERE include_movies = 0);
+        DELETE FROM movie_categories WHERE source_id IN (SELECT id FROM sources WHERE include_movies = 0);
+        DELETE FROM series WHERE source_id IN (SELECT id FROM sources WHERE include_series = 0);
+        DELETE FROM series_categories WHERE source_id IN (SELECT id FROM sources WHERE include_series = 0);
+      `);
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

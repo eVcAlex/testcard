@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS sources (
   sync_deleted_at INTEGER,      -- sync tombstone; NULL = live
   include_live    INTEGER NOT NULL DEFAULT 1,  -- per-source content switches (xtream); m3u is live-only
   include_movies  INTEGER NOT NULL DEFAULT 1,
-  include_series  INTEGER NOT NULL DEFAULT 1
+  include_series  INTEGER NOT NULL DEFAULT 1,
+  sort_order      INTEGER       -- position in the source list (synced); NULL = not placed yet, after the placed ones
 );
 CREATE INDEX IF NOT EXISTS idx_sources_remote_key ON sources(remote_key);
 

@@ -44,6 +44,8 @@ import {
   toggleFavourite,
   toggleMovieFavourite,
   removeSourceRows,
+  moveSource,
+  stampSourceOrder,
   toggleSeriesFavourite,
   type Channel,
   type ProgrammeRow,
@@ -211,6 +213,7 @@ const SYNCED_MUTATIONS: ReadonlySet<string> = new Set([
   "series.removeFromHistory",
   "sources.add",
   "sources.update",
+  "sources.move",
   "progress.set",
   "playback.play",
   "playback.playMovie",
@@ -238,6 +241,13 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
     if (activeController === playback) activeController = null;
     playback.dispose();
   });
+
+  // Versions before the source order and content switches synced pushed neither. This device holds the list the
+  // account should follow, so send both once.
+  if (db.prepare(`SELECT 1 FROM schema_meta WHERE key = 'source_order_stamped'`).get() === undefined) {
+    stampSourceOrder(db);
+    db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('source_order_stamped', '1')`).run();
+  }
 
   const sync = new SyncController(db, (sourceIds) => {
     // Sources that arrived from another device have no channels/movies yet - import them now.
@@ -363,7 +373,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
                     created_at as createdAt, last_refreshed_at as lastRefreshedAt,
                     refresh_interval_hours as refreshIntervalHours,
                     include_live as includeLive, include_movies as includeMovies, include_series as includeSeries
-             FROM sources`,
+             FROM sources ORDER BY sort_order IS NULL, sort_order, created_at`,
           )
           .all() as {
           includeLive: number;
@@ -572,6 +582,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         return source;
       },
 
+      async move(sourceId, direction) {
+        moveSource(db, sourceId, direction === "up" ? -1 : 1);
+      },
       async refresh(sourceId) {
         return refreshSource(sourceId);
       },

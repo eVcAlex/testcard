@@ -17,10 +17,12 @@ export const XtreamCredentialsPayloadSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
   content: SourceContentSchema.optional(),
+  position: z.number().int().optional(),
 });
 export const PlaylistPayloadSchema = z.object({
   playlistUrl: z.string().min(1),
   content: SourceContentSchema.optional(),
+  position: z.number().int().optional(),
 });
 export const SourceCredentialsPayloadSchema = z.union([XtreamCredentialsPayloadSchema, PlaylistPayloadSchema]);
 export type SourceCredentialsPayload = z.infer<typeof SourceCredentialsPayloadSchema>;

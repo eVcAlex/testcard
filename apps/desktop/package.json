@@ -1,7 +1,7 @@
 {
   "name": "@testcard/desktop",
   "productName": "Testcard",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Testcard",
   "author": "Alex McGuiness",

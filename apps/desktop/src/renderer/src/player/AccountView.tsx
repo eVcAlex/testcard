@@ -259,10 +259,12 @@ function SourcesPanel() {
         />
       ) : (
         <ul className="pw-src-list">
-          {list.map((source) => (
+          {list.map((source, index) => (
             <SourceCard
               key={source.id}
               source={source}
+              canMoveUp={index > 0}
+              canMoveDown={index < list.length - 1}
               onEdit={() => setPane({ mode: "edit", section: "connection", source })}
               onSettings={() => setPane({ mode: "edit", section: "settings", source })}
             />

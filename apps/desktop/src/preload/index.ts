@@ -32,6 +32,7 @@ const api: TestcardApi = {
     login: bind("sources.login"),
     add: bind("sources.add"),
     update: bind("sources.update"),
+    move: bind("sources.move"),
     refresh: bind("sources.refresh"),
     remove: bind("sources.remove"),
   },

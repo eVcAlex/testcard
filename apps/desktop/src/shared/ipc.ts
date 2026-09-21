@@ -252,6 +252,8 @@ export interface TestcardApi {
     add(input: AddSourceInput): Promise<Source>;
     /** Edits a source in place — same id, so favourites/recents survive. Kind cannot change. */
     update(sourceId: string, patch: UpdateSourceInput): Promise<Source>;
+    /** Moves a source one place up or down the list. The order is kept on every device signed in to the account. */
+    move(sourceId: string, direction: "up" | "down"): Promise<void>;
     refresh(sourceId: string): Promise<RefreshResult>;
     /** Deletes a source, its credentials, and any favourites/recents left orphaned by it. */
     remove(sourceId: string): Promise<void>;

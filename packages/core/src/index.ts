@@ -33,4 +33,5 @@ export * from "./sync/credentialCrypto.js";
 export * from "./sync/client.js";
 export * from "./sync/localChanges.js";
 export * from "./sync/sourceRemoval.js";
+export * from "./sync/sourceOrder.js";
 export * from "./sync/syncController.js";

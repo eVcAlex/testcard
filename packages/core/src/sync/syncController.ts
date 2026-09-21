@@ -4,6 +4,7 @@ import { generateSalt } from "./credentialCrypto.js";
 import { SyncClient } from "./client.js";
 import { removeSourceRows } from "./sourceRemoval.js";
 import { applySourceContent } from "./sourceContent.js";
+import { applySourcePosition } from "./sourceOrder.js";
 import { applyRemoteChanges, clearTombstones, collectLocalChanges, getSyncState, setSyncState } from "./localChanges.js";
 
 export type SyncAccountStatus = "signed-out" | "signed-in" | "needs-password";
@@ -300,19 +301,23 @@ export class SyncController {
             this.db.prepare(`UPDATE sources SET name = ?, base_url = ?, sync_updated_at = ? WHERE id = ?`).run(label, payload.host, updatedAt, existing.id);
           }
           if (payload.content !== undefined && applySourceContent(this.db, existing.id, payload.content)) addedSourceIds.push(existing.id);
+          if (payload.position !== undefined) applySourcePosition(this.db, existing.id, payload.position);
           return;
         }
         const id = this.platform.randomId();
         if ("playlistUrl" in payload) {
           this.db
-            .prepare(`INSERT INTO sources (id, kind, name, playlist_url, created_at, remote_key) VALUES (?, 'm3u', ?, ?, ?, ?)`)
-            .run(id, label, payload.playlistUrl, Date.now(), remoteKey);
+            .prepare(`INSERT INTO sources (id, kind, name, playlist_url, created_at, remote_key, sync_updated_at) VALUES (?, 'm3u', ?, ?, ?, ?, ?)`)
+            .run(id, label, payload.playlistUrl, Date.now(), remoteKey, updatedAt);
         } else {
           await this.platform.saveCredentials(id, { baseUrl: payload.host, username: payload.username, password: payload.password });
           this.db
-            .prepare(`INSERT INTO sources (id, kind, name, base_url, created_at, remote_key) VALUES (?, 'xtream', ?, ?, ?, ?)`)
-            .run(id, label, payload.host, Date.now(), remoteKey);
+            .prepare(`INSERT INTO sources (id, kind, name, base_url, created_at, remote_key, sync_updated_at) VALUES (?, 'xtream', ?, ?, ?, ?, ?)`)
+            .run(id, label, payload.host, Date.now(), remoteKey, updatedAt);
         }
+        // Taken with the source's own clock, so this device does not push it back as if it had just edited it.
+        if (payload.content !== undefined) applySourceContent(this.db, id, payload.content);
+        if (payload.position !== undefined) applySourcePosition(this.db, id, payload.position);
         addedSourceIds.push(id);
       }, async (remoteKey, deletedAt) => {
         const existing = this.db.prepare(`SELECT id, sync_updated_at AS updatedAt FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string; updatedAt: number | null } | undefined;

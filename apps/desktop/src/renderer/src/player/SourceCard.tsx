@@ -14,10 +14,14 @@ export function SourceCard({
   source,
   onEdit,
   onSettings,
+  canMoveUp,
+  canMoveDown,
 }: {
   source: SourceListItem;
   onEdit: () => void;
   onSettings: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 }) {
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -101,6 +105,13 @@ export function SourceCard({
     wasRefreshing.current = now;
   }, [source.refreshing, queryClient]);
 
+  const move = useMutation({
+    mutationFn: (direction: "up" | "down") => window.testcard.sources.move(source.id, direction),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["sources"] });
+    },
+  });
+
   const remove = useMutation({
     mutationFn: () => window.testcard.sources.remove(source.id),
     onSuccess: () => {
@@ -157,6 +168,30 @@ export function SourceCard({
         </button>
         {menuOpen && (
           <div className="pw-source-menu-pop" role="menu">
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!canMoveUp || move.isPending}
+              onClick={() => {
+                setMenuOpen(false);
+                move.mutate("up");
+              }}
+            >
+              <Icon name="arrow-up" />
+              Move up
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!canMoveDown || move.isPending}
+              onClick={() => {
+                setMenuOpen(false);
+                move.mutate("down");
+              }}
+            >
+              <Icon name="arrow-down" />
+              Move down
+            </button>
             <button
               type="button"
               role="menuitem"
