@@ -1,19 +1,19 @@
 import { Dimensions, Platform, StyleSheet } from "react-native";
 
-/** The desktop "Mist" palette (apps/desktop/src/renderer/src/styles/tokens.css), dark only, sized for a TV. */
+/** Dark only, sized for a TV. Neutrals are the desktop "Mist" palette nudged warm; the accent is cream. */
 export const colors = {
-  background: "#0c0e11",
-  sunken: "#080a0c",
-  raised: "#14171b",
-  card: "#171b20",
-  cardActive: "#20262c",
-  border: "#1e2329",
-  foreground: "#eef1f3",
-  muted: "#949ca4",
-  faint: "#69727a",
-  accent: "#4fb3a6",
-  accentInk: "#06211e",
-  accentSoft: "#4fb3a626",
+  background: "#0a0d11",
+  sunken: "#07090c",
+  raised: "#12161b",
+  card: "#171c22",
+  cardActive: "#232a32",
+  border: "#252c34",
+  foreground: "#f2eee7",
+  muted: "#a4a9af",
+  faint: "#737a82",
+  accent: "#e7d2ad",
+  accentInk: "#1d160a",
+  accentSoft: "#e7d2ad26",
   fault: "#f0745c",
   live: "#e8402a",
 } as const;

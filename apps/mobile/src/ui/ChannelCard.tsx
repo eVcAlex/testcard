@@ -85,7 +85,7 @@ const styles = styleSheet({
   card: { width: CARD_WIDTH, gap: 10, padding: 4 },
   cardFocused: { borderColor: "transparent" },
   art: { width: "100%", aspectRatio: 16 / 9, borderWidth: 3, borderColor: "transparent", borderRadius: 12, backgroundColor: colors.raised, overflow: "hidden", alignItems: "center", justifyContent: "center", padding: 12 },
-  artFocused: { borderColor: colors.foreground },
+  artFocused: { borderColor: colors.accent },
   logo: { width: "100%", height: "100%" },
   fallback: { color: colors.muted, fontSize: 22, textAlign: "center" },
   number: { position: "absolute", right: 8, top: 8, paddingHorizontal: 10, paddingVertical: 2, borderRadius: 6, backgroundColor: "#000000b3" },

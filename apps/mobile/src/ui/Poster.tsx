@@ -115,7 +115,7 @@ const styles = styleSheet({
   card: { width: POSTER_WIDTH, gap: 10, padding: 4 },
   cardGrid: { flex: 1, gap: 10, padding: 4 },
   cardFocused: { borderColor: "transparent" },
-  artFocused: { borderColor: colors.foreground },
+  artFocused: { borderColor: colors.accent },
   art: { width: "100%", aspectRatio: 2 / 3, borderWidth: 3, borderColor: "transparent", borderRadius: 12, backgroundColor: colors.raised, overflow: "hidden", justifyContent: "center" },
   image: { width: "100%", height: "100%" },
   fallback: { color: colors.muted, fontSize: type.small, padding: space.m, textAlign: "center" },

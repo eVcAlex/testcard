@@ -42,5 +42,5 @@ export function Focusable({
 
 const styles = styleSheet({
   base: { borderWidth: 3, borderColor: "transparent", borderRadius: 16 },
-  focused: { borderColor: colors.foreground, transform: [{ scale: 1.05 }] },
+  focused: { borderColor: colors.accent, transform: [{ scale: 1.05 }] },
 });
