@@ -135,14 +135,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     bump();
   }, [sync, bump]);
 
-  // Poll the sync status; when a sync has landed (new favourites, progress, sources), re-query.
-  const lastSyncedAt = useRef<number | undefined>(undefined);
+  // Poll the sync status; when a sync has brought something in (new favourites, progress, sources), re-query.
+  // A sync that found nothing new leaves the screens alone, so they are not rebuilt every minute for no reason.
+  const lastChangedAt = useRef<number | undefined>(undefined);
   useEffect(() => {
     const timer = setInterval(() => {
       const next = sync.status();
       setStatus(next);
-      if (next.lastSyncedAt !== lastSyncedAt.current) {
-        lastSyncedAt.current = next.lastSyncedAt;
+      if (next.lastChangedAt !== lastChangedAt.current) {
+        lastChangedAt.current = next.lastChangedAt;
         bump();
       }
     }, 4000);

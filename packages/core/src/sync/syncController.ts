@@ -13,6 +13,8 @@ export interface SyncStatus {
   readonly account: SyncAccountStatus;
   readonly email?: string;
   readonly lastSyncedAt?: number;
+  /** When a sync last brought in anything new from the account. Screens re-read their data on this, not on every sync. */
+  readonly lastChangedAt?: number;
   readonly lastError?: string;
 }
 
@@ -89,6 +91,7 @@ export class SyncController {
   // Wall-clock time of the last successful sync run. Not `sync_state.last_pulled_at`: that's the
   // newest *data* timestamp pulled, so it stays put whenever there's nothing new to pull.
   private lastSyncedAt: number | undefined;
+  private lastChangedAt: number | undefined;
   private running: Promise<void> | undefined;
   private rerunRequested = false;
   private changeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -140,6 +143,7 @@ export class SyncController {
       account: "signed-in",
       email: row.account_email,
       ...(this.lastSyncedAt !== undefined ? { lastSyncedAt: this.lastSyncedAt } : {}),
+      ...(this.lastChangedAt !== undefined ? { lastChangedAt: this.lastChangedAt } : {}),
       ...(this.lastError !== undefined ? { lastError: this.lastError } : {}),
     };
   }
@@ -190,6 +194,7 @@ export class SyncController {
     this.accountPassword = undefined;
     this.salt = undefined;
     this.lastSyncedAt = undefined;
+    this.lastChangedAt = undefined;
     this.platform.clearAccountPassword();
     if (this.changeTimer) clearTimeout(this.changeTimer);
     this.changeTimer = undefined;
@@ -333,6 +338,7 @@ export class SyncController {
       if (reread) this.db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('sync_source_edits_reread', '1')`).run();
       this.lastSyncedAt = Date.now();
       this.lastError = undefined;
+      if (pull.sources.length + pull.movieFavourites.length + pull.movieRecents.length + pull.seriesFavourites.length + pull.seriesRecents.length + pull.progress.length > 0) this.lastChangedAt = Date.now();
       if (addedSourceIds.length > 0) this.onSourcesAdded(addedSourceIds);
     } catch (error) {
       if (allowReauth && (error as { status?: number }).status === 401) {
