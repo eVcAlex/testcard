@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Keyboard, Text, View } from "react-native";
+import { BackHandler, Keyboard, Text, View } from "react-native";
 import { useApp } from "../state/app";
 import { colors, space, type, styleSheet } from "../theme";
 import { Button, Field, Heading, Muted } from "../ui/controls";
@@ -24,6 +24,16 @@ export function SignInScreen() {
     };
   }, []);
   const [error, setError] = useState<string | undefined>(status.lastError);
+  // Sign up sits next to Sign in and makes a new account, so it asks first. Back answers "no".
+  const [confirmingSignUp, setConfirmingSignUp] = useState(false);
+  useEffect(() => {
+    if (!confirmingSignUp) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      setConfirmingSignUp(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [confirmingSignUp]);
 
   async function submit(mode: "signIn" | "signUp") {
     Keyboard.dismiss();
@@ -38,6 +48,37 @@ export function SignInScreen() {
       setBusy(undefined);
       updateStatus();
     }
+  }
+
+  if (confirmingSignUp) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.panel}>
+          <Text style={styles.brand}>
+            TEST<Text style={styles.brandAccent}>CARD</Text>
+          </Text>
+          <Heading>Create a new account?</Heading>
+          <Muted>
+            This makes a brand new Testcard account with no sources. If you already use Testcard on your computer, go back and choose Sign in with that account.
+          </Muted>
+          <View style={styles.actions}>
+            <Button
+              primary
+              preferred
+              label="Go back"
+              onPress={() => setConfirmingSignUp(false)}
+            />
+            <Button
+              label="Create account"
+              onPress={() => {
+                setConfirmingSignUp(false);
+                void submit("signUp");
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -74,7 +115,7 @@ export function SignInScreen() {
           <Button
             label={busy === "signUp" ? "Working..." : "Sign up"}
             disabled={busy !== undefined || email.trim() === "" || password === ""}
-            onPress={() => void submit("signUp")}
+            onPress={() => setConfirmingSignUp(true)}
           />
           <Button
             primary
