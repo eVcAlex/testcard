@@ -141,7 +141,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const timer = setInterval(() => {
       const next = sync.status();
-      setStatus(next);
+      // A new object every few seconds would re-render every screen that reads the app state; only a real change does.
+      setStatus((previous) =>
+        previous.account === next.account && previous.email === next.email && previous.lastSyncedAt === next.lastSyncedAt && previous.lastChangedAt === next.lastChangedAt && previous.lastError === next.lastError ? previous : next,
+      );
       if (next.lastChangedAt !== lastChangedAt.current) {
         lastChangedAt.current = next.lastChangedAt;
         bump();

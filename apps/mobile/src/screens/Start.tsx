@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { browseChannels, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite } from "@testcard/core/src/db/queries.js";
 import { listHomePins } from "@testcard/core/src/sync/sourcePins.js";
+import { listWatchedLately } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { browseMovies, listFavouriteMovies, listRecentMovies, getMovieById, getMoviePlaybackTarget, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
 import { browseSeries, listFavouriteSeries, listRecentSeries, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
@@ -56,29 +57,38 @@ export function StartScreen({
     if (movieShelves === null || seriesShelves === null) return null;
     const asMovie = (movie: Parameters<typeof homeMovie>[0]) => tag("movie", homeMovie(movie));
     const asSeries = (series: Parameters<typeof homeSeries>[0]) => tag("series", homeSeries(series));
-    const continuing = listRecentMovies(db, 60).filter((movie) => movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs));
-    const recentSeries = listRecentSeries(db, 20);
+    // One row for what you were last watching, films and shows together, the most recent first: films only while unfinished.
+    const recentMovies = new Map(listRecentMovies(db, 60).map((movie) => [movie.id, movie]));
+    const recentSeries = new Map(listRecentSeries(db, 60).map((show) => [show.id, show]));
+    const continuing: HomeItem[] = [];
+    for (const entry of listWatchedLately(db, 60)) {
+      if (entry.kind === "movie") {
+        const movie = recentMovies.get(entry.id);
+        if (movie !== undefined && movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs)) continuing.push(asMovie(movie));
+      } else {
+        const show = recentSeries.get(entry.id);
+        if (show !== undefined) continuing.push(asSeries(show));
+      }
+    }
     const recentChannels = listRecentChannels(db, 30);
     recentChannelIds.current = new Set(recentChannels.map((channel) => channel.id));
     const myList = [...listFavouriteMovies(db).map(asMovie), ...listFavouriteSeries(db).map(asSeries)].slice(0, 30);
     const favouriteChannels = listFavouriteChannels(db).slice(0, 30);
     const list: HomeRow[] = [];
-    const add = (key: string, label: string, items: readonly HomeItem[], channels = false) => {
-      if (items.length > 0) list.push({ key, label, items, ...(channels ? { channels: true } : {}) });
+    const add = (key: string, label: string, items: readonly HomeItem[], channels = false, pinned = false) => {
+      if (items.length > 0) list.push({ key, label, items, ...(channels ? { channels: true } : {}), ...(pinned ? { pinned: true } : {}) });
     };
-    add("continue", "Continue watching", continuing.map(asMovie));
-    add("recent-series", "Recently watched series", recentSeries.map(asSeries));
+    add("continue", "Continue watching", continuing.slice(0, 30));
     add("recent-channels", "Recently watched channels", recentChannels.map((channel) => tag("channel", toHomeItem(channel))), true);
     add("my-list", "My list", myList);
     add("favourite-channels", "Favourite channels", favouriteChannels.map((channel) => tag("channel", toHomeItem(channel))), true);
-    add("sports-channels", "Sports channels", browseChannels(db, { genre: "sports", limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true);
     // Categories pinned from Browse all, in the order they were pinned. A pin whose category is not here yet (a fresh import) waits.
     for (const pin of listHomePins(db)) {
       if (pin.categoryId === null) continue;
       const key = `pin:${pin.sourceId}:${pin.kind}:${pin.key}`;
-      if (pin.kind === "live") add(key, pin.label, browseChannels(db, { categoryId: pin.categoryId, limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true);
-      else if (pin.kind === "movies") add(key, pin.label, browseMovies(db, { categoryId: pin.categoryId, limit: 30 }).map(asMovie));
-      else add(key, pin.label, browseSeries(db, { categoryId: pin.categoryId, limit: 30 }).map(asSeries));
+      if (pin.kind === "live") add(key, pin.label, browseChannels(db, { categoryId: pin.categoryId, limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true, true);
+      else if (pin.kind === "movies") add(key, pin.label, browseMovies(db, { categoryId: pin.categoryId, limit: 30 }).map(asMovie), false, true);
+      else add(key, pin.label, browseSeries(db, { categoryId: pin.categoryId, limit: 30 }).map(asSeries), false, true);
     }
     const newMovies = movieShelves.find((shelf) => shelf.key === "new");
     if (newMovies !== undefined) list.push({ ...shelfRow(newMovies, asMovie), key: "new-movies", label: "New movies" });

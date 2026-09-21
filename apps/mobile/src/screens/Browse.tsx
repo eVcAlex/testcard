@@ -179,6 +179,12 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
   const shownEntry = shown !== undefined ? byId.get(shown.id) : undefined;
   // A real category (not Continue watching, My list or a genre) can be pinned to Home.
   const [, setPinTick] = useState(0);
+  const [pinNote, setPinNote] = useState<string>();
+  useEffect(() => {
+    if (pinNote === undefined) return;
+    const timer = setTimeout(() => setPinNote(undefined), 3000);
+    return () => clearTimeout(timer);
+  }, [pinNote]);
   const pinnable = source.pinning !== undefined && shownEntry?.kind === "row" && shownEntry.selection.kind === "category" ? { id: shownEntry.selection.key, label: shownEntry.label } : undefined;
   const pinned = pinnable !== undefined && source.pinning !== undefined && source.pinning.isPinned(pinnable.id);
 
@@ -285,11 +291,13 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
                 style={styles.pin}
                 onPress={() => {
                   source.pinning?.toggle(pinnable.id, pinnable.label);
+                  setPinNote(pinned ? "Removed from your Home page" : "Added to your Home page");
                   setPinTick((value) => value + 1);
                 }}
               >
-                {({ focused }) => <Text style={[styles.pinText, focused && styles.pinTextFocused]}>{pinned ? "Remove from Home" : "Pin to Home"}</Text>}
+                {({ focused }) => <Text style={[styles.pinText, pinned && styles.pinTextOn, focused && styles.pinTextFocused]}>{pinned ? "Pinned to Home. Press to remove" : "Pin to Home"}</Text>}
               </Focusable>
+              {pinNote !== undefined ? <Text style={styles.pinNote}>{pinNote}</Text> : null}
             </View>
           ) : null}
           {guideOf !== undefined && preview !== undefined ? <OnNow hero={pills} item={preview} loaded={guides.has(preview.id)} guide={guides.get(preview.id)?.guide ?? null} /> : null}
@@ -447,6 +455,8 @@ const styles = styleSheet({
   paneCount: { color: colors.faint, fontSize: 24 },
   pinRow: { flexDirection: "row", paddingHorizontal: 8, paddingBottom: 16, marginTop: -10 },
   pin: { paddingHorizontal: 22, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.card },
+  pinNote: { color: colors.accent, fontSize: 24, marginLeft: 20, alignSelf: "center" },
+  pinTextOn: { color: colors.accent },
   pinText: { color: colors.muted, fontSize: 24 },
   pinTextFocused: { color: colors.foreground },
   onNow: { flexDirection: "row", alignItems: "center", gap: 24, marginHorizontal: 8, marginBottom: 22, padding: 20, borderRadius: 20, backgroundColor: "#ffffff0d" },

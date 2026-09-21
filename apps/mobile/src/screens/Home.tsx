@@ -27,6 +27,8 @@ export interface HomeRow {
   readonly ranked?: boolean;
   /** Landscape logo cards instead of posters (Live TV). */
   readonly channels?: boolean;
+  /** A category the viewer pinned to Home: the row says so. */
+  readonly pinned?: boolean;
 }
 
 /** What the hero's buttons do for the highlighted title. */
@@ -118,11 +120,11 @@ export function HomeScreen({
         onFocusItem(item);
       };
       return row.channels === true ? (
-        <ChannelShelf title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} />
+        <ChannelShelf title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} pinned={row.pinned === true} />
       ) : row.ranked === true ? (
         <RankedRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} />
       ) : (
-        <PosterRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} />
+        <PosterRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} pinned={row.pinned === true} />
       );
     },
     [onSelect, onFocusItem, alignRow],

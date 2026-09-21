@@ -3,6 +3,7 @@ import { FlatList, Image, Text, View } from "react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, space, type, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
+import { PinBadge } from "./PinBadge";
 
 export interface PosterItem {
   readonly id: string;
@@ -84,16 +85,21 @@ export const PosterRow = memo(function PosterRow({
   items,
   onPress,
   onFocusItem,
+  pinned = false,
 }: {
   title: string;
   items: readonly PosterItem[];
   onPress: (item: PosterItem) => void;
   onFocusItem?: (item: PosterItem) => void;
+  pinned?: boolean;
 }) {
   if (items.length === 0) return null;
   return (
     <View style={styles.row}>
-      <Text style={styles.rowTitle}>{title}</Text>
+      <View style={styles.rowHead}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        {pinned ? <PinBadge /> : null}
+      </View>
       <FlatList
         horizontal
         data={items}
@@ -110,6 +116,7 @@ export const PosterRow = memo(function PosterRow({
 
 const styles = styleSheet({
   row: { gap: space.m, marginBottom: space.l },
+  rowHead: { flexDirection: "row", alignItems: "center", gap: 16 },
   rowTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600", letterSpacing: -0.3, paddingLeft: space.s },
   rowList: { gap: space.m, paddingVertical: space.s, paddingHorizontal: space.s },
   card: { width: POSTER_WIDTH, gap: 10, padding: 4 },

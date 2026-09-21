@@ -134,3 +134,22 @@ export function movieHome(db: Database.Database, opts: HomeOptions = {}): HomeSh
 export function seriesHome(db: Database.Database, opts: HomeOptions = {}): HomeShelf<SeriesRow>[] {
   return build<SeriesRow>(db, SERIES, opts);
 }
+
+export interface ContinueEntry {
+  readonly kind: "movie" | "series";
+  readonly id: string;
+  readonly playedAt: number;
+}
+
+/** Everything watched lately, films and shows together, the most recent first. */
+export function listWatchedLately(db: Database.Database, limit = 60): ContinueEntry[] {
+  return db
+    .prepare(
+      `SELECT kind, id, playedAt FROM (
+         SELECT 'movie' AS kind, r.movie_id AS id, r.played_at AS playedAt FROM movie_recents r JOIN movies m ON m.id = r.movie_id
+         UNION ALL
+         SELECT 'series' AS kind, r.series_id AS id, r.played_at AS playedAt FROM series_recents r JOIN series s ON s.id = r.series_id
+       ) ORDER BY playedAt DESC LIMIT ?`,
+    )
+    .all(limit) as ContinueEntry[];
+}

@@ -89,7 +89,9 @@ export function SourcesScreen() {
         </View>
         {sources.length === 0 && <Muted>No sources have arrived yet. Sync runs every minute, or press Sync now.</Muted>}
         <View style={styles.grid}>
-        {sources.map((source) => (
+        {pairsOf(sources).map((pair, pairIndex) => (
+        <View key={pairIndex} style={styles.pairRow}>
+        {pair.map((source) => (
           <View key={source.id} style={styles.card}>
             <View style={styles.cardHead}>
             <View style={styles.avatar}>
@@ -122,6 +124,9 @@ export function SourcesScreen() {
             </View>
           </View>
         ))}
+        {pair.length === 1 ? <View style={styles.pairSpacer} /> : null}
+        </View>
+        ))}
         </View>
       </View>
 
@@ -149,6 +154,13 @@ export function SourcesScreen() {
   );
 }
 
+/** Two to a row, so every card has exactly the width of the panels above and the columns line up. */
+function pairsOf<T>(items: readonly T[]): T[][] {
+  const rows: T[][] = [];
+  for (let index = 0; index < items.length; index += 2) rows.push(items.slice(index, index + 2));
+  return rows;
+}
+
 /** Only the kinds of content a source actually has: a live-only provider does not say "0 movies". */
 function counts(channels: number, movies: number, series: number): string {
   const parts = [
@@ -164,13 +176,15 @@ const styles = styleSheet({
   main: { gap: space.l },
   // Updates and account side by side, then the sources in a grid of the same card size.
   panels: { flexDirection: "row", gap: space.l },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: space.l },
-  card: { width: "48.5%", gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
+  grid: { gap: space.l },
+  pairRow: { flexDirection: "row", gap: space.l },
+  pairSpacer: { flex: 1 },
+  card: { flex: 1, gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
   avatar: { width: 84, height: 84, borderRadius: 20, backgroundColor: colors.cardActive, alignItems: "center", justifyContent: "center" },
   avatarText: { color: colors.accent, fontSize: 34, fontWeight: "600" },
   cardHead: { flexDirection: "row", alignItems: "center", gap: space.l },
   cardText: { flex: 1, gap: 4 },
-  panel: { width: "48.5%", gap: space.m, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
+  panel: { flex: 1, gap: space.m, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
   name: { color: colors.foreground, fontSize: type.lead, fontWeight: "600" },
   kind: { color: colors.faint, fontSize: type.small, fontWeight: "400" },
   meta: { color: colors.muted, fontSize: type.body },

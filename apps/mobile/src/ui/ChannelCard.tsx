@@ -2,6 +2,7 @@ import { memo } from "react";
 import { FlatList, Image, Text, View } from "react-native";
 import { colors, space, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
+import { PinBadge } from "./PinBadge";
 import type { PosterItem } from "./Poster";
 
 /** A channel on a landing row: its logo on a panel, its name beneath. Sits beside the poster cards, drawn the same way. */
@@ -54,16 +55,21 @@ export const ChannelShelf = memo(function ChannelShelf({
   items,
   onPress,
   onFocusItem,
+  pinned = false,
 }: {
   title: string;
   items: readonly ChannelItem[];
   onPress: (item: ChannelItem) => void;
   onFocusItem?: ((item: ChannelItem) => void) | undefined;
+  pinned?: boolean;
 }) {
   if (items.length === 0) return null;
   return (
     <View style={styles.row}>
-      <Text style={styles.rowTitle}>{title}</Text>
+      <View style={styles.rowHead}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        {pinned ? <PinBadge /> : null}
+      </View>
       <FlatList
         horizontal
         data={items}
@@ -80,6 +86,7 @@ export const ChannelShelf = memo(function ChannelShelf({
 
 const styles = styleSheet({
   row: { gap: space.m, marginBottom: space.l },
+  rowHead: { flexDirection: "row", alignItems: "center", gap: 16 },
   rowTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600", letterSpacing: -0.3, paddingLeft: space.s },
   rowList: { gap: space.m, paddingVertical: space.s, paddingHorizontal: space.s },
   card: { width: CARD_WIDTH, gap: 10, padding: 4 },
