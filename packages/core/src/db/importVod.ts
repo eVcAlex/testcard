@@ -1,3 +1,4 @@
+import { applyInSlices } from "./applyInSlices.js";
 import { categoryClassificationParams } from "./categoryClassification.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
@@ -70,8 +71,11 @@ export async function importVod(
   }
 
   let movieCount = 0;
-  const applyAll = db.transaction(() => {
-    for (const page of pages) {
+  await applyInSlices(
+    db,
+    pages,
+    (page) => page.movies.length,
+    (page) => {
       upsertCategory.run(categoryParams(page.category));
       for (const movie of page.movies) {
         upsertMovie.run({
@@ -89,12 +93,11 @@ export async function importVod(
         });
         movieCount += 1;
       }
-    }
-  });
+    },
+  );
 
   // Not deleting movies absent from this refresh — same rationale as importSource.ts:
   // last_seen_at records presence without ever silently dropping a favourite.
-  applyAll();
 
   return { categories: categories.length, movies: movieCount, durationMs: Date.now() - startedAt };
 }

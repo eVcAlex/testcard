@@ -7,6 +7,7 @@ import { createM3UAdapter } from "@testcard/core/src/source/m3u/adapter.js";
 import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js";
 import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
+import { describeSetup, type ImportProgress, type ImportStage, type SetupProgress } from "./setup";
 
 export interface SourceSummary {
   readonly id: string;
@@ -27,6 +28,8 @@ interface AppState {
   /** Bumps whenever stored data may have changed (sync applied, a source imported), so screens re-query. */
   readonly version: number;
   readonly sources: readonly SourceSummary[];
+  /** Set while this device is fetching its data for the first time or refreshing a source: the app waits on it. */
+  readonly setup: SetupProgress | null;
   refreshSource(sourceId: string): Promise<void>;
   /** Takes a source off this device and, through sync, off the user's others. */
   removeSource(sourceId: string): Promise<void>;
@@ -49,6 +52,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [version, setVersion] = useState(0);
   const [refreshing, setRefreshing] = useState<ReadonlySet<string>>(new Set());
+  const [progress, setProgress] = useState<ReadonlyMap<string, ImportProgress>>(new Map());
+  const stage = useCallback((sourceId: string, at: ImportStage) => {
+    setProgress((current) => {
+      const entry = current.get(sourceId);
+      return entry === undefined || entry.at === at ? current : new Map(current).set(sourceId, { ...entry, at });
+    });
+  }, []);
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const bump = useCallback(() => setVersion((current) => current + 1), []);
 
@@ -67,15 +77,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .get(sourceId) as unknown as CatalogueSource | undefined;
       if (row === undefined) return;
       inFlight.current.add(sourceId);
+      const wants = { live: row.includeLive !== 0, movies: row.includeMovies !== 0, series: row.includeSeries !== 0 };
+      setProgress((current) => new Map(current).set(sourceId, { name: row.name, wants, at: wants.live ? "live" : wants.movies ? "movies" : wants.series ? "series" : "saving" }));
       setRefreshing((current) => new Set(current).add(sourceId));
       setErrors(({ [sourceId]: _cleared, ...rest }) => rest);
       try {
-        await importCatalogue(db, row, adapters());
+        await importCatalogue(db, row, adapters(), {
+          live: ({ phase }) => {
+            if (phase === "done") stage(sourceId, wants.movies ? "movies" : wants.series ? "series" : "saving");
+          },
+          vod: ({ phase }) => stage(sourceId, phase === "fetching" ? "movies" : wants.series ? "series" : "saving"),
+          series: ({ phase }) => stage(sourceId, phase === "fetching" ? "series" : "saving"),
+        });
       } catch (error) {
         const message = error instanceof Error ? error.message : "The import failed.";
         setErrors((current) => ({ ...current, [sourceId]: message }));
       } finally {
         inFlight.current.delete(sourceId);
+        setProgress((current) => {
+          const next = new Map(current);
+          next.delete(sourceId);
+          return next;
+        });
         setRefreshing((current) => {
           const next = new Set(current);
           next.delete(sourceId);
@@ -84,7 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         bump();
       }
     },
-    [db, bump],
+    [db, bump, stage],
   );
 
   const syncRef = useRef<SyncController | undefined>(undefined);
@@ -144,9 +167,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [db, version, refreshing, errors]);
 
+  // A signed-in device with no sources has not had its first sync yet, unless that sync already failed or finished.
+  const firstSync = status.account === "signed-in" && sources.length === 0 && status.lastSyncedAt === undefined && status.lastError === undefined;
+  const setup = useMemo(() => describeSetup({ firstSync, imports: [...progress.values()] }), [firstSync, progress]);
+
   const value = useMemo<AppState>(
-    () => ({ db, sync, status, version, sources, refreshSource, removeSource, updateStatus }),
-    [db, sync, status, version, sources, refreshSource, removeSource, updateStatus],
+    () => ({ db, sync, status, version, sources, setup, refreshSource, removeSource, updateStatus }),
+    [db, sync, status, version, sources, setup, refreshSource, removeSource, updateStatus],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

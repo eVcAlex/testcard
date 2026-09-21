@@ -22,6 +22,7 @@ export interface CatalogueDeps {
 
 /** Progress a caller may surface; movies and series are best-effort, so their failures arrive here, not as throws. */
 export interface CatalogueEvents {
+  live?(event: { phase: "fetching" | "done" }): void;
   vod?(event: { phase: "fetching" | "done" | "error"; movies?: number; message?: string }): void;
   series?(event: { phase: "fetching" | "done" | "error"; series?: number; message?: string }): void;
 }
@@ -52,6 +53,7 @@ export async function importCatalogue(
 ): Promise<CatalogueResult> {
   let playlist: M3UPlaylist | undefined;
   let live: typeof NO_LIVE;
+  if (row.includeLive !== 0) events.live?.({ phase: "fetching" });
 
   if (row.kind === "m3u") {
     const loaded = await deps.m3uAdapter.loadPlaylist(row);
@@ -68,10 +70,12 @@ export async function importCatalogue(
     live = row.includeLive === 0 ? NO_LIVE : await importSource(db, row, deps.xtreamAdapter);
   }
 
+  if (row.includeLive !== 0) events.live?.({ phase: "done" });
   let movies: number | undefined;
   let series: number | undefined;
 
   if (playlist !== undefined) {
+    events.vod?.({ phase: "fetching" });
     const imported = await importM3UVod(db, row, playlist.vod, {
       movies: row.includeMovies !== 0,
       series: row.includeSeries !== 0,

@@ -1,4 +1,5 @@
 import { categoryClassificationParams } from "./categoryClassification.js";
+import { applyInSlices } from "./applyInSlices.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
 import { remoteKeyFor } from "../sync/remoteKey.js";
@@ -66,8 +67,11 @@ export async function importSeries(
   }
 
   let seriesCount = 0;
-  const applyAll = db.transaction(() => {
-    for (const page of pages) {
+  await applyInSlices(
+    db,
+    pages,
+    (page) => page.series.length,
+    (page) => {
       upsertCategory.run(categoryParams(page.category));
       for (const series of page.series) {
         upsertSeries.run({
@@ -85,10 +89,8 @@ export async function importSeries(
         });
         seriesCount += 1;
       }
-    }
-  });
-
-  applyAll();
+    },
+  );
 
   return { categories: categories.length, series: seriesCount, durationMs: Date.now() - startedAt };
 }

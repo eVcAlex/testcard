@@ -9,6 +9,7 @@ import { AppProvider, useApp } from "./src/state/app";
 import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
 import { colors, space, type, styleSheet } from "./src/theme";
 import { NavTab } from "./src/ui/NavTab";
+import { SetupOverlay } from "./src/ui/SetupOverlay";
 import { SourceNames } from "./src/ui/Poster";
 import { MoviesScreen, SeriesScreen } from "./src/screens/Catalogue";
 import { LiveScreen } from "./src/screens/Live";
@@ -56,7 +57,7 @@ export default function App() {
 }
 
 function Root() {
-  const { status, sources, db, version } = useApp();
+  const { status, sources, db, version, setup } = useApp();
   const { available } = useUpdate();
   const [section, setSection] = useState<Section>("home");
   const [route, setRoute] = useState<Route>({ name: "home" });
@@ -165,6 +166,9 @@ function Root() {
       />
     );
   }
+
+  // First sync or a refresh: nothing else is drawn, so there is nothing to navigate to until it finishes.
+  if (setup !== null) return <SetupOverlay setup={setup} hint={exitHint ? "Press back again to exit" : null} />;
 
   return (
     <SourceNames.Provider value={sourceNames}>

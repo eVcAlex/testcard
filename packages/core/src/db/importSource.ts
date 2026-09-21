@@ -1,3 +1,4 @@
+import { applyInSlices } from "./applyInSlices.js";
 import { categoryClassificationParams } from "./categoryClassification.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
@@ -73,8 +74,11 @@ export async function importSource(
   const pages: { category: Category; channels: readonly Channel[] }[] = [];
   for await (const page of adapter.importAll(source)) pages.push(page);
 
-  const applyAll = db.transaction(() => {
-    for (const page of pages) {
+  await applyInSlices(
+    db,
+    pages,
+    (page) => page.channels.length * 2,
+    (page) => {
       upsertCategory.run(categoryParams(page.category));
       categoryCount += 1;
 
@@ -102,18 +106,15 @@ export async function importSource(
           variantCount += 1;
         });
       }
-    }
-
-    db.prepare(`UPDATE sources SET last_refreshed_at = ? WHERE id = ?`).run(now, source.id);
-  });
+    },
+  );
+  db.prepare(`UPDATE sources SET last_refreshed_at = ? WHERE id = ?`).run(now, source.id);
 
   // Deliberately not deleting channels absent from this refresh: `last_seen_at` records
   // when each channel was last confirmed present, and a UI can use it to grey out or hide
   // stale entries — but never auto-deletes, so a favourite briefly missing from one refresh
   // (or a provider category that vanishes and reappears) never silently loses its favourite.
   // A real "prune channels stale for N refreshes" pass, if wanted, is a v2 addition.
-
-  applyAll();
 
   return { categories: categoryCount, channels: channelCount, variants: variantCount, durationMs: Date.now() - startedAt };
 }
