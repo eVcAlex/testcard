@@ -11,6 +11,7 @@ import { useApp } from "../state/app";
 import { colors, type, styleSheet } from "../theme";
 import { memoByVersion } from "../state/memoByVersion";
 import { BrowseScreen, type BrowseItem, type BrowseSource } from "./Browse";
+import { HomeSkeleton } from "../ui/HomeSkeleton";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
 /** Category tags that are dividers or decoration rather than something to browse (adult ones stay out of the way too). */
@@ -320,14 +321,9 @@ export function Padded({ children }: { children: ReactNode }) {
   return <View style={loadingStyles.padded}>{children}</View>;
 }
 
-export function Loading({ noun }: { noun: string }) {
-  return (
-    <Padded>
-      <View style={loadingStyles.wrap}>
-        <Text style={loadingStyles.text}>{`Loading ${noun}...`}</Text>
-      </View>
-    </Padded>
-  );
+/** The landing page's outline while its rows are built for the first time. */
+export function Loading(_props: { noun: string }) {
+  return <HomeSkeleton />;
 }
 
 const loadingStyles = styleSheet({
