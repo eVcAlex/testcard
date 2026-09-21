@@ -8,6 +8,7 @@ import { memoByVersion } from "../state/memoByVersion";
 import { styleSheet } from "../theme";
 import { BrowseScreen, type BrowseItem, type BrowseSource, type Guide } from "./Browse";
 import { useBackTo } from "./Catalogue";
+import { makePinning } from "./pinning";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
 const toItem = (channel: ChannelRow): BrowseItem => ({ id: channel.id, title: channel.normalised_name, imageUrl: channel.logo_url, number: channel.channel_number });
@@ -142,7 +143,7 @@ export function LiveScreen({
 
 /** Every category as a row of pills, channels beneath. */
 function Browsing({ sourceId, own, onPlay }: { sourceId: string | null; own: (channel: ChannelRow) => boolean; onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void }) {
-  const { db, version } = useApp();
+  const { db, version, sync } = useApp();
   const source = useMemo<BrowseSource>(() => {
     const scope = sourceId !== null ? { sourceId } : {};
     const categories = channelCategories(db, version, sourceId ?? undefined);
@@ -150,6 +151,7 @@ function Browsing({ sourceId, own, onPlay }: { sourceId: string | null; own: (ch
     const recents = listRecentChannels(db, 60).filter(own).slice(0, 30);
     return {
       layout: "channel",
+      pinning: makePinning(db, sync, "live"),
       noun: "channels",
       single: "channel",
       genres: false,
@@ -171,7 +173,7 @@ function Browsing({ sourceId, own, onPlay }: { sourceId: string | null; own: (ch
         return browseChannels(db, { limit, ...scope }).map(toItem);
       },
     };
-  }, [db, version, sourceId, own]);
+  }, [db, version, sourceId, own, sync]);
 
   return (
     <View style={styles.padded}>

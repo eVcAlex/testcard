@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
-import { listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite } from "@testcard/core/src/db/queries.js";
+import { browseChannels, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite } from "@testcard/core/src/db/queries.js";
+import { listHomePins } from "@testcard/core/src/sync/sourcePins.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
-import { listFavouriteMovies, listRecentMovies, getMovieById, getMoviePlaybackTarget, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
-import { listFavouriteSeries, listRecentSeries, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
+import { browseMovies, listFavouriteMovies, listRecentMovies, getMovieById, getMoviePlaybackTarget, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
+import { browseSeries, listFavouriteSeries, listRecentSeries, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { fetchGuide } from "../playback/airing";
 import { getCredentials } from "../platform/secrets";
@@ -70,6 +71,14 @@ export function StartScreen({
     add("recent-channels", "Recently watched channels", recentChannels.map((channel) => tag("channel", toHomeItem(channel))), true);
     add("my-list", "My list", myList);
     add("favourite-channels", "Favourite channels", favouriteChannels.map((channel) => tag("channel", toHomeItem(channel))), true);
+    // Categories pinned from Browse all, in the order they were pinned. A pin whose category is not here yet (a fresh import) waits.
+    for (const pin of listHomePins(db)) {
+      if (pin.categoryId === null) continue;
+      const key = `pin:${pin.sourceId}:${pin.kind}:${pin.key}`;
+      if (pin.kind === "live") add(key, pin.label, browseChannels(db, { categoryId: pin.categoryId, limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true);
+      else if (pin.kind === "movies") add(key, pin.label, browseMovies(db, { categoryId: pin.categoryId, limit: 30 }).map(asMovie));
+      else add(key, pin.label, browseSeries(db, { categoryId: pin.categoryId, limit: 30 }).map(asSeries));
+    }
     const newMovies = movieShelves.find((shelf) => shelf.key === "new");
     if (newMovies !== undefined) list.push({ ...shelfRow(newMovies, asMovie), key: "new-movies", label: "New movies" });
     const newSeries = seriesShelves.find((shelf) => shelf.key === "new");

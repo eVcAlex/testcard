@@ -10,6 +10,7 @@ import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.j
 import { useApp } from "../state/app";
 import { colors, type, styleSheet } from "../theme";
 import { memoByVersion } from "../state/memoByVersion";
+import { makePinning } from "./pinning";
 import { BrowseScreen, type BrowseItem, type BrowseSource } from "./Browse";
 import { HomeSkeleton } from "../ui/HomeSkeleton";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
@@ -42,7 +43,7 @@ const seriesCategories = memoByVersion((db: Parameters<typeof listSeriesCategori
 
 /** Every category the provider ships, with continue watching and my list first. Selecting a poster opens the film's page. */
 function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (movie: { id: string; title: string }) => void }) {
-  const { db, version } = useApp();
+  const { db, version, sync } = useApp();
   const source = useMemo<BrowseSource>(() => {
     const scope = sourceId !== null ? { sourceId } : {};
     const categories = movieCategories(db, version, sourceId ?? undefined);
@@ -51,6 +52,7 @@ function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
     const myList = listFavouriteMovies(db);
     return {
       layout: "poster",
+      pinning: makePinning(db, sync, "movies"),
       noun: "movies",
       single: "movie",
       specials: [
@@ -67,7 +69,7 @@ function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
         return browseMovies(db, { limit, ...scope }).map(toMovieItem);
       },
     };
-  }, [db, version, sourceId]);
+  }, [db, version, sourceId, sync]);
 
   return (
     <BrowseScreen
@@ -80,13 +82,14 @@ function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
 
 /** Every category, with my list first. Selecting a poster opens its episodes. */
 function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (series: { id: string; title: string }) => void }) {
-  const { db, version } = useApp();
+  const { db, version, sync } = useApp();
   const source = useMemo<BrowseSource>(() => {
     const scope = sourceId !== null ? { sourceId } : {};
     const categories = seriesCategories(db, version, sourceId ?? undefined);
     const myList = listFavouriteSeries(db);
     return {
       layout: "poster",
+      pinning: makePinning(db, sync, "series"),
       noun: "series",
       single: "series",
       specials: [
@@ -101,7 +104,7 @@ function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
         return browseSeries(db, { limit, ...scope }).map(toSeriesItem);
       },
     };
-  }, [db, version, sourceId]);
+  }, [db, version, sourceId, sync]);
 
   return (
     <BrowseScreen

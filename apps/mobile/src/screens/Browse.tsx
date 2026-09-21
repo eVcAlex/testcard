@@ -54,6 +54,11 @@ export interface BrowseSource {
   readonly genres?: boolean;
   /** Where the categories sit: a list down the left (default) or a row of pills across the top. */
   readonly menu?: "list" | "pills";
+  /** Pinning a category to the Home page. Left out where it does not apply. */
+  readonly pinning?: {
+    readonly isPinned: (categoryId: string) => boolean;
+    readonly toggle: (categoryId: string, label: string) => void;
+  };
 }
 
 type Entry =
@@ -172,6 +177,10 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
 
   const items = useMemo(() => (shown === undefined ? [] : source.load(shown.selection, limit)), [source, shown, limit]);
   const shownEntry = shown !== undefined ? byId.get(shown.id) : undefined;
+  // A real category (not Continue watching, My list or a genre) can be pinned to Home.
+  const [, setPinTick] = useState(0);
+  const pinnable = source.pinning !== undefined && shownEntry?.kind === "row" && shownEntry.selection.kind === "category" ? { id: shownEntry.selection.key, label: shownEntry.label } : undefined;
+  const pinned = pinnable !== undefined && source.pinning !== undefined && source.pinning.isPinned(pinnable.id);
 
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -269,6 +278,20 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
             </Text>
             {shownEntry !== undefined ? <Text style={styles.paneCount}>{`${withCommas(shownEntry.count)} ${shownEntry.count === 1 ? source.single : source.noun}`}</Text> : null}
           </View>
+          {/* On its own line, above the first column, so pressing up from the first poster lands on it. */}
+          {pinnable !== undefined ? (
+            <View style={styles.pinRow}>
+              <Focusable
+                style={styles.pin}
+                onPress={() => {
+                  source.pinning?.toggle(pinnable.id, pinnable.label);
+                  setPinTick((value) => value + 1);
+                }}
+              >
+                {({ focused }) => <Text style={[styles.pinText, focused && styles.pinTextFocused]}>{pinned ? "Remove from Home" : "Pin to Home"}</Text>}
+              </Focusable>
+            </View>
+          ) : null}
           {guideOf !== undefined && preview !== undefined ? <OnNow hero={pills} item={preview} loaded={guides.has(preview.id)} guide={guides.get(preview.id)?.guide ?? null} /> : null}
           {items.length === 0 ? (
             <View style={styles.empty}>
@@ -422,6 +445,10 @@ const styles = styleSheet({
   paneHead: { flexDirection: "row", alignItems: "baseline", gap: 20, paddingTop: 12, paddingBottom: 24, paddingHorizontal: 8 },
   paneTitle: { flexShrink: 1, color: colors.foreground, fontSize: 38, fontWeight: "600", letterSpacing: -0.5 },
   paneCount: { color: colors.faint, fontSize: 24 },
+  pinRow: { flexDirection: "row", paddingHorizontal: 8, paddingBottom: 16, marginTop: -10 },
+  pin: { paddingHorizontal: 22, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.card },
+  pinText: { color: colors.muted, fontSize: 24 },
+  pinTextFocused: { color: colors.foreground },
   onNow: { flexDirection: "row", alignItems: "center", gap: 24, marginHorizontal: 8, marginBottom: 22, padding: 20, borderRadius: 20, backgroundColor: "#ffffff0d" },
   onNowHero: { gap: 32, padding: 28, marginBottom: 26 },
   onNowLogoHero: { width: 200, height: 132 },
