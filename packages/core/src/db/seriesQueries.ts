@@ -300,3 +300,26 @@ export function seriesShelves(
   );
   return chosen.map((category) => ({ category, items: select.all(category.id, perShelf) as SeriesRow[] }));
 }
+
+export interface NextEpisode {
+  readonly id: string;
+  readonly name: string;
+  readonly seasonNumber: number;
+  readonly episodeNumber: number;
+}
+
+/** The episode after this one in its series: the next in the season, or the first of the next season. Undefined at the end. */
+export function findNextEpisode(db: Database.Database, episodeId: string): NextEpisode | undefined {
+  const current = db
+    .prepare(`SELECT e.series_id AS seriesId, s.season_number AS seasonNumber, e.episode_number AS episodeNumber FROM episodes e JOIN seasons s ON s.id = e.season_id WHERE e.id = ?`)
+    .get(episodeId) as { seriesId: string; seasonNumber: number; episodeNumber: number } | undefined;
+  if (current === undefined) return undefined;
+  return db
+    .prepare(
+      `SELECT e.id, e.name, s.season_number AS seasonNumber, e.episode_number AS episodeNumber
+       FROM episodes e JOIN seasons s ON s.id = e.season_id
+       WHERE e.series_id = ? AND (s.season_number > ? OR (s.season_number = ? AND e.episode_number > ?))
+       ORDER BY s.season_number, e.episode_number LIMIT 1`,
+    )
+    .get(current.seriesId, current.seasonNumber, current.seasonNumber, current.episodeNumber) as NextEpisode | undefined;
+}

@@ -133,6 +133,7 @@ function Root() {
         resume={route.resume}
         channels={route.channels}
         onZap={(next) => setRoute({ ...route, item: next })}
+        onNextEpisode={(next) => setRoute({ ...route, item: next, resume: false })}
         onExit={() => setRoute(route.returnTo)}
         {...(route.seriesId !== undefined ? { seriesId: route.seriesId } : {})}
       />

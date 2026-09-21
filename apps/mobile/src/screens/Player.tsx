@@ -5,7 +5,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
 import { recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
-import { recordSeriesRecent } from "@testcard/core/src/db/seriesQueries.js";
+import { findNextEpisode, recordSeriesRecent } from "@testcard/core/src/db/seriesQueries.js";
 import type { CatchupProgramme } from "@testcard/core/src/source/xtream/catchup.js";
 import { playerTitle } from "../ui/titles";
 import { channelVariantIds, resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
@@ -24,13 +24,17 @@ const CHROME_HIDES_AFTER_MS = 4000;
 /** A live picture stuck refilling this long is reloaded, at most this many times. */
 const STUCK_AFTER_MS = 12_000;
 const MAX_RELOADS = 4;
+/** The last stretch of an episode, when the next one is offered: about where the credits start. */
+const NEXT_WINDOW_SECS = 40;
+/** After an episode ends, the next one starts by itself this many seconds later unless a key is pressed. */
+const AUTO_NEXT_SECS = 8;
 /** Stepping to another channel remounts the player, so the highlighted control is carried across, and spamming next or previous keeps working. */
 let carriedSelection: Control | undefined;
 /** The channel being watched and the one before it, kept across channel changes so "Last" can flip back, as on a TV remote. */
 let channelHistory: { current?: PlayItem; previous?: PlayItem } = {};
 const PROGRESS_EVERY_MS = 5000;
 
-type Control = "exit" | "seek" | "back" | "play" | "forward" | "info" | "captions" | "last" | "live" | "catchup";
+type Control = "exit" | "seek" | "back" | "play" | "forward" | "info" | "captions" | "next" | "last" | "live" | "catchup";
 
 /** A length written in 1920 px design units, for the shapes below that are sized in code. */
 const u = (n: number) => Math.round(n * uiScale);
@@ -40,7 +44,7 @@ const u = (n: number) => Math.round(n * uiScale);
  * Back leaves. On a phone: tap the picture for the controls. Position is saved every few seconds so
  * "continue watching" and sync have something to carry.
  */
-export function PlayerScreen({ item, seriesId, resume, channels, onZap, onExit }: { item: PlayItem; seriesId?: string; resume: boolean; channels?: readonly PlayItem[] | undefined; onZap?: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
+export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEpisode, onExit }: { onNextEpisode?: ((episode: PlayItem) => void) | undefined; item: PlayItem; seriesId?: string; resume: boolean; channels?: readonly PlayItem[] | undefined; onZap?: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db, sync, updateStatus } = useApp();
   const [stream, setStream] = useState<ResolvedStream>();
   const [error, setError] = useState<string>();
@@ -90,6 +94,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onExit }
       onCatchup={(programme) => setPicked(programme === undefined ? undefined : { channelId: item.id, programme })}
       channels={channels}
       onZap={onZap}
+      onNextEpisode={onNextEpisode}
       moreFeeds={variantAt + 1 < variantCount}
       onFailOver={failOver}
       onExit={() => {
@@ -167,7 +172,7 @@ function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
   return guide.current === undefined ? past : [{ programme: guide.current, when: "Start over", time: hourMinute(guide.current.start) }, ...past];
 }
 
-function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, moreFeeds, onFailOver, onExit }: { moreFeeds: boolean; onFailOver: () => void; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
+function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, onExit }: { onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
@@ -276,6 +281,25 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // time this component's cleanup runs, and touching it then throws.
   const latest = useRef({ position: 0, duration: 0 });
   latest.current = { position, duration };
+
+  // An episode offers the next one near its end, and starts it by itself once it has finished unless a key is pressed.
+  const next = useMemo(() => (item.kind === "episode" ? findNextEpisode(db, item.id) : undefined), [db, item]);
+  const nearEnd = next !== undefined && onNextEpisode !== undefined && duration > 300 && position >= duration - NEXT_WINDOW_SECS;
+  const finished = nearEnd && position >= duration - 0.5;
+  const [autoCancelled, setAutoCancelled] = useState(false);
+  const [autoIn, setAutoIn] = useState(AUTO_NEXT_SECS);
+  const goNext = useCallback(() => {
+    if (next !== undefined) onNextEpisode?.({ kind: "episode", id: next.id, title: next.name });
+  }, [next, onNextEpisode]);
+  useEffect(() => {
+    if (!finished || autoCancelled) return;
+    setAutoIn(AUTO_NEXT_SECS);
+    const timer = setInterval(() => setAutoIn((left) => left - 1), 1000);
+    return () => clearInterval(timer);
+  }, [autoCancelled, finished]);
+  useEffect(() => {
+    if (finished && !autoCancelled && autoIn <= 0) goNext();
+  }, [autoCancelled, autoIn, finished, goNext]);
 
   // The controls fade out while playing and come back on any key, tap or pause.
   const [awake, setAwake] = useState(true);
@@ -402,7 +426,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const previousChannel = zapping ? channelHistory.previous : undefined;
   const more: Control[] = [...(previousChannel !== undefined ? (["last"] as const) : []), ...(archive !== undefined ? (["catchup"] as const) : [])];
   const captionsKey: Control[] = vod && tracks.length > 0 ? ["captions"] : [];
-  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
+  const nextKey: Control[] = next !== undefined && onNextEpisode !== undefined ? ["next"] : [];
+  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, ...nextKey, "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
   const [selected, setSelected] = useState<Control>(() => {
     const carried = carriedSelection;
     carriedSelection = undefined;
@@ -417,6 +442,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       }
       else if (control === "info") setStatsOn((on) => !on);
       else if (control === "captions") cycleCaptions();
+      else if (control === "next") goNext();
       else if (control === "last") {
         const previous = channelHistory.previous;
         if (previous !== undefined && onZap !== undefined) {
@@ -428,7 +454,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       else if (control === "live") (timeshift ? onCatchup(undefined) : behindLive ? goLive() : wake());
       else togglePause();
     },
-    [behindLive, cycleCaptions, goLive, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
+    [behindLive, cycleCaptions, goLive, goNext, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
   );
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
   useTVEventHandler(
@@ -436,6 +462,12 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       (event: { eventType: string; eventKeyAction?: number | undefined }) => {
         if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
         const key = event.eventType;
+        // While the next episode is on offer, OK plays it; any other key means the viewer is still here, so the automatic start is off.
+        if (nearEnd) {
+          // OK on the bar or with the controls hidden means "yes, the next one"; on another control it does that control's job.
+          if (key === "select" && (!chrome || selected === "seek" || selected === "play")) return goNext();
+          setAutoCancelled(true);
+        }
         if (guideOpen) {
           const count = guide.state === "ready" ? guide.entries.length : 0;
           if (key === "up" || key === "down") setGuideAt((at) => Math.min(Math.max(0, count - 1), Math.max(0, at + (key === "down" ? 1 : -1))));
@@ -475,7 +507,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [chrome, guide, guideAt, guideOpen, playEntry, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
+      [chrome, goNext, guide, guideAt, guideOpen, nearEnd, playEntry, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
     ),
   );
 
@@ -665,6 +697,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
               ) : null}
               {previousChannel !== undefined ? <TextKey label={`Last: ${previousChannel.title}`} selected={lit("last")} onPress={() => press("last")} /> : null}
               {archive !== undefined ? <TextKey label="Catch up" selected={lit("catchup")} onPress={() => press("catchup")} /> : null}
+              {next !== undefined && onNextEpisode !== undefined ? <TextKey label="Next episode" selected={lit("next")} onPress={() => press("next")} /> : null}
               {vod && tracks.length > 0 ? <TextKey label={captionLabel(captionTrack)} selected={lit("captions")} onPress={() => press("captions")} /> : null}
               {vod ? (
                 <Key selected={lit("info")} active={statsOn} onPress={() => press("info")}>
@@ -675,6 +708,16 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
           </View>
         </View>
       </Animated.View>
+
+      {nearEnd && next !== undefined ? (
+        <View style={styles.nextCard} pointerEvents="none">
+          <Text style={styles.nextKicker}>NEXT EPISODE</Text>
+          <Text style={styles.nextTitle} numberOfLines={2}>
+            {`S${next.seasonNumber} E${next.episodeNumber}: ${next.name}`}
+          </Text>
+          <Text style={styles.nextHint}>{finished && !autoCancelled ? `Starting in ${Math.max(0, autoIn)}. Press any key to stay.` : "Press OK to play it now"}</Text>
+        </View>
+      ) : null}
 
       {guide !== undefined ? (
         <View style={styles.guide}>
@@ -878,6 +921,10 @@ const styles = styleSheet({
   phoneBack: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: "#0008" },
   wallClock: { color: colors.foreground, opacity: 0.9, fontSize: 30, fontWeight: "500" },
 
+  nextCard: { position: "absolute", right: 96, bottom: 300, width: 640, gap: 8, padding: 28, borderRadius: 18, backgroundColor: "#0a0d11e6", borderWidth: 2, borderColor: colors.accent },
+  nextKicker: { color: colors.accent, fontSize: 22, fontWeight: "600", letterSpacing: 2 },
+  nextTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600" },
+  nextHint: { color: colors.muted, fontSize: 24 },
   bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 96, paddingBottom: 44, paddingTop: 220, gap: 28 },
   info: { flexDirection: "row", alignItems: "center", gap: 20 },
   heading: { flexShrink: 1, color: colors.foreground, fontSize: 44, fontWeight: "600", letterSpacing: -0.5 },
