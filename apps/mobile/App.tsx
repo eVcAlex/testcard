@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
 import { useFonts } from "expo-font";
 import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
@@ -88,8 +88,10 @@ function Root() {
   const goHome = useCallback(() => setRoute({ name: "home" }), []);
   // Movies and Series open on a landing page of rows; "Browse all" in the nav bar swaps it for the full category list.
   const [browsing, setBrowsing] = useState(false);
+  const [visited, setVisited] = useState<ReadonlySet<Section>>(() => new Set(["home"]));
   const pickSection = useCallback((key: string) => {
     setSection(key as Section);
+    setVisited((current) => (current.has(key as Section) ? current : new Set(current).add(key as Section)));
     setBrowsing(false);
   }, []);
   const toggleBrowse = useCallback(() => setBrowsing((value) => !value), []);
@@ -167,6 +169,21 @@ function Root() {
     );
   }
 
+  const playChannel = (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) =>
+    setRoute({
+      name: "play",
+      item: { kind: "channel", id: channel.id, title: channel.title },
+      channels: channels.map((entry) => ({ kind: "channel" as const, id: entry.id, title: entry.title })),
+      resume: false,
+      returnTo: { name: "home" },
+    });
+  const pane = (key: Section, node: ReactNode) =>
+    visited.has(key) || section === key ? (
+      <View key={key} style={section === key ? styles.content : styles.hidden}>
+        {node}
+      </View>
+    ) : null;
+
   // First sync or a refresh: nothing else is drawn, so there is nothing to navigate to until it finishes.
   if (setup !== null) return <SetupOverlay setup={setup} hint={exitHint ? "Press back again to exit" : null} />;
 
@@ -187,71 +204,48 @@ function Root() {
           </View>
         </TVFocusGuideView>
         <View style={styles.content}>
-          {section === "home" && (
+          {/* Each section is drawn the first time it is opened and kept, so coming back to it costs nothing and keeps its place. */}
+          {pane(
+            "home",
             <StartScreen
               sourceId={sourceId}
               onOpenMovie={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
               onPlayMovie={(movie, resume) => setRoute({ name: "play", item: { kind: "movie", id: movie.id, title: movie.title }, resume, returnTo: { name: "home" } })}
               onOpenSeries={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
-              onPlayChannel={(channel, channels) =>
-                setRoute({
-                  name: "play",
-                  item: { kind: "channel", id: channel.id, title: channel.title },
-                  channels: channels.map((entry) => ({ kind: "channel" as const, id: entry.id, title: entry.title })),
-                  resume: false,
-                  returnTo: { name: "home" },
-                })
-              }
-            />
+              onPlayChannel={playChannel}
+            />,
           )}
-          {section === "movies" && (
+          {pane(
+            "movies",
             <MoviesScreen
               sourceId={sourceId}
-              browsing={browsing}
+              browsing={browsing && section === "movies"}
               onBrowseDone={onBrowseDone}
               onOpen={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
               onPlay={(movie, resume) => setRoute({ name: "play", item: { kind: "movie", id: movie.id, title: movie.title }, resume, returnTo: { name: "home" } })}
-            />
+            />,
           )}
-          {section === "series" && <SeriesScreen sourceId={sourceId} browsing={browsing} onBrowseDone={onBrowseDone} onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })} />}
-          {section === "live" && (
-            <LiveScreen
-              sourceId={liveSource?.id ?? null}
-              browsing={browsing}
-              onBrowseDone={onBrowseDone}
-              onPlay={(channel, channels) =>
-                setRoute({
-                  name: "play",
-                  item: { kind: "channel", id: channel.id, title: channel.title },
-                  channels: channels.map((entry) => ({ kind: "channel" as const, id: entry.id, title: entry.title })),
-                  resume: false,
-                  returnTo: { name: "home" },
-                })
-              }
-            />
+          {pane(
+            "series",
+            <SeriesScreen sourceId={sourceId} browsing={browsing && section === "series"} onBrowseDone={onBrowseDone} onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })} />,
           )}
-          {section === "search" && (
+          {pane("live", <LiveScreen sourceId={liveSource?.id ?? null} browsing={browsing && section === "live"} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
+          {pane(
+            "search",
             <View style={styles.padded}>
               <SearchScreen
                 sourceId={sourceId}
                 onOpenMovie={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
                 onOpenSeries={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
-                onPlayChannel={(channel, channels) =>
-                  setRoute({
-                    name: "play",
-                    item: { kind: "channel", id: channel.id, title: channel.title },
-                    channels: channels.map((entry) => ({ kind: "channel" as const, id: entry.id, title: entry.title })),
-                    resume: false,
-                    returnTo: { name: "home" },
-                  })
-                }
+                onPlayChannel={playChannel}
               />
-            </View>
+            </View>,
           )}
-          {section === "sources" && (
+          {pane(
+            "sources",
             <View style={styles.padded}>
               <SourcesScreen />
-            </View>
+            </View>,
           )}
         </View>
         {exitHint && (
@@ -272,6 +266,7 @@ const styles = styleSheet({
   brandAccent: { color: colors.accent },
   scope: { flex: 1, flexDirection: "row", justifyContent: "flex-end", gap: 8 },
   content: { flex: 1 },
+  hidden: { display: "none" },
   toast: { position: "absolute", left: 0, right: 0, bottom: 60, alignItems: "center", zIndex: 20 },
   toastText: { color: colors.foreground, fontSize: 26, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 999, backgroundColor: "#000000d9", overflow: "hidden" },
   padded: { flex: 1, paddingHorizontal: 44, paddingTop: 112 },

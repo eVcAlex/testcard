@@ -112,7 +112,10 @@ function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
 }
 
 export type AppDb = ReturnType<typeof useApp>["db"];
-type Memo<T> = ((db: AppDb, version: number, key?: string) => T) & { cached: (db: AppDb, version: number, key?: string) => T | undefined };
+type Memo<T> = ((db: AppDb, version: number, key?: string) => T) & {
+  cached: (db: AppDb, version: number, key?: string) => T | undefined;
+  stale: (db: AppDb, key?: string) => T | undefined;
+};
 
 // The landing rows read a lot of the catalogue, so they are built once per sync, and after the screen's first paint.
 /** The device's language ("en"), so the landing page leans towards titles the viewer can follow. */
@@ -131,17 +134,26 @@ const homeOptions = (sourceId?: string) => ({
 export const movieRows = memoByVersion((db: AppDb, sourceId?: string) => movieHome(db, homeOptions(sourceId)));
 export const seriesRows = memoByVersion((db: AppDb, sourceId?: string) => seriesHome(db, homeOptions(sourceId)));
 
-/** The remembered rows straight away when there are some, otherwise null until they have been built. */
+/**
+ * The remembered rows straight away when there are some, otherwise null until they have been built. When a sync
+ * bumps `version`, the old rows stay up while the new ones are built (blanking the page would flash a loading
+ * screen and throw the viewer back to the top); only switching source starts from nothing.
+ */
 export function useBuilt<T>(memo: Memo<T>, db: AppDb, version: number, sourceId: string | null): T | null {
   const key = sourceId ?? undefined;
-  const [value, setValue] = useState<T | null>(() => memo.cached(db, version, key) ?? null);
+  const [value, setValue] = useState<T | null>(() => memo.cached(db, version, key) ?? memo.stale(db, key) ?? null);
+  const builtFor = useRef(key);
   useEffect(() => {
     const hit = memo.cached(db, version, key);
     if (hit !== undefined) {
+      builtFor.current = key;
       setValue(hit);
       return;
     }
-    setValue(null);
+    if (builtFor.current !== key) {
+      builtFor.current = key;
+      setValue(null);
+    }
     const timer = setTimeout(() => setValue(memo(db, version, key)), 30);
     return () => clearTimeout(timer);
   }, [memo, db, version, key]);
