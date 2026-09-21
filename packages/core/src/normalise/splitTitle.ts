@@ -11,6 +11,8 @@ export interface TitleParts {
 
 const PREFIX = /^([A-Z0-9][A-Z0-9+&]*(?:-[A-Z0-9+&]+)*)\s+-\s+/;
 const YEAR = /\s*\((\d{4})\)\s*$/;
+/** A trailing country tag, "(US)" or "(IT)", which providers put after the year. */
+const COUNTRY = /\s*\([A-Z]{2,3}\)\s*$/;
 
 export function splitTitle(name: string): TitleParts {
   let rest = name.trim();
@@ -21,6 +23,8 @@ export function splitTitle(name: string): TitleParts {
     is4k = prefix[1].includes("4K");
     rest = rest.slice(prefix[0].length);
   }
+
+  rest = rest.replace(COUNTRY, "");
 
   let year: string | null = null;
   const yearMatch = YEAR.exec(rest);

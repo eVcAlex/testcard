@@ -17,7 +17,7 @@ export interface MovieRow {
   readonly watched: 0 | 1;
 }
 
-const MOVIE_COLUMNS = `m.id, m.source_id, m.category_id, m.name, m.poster_url, m.rating, m.plot,
+export const MOVIE_COLUMNS = `m.id, m.source_id, m.category_id, m.name, m.poster_url, m.rating, m.plot,
   COALESCE(m.duration_secs, (SELECT duration_secs FROM playback_progress pp WHERE pp.item_type = 'movie' AND pp.item_id = m.id)) AS duration_secs,
   m.details_fetched_at,
   (SELECT 1 FROM movie_favourites f WHERE f.movie_id = m.id) IS NOT NULL AS is_favourite,

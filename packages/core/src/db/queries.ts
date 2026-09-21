@@ -14,7 +14,7 @@ export interface ChannelRow {
   readonly is_favourite: 0 | 1;
 }
 
-const CHANNEL_COLUMNS = `c.id, c.source_id, c.category_id, c.normalised_name, c.raw_name,
+export const CHANNEL_COLUMNS = `c.id, c.source_id, c.category_id, c.normalised_name, c.raw_name,
   c.country, c.logo_url, c.channel_number,
   (SELECT 1 FROM favourites f WHERE f.channel_id = c.id) IS NOT NULL AS is_favourite`;
 

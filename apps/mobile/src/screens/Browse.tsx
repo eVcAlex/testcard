@@ -19,6 +19,12 @@ export interface BrowseItem {
   readonly resume?: boolean;
 }
 
+/** What is on a channel: the programme airing and the one after it. Either can be missing. */
+export interface Guide {
+  readonly now: { readonly title: string; readonly start: number; readonly end: number } | null;
+  readonly next: { readonly title: string; readonly start: number } | null;
+}
+
 export type Selection = {
   readonly kind: "special" | "category" | "genre";
   readonly key: string;
@@ -41,6 +47,8 @@ export interface BrowseSource {
   }[];
   /** The items for a selection, at most `limit` of them. Synchronous: it is a local database read. */
   readonly load: (selection: Selection, limit: number) => BrowseItem[];
+  /** What is on a channel right now. Asked of the provider, so only for the channel the remote rests on. */
+  readonly guide?: (id: string) => Promise<Guide | null>;
 }
 
 type Entry =
@@ -67,6 +75,16 @@ const MAX_ITEMS = 600;
 /** How long the remote must rest on a category before it opens, so scrolling past dozens does not load dozens. */
 const OPEN_AFTER_MS = 160;
 const rowHeight = Math.round(ROW_HEIGHT * uiScale);
+/** How long the remote must rest on a channel before its guide is asked for. */
+const GUIDE_AFTER_MS = 350;
+/** A channel's guide is good for this long before it is asked for again. */
+const GUIDE_FRESH_MS = 5 * 60 * 1000;
+
+/** "21:05". `toLocaleTimeString` is not dependable on every Hermes build. */
+const clock = (ms: number): string => {
+  const date = new Date(ms);
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+};
 
 /**
  * Categories down the left, what is in the highlighted one on the right (the TiviMate layout, with the
@@ -186,6 +204,35 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
     [activeId, genresOpen, onFocusId, onPressId],
   );
 
+  // The channel the remote rests on, for the "on now" strip above the grid.
+  const [restingId, setRestingId] = useState<string | undefined>(undefined);
+  const restTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(restTimer.current), []);
+  const onFocusItem = useCallback((item: BrowseItem) => {
+    clearTimeout(restTimer.current);
+    restTimer.current = setTimeout(() => setRestingId(item.id), GUIDE_AFTER_MS);
+  }, []);
+  const preview = items.find((item) => item.id === restingId) ?? items[0];
+  const previewId = preview?.id;
+  const [guides, setGuides] = useState<ReadonlyMap<string, { at: number; guide: Guide | null }>>(new Map());
+  const guideOf = source.guide;
+  useEffect(() => {
+    if (guideOf === undefined || previewId === undefined) return;
+    const known = guides.get(previewId);
+    if (known !== undefined && Date.now() - known.at < GUIDE_FRESH_MS) return;
+    let live = true;
+    guideOf(previewId)
+      .catch(() => null) // the strip works without it
+      .then((guide) => {
+        if (live) setGuides((previous) => new Map(previous).set(previewId, { at: Date.now(), guide }));
+      });
+    return () => {
+      live = false;
+    };
+    // `guides` is left out on purpose: the answer arriving must not ask again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guideOf, previewId]);
+
   const poster = source.layout === "poster";
   const columns = poster ? 7 : 3;
   const cells = useMemo<(BrowseItem | undefined)[]>(() => {
@@ -229,6 +276,7 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
           </Text>
           {shownEntry !== undefined ? <Text style={styles.paneCount}>{`${withCommas(shownEntry.count)} ${shownEntry.count === 1 ? source.single : source.noun}`}</Text> : null}
         </View>
+        {guideOf !== undefined && preview !== undefined ? <OnNow item={preview} loaded={guides.has(preview.id)} guide={guides.get(preview.id)?.guide ?? null} /> : null}
         {items.length === 0 ? (
           <View style={styles.empty}>
             <Muted>{`Nothing in here yet.`}</Muted>
@@ -248,7 +296,7 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
             onEndReachedThreshold={1.5}
             onEndReached={() => setLimit((value) => (value < MAX_ITEMS && items.length >= value ? value + PAGE : value))}
             renderItem={({ item: cell }) =>
-              cell === undefined ? <View style={styles.pad} /> : poster ? <PosterTile item={cell} onSelect={(picked) => onSelect(picked, items)} /> : <ChannelTile item={cell} onSelect={(picked) => onSelect(picked, items)} />
+              cell === undefined ? <View style={styles.pad} /> : poster ? <PosterTile item={cell} onSelect={(picked) => onSelect(picked, items)} /> : <ChannelTile item={cell} onSelect={(picked) => onSelect(picked, items)} onFocusItem={onFocusItem} />
             }
           />
         )}
@@ -267,9 +315,55 @@ const PosterTile = memo(function PosterTile({ item, onSelect }: { item: BrowseIt
   return <PosterCard grid item={poster} onPress={() => onSelect(item)} />;
 });
 
-const ChannelTile = memo(function ChannelTile({ item, onSelect }: { item: BrowseItem; onSelect: (item: BrowseItem) => void }) {
+/** The channel the remote rests on, with what is airing and what follows, above the grid. */
+const OnNow = memo(function OnNow({ item, guide, loaded }: { item: BrowseItem; guide: Guide | null; loaded: boolean }) {
+  const now = guide?.now ?? null;
+  const next = guide?.next ?? null;
+  const span = now !== null ? now.end - now.start : 0;
+  const progress = now !== null && span > 0 ? Math.min(1, Math.max(0, (Date.now() - now.start) / span)) : 0;
   return (
-    <Focusable onPress={() => onSelect(item)} style={styles.channel} focusedStyle={styles.channelFocused}>
+    <View style={styles.onNow}>
+      <View style={styles.onNowLogo}>
+        {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
+      </View>
+      <View style={styles.onNowText}>
+        <Text style={styles.onNowChannel} numberOfLines={1}>
+          {item.number !== undefined && item.number !== null ? `${item.number}  ${item.title}` : item.title}
+        </Text>
+        {now !== null ? (
+          <>
+            <Text style={styles.onNowTitle} numberOfLines={1}>
+              {now.title}
+            </Text>
+            <View style={styles.onNowMeta}>
+              <View style={styles.bar}>
+                <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%` }]} />
+              </View>
+              <Text style={styles.onNowTime} numberOfLines={1}>
+                {`${clock(now.start)} to ${clock(now.end)}`}
+                {next !== null ? `   Next ${clock(next.start)}  ${next.title}` : ""}
+              </Text>
+            </View>
+          </>
+        ) : next !== null ? (
+          // The provider only listed what is coming up.
+          <>
+            <Text style={styles.onNowTitle} numberOfLines={1}>
+              {next.title}
+            </Text>
+            <Text style={styles.onNowTime}>{`Starts ${clock(next.start)}`}</Text>
+          </>
+        ) : (
+          <Text style={styles.onNowNone}>{loaded ? "No guide for this channel" : ""}</Text>
+        )}
+      </View>
+    </View>
+  );
+});
+
+const ChannelTile = memo(function ChannelTile({ item, onSelect, onFocusItem }: { item: BrowseItem; onSelect: (item: BrowseItem) => void; onFocusItem: (item: BrowseItem) => void }) {
+  return (
+    <Focusable onPress={() => onSelect(item)} onFocus={() => onFocusItem(item)} style={styles.channel} focusedStyle={styles.channelFocused}>
       <View style={styles.logo}>
         {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
       </View>
@@ -288,6 +382,16 @@ const styles = styleSheet({
   paneHead: { flexDirection: "row", alignItems: "baseline", gap: 20, paddingTop: 12, paddingBottom: 24, paddingHorizontal: 8 },
   paneTitle: { flexShrink: 1, color: colors.foreground, fontSize: 38, fontWeight: "600", letterSpacing: -0.5 },
   paneCount: { color: colors.faint, fontSize: 24 },
+  onNow: { flexDirection: "row", alignItems: "center", gap: 24, marginHorizontal: 8, marginBottom: 22, padding: 20, borderRadius: 20, backgroundColor: "#ffffff0d" },
+  onNowLogo: { width: 132, height: 88, borderRadius: 12, backgroundColor: colors.sunken, overflow: "hidden" },
+  onNowText: { flex: 1, gap: 4, height: 118, justifyContent: "center" },
+  onNowChannel: { color: colors.accent, fontSize: 22, fontWeight: "600", letterSpacing: 0.5 },
+  onNowTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600", letterSpacing: -0.4 },
+  onNowMeta: { flexDirection: "row", alignItems: "center", gap: 18 },
+  bar: { width: 200, height: 6, borderRadius: 3, backgroundColor: "#ffffff26", overflow: "hidden" },
+  barFill: { height: 6, backgroundColor: colors.accent },
+  onNowTime: { flex: 1, color: colors.muted, fontSize: 22 },
+  onNowNone: { color: colors.faint, fontSize: 26 },
   grid: { paddingBottom: 80 },
   posterColumns: { gap: 18 },
   channelColumns: { gap: 16 },

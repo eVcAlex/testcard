@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, StyleSheet, Text, useTVEventHandler, View } from "react-native";
 import { useEvent } from "expo";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -11,6 +11,7 @@ import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/r
 import { useApp } from "../state/app";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button } from "../ui/controls";
+import { streamFacts } from "../playback/streamInfo";
 
 const SEEK_STEP_SECS = 10;
 /** Presses in a row (each within this of the last) reach further: 10 s, then 30 s, 1 min, 2 min. */
@@ -19,7 +20,7 @@ const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4
 const CHROME_HIDES_AFTER_MS = 4000;
 const PROGRESS_EVERY_MS = 5000;
 
-type Control = "exit" | "seek" | "back" | "play" | "forward";
+type Control = "exit" | "seek" | "back" | "play" | "forward" | "info";
 
 /** A length written in 1920 px design units, for the shapes below that are sized in code. */
 const u = (n: number) => Math.round(n * uiScale);
@@ -123,13 +124,29 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
   const started = useRef(false);
 
   const player = useVideoPlayer(stream.url, (instance) => {
-    instance.timeUpdateEventInterval = 0.5;
+    // Live has no bar to move, so it needs far fewer time updates (each one re-renders the screen).
+    instance.timeUpdateEventInterval = vod ? 0.5 : 1;
+    // Read well ahead so a provider hiccup is absorbed instead of stalling the picture. The byte cap keeps a
+    // high-bitrate 4K stream from filling a small device's memory before the time target is reached.
+    instance.bufferOptions = vod
+      ? { preferredForwardBufferDuration: 40, minBufferForPlayback: 2.5, maxBufferBytes: 64 * 1024 * 1024 }
+      : { preferredForwardBufferDuration: 60, minBufferForPlayback: 2.5, maxBufferBytes: 48 * 1024 * 1024 };
     if (stream.resumeSecs !== null) instance.currentTime = stream.resumeSecs;
     instance.play();
   });
 
   const { status, error } = useEvent(player, "statusChange", { status: player.status });
   const { isPlaying } = useEvent(player, "playingChange", { isPlaying: player.playing });
+  const { videoTrack } = useEvent(player, "videoTrackChange", { videoTrack: player.videoTrack });
+  const facts = streamFacts(videoTrack);
+  // Each time the picture stops to refill after it has started is one stall, shown in the info panel.
+  const [stalls, setStalls] = useState(0);
+  const everPlayed = useRef(false);
+  useEffect(() => {
+    if (status === "readyToPlay") everPlayed.current = true;
+    else if (status === "loading" && everPlayed.current) setStalls((count) => count + 1);
+  }, [status]);
+  const [statsOn, setStatsOn] = useState(false);
   const time = useEvent(player, "timeUpdate", { currentTime: player.currentTime, currentLiveTimestamp: null, currentOffsetFromLive: null, bufferedPosition: player.bufferedPosition });
   // Seeking moves the shown position straight away instead of waiting for the next time update.
   const [seekedTo, setSeekedTo] = useState<number>();
@@ -217,13 +234,14 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
   // The D-pad drives a highlight (`selected`) over the controls: up/down change row, left/right change
   // control (or scrub, on the bar), OK presses. With the controls hidden, left/right seek and OK pauses.
   // Live keeps up/down for changing channel, so its way out sits at the left end of the transport row.
-  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward"]] : zapping ? [["exit", "back", "play", "forward"]] : [["exit"], ["play"]];
+  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", "info"]] : zapping ? [["exit", "back", "play", "forward", "info"]] : [["exit"], ["play", "info"]];
   const [selected, setSelected] = useState<Control>("play");
   const press = useCallback(
     (control: Control) => {
       if (control === "exit") onExit();
       else if (control === "back") step(-1);
       else if (control === "forward") step(1);
+      else if (control === "info") setStatsOn((on) => !on);
       else togglePause();
     },
     [onExit, step, togglePause],
@@ -336,6 +354,19 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
         </View>
       ) : null}
 
+      {statsOn ? (
+        <View style={styles.stats} pointerEvents="none">
+          <Text style={styles.statsTitle}>Stream info</Text>
+          <Fact label="Quality" value={facts.quality !== null && facts.size !== null ? `${facts.quality}  (${facts.size})` : (facts.size ?? "Waiting for video")} />
+          <Fact label="Frame rate" value={facts.fps ?? "Not reported"} />
+          <Fact label="Video" value={[facts.codec, facts.hdr].filter((part) => part !== null).join("  ") || "Not reported"} />
+          <Fact label="Bitrate" value={facts.bitrate ?? "Not reported"} />
+          <Fact label="Buffered" value={`${Math.max(0, Math.round(time.bufferedPosition - time.currentTime))} s ahead`} />
+          <Fact label="Stalls" value={String(stalls)} />
+          <Fact label="State" value={loading ? "Buffering" : isPlaying ? "Playing" : "Paused"} />
+        </View>
+      ) : null}
+
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]} pointerEvents={chrome ? "box-none" : "none"}>
         <View style={styles.top} pointerEvents="box-none">
           <Scrim from="top" />
@@ -359,6 +390,9 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
             <Text style={styles.heading} numberOfLines={1}>
               {vod ? playerTitle(stream.title) : stream.title}
             </Text>
+          </View>
+          <View style={styles.chips} pointerEvents="none">
+            {[facts.quality, facts.fps, facts.codec, facts.hdr].map((chip) => (chip !== null ? <Chip key={chip} label={chip} /> : null))}
           </View>
 
           {vod ? (
@@ -401,12 +435,15 @@ function Playing({ item, stream, seriesId, channels, onZap, onExit }: { item: Pl
                 </Key>
               ) : null}
             </View>
-            <View style={[styles.side, styles.sideRight]} pointerEvents="none">
+            <View style={[styles.side, styles.sideRight]} pointerEvents="box-none">
               {vod && duration > 0 ? (
                 <Text style={styles.clockDim}>
                   Ends {two(endsAt.getHours())}:{two(endsAt.getMinutes())}
                 </Text>
               ) : null}
+              <Key selected={lit("info")} active={statsOn} onPress={() => press("info")}>
+                {(ink) => <Text style={{ color: ink, fontSize: u(30), fontFamily: "Inter_600SemiBold" }}>i</Text>}
+              </Key>
             </View>
           </View>
         </View>
@@ -432,14 +469,31 @@ function Key({ big = false, selected = false, active = false, onPress, children 
 }
 
 /** A darkening that fades out from one edge, built from stacked bands (no gradient library in the app). */
-function Scrim({ from }: { from: "top" | "bottom" }) {
-  const bands = 32;
+const Scrim = memo(function Scrim({ from }: { from: "top" | "bottom" }) {
+  const bands = 14;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {Array.from({ length: bands }, (_, index) => {
         const strength = from === "top" ? 1 - index / (bands - 1) : index / (bands - 1);
         return <View key={index} style={{ flex: 1, backgroundColor: `rgba(5,7,9,${(0.9 * strength ** 1.5).toFixed(3)})` }} />;
       })}
+    </View>
+  );
+});
+
+function Chip({ label }: { label: string }) {
+  return (
+    <View style={styles.chip}>
+      <Text style={styles.chipText}>{label}</Text>
+    </View>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.fact}>
+      <Text style={styles.factLabel}>{label}</Text>
+      <Text style={styles.factValue}>{value}</Text>
     </View>
   );
 }
@@ -564,7 +618,15 @@ const styles = styleSheet({
 
   controls: { flexDirection: "row", alignItems: "center" },
   side: { flex: 1 },
-  sideRight: { alignItems: "flex-end" },
+  sideRight: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 20 },
+  chips: { flexDirection: "row", gap: 10, marginTop: -12 },
+  chip: { borderRadius: 7, borderWidth: 2, borderColor: "#ffffff66", paddingHorizontal: 12, paddingVertical: 3 },
+  chipText: { color: colors.foreground, fontSize: 20, fontWeight: "600", letterSpacing: 0.5 },
+  stats: { position: "absolute", right: 96, top: 140, width: 520, gap: 10, padding: 28, borderRadius: 18, backgroundColor: "#000000b3" },
+  statsTitle: { color: colors.muted, fontSize: 20, fontWeight: "500", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 },
+  fact: { flexDirection: "row", justifyContent: "space-between", gap: 24 },
+  factLabel: { color: colors.muted, fontSize: 24 },
+  factValue: { color: colors.foreground, fontSize: 24, fontWeight: "500", flexShrink: 1, textAlign: "right" },
   clock: { color: colors.foreground, fontSize: 28, fontWeight: "500" },
   clockDim: { color: colors.foreground, opacity: 0.6, fontSize: 28, fontWeight: "400" },
   transport: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 24 },

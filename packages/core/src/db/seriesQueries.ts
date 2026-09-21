@@ -14,7 +14,7 @@ export interface SeriesRow {
   readonly is_favourite: 0 | 1;
 }
 
-const SERIES_COLUMNS = `sr.id, sr.source_id, sr.category_id, sr.name, sr.poster_url, sr.rating, sr.plot, sr.episodes_fetched_at,
+export const SERIES_COLUMNS = `sr.id, sr.source_id, sr.category_id, sr.name, sr.poster_url, sr.rating, sr.plot, sr.episodes_fetched_at,
   (SELECT 1 FROM series_favourites f WHERE f.series_id = sr.id) IS NOT NULL AS is_favourite`;
 
 export function searchSeries(db: Database.Database, query: string, limit = 200, sourceId?: string): SeriesRow[] {

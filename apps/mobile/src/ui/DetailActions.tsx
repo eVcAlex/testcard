@@ -5,7 +5,7 @@ import { colors, styleSheet, uiScale } from "../theme";
 const u = (n: number) => Math.round(n * uiScale);
 const INK = "#0b0e10";
 
-export type ActionGlyph = "restart" | "plus" | "check" | "cross";
+export type ActionGlyph = "restart" | "plus" | "check" | "cross" | "info";
 
 function Glyph({ kind, color }: { kind: ActionGlyph; color: string }) {
   const size = u(30);
@@ -28,6 +28,16 @@ function Glyph({ kind, color }: { kind: ActionGlyph; color: string }) {
   }
   if (kind === "check") {
     return <View style={{ width: u(14), height: u(26), borderRightWidth: u(4), borderBottomWidth: u(4), borderColor: color, transform: [{ rotate: "45deg" }, { translateY: -u(3) }] }} />;
+  }
+  if (kind === "info") {
+    // a ring with a dot and a stem
+    return (
+      <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+        <View style={{ position: "absolute", width: size, height: size, borderRadius: size / 2, borderWidth: u(3), borderColor: color }} />
+        <View style={{ position: "absolute", top: u(6), width: u(4), height: u(4), borderRadius: u(2), backgroundColor: color }} />
+        <View style={{ position: "absolute", top: u(12), width: u(4), height: u(11), borderRadius: u(2), backgroundColor: color }} />
+      </View>
+    );
   }
   // restart: an open ring with an arrowhead
   return (
@@ -67,7 +77,16 @@ export interface DetailAction {
  * What you can do with a film or episode: one big Play pill, then a few round icon buttons. The focused
  * icon's name shows underneath, so nothing needs a long label.
  */
-export function DetailActions({ primary, actions }: { primary: { label: string; onPress: () => void; /** 0 to 1: how far through it you are, drawn inside the pill. */ progress?: number | undefined }; actions: readonly DetailAction[] }) {
+export function DetailActions({
+  primary,
+  actions,
+  preferred = true,
+}: {
+  primary: { label: string; onPress: () => void; /** 0 to 1: how far through it you are, drawn inside the pill. */ progress?: number | undefined };
+  actions: readonly DetailAction[];
+  /** Claim focus when shown. Off where the screen sits under a nav bar that should keep it. */
+  preferred?: boolean;
+}) {
   const [hint, setHint] = useState("");
   const [playFocused, setPlayFocused] = useState(false);
   return (
@@ -75,7 +94,7 @@ export function DetailActions({ primary, actions }: { primary: { label: string; 
       <View style={styles.row}>
         <Pressable
           focusable
-          hasTVPreferredFocus
+          hasTVPreferredFocus={preferred}
           onPress={primary.onPress}
           onFocus={() => {
             setPlayFocused(true);
@@ -111,7 +130,10 @@ function IconButton({ action, onHint }: { action: DetailAction; onHint: (label: 
         setFocused(true);
         onHint(action.label);
       }}
-      onBlur={() => setFocused(false)}
+      onBlur={() => {
+        setFocused(false);
+        onHint("");
+      }}
       style={[styles.icon, focused && styles.iconFocused]}
     >
       <Glyph kind={action.glyph} color={focused ? INK : colors.foreground} />
