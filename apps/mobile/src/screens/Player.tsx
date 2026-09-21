@@ -262,15 +262,25 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     };
   }, [db, item.id, timeshift, vod]);
   const [statsOn, setStatsOn] = useState(false);
-  // Captions the file carries: the key steps through them (off, then each track) and back to off.
+  // Captions the file carries, chosen from a list: Off, then each track.
   const tracks = useEvent(player, "availableSubtitleTracksChange", { availableSubtitleTracks: player.availableSubtitleTracks }).availableSubtitleTracks;
   const captionTrack = useEvent(player, "subtitleTrackChange", { subtitleTrack: player.subtitleTrack, oldSubtitleTrack: null }).subtitleTrack;
-  const captionLabel = (track: (typeof tracks)[number] | null) => (track === null ? "CC off" : `CC: ${track.label !== "" ? track.label.slice(0, 12) : track.language !== "" ? track.language : "on"}`);
-  const cycleCaptions = useCallback(() => {
-    const options = [null, ...tracks];
-    const now = options.findIndex((track) => (track === null ? captionTrack === null : captionTrack !== null && track.id === captionTrack.id && track.label === captionTrack.label && track.language === captionTrack.language));
-    player.subtitleTrack = options[(now + 1) % options.length] ?? null;
-  }, [captionTrack, player, tracks]);
+  const captionName = (track: (typeof tracks)[number] | null) => (track === null ? "Off" : track.label !== "" ? track.label : track.language !== "" ? track.language : "On");
+  const captionOptions = useMemo(() => [null, ...tracks], [tracks]);
+  const currentCaption = captionOptions.findIndex((track) => (track === null ? captionTrack === null : captionTrack !== null && track.id === captionTrack.id && track.label === captionTrack.label && track.language === captionTrack.language));
+  const [captionsOpen, setCaptionsOpen] = useState(false);
+  const [captionAt, setCaptionAt] = useState(0);
+  const openCaptions = useCallback(() => {
+    setCaptionAt(Math.max(0, currentCaption));
+    setCaptionsOpen(true);
+  }, [currentCaption]);
+  const chooseCaption = useCallback(
+    (index: number) => {
+      player.subtitleTrack = captionOptions[index] ?? null;
+      setCaptionsOpen(false);
+    },
+    [captionOptions, player],
+  );
   const time = useEvent(player, "timeUpdate", { currentTime: player.currentTime, currentLiveTimestamp: null, currentOffsetFromLive: null, bufferedPosition: player.bufferedPosition });
   // Seeking moves the shown position straight away instead of waiting for the next time update.
   const [seekedTo, setSeekedTo] = useState<number>();
@@ -306,8 +316,11 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
 
   // The controls fade out while playing and come back on any key, tap or pause.
   const [awake, setAwake] = useState(true);
+  // Back hides the controls even over a paused picture (where they would otherwise stay up); any key brings them back.
+  const [muted, setMuted] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wake = useCallback(() => {
+    setMuted(false);
     setAwake(true);
     clearTimeout(hideTimer.current);
     hideTimer.current = setTimeout(() => setAwake(false), CHROME_HIDES_AFTER_MS);
@@ -316,9 +329,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     wake();
     return () => clearTimeout(hideTimer.current);
   }, [wake]);
-  const chrome = awake || !isPlaying;
-  // Back with the controls showing over a playing picture hides them; with them hidden (or paused, when they stay up) it leaves.
-  const canHide = awake && isPlaying;
+  const chrome = !muted && (awake || !isPlaying);
   const fade = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.timing(fade, { toValue: chrome ? 1 : 0, duration: 200, useNativeDriver: true }).start();
@@ -435,14 +446,24 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     return () => subscription.remove();
   }, [guideOpen]);
   useEffect(() => {
-    if (!canHide || guideOpen) return;
+    if (!captionsOpen) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      clearTimeout(hideTimer.current);
-      setAwake(false);
+      setCaptionsOpen(false);
       return true;
     });
     return () => subscription.remove();
-  }, [canHide, guideOpen]);
+  }, [captionsOpen]);
+  // Back with the controls showing hides them, playing or paused; with them hidden it leaves.
+  useEffect(() => {
+    if (!chrome || guideOpen || captionsOpen) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      clearTimeout(hideTimer.current);
+      setAwake(false);
+      setMuted(true);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [chrome, guideOpen, captionsOpen]);
   const guideScroll = useRef<ScrollView>(null);
   useEffect(() => guideScroll.current?.scrollTo({ y: Math.max(0, guideAt - 3) * u(GUIDE_ROW), animated: false }), [guideAt]);
   const lastToggle = useRef(0);
@@ -480,7 +501,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const more: Control[] = [...(previousChannel !== undefined ? (["last"] as const) : []), ...(archive !== undefined ? (["catchup"] as const) : [])];
   const captionsKey: Control[] = vod && tracks.length > 0 ? ["captions"] : [];
   const nextKey: Control[] = next !== undefined && onNextEpisode !== undefined ? ["next"] : [];
-  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, ...nextKey, "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
+  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward"], [...captionsKey, ...nextKey, "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
   const [selected, setSelected] = useState<Control>(() => {
     const carried = carriedSelection;
     carriedSelection = undefined;
@@ -494,7 +515,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         step(control === "back" ? -1 : 1);
       }
       else if (control === "info") setStatsOn((on) => !on);
-      else if (control === "captions") cycleCaptions();
+      else if (control === "captions") openCaptions();
       else if (control === "next") goNext();
       else if (control === "last") {
         const previous = channelHistory.previous;
@@ -507,7 +528,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       else if (control === "live") (timeshift ? onCatchup(undefined) : behindLive ? goLive() : wake());
       else togglePause();
     },
-    [behindLive, cycleCaptions, goLive, goNext, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
+    [behindLive, openCaptions, goLive, goNext, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
   );
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
   useTVEventHandler(
@@ -521,6 +542,12 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
           // OK on the bar or with the controls hidden means "yes, the next one"; on another control it does that control's job.
           if (key === "select" && (!chrome || selected === "seek" || selected === "play")) return goNext();
           setAutoCancelled(true);
+        }
+        if (captionsOpen) {
+          if (key === "up" || key === "down") setCaptionAt((at) => Math.min(captionOptions.length - 1, Math.max(0, at + (key === "down" ? 1 : -1))));
+          else if (key === "select") chooseCaption(captionAt);
+          else if (key === "left") setCaptionsOpen(false);
+          return;
         }
         if (guideOpen) {
           const count = guide.state === "ready" ? guide.entries.length : 0;
@@ -561,7 +588,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [chrome, goNext, guide, guideAt, guideOpen, inIntro, nearEnd, playEntry, skipIntro, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
+      [captionAt, captionOptions.length, captionsOpen, chooseCaption, chrome, goNext, guide, guideAt, guideOpen, inIntro, nearEnd, playEntry, skipIntro, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
     ),
   );
 
@@ -749,15 +776,16 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
             <View style={[styles.side, styles.sideRight]} pointerEvents="box-none">
               {previousChannel !== undefined ? <TextKey label={previousChannel.title.length > 16 ? `Last: ${previousChannel.title.slice(0, 15)}...` : `Last: ${previousChannel.title}`} selected={lit("last")} onPress={() => press("last")} /> : null}
               {archive !== undefined ? <TextKey label="Catch up" selected={lit("catchup")} onPress={() => press("catchup")} /> : null}
-              {next !== undefined && onNextEpisode !== undefined ? <TextKey label="Next" selected={lit("next")} onPress={() => press("next")} /> : null}
-              {vod && tracks.length > 0 ? <TextKey label={captionLabel(captionTrack)} selected={lit("captions")} onPress={() => press("captions")} /> : null}
-              {vod ? (
-                <Key selected={lit("info")} active={statsOn} onPress={() => press("info")}>
-                  {(ink) => <Text style={{ color: ink, fontSize: u(30), fontFamily: "Inter_600SemiBold" }}>i</Text>}
-                </Key>
-              ) : null}
             </View>
           </View>
+          {/* Down from the transport keys: the less used ones, so the first row stays short. */}
+          {vod ? (
+            <View style={styles.secondary} pointerEvents="box-none">
+              {tracks.length > 0 ? <TextKey label="Captions" selected={lit("captions")} onPress={() => press("captions")} /> : null}
+              {next !== undefined && onNextEpisode !== undefined ? <TextKey label="Next episode" selected={lit("next")} onPress={() => press("next")} /> : null}
+              <TextKey label={statsOn ? "Hide info" : "Stream info"} selected={lit("info")} onPress={() => press("info")} />
+            </View>
+          ) : null}
         </View>
       </Animated.View>
 
@@ -776,6 +804,26 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
             {`S${next.seasonNumber} E${next.episodeNumber}: ${next.name}`}
           </Text>
           <Text style={styles.nextHint}>{finished && !autoCancelled ? `Starting in ${Math.max(0, autoIn)}. Press any key to stay.` : "Press OK to play it now"}</Text>
+        </View>
+      ) : null}
+
+      {captionsOpen ? (
+        <View style={styles.guide}>
+          <Text style={styles.statsTitle}>Captions</Text>
+          <View style={styles.guideList}>
+            {captionOptions.map((track, index) => {
+              const lit = tv && index === captionAt;
+              return (
+                <Pressable key={index} focusable={false} onPress={() => chooseCaption(index)} style={[styles.guideRow, lit && styles.guideRowLit]}>
+                  <Text style={[styles.guideTitle, lit && styles.guideInk]} numberOfLines={1}>
+                    {captionName(track)}
+                  </Text>
+                  <Text style={[styles.guideTime, lit && styles.guideInk]}>{index === currentCaption ? "On now" : ""}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {tv ? <Text style={styles.guideNote}>Up and down to choose, OK to select, Back to close</Text> : null}
         </View>
       ) : null}
 
@@ -1030,6 +1078,7 @@ const styles = styleSheet({
   programme: { color: colors.foreground, opacity: 0.75, fontSize: 26, marginTop: -14 },
   textKeyLabel: { color: colors.foreground, fontSize: 26, fontWeight: "500" },
 
+  secondary: { flexDirection: "row", justifyContent: "center", gap: 20 },
   guide: { position: "absolute", right: 96, top: 110, bottom: 110, width: 780, gap: 12, padding: 28, borderRadius: 18, backgroundColor: "#000000e0" },
   guideList: { flex: 1 },
   guideRow: { height: GUIDE_ROW, flexDirection: "row", alignItems: "center", gap: 20, paddingHorizontal: 18, borderRadius: 12 },
