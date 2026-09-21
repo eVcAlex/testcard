@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 11;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -310,6 +310,14 @@ CREATE TABLE IF NOT EXISTS sync_state (
 CREATE TABLE IF NOT EXISTS schema_meta (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
+);
+
+-- The stretch of a series' episodes the viewer skipped last: offered as "Skip intro" in the episodes that follow. This device only.
+CREATE TABLE IF NOT EXISTS series_skip (
+  series_id   TEXT PRIMARY KEY REFERENCES series(id) ON DELETE CASCADE,
+  from_secs   INTEGER NOT NULL,   -- where the viewer started skipping the opening
+  to_secs     INTEGER NOT NULL,   -- where they landed
+  updated_at  INTEGER NOT NULL
 );
 
 -- Categories pinned to the Home page. Synced inside the source's encrypted record, not as a table of their own.

@@ -284,6 +284,19 @@ export const MIGRATIONS: readonly Migration[] = [
 `);
     },
   },
+  {
+    version: 11,
+    up: (db) => {
+      // Skip intro: what the viewer last skipped in a series.
+      db.exec(`CREATE TABLE IF NOT EXISTS series_skip (
+  series_id   TEXT PRIMARY KEY REFERENCES series(id) ON DELETE CASCADE,
+  from_secs   INTEGER NOT NULL,   -- where the viewer started skipping the opening
+  to_secs     INTEGER NOT NULL,   -- where they landed
+  updated_at  INTEGER NOT NULL
+);
+`);
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

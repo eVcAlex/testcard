@@ -30,3 +30,26 @@ describe("the next episode", () => {
     expect(findNextEpisode(seed(), "nope")).toBeUndefined();
   });
 });
+
+import { clearSkipWindow, getSkipWindow, saveSkipWindow } from "../db/seriesQueries.js";
+
+describe("skip intro memory", () => {
+  it("remembers the last skip per series, and forgets on request", () => {
+    const db = seed();
+    expect(getSkipWindow(db, "sr")).toBeUndefined();
+    saveSkipWindow(db, "sr", 22.4, 96.7);
+    expect(getSkipWindow(db, "sr")).toEqual({ fromSecs: 22, toSecs: 97 });
+    saveSkipWindow(db, "sr", 30, 110);
+    expect(getSkipWindow(db, "sr")).toEqual({ fromSecs: 30, toSecs: 110 });
+    clearSkipWindow(db, "sr");
+    expect(getSkipWindow(db, "sr")).toBeUndefined();
+  });
+
+  it("goes when its series does", () => {
+    const db = seed();
+    db.pragma("foreign_keys = ON");
+    saveSkipWindow(db, "sr", 20, 90);
+    db.prepare("DELETE FROM series WHERE id = 'sr'").run();
+    expect(getSkipWindow(db, "sr")).toBeUndefined();
+  });
+});

@@ -5,7 +5,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
 import { recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
-import { findNextEpisode, recordSeriesRecent } from "@testcard/core/src/db/seriesQueries.js";
+import { findNextEpisode, getSkipWindow, recordSeriesRecent, saveSkipWindow } from "@testcard/core/src/db/seriesQueries.js";
 import type { CatchupProgramme } from "@testcard/core/src/source/xtream/catchup.js";
 import { playerTitle } from "../ui/titles";
 import { channelVariantIds, resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
@@ -286,6 +286,9 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const next = useMemo(() => (item.kind === "episode" ? findNextEpisode(db, item.id) : undefined), [db, item]);
   const nearEnd = next !== undefined && onNextEpisode !== undefined && duration > 300 && position >= duration - NEXT_WINDOW_SECS;
   const finished = nearEnd && position >= duration - 0.5;
+  // Skip intro: what the viewer last skipped at the start of this series is offered again where it starts in each episode.
+  const skip = useMemo(() => (item.kind === "episode" && seriesId !== undefined ? getSkipWindow(db, seriesId) : undefined), [db, item, seriesId]);
+  const inIntro = skip !== undefined && position >= skip.fromSecs - 3 && position < skip.toSecs - 2 && duration > skip.toSecs + 60;
   const [autoCancelled, setAutoCancelled] = useState(false);
   const [autoIn, setAutoIn] = useState(AUTO_NEXT_SECS);
   const goNext = useCallback(() => {
@@ -330,6 +333,29 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   }, []);
   useEffect(() => () => clearTimeout(flashTimer.current), []);
 
+  // A run of forward jumps near the start of an episode (the skip or fast-forward keys pressed in a row) is taken as skipping the
+  // opening, and remembered for the series. Small nudges, or jumps later on, are not.
+  const burst = useRef<{ from: number; to: number; timer?: ReturnType<typeof setTimeout> } | undefined>(undefined);
+  const noteJump = useCallback(
+    (from: number, to: number) => {
+      if (item.kind !== "episode" || seriesId === undefined) return;
+      if (to <= from) {
+        clearTimeout(burst.current?.timer);
+        burst.current = undefined;
+        return;
+      }
+      const run = burst.current ?? { from, to };
+      run.to = to;
+      burst.current = run;
+      clearTimeout(run.timer);
+      run.timer = setTimeout(() => {
+        burst.current = undefined;
+        if (run.from < 360 && run.to - run.from >= 40 && run.to < 720) saveSkipWindow(db, seriesId, run.from, run.to);
+      }, 1800);
+    },
+    [db, item.kind, seriesId],
+  );
+  useEffect(() => () => clearTimeout(burst.current?.timer), []);
   const lastSeek = useRef({ at: 0, direction: 0, count: 0 });
   const seek = useCallback(
     (direction: 1 | -1) => {
@@ -337,14 +363,23 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       const now = Date.now();
       const streak = lastSeek.current.direction === direction && now - lastSeek.current.at < STREAK_WITHIN_MS ? lastSeek.current.count + 1 : 0;
       lastSeek.current = { at: now, direction, count: streak };
-      const target = Math.min(duration > 0 ? duration - 1 : Infinity, Math.max(0, player.currentTime + direction * stepForStreak(streak)));
+      const from = player.currentTime;
+      const target = Math.min(duration > 0 ? duration - 1 : Infinity, Math.max(0, from + direction * stepForStreak(streak)));
+      noteJump(from, target);
       player.currentTime = target;
       setSeekedTo(target);
       pulse(direction === 1 ? "forward" : "back");
       wake();
     },
-    [duration, player, pulse, vod, wake],
+    [duration, noteJump, player, pulse, vod, wake],
   );
+  const skipIntro = useCallback(() => {
+    if (skip === undefined) return;
+    player.currentTime = skip.toSecs;
+    setSeekedTo(skip.toSecs);
+    pulse("forward");
+    wake();
+  }, [player, pulse, skip, wake]);
   // A tap or click on the progress bar jumps to that point.
   const [barWidth, setBarWidth] = useState(0);
   const seekToRatio = useCallback(
@@ -463,6 +498,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
         const key = event.eventType;
         // While the next episode is on offer, OK plays it; any other key means the viewer is still here, so the automatic start is off.
+        if (inIntro && key === "select" && (!chrome || selected === "seek" || selected === "play")) return skipIntro();
         if (nearEnd) {
           // OK on the bar or with the controls hidden means "yes, the next one"; on another control it does that control's job.
           if (key === "select" && (!chrome || selected === "seek" || selected === "play")) return goNext();
@@ -507,7 +543,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [chrome, goNext, guide, guideAt, guideOpen, nearEnd, playEntry, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
+      [chrome, goNext, guide, guideAt, guideOpen, inIntro, nearEnd, playEntry, skipIntro, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
     ),
   );
 
@@ -708,6 +744,14 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
           </View>
         </View>
       </Animated.View>
+
+      {inIntro && !nearEnd ? (
+        <View style={styles.nextCard} pointerEvents="none">
+          <Text style={styles.nextKicker}>INTRO</Text>
+          <Text style={styles.nextTitle}>Skip intro</Text>
+          <Text style={styles.nextHint}>Press OK</Text>
+        </View>
+      ) : null}
 
       {nearEnd && next !== undefined ? (
         <View style={styles.nextCard} pointerEvents="none">

@@ -323,3 +323,26 @@ export function findNextEpisode(db: Database.Database, episodeId: string): NextE
     )
     .get(current.seriesId, current.seasonNumber, current.seasonNumber, current.episodeNumber) as NextEpisode | undefined;
 }
+
+export interface SkipWindow {
+  readonly fromSecs: number;
+  readonly toSecs: number;
+}
+
+/** What the viewer last skipped at the start of this series' episodes, if anything. */
+export function getSkipWindow(db: Database.Database, seriesId: string): SkipWindow | undefined {
+  return db.prepare(`SELECT from_secs AS fromSecs, to_secs AS toSecs FROM series_skip WHERE series_id = ?`).get(seriesId) as SkipWindow | undefined;
+}
+
+/** Remembers a skip at the start of an episode so the same stretch is offered in the next ones. */
+export function saveSkipWindow(db: Database.Database, seriesId: string, fromSecs: number, toSecs: number): void {
+  db.prepare(
+    `INSERT INTO series_skip (series_id, from_secs, to_secs, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(series_id) DO UPDATE SET from_secs = excluded.from_secs, to_secs = excluded.to_secs, updated_at = excluded.updated_at`,
+  ).run(seriesId, Math.round(fromSecs), Math.round(toSecs), Date.now());
+}
+
+/** Forgets it, for a skip that was wrong. */
+export function clearSkipWindow(db: Database.Database, seriesId: string): void {
+  db.prepare(`DELETE FROM series_skip WHERE series_id = ?`).run(seriesId);
+}
