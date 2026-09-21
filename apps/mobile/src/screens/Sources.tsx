@@ -125,7 +125,7 @@ export function SourcesScreen() {
             <Text style={styles.meta}>
               Syncing stops on this TV until you sign in again. You will need your account password.
             </Text>
-            <View style={styles.actions}>
+            <View style={styles.dialogActions}>
               <Button primary preferred label="Stay signed in" onPress={() => setConfirmingSignOut(false)} />
               <Button
                 label="Sign out"
@@ -169,5 +169,6 @@ const styles = styleSheet({
   actions: { flexDirection: "row", gap: space.m },
   scrim: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(5, 8, 11, 0.8)" },
   dialog: { width: 760, gap: space.l, padding: space.xl, backgroundColor: colors.raised, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
+  dialogActions: { flexDirection: "row", justifyContent: "flex-end", gap: space.m },
   dialogTitle: { color: colors.foreground, fontSize: type.title, fontWeight: "600" },
 });
