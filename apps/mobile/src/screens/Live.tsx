@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { View } from "react-native";
 import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
-import { browseChannels, listCategories, listFavouriteChannels, listRecentChannels, toggleFavourite, type ChannelRow } from "@testcard/core/src/db/queries.js";
+import { browseChannels, listCategories, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite, type ChannelRow } from "@testcard/core/src/db/queries.js";
 import { fetchGuide } from "../playback/airing";
 import { useApp } from "../state/app";
 import { memoByVersion } from "../state/memoByVersion";
@@ -63,11 +63,13 @@ export function LiveScreen({
   useBackTo(browsing, onBrowseDone);
   const own = useCallback((channel: ChannelRow) => sourceId === null || channel.source_id === sourceId, [sourceId]);
 
+  const recentIds = useRef(new Set<string>());
   const rows = useMemo<HomeRow[]>(() => {
     void tick;
     const categories = channelCategories(db, version, sourceId ?? undefined);
     const scope = sourceId !== null ? { sourceId } : {};
     const recents = listRecentChannels(db, 60).filter(own).slice(0, 30);
+    recentIds.current = new Set(recents.map((channel) => channel.id));
     const favourites = listFavouriteChannels(db).filter(own);
     const list: HomeRow[] = [];
     if (recents.length > 0) list.push({ key: "recent", label: "Recently watched", items: recents.map(toHomeItem), channels: true });
@@ -116,6 +118,19 @@ export function LiveScreen({
             setTick((value) => value + 1);
           },
         },
+        ...(recentIds.current.has(item.id)
+          ? [
+              {
+                key: "forget",
+                label: "Remove from Recently watched",
+                glyph: "cross" as const,
+                onPress: () => {
+                  removeChannelFromRecents(db, item.id);
+                  setTick((value) => value + 1);
+                },
+              },
+            ]
+          : []),
       ],
     }),
     [db, sync, play],

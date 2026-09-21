@@ -105,16 +105,27 @@ export function HomeScreen({
     return () => clearTimeout(timer);
   }, [fetchDetail, shownId, missing]);
 
+  // The row the remote is on is lined up under the hero, so it is never left half cut off at the edge.
+  const listRef = useRef<FlatList<HomeRow>>(null);
+  const alignRow = useCallback((index: number) => {
+    listRef.current?.scrollToIndex({ index, viewPosition: 0, animated: true });
+  }, []);
+
   const renderRow = useCallback(
-    ({ item: row }: { item: HomeRow }) =>
-      row.channels === true ? (
-        <ChannelShelf title={row.label} items={row.items} onPress={onSelect} onFocusItem={onFocusItem} />
+    ({ item: row, index }: { item: HomeRow; index: number }) => {
+      const focus = (item: PosterItem) => {
+        alignRow(index);
+        onFocusItem(item);
+      };
+      return row.channels === true ? (
+        <ChannelShelf title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} />
       ) : row.ranked === true ? (
-        <RankedRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={onFocusItem} />
+        <RankedRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} />
       ) : (
-        <PosterRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={onFocusItem} />
-      ),
-    [onSelect, onFocusItem],
+        <PosterRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} />
+      );
+    },
+    [onSelect, onFocusItem, alignRow],
   );
 
   return (
@@ -130,9 +141,11 @@ export function HomeScreen({
           <Fade from="top" />
         </View>
         <FlatList
+          ref={listRef}
           data={rows}
           keyExtractor={(row) => row.key}
           renderItem={renderRow}
+          onScrollToIndexFailed={(info) => listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true })}
           // Enough rows drawn ahead that the remote always has a next row to land on; with fewer, the first Down press finds nothing yet.
           initialNumToRender={4}
           maxToRenderPerBatch={4}

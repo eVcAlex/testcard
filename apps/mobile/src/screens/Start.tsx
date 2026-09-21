@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
-import { listFavouriteChannels, listRecentChannels, toggleFavourite } from "@testcard/core/src/db/queries.js";
+import { listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite } from "@testcard/core/src/db/queries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { listFavouriteMovies, listRecentMovies, getMovieById, getMoviePlaybackTarget, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
 import { listFavouriteSeries, listRecentSeries, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
@@ -50,6 +50,7 @@ export function StartScreen({
   const movieShelves = useBuilt(movieRows, db, version, sourceId);
   const seriesShelves = useBuilt(seriesRows, db, version, sourceId);
 
+  const recentChannelIds = useRef(new Set<string>());
   const rows = useMemo<HomeRow[] | null>(() => {
     if (movieShelves === null || seriesShelves === null) return null;
     const asMovie = (movie: Parameters<typeof homeMovie>[0]) => tag("movie", homeMovie(movie));
@@ -57,6 +58,7 @@ export function StartScreen({
     const continuing = listRecentMovies(db, 60).filter((movie) => movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs));
     const recentSeries = listRecentSeries(db, 20);
     const recentChannels = listRecentChannels(db, 30);
+    recentChannelIds.current = new Set(recentChannels.map((channel) => channel.id));
     const myList = [...listFavouriteMovies(db).map(asMovie), ...listFavouriteSeries(db).map(asSeries)].slice(0, 30);
     const favouriteChannels = listFavouriteChannels(db).slice(0, 30);
     const list: HomeRow[] = [];
@@ -145,6 +147,19 @@ export function StartScreen({
               changed();
             },
           },
+          ...(recentChannelIds.current.has(id)
+            ? [
+                {
+                  key: "forget",
+                  label: "Remove from Recently watched",
+                  glyph: "cross" as const,
+                  onPress: () => {
+                    removeChannelFromRecents(db, id);
+                    setTick((value) => value + 1);
+                  },
+                },
+              ]
+            : []),
         ],
       };
     },
