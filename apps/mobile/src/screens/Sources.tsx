@@ -39,9 +39,59 @@ export function SourcesScreen() {
         </Muted>
         {status.lastError !== undefined && <Text style={styles.error}>{status.lastError}</Text>}
 
+
+        <View style={styles.panels}>
+          <View style={styles.panel}>
+            <Text style={styles.name}>{`Testcard ${version.name}`}</Text>
+            <Text style={styles.meta}>
+              {!update.configured
+                ? "Updates are not set up for this build."
+                : update.phase === "downloading"
+                  ? `Downloading ${Math.round(update.progress * 100)}%`
+                  : update.phase === "checking"
+                    ? "Checking for updates..."
+                    : update.available !== null
+                      ? `Version ${update.available.versionName} is available.`
+                      : update.checked
+                        ? "You are up to date."
+                        : "Not checked yet."}
+            </Text>
+            {update.error !== undefined && <Text style={styles.error}>{update.error}</Text>}
+            {update.configured && (
+              <Button
+                primary={update.available !== null}
+                label={update.available !== null ? "Update now" : "Check for updates"}
+                disabled={update.phase === "downloading" || update.phase === "checking"}
+                onPress={update.available !== null ? update.install : update.check}
+              />
+            )}
+          </View>
+
+          <View style={styles.panel}>
+            <Text style={styles.name}>Account</Text>
+            <Text style={styles.meta} numberOfLines={1}>
+              {status.email ?? "Signed out"}
+            </Text>
+            {status.lastSyncedAt !== undefined && <Text style={styles.synced}>{`Synced ${ago(status.lastSyncedAt)}`}</Text>}
+            <View style={styles.actions}>
+              <Button
+                label="Sync now"
+                onPress={() => {
+                  void sync.triggerNow().then(updateStatus);
+                }}
+              />
+              <Button
+                label="Sign out"
+                onPress={() => setConfirmingSignOut(true)}
+              />
+            </View>
+          </View>
+        </View>
         {sources.length === 0 && <Muted>No sources have arrived yet. Sync runs every minute, or press Sync now.</Muted>}
+        <View style={styles.grid}>
         {sources.map((source) => (
           <View key={source.id} style={styles.card}>
+            <View style={styles.cardHead}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{source.name.slice(0, 1).toUpperCase()}</Text>
             </View>
@@ -57,67 +107,24 @@ export function SourcesScreen() {
                 <Text style={styles.synced}>{`Synced ${ago(source.lastRefreshedAt)}`}</Text>
               ) : null}
             </View>
-            <Button label={source.refreshing ? "Refreshing" : "Refresh"} disabled={source.refreshing} onPress={() => void refreshSource(source.id)} />
-            <Button
-              label={confirming === source.id ? "Press again to remove" : "Remove"}
-              onPress={() => {
-                if (confirming === source.id) {
-                  setConfirming(undefined);
-                  void removeSource(source.id);
-                } else setConfirming(source.id);
-              }}
-            />
+            </View>
+            <View style={styles.actions}>
+              <Button label={source.refreshing ? "Refreshing" : "Refresh"} disabled={source.refreshing} onPress={() => void refreshSource(source.id)} />
+              <Button
+                label={confirming === source.id ? "Press again to remove" : "Remove"}
+                onPress={() => {
+                  if (confirming === source.id) {
+                    setConfirming(undefined);
+                    void removeSource(source.id);
+                  } else setConfirming(source.id);
+                }}
+              />
+            </View>
           </View>
         ))}
-      </View>
-
-      <View style={styles.side}>
-        <View style={styles.panel}>
-          <Text style={styles.name}>{`Testcard ${version.name}`}</Text>
-          <Text style={styles.meta}>
-            {!update.configured
-              ? "Updates are not set up for this build."
-              : update.phase === "downloading"
-                ? `Downloading ${Math.round(update.progress * 100)}%`
-                : update.phase === "checking"
-                  ? "Checking for updates..."
-                  : update.available !== null
-                    ? `Version ${update.available.versionName} is available.`
-                    : update.checked
-                      ? "You are up to date."
-                      : "Not checked yet."}
-          </Text>
-          {update.error !== undefined && <Text style={styles.error}>{update.error}</Text>}
-          {update.configured && (
-            <Button
-              primary={update.available !== null}
-              label={update.available !== null ? "Update now" : "Check for updates"}
-              disabled={update.phase === "downloading" || update.phase === "checking"}
-              onPress={update.available !== null ? update.install : update.check}
-            />
-          )}
-        </View>
-
-        <View style={styles.panel}>
-          <Text style={styles.name}>Account</Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            {status.email ?? "Signed out"}
-          </Text>
-          {status.lastSyncedAt !== undefined && <Text style={styles.synced}>{`Synced ${ago(status.lastSyncedAt)}`}</Text>}
-          <View style={styles.actions}>
-            <Button
-              label="Sync now"
-              onPress={() => {
-                void sync.triggerNow().then(updateStatus);
-              }}
-            />
-            <Button
-              label="Sign out"
-              onPress={() => setConfirmingSignOut(true)}
-            />
-          </View>
         </View>
       </View>
+
       <Modal transparent animationType="fade" visible={confirmingSignOut} onRequestClose={() => setConfirmingSignOut(false)}>
         <View style={styles.scrim}>
           <View style={styles.dialog}>
@@ -153,14 +160,17 @@ function counts(channels: number, movies: number, series: number): string {
 }
 
 const styles = styleSheet({
-  page: { flexDirection: "row", alignItems: "flex-start", gap: space.xl, padding: space.xl },
-  main: { flex: 1, gap: space.l },
-  side: { width: 520, gap: space.l, paddingTop: 84 },
-  card: { flexDirection: "row", alignItems: "center", gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
+  page: { padding: space.xl },
+  main: { gap: space.l },
+  // Updates and account side by side, then the sources in a grid of the same card size.
+  panels: { flexDirection: "row", gap: space.l },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: space.l },
+  card: { width: "48.5%", gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
   avatar: { width: 84, height: 84, borderRadius: 20, backgroundColor: colors.cardActive, alignItems: "center", justifyContent: "center" },
   avatarText: { color: colors.accent, fontSize: 34, fontWeight: "600" },
+  cardHead: { flexDirection: "row", alignItems: "center", gap: space.l },
   cardText: { flex: 1, gap: 4 },
-  panel: { gap: space.m, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
+  panel: { width: "48.5%", gap: space.m, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
   name: { color: colors.foreground, fontSize: type.lead, fontWeight: "600" },
   kind: { color: colors.faint, fontSize: type.small, fontWeight: "400" },
   meta: { color: colors.muted, fontSize: type.body },
