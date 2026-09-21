@@ -81,11 +81,14 @@ export function DetailActions({
   primary,
   actions,
   preferred = true,
+  hintBeside = false,
 }: {
   primary: { label: string; onPress: () => void; /** 0 to 1: how far through it you are, drawn inside the pill. */ progress?: number | undefined };
   actions: readonly DetailAction[];
   /** Claim focus when shown. Off where the screen sits under a nav bar that should keep it. */
   preferred?: boolean;
+  /** Show the focused icon's name to the right of the buttons instead of underneath, for a container that clips below them. */
+  hintBeside?: boolean;
 }) {
   const [hint, setHint] = useState("");
   const [playFocused, setPlayFocused] = useState(false);
@@ -114,8 +117,9 @@ export function DetailActions({
         {actions.map((action) => (
           <IconButton key={action.key} action={action} onHint={setHint} />
         ))}
+        {hintBeside && actions.length > 0 ? <Text style={styles.hintBeside}>{hint}</Text> : null}
       </View>
-      {actions.length > 0 ? <Text style={styles.hint}>{hint}</Text> : null}
+      {!hintBeside && actions.length > 0 ? <Text style={styles.hint}>{hint}</Text> : null}
     </View>
   );
 }
@@ -180,6 +184,7 @@ const styles = styleSheet({
   fact: { height: 44, paddingHorizontal: 20, borderRadius: 22, justifyContent: "center", backgroundColor: "#ffffff14" },
   factLabel: { color: colors.foreground, fontSize: 23, fontWeight: "500" },
   hint: { height: 34, color: colors.muted, fontSize: 24 },
+  hintBeside: { color: colors.muted, fontSize: 26, marginLeft: 6 },
   backdrop: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0 },
   backdropImage: { width: "100%", height: "100%", opacity: 0.5 },
   backdropShade: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "#0c0e1199" },

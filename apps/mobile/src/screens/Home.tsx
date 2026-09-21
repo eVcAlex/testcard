@@ -169,7 +169,7 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
         <Text style={styles.plot} numberOfLines={2}>
           {plot ?? ""}
         </Text>
-        {actions !== undefined ? <DetailActions preferred={false} primary={actions.primary} actions={actions.actions} /> : null}
+        {actions !== undefined ? <DetailActions preferred={false} hintBeside primary={actions.primary} actions={actions.actions} /> : null}
       </View>
     </View>
   );
