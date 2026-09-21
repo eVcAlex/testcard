@@ -1,5 +1,6 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { createAuth } from "./auth.js";
+import { handleLinkApprove, handleLinkPage, handleLinkPoll, handleLinkSession, handleLinkStart } from "./routes/link.js";
 import { handlePull } from "./routes/pull.js";
 import { handlePush } from "./routes/push.js";
 import { handleRelease } from "./routes/release.js";
@@ -32,6 +33,13 @@ const requireSession: MiddlewareHandler<AppEnv> = async (c, next) => {
 };
 
 app.get("/app/:file", handleRelease);
+
+// Signing a TV in with a code: the page, and the three calls behind it. No session: the TV has none yet.
+app.get("/link", handleLinkPage);
+app.post("/link/start", handleLinkStart);
+app.get("/link/session", handleLinkSession);
+app.post("/link/approve", handleLinkApprove);
+app.get("/link/poll", handleLinkPoll);
 
 app.get("/sync/pull", requireSession, handlePull);
 app.post("/sync/push", requireSession, handlePush);
