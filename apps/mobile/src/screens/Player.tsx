@@ -265,7 +265,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // Captions the file carries: the key steps through them (off, then each track) and back to off.
   const tracks = useEvent(player, "availableSubtitleTracksChange", { availableSubtitleTracks: player.availableSubtitleTracks }).availableSubtitleTracks;
   const captionTrack = useEvent(player, "subtitleTrackChange", { subtitleTrack: player.subtitleTrack, oldSubtitleTrack: null }).subtitleTrack;
-  const captionLabel = (track: (typeof tracks)[number] | null) => (track === null ? "Captions off" : `Captions: ${track.label !== "" ? track.label : track.language !== "" ? track.language : "on"}`);
+  const captionLabel = (track: (typeof tracks)[number] | null) => (track === null ? "CC off" : `CC: ${track.label !== "" ? track.label.slice(0, 12) : track.language !== "" ? track.language : "on"}`);
   const cycleCaptions = useCallback(() => {
     const options = [null, ...tracks];
     const now = options.findIndex((track) => (track === null ? captionTrack === null : captionTrack !== null && track.id === captionTrack.id && track.label === captionTrack.label && track.language === captionTrack.language));
@@ -725,6 +725,9 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
                 <Text style={styles.clock}>
                   {clock(position)}
                   <Text style={styles.clockDim}>{duration > 0 ? ` / ${clock(duration)}` : ""}</Text>
+                  {duration > 0 ? (
+                    <Text style={styles.clockDim}>{`   Ends ${two(endsAt.getHours())}:${two(endsAt.getMinutes())}`}</Text>
+                  ) : null}
                 </Text>
               ) : null}
             </View>
@@ -744,14 +747,9 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
               ) : null}
             </View>
             <View style={[styles.side, styles.sideRight]} pointerEvents="box-none">
-              {vod && duration > 0 ? (
-                <Text style={styles.clockDim}>
-                  Ends {two(endsAt.getHours())}:{two(endsAt.getMinutes())}
-                </Text>
-              ) : null}
-              {previousChannel !== undefined ? <TextKey label={`Last: ${previousChannel.title}`} selected={lit("last")} onPress={() => press("last")} /> : null}
+              {previousChannel !== undefined ? <TextKey label={previousChannel.title.length > 16 ? `Last: ${previousChannel.title.slice(0, 15)}...` : `Last: ${previousChannel.title}`} selected={lit("last")} onPress={() => press("last")} /> : null}
               {archive !== undefined ? <TextKey label="Catch up" selected={lit("catchup")} onPress={() => press("catchup")} /> : null}
-              {next !== undefined && onNextEpisode !== undefined ? <TextKey label="Next episode" selected={lit("next")} onPress={() => press("next")} /> : null}
+              {next !== undefined && onNextEpisode !== undefined ? <TextKey label="Next" selected={lit("next")} onPress={() => press("next")} /> : null}
               {vod && tracks.length > 0 ? <TextKey label={captionLabel(captionTrack)} selected={lit("captions")} onPress={() => press("captions")} /> : null}
               {vod ? (
                 <Key selected={lit("info")} active={statsOn} onPress={() => press("info")}>
