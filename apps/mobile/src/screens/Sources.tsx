@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Modal, ScrollView, Text, View } from "react-native";
 import { useApp } from "../state/app";
 import { useUpdate } from "../update/UpdateProvider";
 import { installedVersion } from "../update/update";
@@ -23,6 +23,8 @@ export function SourcesScreen() {
   const { sources, refreshSource, removeSource, status, sync, updateStatus } = useApp();
   // Removing is permanent (and reaches the other devices), so it takes a second press.
   const [confirming, setConfirming] = useState<string>();
+  // Signing out drops the account from this TV, and the button sits right beside Sync now, so it asks first.
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const update = useUpdate();
   const version = installedVersion();
 
@@ -111,13 +113,31 @@ export function SourcesScreen() {
             />
             <Button
               label="Sign out"
-              onPress={() => {
-                void sync.signOut().then(updateStatus);
-              }}
+              onPress={() => setConfirmingSignOut(true)}
             />
           </View>
         </View>
       </View>
+      <Modal transparent animationType="fade" visible={confirmingSignOut} onRequestClose={() => setConfirmingSignOut(false)}>
+        <View style={styles.scrim}>
+          <View style={styles.dialog}>
+            <Text style={styles.dialogTitle}>Sign out?</Text>
+            <Text style={styles.meta}>
+              Syncing stops on this TV until you sign in again. You will need your account password.
+            </Text>
+            <View style={styles.actions}>
+              <Button primary preferred label="Stay signed in" onPress={() => setConfirmingSignOut(false)} />
+              <Button
+                label="Sign out"
+                onPress={() => {
+                  setConfirmingSignOut(false);
+                  void sync.signOut().then(updateStatus);
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -147,4 +167,7 @@ const styles = styleSheet({
   synced: { color: colors.accent, fontSize: type.small },
   error: { color: colors.fault, fontSize: type.small },
   actions: { flexDirection: "row", gap: space.m },
+  scrim: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(5, 8, 11, 0.8)" },
+  dialog: { width: 760, gap: space.l, padding: space.xl, backgroundColor: colors.raised, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
+  dialogTitle: { color: colors.foreground, fontSize: type.title, fontWeight: "600" },
 });

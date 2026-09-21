@@ -63,6 +63,8 @@ function SyncPanel() {
     }
   }
 
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+
   async function run(action: () => Promise<SyncStatus>): Promise<void> {
     setBusy(true);
     try {
@@ -100,13 +102,42 @@ function SyncPanel() {
             <button type="button" className="btn btn--ghost" onClick={() => run(() => window.testcard.sync.triggerNow())} disabled={busy}>
               <Icon name="refresh" /> Sync now
             </button>
-            <button type="button" className="btn btn--ghost" onClick={() => run(() => window.testcard.sync.signOut())} disabled={busy}>
+            <button type="button" className="btn btn--ghost" onClick={() => setConfirmingSignOut(true)} disabled={busy}>
               Sign out
             </button>
           </div>
         </div>
         {failed && <p className="msg msg--error">{status.lastError}</p>}
         <p className="pw-panel-note">Favourites, watch progress and sources stay in step across every device signed in to this account.</p>
+        {confirmingSignOut && (
+          <div
+            className="pw-confirm-backdrop"
+            onClick={() => setConfirmingSignOut(false)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setConfirmingSignOut(false);
+            }}
+          >
+            <div className="pw-confirm" role="alertdialog" aria-modal="true" aria-labelledby="pw-signout-title" onClick={(event) => event.stopPropagation()}>
+              <h3 id="pw-signout-title">Sign out?</h3>
+              <p>Syncing stops on this computer until you sign in again. Your sources and favourites stay here.</p>
+              <div className="pw-confirm-actions">
+                <button type="button" className="btn btn--ghost" autoFocus onClick={() => setConfirmingSignOut(false)}>
+                  Stay signed in
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={() => {
+                    setConfirmingSignOut(false);
+                    void run(() => window.testcard.sync.signOut());
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     );
   }

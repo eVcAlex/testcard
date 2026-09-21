@@ -1161,6 +1161,40 @@
   max-width: none;
 }
 
+/* A question that must be answered before anything else on the page: sits over the whole window. */
+.pw-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-popover);
+  display: grid;
+  place-items: center;
+  background: var(--scrim);
+}
+
+.pw-confirm {
+  width: min(420px, calc(100vw - var(--s-8)));
+  padding: var(--s-7);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  box-shadow: var(--elev-3), var(--edge-light);
+}
+
+.pw-confirm h3 {
+  margin: 0 0 var(--s-3);
+}
+
+.pw-confirm p {
+  margin: 0 0 var(--s-6);
+  color: var(--muted-foreground);
+}
+
+.pw-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-3);
+}
+
 /* ============================ empty state ============================ */
 
 .pw-empty-state {
