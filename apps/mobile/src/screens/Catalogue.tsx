@@ -111,7 +111,7 @@ function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
   );
 }
 
-type AppDb = ReturnType<typeof useApp>["db"];
+export type AppDb = ReturnType<typeof useApp>["db"];
 type Memo<T> = ((db: AppDb, version: number, key?: string) => T) & { cached: (db: AppDb, version: number, key?: string) => T | undefined };
 
 // The landing rows read a lot of the catalogue, so they are built once per sync, and after the screen's first paint.
@@ -128,11 +128,11 @@ const homeOptions = (sourceId?: string) => ({
   ...(deviceLanguage !== undefined ? { language: deviceLanguage } : {}),
   year: new Date().getFullYear(),
 });
-const movieRows = memoByVersion((db: AppDb, sourceId?: string) => movieHome(db, homeOptions(sourceId)));
-const seriesRows = memoByVersion((db: AppDb, sourceId?: string) => seriesHome(db, homeOptions(sourceId)));
+export const movieRows = memoByVersion((db: AppDb, sourceId?: string) => movieHome(db, homeOptions(sourceId)));
+export const seriesRows = memoByVersion((db: AppDb, sourceId?: string) => seriesHome(db, homeOptions(sourceId)));
 
 /** The remembered rows straight away when there are some, otherwise null until they have been built. */
-function useBuilt<T>(memo: Memo<T>, db: AppDb, version: number, sourceId: string | null): T | null {
+export function useBuilt<T>(memo: Memo<T>, db: AppDb, version: number, sourceId: string | null): T | null {
   const key = sourceId ?? undefined;
   const [value, setValue] = useState<T | null>(() => memo.cached(db, version, key) ?? null);
   useEffect(() => {
@@ -161,13 +161,13 @@ export function useBackTo(active: boolean, back: () => void) {
 }
 
 /** A landing row from a built shelf. The top shelf becomes a numbered top 10. */
-function shelfRow<T>(shelf: { key: string; label: string; items: T[] }, toItem: (row: T) => HomeItem): HomeRow {
+export function shelfRow<T>(shelf: { key: string; label: string; items: T[] }, toItem: (row: T) => HomeItem): HomeRow {
   return shelf.key === "top"
     ? { key: shelf.key, label: shelf.label, items: shelf.items.slice(0, 10).map(toItem), ranked: true }
     : { key: shelf.key, label: shelf.label, items: shelf.items.map(toItem) };
 }
 
-const homeMovie = (movie: MovieRow): HomeItem => ({
+export const homeMovie = (movie: MovieRow): HomeItem => ({
   id: movie.id,
   name: movie.name,
   posterUrl: movie.poster_url,
@@ -178,7 +178,7 @@ const homeMovie = (movie: MovieRow): HomeItem => ({
   favourite: movie.is_favourite === 1,
   resume: movie.position_secs !== null && shouldPromptResume(movie.position_secs, movie.duration_secs),
 });
-const homeSeries = (series: SeriesRow): HomeItem => ({ id: series.id, name: series.name, posterUrl: series.poster_url, progress: null, rating: series.rating, plot: series.plot, durationSecs: null, favourite: series.is_favourite === 1, resume: false });
+export const homeSeries = (series: SeriesRow): HomeItem => ({ id: series.id, name: series.name, posterUrl: series.poster_url, progress: null, rating: series.rating, plot: series.plot, durationSecs: null, favourite: series.is_favourite === 1, resume: false });
 
 /** Movies: a landing page of rows (continue watching, my list, top rated, recently added, genres). `browsing` (the nav bar's Browse all) shows every category instead. */
 export function MoviesScreen({
@@ -304,11 +304,11 @@ export function SeriesScreen({ sourceId, browsing, onBrowseDone, onOpen }: { sou
 }
 
 /** The category browser and empty states sit under the nav bar, which floats over the landing page's art. */
-function Padded({ children }: { children: ReactNode }) {
+export function Padded({ children }: { children: ReactNode }) {
   return <View style={loadingStyles.padded}>{children}</View>;
 }
 
-function Loading({ noun }: { noun: string }) {
+export function Loading({ noun }: { noun: string }) {
   return (
     <Padded>
       <View style={loadingStyles.wrap}>

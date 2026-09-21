@@ -11,7 +11,7 @@ import { useBackTo } from "./Catalogue";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
 const toItem = (channel: ChannelRow): BrowseItem => ({ id: channel.id, title: channel.normalised_name, imageUrl: channel.logo_url, number: channel.channel_number });
-const toHomeItem = (channel: ChannelRow): HomeItem => ({
+export const toHomeItem = (channel: ChannelRow): HomeItem => ({
   id: channel.id,
   name: channel.normalised_name,
   posterUrl: channel.logo_url,

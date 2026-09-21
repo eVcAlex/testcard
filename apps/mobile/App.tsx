@@ -12,6 +12,7 @@ import { NavTab } from "./src/ui/NavTab";
 import { SourceNames } from "./src/ui/Poster";
 import { MoviesScreen, SeriesScreen } from "./src/screens/Catalogue";
 import { LiveScreen } from "./src/screens/Live";
+import { StartScreen } from "./src/screens/Start";
 import { PlayerScreen } from "./src/screens/Player";
 import { MovieDetailScreen } from "./src/screens/MovieDetail";
 import { SeriesDetailScreen } from "./src/screens/SeriesDetail";
@@ -21,7 +22,7 @@ import { SourcesScreen } from "./src/screens/Sources";
 import { SearchScreen } from "./src/screens/Search";
 import type { PlayItem } from "./src/playback/resolveStream";
 
-type Section = "movies" | "series" | "live" | "search" | "sources";
+type Section = "home" | "movies" | "series" | "live" | "search" | "sources";
 type Route =
   | { name: "home" }
   | { name: "series"; id: string; title: string }
@@ -33,6 +34,7 @@ type Route =
 const EXIT_WINDOW_MS = 2500;
 
 const SECTIONS: { key: Section; label: string }[] = [
+  { key: "home", label: "Home" },
   { key: "search", label: "Search" },
   { key: "live", label: "Live TV" },
   { key: "movies", label: "Movies" },
@@ -56,7 +58,7 @@ export default function App() {
 function Root() {
   const { status, sources, db, version } = useApp();
   const { available } = useUpdate();
-  const [section, setSection] = useState<Section>("live");
+  const [section, setSection] = useState<Section>("home");
   const [route, setRoute] = useState<Route>({ name: "home" });
   // Which source the browse screens show: all of them, or one. Forgotten if that source is later removed.
   const [pickedSource, setPickedSource] = useState<string | null>(null);
@@ -181,6 +183,23 @@ function Root() {
           </View>
         </TVFocusGuideView>
         <View style={styles.content}>
+          {section === "home" && (
+            <StartScreen
+              sourceId={sourceId}
+              onOpenMovie={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
+              onPlayMovie={(movie, resume) => setRoute({ name: "play", item: { kind: "movie", id: movie.id, title: movie.title }, resume, returnTo: { name: "home" } })}
+              onOpenSeries={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
+              onPlayChannel={(channel, channels) =>
+                setRoute({
+                  name: "play",
+                  item: { kind: "channel", id: channel.id, title: channel.title },
+                  channels: channels.map((entry) => ({ kind: "channel" as const, id: entry.id, title: entry.title })),
+                  resume: false,
+                  returnTo: { name: "home" },
+                })
+              }
+            />
+          )}
           {section === "movies" && (
             <MoviesScreen
               sourceId={sourceId}
