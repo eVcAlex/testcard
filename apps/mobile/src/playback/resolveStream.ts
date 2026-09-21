@@ -24,6 +24,11 @@ export interface ResolvedStream {
   readonly resumeSecs: number | null;
 }
 
+/** How many ways there are to watch a channel: the same channel offered in more than one quality or feed. */
+export function channelVariantIds(db: Database.Database, channelId: string): string[] {
+  return (db.prepare(`SELECT id FROM channel_variants WHERE channel_id = ? ORDER BY sort_order`).all(channelId) as { id: string }[]).map((row) => row.id);
+}
+
 const xtream = createXtreamAdapter(getCredentials);
 const m3u = createM3UAdapter();
 
@@ -33,9 +38,9 @@ const m3u = createM3UAdapter();
  * goes straight to the player and is never shown or logged. With `catchup`, a channel plays that past programme
  * from its start instead of the live picture.
  */
-export async function resolveStream(db: Database.Database, item: PlayItem, resume: boolean, catchup?: CatchupProgramme): Promise<ResolvedStream> {
+export async function resolveStream(db: Database.Database, item: PlayItem, resume: boolean, catchup?: CatchupProgramme, variantAt = 0): Promise<ResolvedStream> {
   if (item.kind === "channel") {
-    const target = getPlaybackTarget(db, item.id);
+    const target = getPlaybackTarget(db, item.id, variantAt > 0 ? channelVariantIds(db, item.id)[variantAt] : undefined);
     if (target === undefined) throw new Error("That channel is no longer available.");
     if (catchup !== undefined) {
       const url = await buildTimeshiftUrl(target.source, target.variant.providerStreamId, catchup, getCredentials);

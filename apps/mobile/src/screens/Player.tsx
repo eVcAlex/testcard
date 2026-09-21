@@ -8,7 +8,7 @@ import { recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
 import { recordSeriesRecent } from "@testcard/core/src/db/seriesQueries.js";
 import type { CatchupProgramme } from "@testcard/core/src/source/xtream/catchup.js";
 import { playerTitle } from "../ui/titles";
-import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
+import { channelVariantIds, resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
 import { useApp } from "../state/app";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button } from "../ui/controls";
@@ -21,6 +21,9 @@ const SEEK_STEP_SECS = 10;
 const STREAK_WITHIN_MS = 600;
 const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4 ? 30 : count < 7 ? 60 : 120);
 const CHROME_HIDES_AFTER_MS = 4000;
+/** A live picture stuck refilling this long is reloaded, at most this many times. */
+const STUCK_AFTER_MS = 12_000;
+const MAX_RELOADS = 4;
 /** Stepping to another channel remounts the player, so the highlighted control is carried across, and spamming next or previous keeps working. */
 let carriedSelection: Control | undefined;
 /** The channel being watched and the one before it, kept across channel changes so "Last" can flip back, as on a TV remote. */
@@ -44,18 +47,22 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onExit }
   // A past programme the viewer picked from Catch up, for this channel only: changing channel goes back to live.
   const [picked, setPicked] = useState<{ channelId: string; programme: CatchupProgramme }>();
   const catchup = picked?.channelId === item.id ? picked.programme : undefined;
+  // A live channel that will not play is tried again on its other feeds (another quality, a backup) before the viewer sees an error.
+  const [variantAt, setVariantAt] = useState(0);
+  const variantCount = useMemo(() => (item.kind === "channel" ? channelVariantIds(db, item.id).length : 1), [db, item]);
+  const failOver = useCallback(() => setVariantAt((at) => at + 1), []);
 
   useEffect(() => {
     let cancelled = false;
     setError(undefined);
-    resolveStream(db, item, resume, catchup).then(
+    resolveStream(db, item, resume, catchup, variantAt).then(
       (resolved) => !cancelled && setStream(resolved),
       (failure: unknown) => !cancelled && setError(failure instanceof Error ? failure.message : "This couldn't be played."),
     );
     return () => {
       cancelled = true;
     };
-  }, [db, item, resume, catchup]);
+  }, [db, item, resume, catchup, variantAt]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -83,6 +90,8 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onExit }
       onCatchup={(programme) => setPicked(programme === undefined ? undefined : { channelId: item.id, programme })}
       channels={channels}
       onZap={onZap}
+      moreFeeds={variantAt + 1 < variantCount}
+      onFailOver={failOver}
       onExit={() => {
         sync.notifyLocalChange();
         updateStatus();
@@ -158,7 +167,7 @@ function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
   return guide.current === undefined ? past : [{ programme: guide.current, when: "Start over", time: hourMinute(guide.current.start) }, ...past];
 }
 
-function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onExit }: { item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
+function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, moreFeeds, onFailOver, onExit }: { moreFeeds: boolean; onFailOver: () => void; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
@@ -187,6 +196,23 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     if (status === "readyToPlay") everPlayed.current = true;
     else if (status === "loading" && everPlayed.current) setStalls((count) => count + 1);
   }, [status]);
+  // Live TV: a picture that stays stuck refilling is asked for again from the start, a few times, before giving up.
+  const reloads = useRef(0);
+  useEffect(() => {
+    if (vod || timeshift || status !== "loading" || !everPlayed.current || reloads.current >= MAX_RELOADS) return;
+    const timer = setTimeout(() => {
+      reloads.current += 1;
+      player.replace(stream.url);
+      player.play();
+    }, STUCK_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [player, status, stream.url, timeshift, vod]);
+  // A live channel that errors is tried on its next feed, if it has one.
+  const failing = status === "error" && !vod && !timeshift && moreFeeds;
+  useEffect(() => {
+    if (failing) onFailOver();
+  }, [failing, onFailOver]);
+
   // Live TV: pausing lets the picture fall behind the broadcast. Once it has, there is a way back to live.
   const [behindLive, setBehindLive] = useState(false);
   const pausedAt = useRef<number | undefined>(undefined);
@@ -476,6 +502,14 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     };
   }, [db, item, seriesId, timeshift, vod]);
 
+  if (failing) {
+    return (
+      <View style={styles.centre}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.muted}>Trying another feed...</Text>
+      </View>
+    );
+  }
   if (status === "error") {
     const raw = error?.message ?? "";
     const message = explain(raw);

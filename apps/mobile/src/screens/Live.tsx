@@ -75,6 +75,8 @@ export function LiveScreen({
     const list: HomeRow[] = [];
     if (recents.length > 0) list.push({ key: "recent", label: "Recently watched", items: recents.map(toHomeItem), channels: true });
     if (favourites.length > 0) list.push({ key: "favourites", label: "Favourites", items: favourites.slice(0, 30).map(toHomeItem), channels: true });
+    const sports = browseChannels(db, { genre: "sports", limit: ROW_SIZE, ...scope });
+    if (sports.length > 0) list.push({ key: "sports", label: "Sports", items: sports.map(toHomeItem), channels: true });
     for (const category of categories.filter((entry) => entry.count > 0).slice(0, CATEGORY_ROWS)) {
       const channels = browseChannels(db, { categoryId: category.id, limit: ROW_SIZE, ...scope });
       if (channels.length > 0) list.push({ key: category.id, label: category.label, items: channels.map(toHomeItem), channels: true });

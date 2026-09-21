@@ -71,6 +71,7 @@ export function StartScreen({
     add("recent-channels", "Recently watched channels", recentChannels.map((channel) => tag("channel", toHomeItem(channel))), true);
     add("my-list", "My list", myList);
     add("favourite-channels", "Favourite channels", favouriteChannels.map((channel) => tag("channel", toHomeItem(channel))), true);
+    add("sports-channels", "Sports channels", browseChannels(db, { genre: "sports", limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true);
     // Categories pinned from Browse all, in the order they were pinned. A pin whose category is not here yet (a fresh import) waits.
     for (const pin of listHomePins(db)) {
       if (pin.categoryId === null) continue;
