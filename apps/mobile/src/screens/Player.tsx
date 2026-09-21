@@ -21,9 +21,11 @@ const SEEK_STEP_SECS = 10;
 const STREAK_WITHIN_MS = 600;
 const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4 ? 30 : count < 7 ? 60 : 120);
 const CHROME_HIDES_AFTER_MS = 4000;
+/** Stepping to another channel remounts the player, so the highlighted control is carried across, and spamming next or previous keeps working. */
+let carriedSelection: Control | undefined;
 const PROGRESS_EVERY_MS = 5000;
 
-type Control = "exit" | "seek" | "back" | "play" | "forward" | "info" | "live" | "catchup";
+type Control = "exit" | "seek" | "back" | "play" | "forward" | "info" | "captions" | "live" | "catchup";
 
 /** A length written in 1920 px design units, for the shapes below that are sized in code. */
 const u = (n: number) => Math.round(n * uiScale);
@@ -227,6 +229,15 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     };
   }, [db, item.id, timeshift, vod]);
   const [statsOn, setStatsOn] = useState(false);
+  // Captions the file carries: the key steps through them (off, then each track) and back to off.
+  const tracks = useEvent(player, "availableSubtitleTracksChange", { availableSubtitleTracks: player.availableSubtitleTracks }).availableSubtitleTracks;
+  const captionTrack = useEvent(player, "subtitleTrackChange", { subtitleTrack: player.subtitleTrack, oldSubtitleTrack: null }).subtitleTrack;
+  const captionLabel = (track: (typeof tracks)[number] | null) => (track === null ? "Captions off" : `Captions: ${track.label !== "" ? track.label : track.language !== "" ? track.language : "on"}`);
+  const cycleCaptions = useCallback(() => {
+    const options = [null, ...tracks];
+    const now = options.findIndex((track) => (track === null ? captionTrack === null : captionTrack !== null && track.id === captionTrack.id && track.label === captionTrack.label && track.language === captionTrack.language));
+    player.subtitleTrack = options[(now + 1) % options.length] ?? null;
+  }, [captionTrack, player, tracks]);
   const time = useEvent(player, "timeUpdate", { currentTime: player.currentTime, currentLiveTimestamp: null, currentOffsetFromLive: null, bufferedPosition: player.bufferedPosition });
   // Seeking moves the shown position straight away instead of waiting for the next time update.
   const [seekedTo, setSeekedTo] = useState<number>();
@@ -251,6 +262,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     return () => clearTimeout(hideTimer.current);
   }, [wake]);
   const chrome = awake || !isPlaying;
+  // Back with the controls showing over a playing picture hides them; with them hidden (or paused, when they stay up) it leaves.
+  const canHide = awake && isPlaying;
   const fade = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.timing(fade, { toValue: chrome ? 1 : 0, duration: 200, useNativeDriver: true }).start();
@@ -334,6 +347,15 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     });
     return () => subscription.remove();
   }, [guideOpen]);
+  useEffect(() => {
+    if (!canHide || guideOpen) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      clearTimeout(hideTimer.current);
+      setAwake(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [canHide, guideOpen]);
   const guideScroll = useRef<ScrollView>(null);
   useEffect(() => guideScroll.current?.scrollTo({ y: Math.max(0, guideAt - 3) * u(GUIDE_ROW), animated: false }), [guideAt]);
   const togglePause = useCallback(() => {
@@ -344,22 +366,31 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   }, [player, pulse, wake]);
 
   // The D-pad drives a highlight (`selected`) over the controls: up/down change row, left/right change
-  // control (or scrub, on the bar), OK presses. With the controls hidden, left/right seek and OK pauses.
+  // control (or scrub, on the bar), OK presses. With the controls hidden, any key only brings them up, so a
+  // stray press never skips. Films and episodes start on the bar, so left and right scrub straight away.
   // Live keeps up/down for changing channel, so its way out sits at the left end of the transport row.
   const more: Control[] = archive !== undefined ? ["catchup"] : [];
-  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
-  const [selected, setSelected] = useState<Control>("play");
+  const captionsKey: Control[] = vod && tracks.length > 0 ? ["captions"] : [];
+  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
+  const [selected, setSelected] = useState<Control>(() => {
+    const carried = carriedSelection;
+    carriedSelection = undefined;
+    return carried ?? (vod ? "seek" : "play");
+  });
   const press = useCallback(
     (control: Control) => {
       if (control === "exit") onExit();
-      else if (control === "back") step(-1);
-      else if (control === "forward") step(1);
+      else if (control === "back" || control === "forward") {
+        if (zapping) carriedSelection = control;
+        step(control === "back" ? -1 : 1);
+      }
       else if (control === "info") setStatsOn((on) => !on);
+      else if (control === "captions") cycleCaptions();
       else if (control === "catchup") openGuide();
       else if (control === "live") (timeshift ? onCatchup(undefined) : behindLive ? goLive() : wake());
       else togglePause();
     },
-    [behindLive, goLive, onCatchup, onExit, openGuide, step, timeshift, togglePause, wake],
+    [behindLive, cycleCaptions, goLive, onCatchup, onExit, openGuide, step, timeshift, togglePause, wake, zapping],
   );
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
   useTVEventHandler(
@@ -382,13 +413,12 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         // Live: up and down change channel, as on any TV.
         if (zapping && (key === "up" || key === "down")) {
           wake();
+          carriedSelection = selected;
           return zap(key === "down" ? 1 : -1);
         }
         if (!chrome) {
-          if (key === "left") return seek(-1);
-          if (key === "right") return seek(1);
-          // OK brings the controls up; pausing is the play key's job.
-          setSelected("play");
+          // Any key brings the controls up; pausing is the play key's job.
+          setSelected(vod ? "seek" : "play");
           return wake();
         }
         wake();
@@ -588,6 +618,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
                 </Text>
               ) : null}
               {archive !== undefined ? <TextKey label="Catch up" selected={lit("catchup")} onPress={() => press("catchup")} /> : null}
+              {vod && tracks.length > 0 ? <TextKey label={captionLabel(captionTrack)} selected={lit("captions")} onPress={() => press("captions")} /> : null}
               {vod ? (
                 <Key selected={lit("info")} active={statsOn} onPress={() => press("info")}>
                   {(ink) => <Text style={{ color: ink, fontSize: u(30), fontFamily: "Inter_600SemiBold" }}>i</Text>}
