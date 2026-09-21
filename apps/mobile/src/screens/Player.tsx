@@ -23,9 +23,11 @@ const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4
 const CHROME_HIDES_AFTER_MS = 4000;
 /** Stepping to another channel remounts the player, so the highlighted control is carried across, and spamming next or previous keeps working. */
 let carriedSelection: Control | undefined;
+/** The channel being watched and the one before it, kept across channel changes so "Last" can flip back, as on a TV remote. */
+let channelHistory: { current?: PlayItem; previous?: PlayItem } = {};
 const PROGRESS_EVERY_MS = 5000;
 
-type Control = "exit" | "seek" | "back" | "play" | "forward" | "info" | "captions" | "live" | "catchup";
+type Control = "exit" | "seek" | "back" | "play" | "forward" | "info" | "captions" | "last" | "live" | "catchup";
 
 /** A length written in 1920 px design units, for the shapes below that are sized in code. */
 const u = (n: number) => Math.round(n * uiScale);
@@ -369,7 +371,10 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // control (or scrub, on the bar), OK presses. With the controls hidden, any key only brings them up, so a
   // stray press never skips. Films and episodes start on the bar, so left and right scrub straight away.
   // Live keeps up/down for changing channel, so its way out sits at the left end of the transport row.
-  const more: Control[] = archive !== undefined ? ["catchup"] : [];
+  // Remember the channel; once there is an earlier one, a Last key flips back to it.
+  if (item.kind === "channel" && !timeshift && channelHistory.current?.id !== item.id) channelHistory = { previous: channelHistory.current, current: item };
+  const previousChannel = zapping ? channelHistory.previous : undefined;
+  const more: Control[] = [...(previousChannel !== undefined ? (["last"] as const) : []), ...(archive !== undefined ? (["catchup"] as const) : [])];
   const captionsKey: Control[] = vod && tracks.length > 0 ? ["captions"] : [];
   const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
   const [selected, setSelected] = useState<Control>(() => {
@@ -386,11 +391,18 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       }
       else if (control === "info") setStatsOn((on) => !on);
       else if (control === "captions") cycleCaptions();
+      else if (control === "last") {
+        const previous = channelHistory.previous;
+        if (previous !== undefined && onZap !== undefined) {
+          carriedSelection = "last";
+          onZap(previous);
+        }
+      }
       else if (control === "catchup") openGuide();
       else if (control === "live") (timeshift ? onCatchup(undefined) : behindLive ? goLive() : wake());
       else togglePause();
     },
-    [behindLive, cycleCaptions, goLive, onCatchup, onExit, openGuide, step, timeshift, togglePause, wake, zapping],
+    [behindLive, cycleCaptions, goLive, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
   );
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
   useTVEventHandler(
@@ -617,6 +629,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
                   Ends {two(endsAt.getHours())}:{two(endsAt.getMinutes())}
                 </Text>
               ) : null}
+              {previousChannel !== undefined ? <TextKey label={`Last: ${previousChannel.title}`} selected={lit("last")} onPress={() => press("last")} /> : null}
               {archive !== undefined ? <TextKey label="Catch up" selected={lit("catchup")} onPress={() => press("catchup")} /> : null}
               {vod && tracks.length > 0 ? <TextKey label={captionLabel(captionTrack)} selected={lit("captions")} onPress={() => press("captions")} /> : null}
               {vod ? (
