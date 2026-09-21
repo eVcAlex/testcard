@@ -445,9 +445,27 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   }, [canHide, guideOpen]);
   const guideScroll = useRef<ScrollView>(null);
   useEffect(() => guideScroll.current?.scrollTo({ y: Math.max(0, guideAt - 3) * u(GUIDE_ROW), animated: false }), [guideAt]);
+  const lastToggle = useRef(0);
   const togglePause = useCallback(() => {
-    if (player.playing) player.pause();
-    else player.play();
+    // One press of the remote's play/pause key can reach us twice, and the system's media session can act on the same
+    // press after we have: the picture plays, then pauses straight away. So a second toggle this soon is ignored,
+    // and a moment later the picture is put back where this press left it if something else moved it.
+    const now = Date.now();
+    if (now - lastToggle.current < 500) return;
+    lastToggle.current = now;
+    const wantPlaying = !player.playing;
+    if (wantPlaying) player.play();
+    else player.pause();
+    setTimeout(() => {
+      try {
+        if (player.playing !== wantPlaying) {
+          if (wantPlaying) player.play();
+          else player.pause();
+        }
+      } catch {
+        // The player was released in the meantime (the viewer left).
+      }
+    }, 350);
     pulse("play");
     wake();
   }, [player, pulse, wake]);
