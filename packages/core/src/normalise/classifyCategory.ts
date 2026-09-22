@@ -12,7 +12,7 @@
  *
  * Bump `CLASSIFIER_VERSION` whenever a rule changes so stored results are recomputed on next open.
  */
-export const CLASSIFIER_VERSION = 2;
+export const CLASSIFIER_VERSION = 3;
 
 export const GENRES = [
   "sports",
@@ -146,7 +146,9 @@ const GENRE_RULES: readonly [Genre, RegExp][] = [
   ["kids", words("kids?|children|family|cartoons?|junior|toons?|cbeebies|cbbc|nick jr|nickelodeon|disney (?:channel|junior)|baby")],
   ["animation", words("anime|animi|animation|animated|manga|pixar|crunchyroll|adult swim")],
   ["scifi", words("sci fi|scifi|science fiction|fantasy|fantastic")],
-  ["documentary", words("docu|documentar(?:y|ies)|docs|nature|history|science|crime|discovery")],
+  // "discovery" alone is the Discovery Channel genre word; "discovery+" is the streaming service's own brand and
+  // says nothing about what is in a category named after it (found by the TypeSafe/Jev audit, see ADR 0007).
+  ["documentary", words("docu|documentar(?:y|ies)|docs|nature|history|science|crime|discovery(?!\\+)")],
   ["news", words("news|weather|business|politics")],
   ["music", words("music|musicals?|concerts?|radio|mtv|broadway")],
   ["reality", words("reality|lifestyle|cooking|food|home|hgtv")],

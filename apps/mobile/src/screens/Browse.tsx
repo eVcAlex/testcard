@@ -283,6 +283,20 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
     const padding = (columns - (items.length % columns)) % columns;
     return [...items, ...Array.from({ length: padding }, () => undefined)];
   }, [items, columns]);
+  // Stable across renders of the pane (guide ticks, pin notes) so PosterTile/ChannelTile's memo() actually holds.
+  const selectTile = useCallback((picked: BrowseItem) => onSelect(picked, items), [onSelect, items]);
+  const focusTile = useCallback(
+    (picked: BrowseItem) => {
+      alignGridRow(picked);
+      onFocusItem(picked);
+    },
+    [alignGridRow, onFocusItem],
+  );
+  const renderCell = useCallback(
+    ({ item: cell }: { item: BrowseItem | undefined }) =>
+      cell === undefined ? <View style={styles.pad} /> : poster ? <PosterTile item={cell} onSelect={selectTile} onFocusTile={alignGridRow} /> : <ChannelTile card={pills} item={cell} onSelect={selectTile} onFocusItem={focusTile} />,
+    [poster, pills, selectTile, alignGridRow, focusTile],
+  );
 
   if (entries.length === 0 || (first === undefined && source.categories.length === 0)) {
     return (
@@ -338,9 +352,7 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
               showsVerticalScrollIndicator={false}
               onEndReachedThreshold={1.5}
               onEndReached={() => setLimit((value) => (value < MAX_ITEMS && items.length >= value ? value + PAGE : value))}
-              renderItem={({ item: cell }) =>
-                cell === undefined ? <View style={styles.pad} /> : poster ? <PosterTile item={cell} onSelect={(picked) => onSelect(picked, items)} onFocusTile={alignGridRow} /> : <ChannelTile card={pills} item={cell} onSelect={(picked) => onSelect(picked, items)} onFocusItem={(picked) => { alignGridRow(picked); onFocusItem(picked); }} />
-              }
+              renderItem={renderCell}
             />
           )}
         </TVFocusGuideView>
