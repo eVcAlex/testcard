@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(inputs.target == 'debug' && '[{"target":"debug","tv":"1","task":"assembleDebug -PreactNativeArchitectures=x86_64,arm64-v8a","apk":"debug/app-debug.apk"}]' || inputs.target == 'both' && '[{"target":"firetv","tv":"1","task":"assembleRelease -PreactNativeArchitectures=armeabi-v7a","apk":"release/app-release.apk"},{"target":"phone","tv":"0","task":"assembleRelease","apk":"release/app-release.apk"}]' || inputs.target == 'phone' && '[{"target":"phone","tv":"0","task":"assembleRelease","apk":"release/app-release.apk"}]' || '[{"target":"firetv","tv":"1","task":"assembleRelease -PreactNativeArchitectures=armeabi-v7a","apk":"release/app-release.apk"}]') }}
+        include: ${{ fromJSON(inputs.target == 'debug' && '[{"target":"debug","tv":"1","task":"assembleDebug -PreactNativeArchitectures=x86_64,arm64-v8a","apk":"debug/app-debug.apk"}]' || inputs.target == 'both' && '[{"target":"firetv","tv":"1","task":"assembleRelease -PreactNativeArchitectures=armeabi-v7a","apk":"release/app-release.apk"},{"target":"phone","tv":"0","task":"assembleRelease -PreactNativeArchitectures=arm64-v8a","apk":"release/app-release.apk"}]' || inputs.target == 'phone' && '[{"target":"phone","tv":"0","task":"assembleRelease -PreactNativeArchitectures=arm64-v8a","apk":"release/app-release.apk"}]' || '[{"target":"firetv","tv":"1","task":"assembleRelease -PreactNativeArchitectures=armeabi-v7a","apk":"release/app-release.apk"}]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +53,14 @@ jobs:
         env:
           EXPO_TV: ${{ matrix.tv }}
         run: pnpm exec expo prebuild --platform android --no-install --clean
+
+      # The generated gradle.properties caps the heap at 2 GB, which throttles the
+      # parallel module and R8 work. This override applies here only, not locally.
+      - name: Tune Gradle
+        working-directory: apps/mobile/android
+        run: |
+          sed -i "/^org.gradle.jvmargs=/d" gradle.properties
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> gradle.properties
 
       - name: Build the release APK
         working-directory: apps/mobile/android
