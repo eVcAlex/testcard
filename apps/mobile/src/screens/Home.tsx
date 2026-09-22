@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Image, Text, TVFocusGuideView, View } from "react-native";
+import { FlatList, Text, TVFocusGuideView, View } from "react-native";
+import { Image } from "expo-image";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, styleSheet } from "../theme";
 import { DetailActions, Facts, type DetailAction } from "../ui/DetailActions";
@@ -178,11 +179,11 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
     <View style={styles.hero}>
       {channel ? (
         <View style={styles.logoPanel} pointerEvents="none">
-          {art !== null && art !== "" ? <Image source={{ uri: art }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
+          {art !== null && art !== "" ? <Image source={{ uri: art }} style={styles.logoImage} contentFit="contain" cachePolicy="memory-disk" /> : null}
         </View>
       ) : art !== null && art !== "" ? (
         <View style={styles.art} pointerEvents="none">
-          <Image source={{ uri: art }} style={styles.artImage} resizeMode="cover" resizeMethod="resize" fadeDuration={300} />
+          <Image source={{ uri: art }} style={styles.artImage} contentFit="cover" cachePolicy="memory-disk" transition={300} />
           <Fade from="left" />
         </View>
       ) : null}

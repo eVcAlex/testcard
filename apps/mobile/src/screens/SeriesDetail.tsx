@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BackHandler, FlatList, Image, Text, TVFocusGuideView, View } from "react-native";
+import { BackHandler, FlatList, Text, TVFocusGuideView, View } from "react-native";
+import { Image } from "expo-image";
 import { getSeriesDetail, getSeriesSource, getUpNextEpisode } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
@@ -142,7 +143,7 @@ export function SeriesDetailScreen({
                   >
                     <Text style={styles.number}>{episode.episode_number}</Text>
                     <View style={styles.thumb}>
-                      {episode.image_url ? <Image source={{ uri: episode.image_url }} style={styles.thumbImage} resizeMode="cover" resizeMethod="resize" fadeDuration={0} /> : null}
+                      {episode.image_url ? <Image source={{ uri: episode.image_url }} style={styles.thumbImage} contentFit="cover" cachePolicy="memory-disk" recyclingKey={episode.id} /> : null}
                       {ratio > 0 ? (
                         <View style={styles.progress}>
                           <View style={[styles.progressFill, { width: `${ratio * 100}%` }]} />

@@ -1,5 +1,6 @@
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Image, Text, TVFocusGuideView, View } from "react-native";
+import { FlatList, Text, TVFocusGuideView, View } from "react-native";
+import { Image } from "expo-image";
 import { genreOptions } from "@testcard/core/src/normalise/genres.js";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Muted } from "../ui/controls";
@@ -413,7 +414,7 @@ const OnNow = memo(function OnNow({ item, guide, loaded, hero = false }: { item:
   return (
     <View style={[styles.onNow, hero && styles.onNowHero]}>
       <View style={[styles.onNowLogo, hero && styles.onNowLogoHero]}>
-        {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
+        {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} contentFit="contain" cachePolicy="memory-disk" /> : null}
       </View>
       <View style={styles.onNowText}>
         <Text style={styles.onNowChannel} numberOfLines={1}>
@@ -454,7 +455,7 @@ const ChannelTile = memo(function ChannelTile({ item, onSelect, onFocusItem, car
   return (
     <Focusable onPress={() => onSelect(item)} onFocus={() => onFocusItem(item)} style={card ? styles.channelCard : styles.channel} focusedStyle={styles.channelFocused}>
       <View style={card ? styles.logoCard : styles.logo}>
-        {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
+        {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} contentFit="contain" cachePolicy="memory-disk" recyclingKey={item.id} /> : null}
       </View>
       {card ? (
         <View style={styles.cardLine}>

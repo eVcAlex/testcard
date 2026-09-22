@@ -297,6 +297,19 @@ export const MIGRATIONS: readonly Migration[] = [
 `);
     },
   },
+  {
+    version: 12,
+    up: (db) => {
+      // channels/movies/series had an index on category_id but not source_id, so every "how much
+      // does this source hold" count (the Sources screen, every sync/refresh completion) did a
+      // full table scan — tens of thousands of rows, synchronously, on the JS thread.
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_channels_source ON channels(source_id);
+        CREATE INDEX IF NOT EXISTS idx_movies_source ON movies(source_id);
+        CREATE INDEX IF NOT EXISTS idx_series_source ON series(source_id);
+      `);
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

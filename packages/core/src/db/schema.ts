@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS channels (
 );
 CREATE INDEX IF NOT EXISTS idx_channels_category ON channels(category_id);
 CREATE INDEX IF NOT EXISTS idx_channels_tvg_id ON channels(tvg_id);
+CREATE INDEX IF NOT EXISTS idx_channels_source ON channels(source_id);
 
 CREATE TABLE IF NOT EXISTS channel_variants (
   id                  TEXT PRIMARY KEY,
@@ -153,6 +154,7 @@ CREATE TABLE IF NOT EXISTS movies (
 );
 CREATE INDEX IF NOT EXISTS idx_movies_category ON movies(category_id);
 CREATE INDEX IF NOT EXISTS idx_movies_remote_key ON movies(remote_key);
+CREATE INDEX IF NOT EXISTS idx_movies_source ON movies(source_id);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS movies_fts USING fts5(name, content='movies', content_rowid='rowid');
 
@@ -198,6 +200,7 @@ CREATE TABLE IF NOT EXISTS series (
 );
 CREATE INDEX IF NOT EXISTS idx_series_category ON series(category_id);
 CREATE INDEX IF NOT EXISTS idx_series_remote_key ON series(remote_key);
+CREATE INDEX IF NOT EXISTS idx_series_source ON series(source_id);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS series_fts USING fts5(name, content='series', content_rowid='rowid');
 

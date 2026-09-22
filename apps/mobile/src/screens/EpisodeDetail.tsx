@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
-import { BackHandler, Image, Text, View } from "react-native";
+import { BackHandler, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { getSeriesDetail } from "@testcard/core/src/db/seriesQueries.js";
 import { clearPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
@@ -70,7 +71,7 @@ export function EpisodeDetailScreen({ seriesId, episodeId, onPlay, onBack }: { s
       <View style={styles.back}>
         <BackArrow onPress={onBack} />
       </View>
-      <View style={styles.poster}>{poster !== null && poster !== "" ? <Image source={{ uri: poster }} style={styles.posterImage} resizeMode="cover" resizeMethod="resize" fadeDuration={0} /> : null}</View>
+      <View style={styles.poster}>{poster !== null && poster !== "" ? <Image source={{ uri: poster }} style={styles.posterImage} contentFit="cover" cachePolicy="memory-disk" /> : null}</View>
       <View style={styles.info}>
         <Text style={styles.series} numberOfLines={1}>
           {seriesTitle(series.name)}

@@ -784,8 +784,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
               {archive !== undefined ? <TextKey label="Catch up" selected={lit("catchup")} onPress={() => press("catchup")} /> : null}
             </View>
           </View>
-          {/* Down from the transport keys: the less used ones, so the first row stays short. */}
-          {vod ? (
+          {/* Hidden until the remote is pressed Down onto this row (a phone has no Down, so it always shows). */}
+          {vod && (!tv || rows[rows.length - 1]?.includes(selected) === true) ? (
             <View style={styles.secondary} pointerEvents="box-none">
               {tracks.length > 0 ? <TextKey label="Captions" selected={lit("captions")} onPress={() => press("captions")} /> : null}
               {next !== undefined && onNextEpisode !== undefined ? <TextKey label="Next episode" selected={lit("next")} onPress={() => press("next")} /> : null}

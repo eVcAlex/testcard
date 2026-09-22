@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { colors, styleSheet, uiScale } from "../theme";
 
 const u = (n: number) => Math.round(n * uiScale);
@@ -164,7 +165,7 @@ export function Backdrop({ uri }: { uri: string | null }) {
   if (uri === null || uri === "") return null;
   return (
     <View style={styles.backdrop} pointerEvents="none">
-      <Image source={{ uri }} style={styles.backdropImage} blurRadius={30} resizeMode="cover" resizeMethod="resize" fadeDuration={0} />
+      <Image source={{ uri }} style={styles.backdropImage} blurRadius={30} contentFit="cover" cachePolicy="memory-disk" />
       <View style={styles.backdropShade} />
     </View>
   );

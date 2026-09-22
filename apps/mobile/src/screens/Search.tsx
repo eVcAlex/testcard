@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Image, Text, TVFocusGuideView, View } from "react-native";
+import { FlatList, Text, TVFocusGuideView, View } from "react-native";
+import { Image } from "expo-image";
 import { MIN_SEARCH_LENGTH, searchAll, type SearchResults } from "@testcard/core/src/db/searchQueries.js";
 import type { ChannelRow } from "@testcard/core/src/db/queries.js";
 import { useApp } from "../state/app";
@@ -124,7 +125,7 @@ function ChannelTile({ channel, onPress }: { channel: ChannelRow; onPress: (chan
   return (
     <Focusable onPress={() => onPress(channel)} style={styles.channel} focusedStyle={styles.channelFocused}>
       <View style={styles.logo}>
-        {channel.logo_url !== null && channel.logo_url !== "" ? <Image source={{ uri: channel.logo_url }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
+        {channel.logo_url !== null && channel.logo_url !== "" ? <Image source={{ uri: channel.logo_url }} style={styles.logoImage} contentFit="contain" cachePolicy="memory-disk" recyclingKey={channel.id} /> : null}
       </View>
       <Text style={styles.channelName} numberOfLines={2}>
         {channel.normalised_name}

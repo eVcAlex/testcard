@@ -1,5 +1,6 @@
 import { memo } from "react";
-import { FlatList, Image, Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { colors, space, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
 import { PinBadge } from "./PinBadge";
@@ -28,7 +29,7 @@ export const ChannelCard = memo(function ChannelCard({
         <>
           <View style={[styles.art, focused && styles.artFocused]}>
             {item.posterUrl !== null && item.posterUrl !== "" ? (
-              <Image source={{ uri: item.posterUrl }} style={styles.logo} resizeMode="contain" resizeMethod="resize" fadeDuration={0} />
+              <Image source={{ uri: item.posterUrl }} style={styles.logo} contentFit="contain" cachePolicy="memory-disk" recyclingKey={item.id} />
             ) : (
               <Text style={styles.fallback} numberOfLines={2}>
                 {item.name}
