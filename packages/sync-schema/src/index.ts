@@ -19,6 +19,12 @@ export type SourceContent = z.infer<typeof SourceContentSchema>;
  */
 export const SourcePinSchema = z.object({ kind: z.enum(["live", "movies", "series"]), key: z.string().min(1), label: z.string().min(1) });
 export type SourcePin = z.infer<typeof SourcePinSchema>;
+/**
+ * The stretch at the start of a series' episodes the viewer skipped, offered as "Skip intro" on their other devices.
+ * `key` is the series' remote key (the same on every device). Rides in the source's encrypted record like pins.
+ */
+export const SourceSkipSchema = z.object({ key: z.string().min(1), from: z.number().int().nonnegative(), to: z.number().int().positive() });
+export type SourceSkip = z.infer<typeof SourceSkipSchema>;
 export const XtreamCredentialsPayloadSchema = z.object({
   host: z.string().min(1),
   username: z.string().min(1),
@@ -26,12 +32,14 @@ export const XtreamCredentialsPayloadSchema = z.object({
   content: SourceContentSchema.optional(),
   position: z.number().int().optional(),
   pins: z.array(SourcePinSchema).optional(),
+  skips: z.array(SourceSkipSchema).optional(),
 });
 export const PlaylistPayloadSchema = z.object({
   playlistUrl: z.string().min(1),
   content: SourceContentSchema.optional(),
   position: z.number().int().optional(),
   pins: z.array(SourcePinSchema).optional(),
+  skips: z.array(SourceSkipSchema).optional(),
 });
 export const SourceCredentialsPayloadSchema = z.union([XtreamCredentialsPayloadSchema, PlaylistPayloadSchema]);
 export type SourceCredentialsPayload = z.infer<typeof SourceCredentialsPayloadSchema>;

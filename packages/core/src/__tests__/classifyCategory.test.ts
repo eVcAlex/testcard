@@ -69,6 +69,15 @@ describe("classifyCategory — genre", () => {
     }
   });
 
+  it("does not treat the Discovery+ streaming service as the documentary genre", () => {
+    for (const name of ["DISCOVERY+ MOVIES", "DISCOVERY+ SERIES MENA"]) {
+      const result = classifyCategory(name);
+      expect(result.genre).toBeNull();
+      expect(result.service).toBe("discovery+");
+    }
+    expect(classifyCategory("Discovery Channel").genre).toBe("documentary");
+  });
+
   it("is null, not an error, for names it cannot read", () => {
     expect(classifyCategory("Zzyzx Qwerty").genre).toBeNull();
     expect(classifyCategory("").genre).toBeNull();

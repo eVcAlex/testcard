@@ -5,6 +5,7 @@ import { useUpdate } from "../update/UpdateProvider";
 import { installedVersion } from "../update/update";
 import { colors, space, type, styleSheet } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
+import { Focusable } from "../ui/Focusable";
 import { withCommas } from "../ui/MenuRow";
 
 /** "just now", "5 min ago", "3 hours ago", "2 days ago". */
@@ -18,7 +19,10 @@ function ago(at: number): string {
   return `${days} ${days === 1 ? "day" : "days"} ago`;
 }
 
-/** What this device has loaded from each source, with a manual refresh. Sources themselves are managed on the computer. */
+/**
+ * Sources, with the account and app update as a slim strip and footer either side — this page is about the
+ * sources, not the account, so those two stay out of the way instead of competing with the sources for weight.
+ */
 export function SourcesScreen() {
   const { sources, refreshSource, removeSource, status, sync, updateStatus } = useApp();
   // Removing is permanent (and reaches the other devices), so it takes a second press.
@@ -31,6 +35,24 @@ export function SourcesScreen() {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <View style={styles.main}>
+        <View style={styles.accountStrip}>
+          <View style={styles.accountText}>
+            <Text style={styles.accountEmail} numberOfLines={1}>
+              {status.email ?? "Signed out"}
+            </Text>
+            {status.lastSyncedAt !== undefined && <Text style={styles.accountSynced}>{`✓ Synced ${ago(status.lastSyncedAt)}`}</Text>}
+          </View>
+          <View style={styles.accountActions}>
+            <SmallButton
+              label="Sync now"
+              onPress={() => {
+                void sync.triggerNow().then(updateStatus);
+              }}
+            />
+            <SmallButton label="Sign out" onPress={() => setConfirmingSignOut(true)} />
+          </View>
+        </View>
+
         <Heading>Sources</Heading>
         <Muted>
           {status.account === "signed-in"
@@ -38,95 +60,69 @@ export function SourcesScreen() {
             : "Sign in to load your sources."}
         </Muted>
         {status.lastError !== undefined && <Text style={styles.error}>{status.lastError}</Text>}
+        {sources.length === 0 && <Muted>No sources have arrived yet. Sync runs every minute, or press Sync now above.</Muted>}
 
-
-        <View style={styles.panels}>
-          <View style={styles.panel}>
-            <Text style={styles.name}>{`Testcard ${version.name}`}</Text>
-            <Text style={styles.meta}>
-              {!update.configured
-                ? "Updates are not set up for this build."
-                : update.phase === "downloading"
-                  ? `Downloading ${Math.round(update.progress * 100)}%`
-                  : update.phase === "checking"
-                    ? "Checking for updates..."
-                    : update.available !== null
-                      ? `Version ${update.available.versionName} is available.`
-                      : update.checked
-                        ? "You are up to date."
-                        : "Not checked yet."}
-            </Text>
-            {update.error !== undefined && <Text style={styles.error}>{update.error}</Text>}
-            {update.configured && (
-              <Button
-                primary={update.available !== null}
-                label={update.available !== null ? "Update now" : "Check for updates"}
-                disabled={update.phase === "downloading" || update.phase === "checking"}
-                onPress={update.available !== null ? update.install : update.check}
-              />
-            )}
-          </View>
-
-          <View style={styles.panel}>
-            <Text style={styles.name}>Account</Text>
-            <Text style={styles.meta} numberOfLines={1}>
-              {status.email ?? "Signed out"}
-            </Text>
-            {status.lastSyncedAt !== undefined && <Text style={styles.synced}>{`Synced ${ago(status.lastSyncedAt)}`}</Text>}
-            <View style={styles.actions}>
-              <Button
-                label="Sync now"
-                onPress={() => {
-                  void sync.triggerNow().then(updateStatus);
-                }}
-              />
-              <Button
-                label="Sign out"
-                onPress={() => setConfirmingSignOut(true)}
-              />
+        <View style={styles.list}>
+          {sources.map((source) => (
+            <View key={source.id} style={styles.row}>
+              <View style={styles.rowText}>
+                <Text style={styles.rowName} numberOfLines={1}>
+                  {source.name}
+                  <Text style={styles.rowKind}>{`   ${source.kind === "xtream" ? "Xtream" : "M3U"}`}</Text>
+                </Text>
+                <Text style={styles.rowMeta}>{source.refreshing ? "Loading..." : counts(source.channels, source.movies, source.series)}</Text>
+              </View>
+              <View style={styles.rowStatus}>
+                {source.error !== undefined ? (
+                  <Text style={styles.error} numberOfLines={1}>
+                    {source.error}
+                  </Text>
+                ) : source.lastRefreshedAt !== null ? (
+                  <Text style={styles.rowSynced}>{`✓ Synced ${ago(source.lastRefreshedAt)}`}</Text>
+                ) : null}
+              </View>
+              <View style={styles.rowActions}>
+                <SmallButton label={source.refreshing ? "Refreshing" : "Refresh"} disabled={source.refreshing} onPress={() => void refreshSource(source.id)} />
+                <SmallButton
+                  muted
+                  label={confirming === source.id ? "Press again to remove" : "Remove"}
+                  onPress={() => {
+                    if (confirming === source.id) {
+                      setConfirming(undefined);
+                      void removeSource(source.id);
+                    } else setConfirming(source.id);
+                  }}
+                />
+              </View>
             </View>
-          </View>
+          ))}
         </View>
-        {sources.length === 0 && <Muted>No sources have arrived yet. Sync runs every minute, or press Sync now.</Muted>}
-        <View style={styles.grid}>
-        {pairsOf(sources).map((pair, pairIndex) => (
-        <View key={pairIndex} style={styles.pairRow}>
-        {pair.map((source) => (
-          <View key={source.id} style={styles.card}>
-            <View style={styles.cardHead}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{source.name.slice(0, 1).toUpperCase()}</Text>
-            </View>
-            <View style={styles.cardText}>
-              <Text style={styles.name} numberOfLines={1}>
-                {source.name}
-                <Text style={styles.kind}>{source.kind === "xtream" ? "  Xtream" : "  M3U"}</Text>
-              </Text>
-              <Text style={styles.meta}>{source.refreshing ? "Loading..." : counts(source.channels, source.movies, source.series)}</Text>
-              {source.error !== undefined ? (
-                <Text style={styles.error}>{source.error}</Text>
-              ) : source.lastRefreshedAt !== null ? (
-                <Text style={styles.synced}>{`Synced ${ago(source.lastRefreshedAt)}`}</Text>
-              ) : null}
-            </View>
-            </View>
-            <View style={styles.actions}>
-              <Button label={source.refreshing ? "Refreshing" : "Refresh"} disabled={source.refreshing} onPress={() => void refreshSource(source.id)} />
-              <Button
-                label={confirming === source.id ? "Press again to remove" : "Remove"}
-                onPress={() => {
-                  if (confirming === source.id) {
-                    setConfirming(undefined);
-                    void removeSource(source.id);
-                  } else setConfirming(source.id);
-                }}
-              />
-            </View>
-          </View>
-        ))}
-        {pair.length === 1 ? <View style={styles.pairSpacer} /> : null}
-        </View>
-        ))}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            {`Testcard ${version.name}`}
+            <Text style={styles.footerDot}>{"  ·  "}</Text>
+            {!update.configured
+              ? "Updates are not set up for this build."
+              : update.phase === "downloading"
+                ? `Downloading ${Math.round(update.progress * 100)}%`
+                : update.phase === "checking"
+                  ? "Checking for updates..."
+                  : update.available !== null
+                    ? `Version ${update.available.versionName} is available.`
+                    : update.checked
+                      ? "You are up to date."
+                      : "Not checked yet."}
+          </Text>
+          {update.error !== undefined && <Text style={styles.error}>{update.error}</Text>}
+          {update.configured && (
+            <SmallButton
+              primary={update.available !== null}
+              label={update.available !== null ? "Update now" : "Check for updates"}
+              disabled={update.phase === "downloading" || update.phase === "checking"}
+              onPress={update.available !== null ? update.install : update.check}
+            />
+          )}
         </View>
       </View>
 
@@ -134,9 +130,7 @@ export function SourcesScreen() {
         <View style={styles.scrim}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>Sign out?</Text>
-            <Text style={styles.meta}>
-              Syncing stops on this TV until you sign in again. You will need your account password.
-            </Text>
+            <Text style={styles.rowMeta}>Syncing stops on this TV until you sign in again. You will need your account password.</Text>
             <View style={styles.dialogActions}>
               <Button primary preferred label="Stay signed in" onPress={() => setConfirmingSignOut(false)} />
               <Button
@@ -154,11 +148,18 @@ export function SourcesScreen() {
   );
 }
 
-/** Two to a row, so every card has exactly the width of the panels above and the columns line up. */
-function pairsOf<T>(items: readonly T[]): T[][] {
-  const rows: T[][] = [];
-  for (let index = 0; index < items.length; index += 2) rows.push(items.slice(index, index + 2));
-  return rows;
+/** A lower-key button for a row of controls that isn't the page's main action — smaller than the standard Button. */
+function SmallButton({ label, onPress, primary = false, muted = false, disabled = false }: { label: string; onPress: () => void; primary?: boolean; muted?: boolean; disabled?: boolean }) {
+  return (
+    <Focusable
+      onPress={onPress}
+      disabled={disabled}
+      style={[smallStyles.button, primary && smallStyles.primary, muted && smallStyles.muted, disabled && smallStyles.disabled]}
+      focusedStyle={muted ? smallStyles.mutedFocused : primary ? smallStyles.primaryFocused : undefined}
+    >
+      <Text style={[smallStyles.label, primary && smallStyles.primaryLabel, muted && smallStyles.mutedLabel]}>{label}</Text>
+    </Focusable>
+  );
 }
 
 /** Only the kinds of content a source actually has: a live-only provider does not say "0 movies". */
@@ -171,26 +172,43 @@ function counts(channels: number, movies: number, series: number): string {
   return parts.length > 0 ? parts.join(", ") : "Nothing loaded yet";
 }
 
+const smallStyles = styleSheet({
+  button: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: colors.card },
+  primary: { backgroundColor: colors.accent },
+  muted: { backgroundColor: "transparent", borderWidth: 1, borderColor: colors.border },
+  mutedFocused: { borderColor: colors.fault, backgroundColor: "#f0745c1a" },
+  primaryFocused: { backgroundColor: colors.accent },
+  disabled: { opacity: 0.5 },
+  label: { color: colors.foreground, fontSize: type.small, fontWeight: "600" },
+  primaryLabel: { color: colors.accentInk },
+  mutedLabel: { color: colors.muted },
+});
+
 const styles = styleSheet({
   page: { padding: space.xl },
-  main: { gap: space.l },
-  // Updates and account side by side, then the sources in a grid of the same card size.
-  panels: { flexDirection: "row", gap: space.l },
-  grid: { gap: space.l },
-  pairRow: { flexDirection: "row", gap: space.l },
-  pairSpacer: { flex: 1 },
-  card: { flex: 1, gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
-  avatar: { width: 84, height: 84, borderRadius: 20, backgroundColor: colors.cardActive, alignItems: "center", justifyContent: "center" },
-  avatarText: { color: colors.accent, fontSize: 34, fontWeight: "600" },
-  cardHead: { flexDirection: "row", alignItems: "center", gap: space.l },
-  cardText: { flex: 1, gap: 4 },
-  panel: { flex: 1, gap: space.m, padding: space.l, backgroundColor: colors.raised, borderRadius: 18 },
-  name: { color: colors.foreground, fontSize: type.lead, fontWeight: "600" },
-  kind: { color: colors.faint, fontSize: type.small, fontWeight: "400" },
-  meta: { color: colors.muted, fontSize: type.body },
-  synced: { color: colors.accent, fontSize: type.small },
+  main: { gap: space.m },
+  // Slim, low-key: this page is about sources, not the account.
+  accountStrip: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingBottom: space.l, marginBottom: space.m, borderBottomWidth: 1, borderBottomColor: colors.border },
+  accountText: { gap: 2 },
+  accountEmail: { color: colors.muted, fontSize: type.body, fontWeight: "500" },
+  accountSynced: { color: colors.faint, fontSize: type.small },
+  accountActions: { flexDirection: "row", gap: space.s },
+
+  list: { gap: space.m, marginTop: space.s },
+  row: { flexDirection: "row", alignItems: "center", gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
+  rowText: { width: 420, gap: 4 },
+  rowName: { color: colors.foreground, fontSize: type.lead, fontWeight: "600" },
+  rowKind: { color: colors.faint, fontSize: type.small, fontWeight: "500" },
+  rowMeta: { color: colors.muted, fontSize: type.small },
+  rowStatus: { flex: 1 },
+  rowSynced: { color: colors.accent, fontSize: type.small },
   error: { color: colors.fault, fontSize: type.small },
-  actions: { flexDirection: "row", gap: space.m },
+  rowActions: { flexDirection: "row", gap: space.s },
+
+  footer: { flexDirection: "row", alignItems: "center", gap: space.l, marginTop: space.xl, paddingTop: space.l, borderTopWidth: 1, borderTopColor: colors.border },
+  footerText: { flex: 1, color: colors.faint, fontSize: type.small },
+  footerDot: { color: colors.border },
+
   scrim: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(5, 8, 11, 0.8)" },
   dialog: { width: 760, gap: space.l, padding: space.xl, backgroundColor: colors.raised, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
   dialogActions: { flexDirection: "row", justifyContent: "flex-end", gap: space.m },

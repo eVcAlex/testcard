@@ -261,11 +261,42 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
     ({ item: entry }: { item: Entry }) => (entry.kind === "row" ? <Pill id={entry.id} label={entry.label} active={entry.id === activeId} onPressId={onPressId} onFocusId={onFocusId} /> : null),
     [activeId, onFocusId, onPressId],
   );
+  // The row the remote is on is brought to a steady place in the frame, so it is never left half cut off at an edge.
+  const gridRef = useRef<FlatList<BrowseItem | undefined>>(null);
+  const gridRow = useRef(-1);
+  const alignGridRow = useCallback(
+    (item: BrowseItem) => {
+      const index = items.findIndex((entry) => entry.id === item.id);
+      if (index < 0) return;
+      const row = Math.floor(index / columns);
+      if (gridRow.current === row) return;
+      gridRow.current = row;
+      gridRef.current?.scrollToIndex({ index: row, viewPosition: 0.3, animated: true });
+    },
+    [columns, items],
+  );
+  useEffect(() => {
+    gridRow.current = -1;
+  }, [shown?.id]);
   const cells = useMemo<(BrowseItem | undefined)[]>(() => {
     // Pad the last row so its tiles keep the same width as the rest.
     const padding = (columns - (items.length % columns)) % columns;
     return [...items, ...Array.from({ length: padding }, () => undefined)];
   }, [items, columns]);
+  // Stable across renders of the pane (guide ticks, pin notes) so PosterTile/ChannelTile's memo() actually holds.
+  const selectTile = useCallback((picked: BrowseItem) => onSelect(picked, items), [onSelect, items]);
+  const focusTile = useCallback(
+    (picked: BrowseItem) => {
+      alignGridRow(picked);
+      onFocusItem(picked);
+    },
+    [alignGridRow, onFocusItem],
+  );
+  const renderCell = useCallback(
+    ({ item: cell }: { item: BrowseItem | undefined }) =>
+      cell === undefined ? <View style={styles.pad} /> : poster ? <PosterTile item={cell} onSelect={selectTile} onFocusTile={alignGridRow} /> : <ChannelTile card={pills} item={cell} onSelect={selectTile} onFocusItem={focusTile} />,
+    [poster, pills, selectTile, alignGridRow, focusTile],
+  );
 
   if (entries.length === 0 || (first === undefined && source.categories.length === 0)) {
     return (
@@ -307,6 +338,8 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
             </View>
           ) : (
             <FlatList
+              ref={gridRef}
+              onScrollToIndexFailed={(info) => gridRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true })}
               key={columns}
               data={cells}
               numColumns={columns}
@@ -319,9 +352,7 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
               showsVerticalScrollIndicator={false}
               onEndReachedThreshold={1.5}
               onEndReached={() => setLimit((value) => (value < MAX_ITEMS && items.length >= value ? value + PAGE : value))}
-              renderItem={({ item: cell }) =>
-                cell === undefined ? <View style={styles.pad} /> : poster ? <PosterTile item={cell} onSelect={(picked) => onSelect(picked, items)} /> : <ChannelTile card={pills} item={cell} onSelect={(picked) => onSelect(picked, items)} onFocusItem={onFocusItem} />
-              }
+              renderItem={renderCell}
             />
           )}
         </TVFocusGuideView>
@@ -361,14 +392,14 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
   );
 }
 
-const PosterTile = memo(function PosterTile({ item, onSelect }: { item: BrowseItem; onSelect: (item: BrowseItem) => void }) {
+const PosterTile = memo(function PosterTile({ item, onSelect, onFocusTile }: { item: BrowseItem; onSelect: (item: BrowseItem) => void; onFocusTile: (item: BrowseItem) => void }) {
   const poster: PosterItem = {
     id: item.id,
     name: item.title,
     posterUrl: item.imageUrl,
     progress: item.progress ?? null,
   };
-  return <PosterCard grid item={poster} onPress={() => onSelect(item)} />;
+  return <PosterCard grid item={poster} onPress={() => onSelect(item)} onFocusItem={() => onFocusTile(item)} />;
 });
 
 /** The channel the remote rests on, with what is airing and what follows, above the grid. */

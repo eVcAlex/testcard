@@ -67,29 +67,30 @@ export function HomeScreen({
 }: {
   rows: readonly HomeRow[];
   onSelect: (item: PosterItem) => void;
-  heroActions: (item: HomeItem) => HeroActions;
+  /** `rowKey` is the row the remote is on, since the same title can sit in more than one. */
+  heroActions: (item: HomeItem, rowKey: string) => HeroActions;
   /** Looks up the plot and length the list did not carry (films only get them from the provider one at a time). */
   fetchDetail?: (id: string) => Promise<HomeDetail | null>;
 }) {
   const byId = useMemo(() => {
-    const map = new Map<string, { item: HomeItem; row: string }>();
-    for (const row of rows) for (const item of row.items) if (!map.has(item.id)) map.set(item.id, { item, row: row.label });
+    const map = new Map<string, { item: HomeItem; row: string; rowKey: string }>();
+    for (const row of rows) for (const item of row.items) if (!map.has(`${row.key}|${item.id}`)) map.set(`${row.key}|${item.id}`, { item, row: row.label, rowKey: row.key });
     return map;
   }, [rows]);
   const first = rows[0]?.items[0];
-  const [focusedId, setFocusedId] = useState<string | undefined>(first?.id);
+  const [focusedId, setFocusedId] = useState<string | undefined>(first !== undefined && rows[0] !== undefined ? `${rows[0].key}|${first.id}` : undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const onFocusItem = useCallback((item: PosterItem) => {
+  const onFocusItem = useCallback((item: PosterItem, rowKey: string) => {
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setFocusedId(item.id), HERO_AFTER_MS);
+    timer.current = setTimeout(() => setFocusedId(`${rowKey}|${item.id}`), HERO_AFTER_MS);
   }, []);
 
   const [details, setDetails] = useState<ReadonlyMap<string, HomeDetail>>(new Map());
   const asked = useRef(new Set<string>());
 
-  const shown = (focusedId !== undefined ? byId.get(focusedId) : undefined) ?? (first !== undefined ? { item: first, row: rows[0]?.label ?? "" } : undefined);
+  const shown = (focusedId !== undefined ? byId.get(focusedId) : undefined) ?? (first !== undefined ? { item: first, row: rows[0]?.label ?? "", rowKey: rows[0]?.key ?? "" } : undefined);
 
   // A highlighted title with no plot or length gets them fetched once the remote has rested on it for a moment.
   const shownId = shown?.item.id;
@@ -109,7 +110,11 @@ export function HomeScreen({
 
   // The row the remote is on is lined up under the hero, so it is never left half cut off at the edge.
   const listRef = useRef<FlatList<HomeRow>>(null);
+  const alignedRow = useRef(-1);
   const alignRow = useCallback((index: number) => {
+    // Moving along a row must not ask the list to scroll again: only a change of row does.
+    if (alignedRow.current === index) return;
+    alignedRow.current = index;
     listRef.current?.scrollToIndex({ index, viewPosition: 0, animated: true });
   }, []);
 
@@ -117,7 +122,7 @@ export function HomeScreen({
     ({ item: row, index }: { item: HomeRow; index: number }) => {
       const focus = (item: PosterItem) => {
         alignRow(index);
-        onFocusItem(item);
+        onFocusItem(item, row.key);
       };
       return row.channels === true ? (
         <ChannelShelf title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} pinned={row.pinned === true} />
@@ -136,7 +141,7 @@ export function HomeScreen({
         shown={shown}
         plot={shown !== undefined ? (shown.item.plot !== null && shown.item.plot !== "" ? shown.item.plot : (details.get(shown.item.id)?.plot ?? null)) : null}
         durationSecs={shown !== undefined ? (shown.item.durationSecs ?? details.get(shown.item.id)?.durationSecs ?? null) : null}
-        actions={shown !== undefined ? heroActions(shown.item) : undefined}
+        actions={shown !== undefined ? heroActions(shown.item, shown.rowKey) : undefined}
       />
       <TVFocusGuideView autoFocus style={styles.rows}>
         <View style={styles.rowsFade} pointerEvents="none">
@@ -173,7 +178,7 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
     <View style={styles.hero}>
       {channel ? (
         <View style={styles.logoPanel} pointerEvents="none">
-          {art !== null && art !== "" ? <Image source={{ uri: art }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={300} /> : null}
+          {art !== null && art !== "" ? <Image source={{ uri: art }} style={styles.logoImage} resizeMode="contain" resizeMethod="resize" fadeDuration={0} /> : null}
         </View>
       ) : art !== null && art !== "" ? (
         <View style={styles.art} pointerEvents="none">
@@ -200,7 +205,12 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
         <Text style={styles.plot} numberOfLines={2}>
           {plot ?? ""}
         </Text>
-        {actions !== undefined ? <DetailActions preferred={false} hintBeside primary={actions.primary} actions={actions.actions} /> : null}
+        {/* Coming down from the nav bar lands on the main button, not on whichever button is nearest sideways. */}
+        {actions !== undefined ? (
+          <TVFocusGuideView autoFocus>
+            <DetailActions preferred={false} hintBeside primary={actions.primary} actions={actions.actions} />
+          </TVFocusGuideView>
+        ) : null}
       </View>
     </View>
   );

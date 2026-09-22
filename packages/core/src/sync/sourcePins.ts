@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import type { SourcePin } from "@testcard/sync-schema";
+import type { SourcePin, SourceSkip } from "@testcard/sync-schema";
 
 export type PinKind = SourcePin["kind"];
 
@@ -70,5 +70,31 @@ export function applySourcePins(db: Database.Database, sourceId: string, pins: r
       // Keeps their order: pinned_at follows the position in the list.
       db.prepare(`INSERT INTO home_pins (source_id, kind, category_key, label, pinned_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(source_id, kind, category_key) DO UPDATE SET label = excluded.label, pinned_at = excluded.pinned_at`).run(sourceId, pin.kind, pin.key, pin.label, now + index);
     });
+  })();
+}
+
+/** A source's skip-intro windows as they go into its synced record: by series remote key, never by this device's ids. */
+export function skipsForSource(db: Database.Database, sourceId: string): SourceSkip[] {
+  return db
+    .prepare(
+      `SELECT s.remote_key AS key, k.from_secs AS "from", k.to_secs AS "to"
+       FROM series_skip k JOIN series s ON s.id = k.series_id
+       WHERE s.source_id = ? AND s.remote_key IS NOT NULL`,
+    )
+    .all(sourceId) as SourceSkip[];
+}
+
+/** Takes on skip-intro windows that came with a source from another device. Ones for series not imported here yet are left for later. */
+export function applySourceSkips(db: Database.Database, sourceId: string, skips: readonly SourceSkip[]): void {
+  const find = db.prepare(`SELECT id FROM series WHERE source_id = ? AND remote_key = ?`);
+  const save = db.prepare(
+    `INSERT INTO series_skip (series_id, from_secs, to_secs, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(series_id) DO UPDATE SET from_secs = excluded.from_secs, to_secs = excluded.to_secs, updated_at = excluded.updated_at`,
+  );
+  db.transaction(() => {
+    for (const skip of skips) {
+      const series = find.get(sourceId, skip.key) as { id: string } | undefined;
+      if (series !== undefined) save.run(series.id, skip.from, skip.to, Date.now());
+    }
   })();
 }

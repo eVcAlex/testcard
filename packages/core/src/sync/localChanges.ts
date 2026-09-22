@@ -1,9 +1,10 @@
 import type Database from "better-sqlite3";
 import { decryptCredentials, encryptCredentials } from "./credentialCrypto.js";
 import { remoteKeyFor, remoteKeyForPlaylist } from "./remoteKey.js";
-import { pinsForSource } from "./sourcePins.js";
+import { pinsForSource, skipsForSource } from "./sourcePins.js";
 import type {
   SourceCredentialsPayload,
+  SourceSkip,
   SyncFavourite,
   SyncPullResponse,
   SyncPushRequest,
@@ -89,6 +90,12 @@ async function backfillSourceKeys(db: Database.Database, getCredentials: SyncCre
  * `safeStorage`-backed store, outside this framework-free module's reach — see `main/credentials.ts`)
  * and encrypted here, right before they leave the device.
  */
+/** Skip-intro windows go with the source only when there are some. */
+function skipsField(db: Database.Database, sourceId: string): { skips?: SourceSkip[] } {
+  const skips = skipsForSource(db, sourceId);
+  return skips.length > 0 ? { skips } : {};
+}
+
 export async function collectLocalChanges(
   db: Database.Database,
   sinceMs: number,
@@ -110,10 +117,10 @@ export async function collectLocalChanges(
     let payload: SourceCredentialsPayload;
     if (row.kind === "m3u") {
       if (row.playlistUrl === null || row.playlistUrl === "") continue;
-      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), pins: pinsForSource(db, row.id) };
+      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), pins: pinsForSource(db, row.id), ...skipsField(db, row.id) };
     } else {
       const credentials = await getCredentials(row.id);
-      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), pins: pinsForSource(db, row.id) };
+      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), pins: pinsForSource(db, row.id), ...skipsField(db, row.id) };
     }
     const encrypted = await encryptCredentials(payload, accountPassword, salt);
     sources.push({ remoteKey: row.remote_key, label: row.name, credentialsBlob: encrypted.blob, credentialsIv: encrypted.iv, updatedAt: row.sync_updated_at, deletedAt: null });

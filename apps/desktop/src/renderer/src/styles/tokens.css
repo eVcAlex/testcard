@@ -34,13 +34,13 @@
   --border-strong: #343c43;
 
   /* ---- semantic foreground ------------------------------------------- */
-  --foreground: #eef1f3;
+  --foreground: #f2eee7;
   --muted-foreground: #949ca4;
   --faint-foreground: #69727a; /* decorative / disabled only — never body copy */
 
   /* ---- accent: edit --accent and --accent-foreground to reskin ------- */
-  --accent: #4fb3a6; /* Mist's one quiet note — verified as legible TEXT, not just a fill */
-  --accent-foreground: #06211e; /* ink on a SOLID accent fill */
+  --accent: #e7d2ad; /* cream: the same accent as the Fire TV app — legible as TEXT on the dark surfaces, not just a fill */
+  --accent-foreground: #1d160a; /* ink on a SOLID accent fill */
   --accent-strong: color-mix(in oklab, var(--accent) 82%, white);
   --accent-soft: color-mix(in oklab, var(--accent) 15%, transparent);
   --accent-line: color-mix(in oklab, var(--accent) 55%, transparent);
@@ -140,7 +140,7 @@
   --muted-foreground: #5b6670;
   --faint-foreground: #8d99a2;
 
-  --accent: #1f7a70;
+  --accent: #7d5f22; /* the cream accent, darkened until it reads on white */
   --accent-foreground: #ffffff;
   --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
 
