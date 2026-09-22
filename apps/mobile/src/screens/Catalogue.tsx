@@ -143,9 +143,11 @@ export const seriesRows = memoByVersion((db: AppDb, sourceId?: string) => series
  * bumps `version`, the old rows stay up while the new ones are built (blanking the page would flash a loading
  * screen and throw the viewer back to the top); only switching source starts from nothing.
  */
-export function useBuilt<T>(memo: Memo<T>, db: AppDb, version: number, sourceId: string | null): T | null {
+export function useBuilt<T>(memo: Memo<T>, db: AppDb, version: number, sourceId: string | null, remember?: string): T | null {
   const key = sourceId ?? undefined;
-  const [value, setValue] = useState<T | null>(() => memo.cached(db, version, key) ?? memo.stale(db, key) ?? null);
+  // Across launches: the rows built last time are on screen at once, then replaced when the fresh ones are ready.
+  const persisted = remember !== undefined && key === undefined;
+  const [value, setValue] = useState<T | null>(() => memo.cached(db, version, key) ?? memo.stale(db, key) ?? (persisted ? readRemembered<T>(db, remember) : null) ?? null);
   const builtFor = useRef(key);
   useEffect(() => {
     const hit = memo.cached(db, version, key);
@@ -158,10 +160,44 @@ export function useBuilt<T>(memo: Memo<T>, db: AppDb, version: number, sourceId:
       builtFor.current = key;
       setValue(null);
     }
-    const timer = setTimeout(() => setValue(memo(db, version, key)), 30);
+    const timer = setTimeout(() => {
+      const built = memo(db, version, key);
+      setValue(built);
+      if (persisted) writeRemembered(db, remember, built);
+    }, 30);
     return () => clearTimeout(timer);
-  }, [memo, db, version, key]);
+  }, [memo, db, version, key, persisted, remember]);
   return value;
+}
+
+/** Rows kept between launches, as JSON in the database's small key/value table. A read that fails just means nothing was kept. */
+function readRemembered<T>(db: AppDb, name: string): T | undefined {
+  try {
+    const row = db.prepare(`SELECT value FROM schema_meta WHERE key = ?`).get(`rows:${name}`) as { value: string } | undefined;
+    return row === undefined ? undefined : (JSON.parse(row.value) as T);
+  } catch {
+    return undefined;
+  }
+}
+
+function writeRemembered<T>(db: AppDb, name: string, rows: T): void {
+  try {
+    db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(`rows:${name}`, JSON.stringify(rows));
+  } catch {
+    // Not worth failing the screen for.
+  }
+}
+
+/**
+ * A section that stays mounted while hidden has not seen what happened elsewhere (something watched, pinned, favourited),
+ * so its rows are read again each time it is brought back to the front.
+ */
+export function useRefreshOnShow(active: boolean, refresh: () => void) {
+  const was = useRef(active);
+  useEffect(() => {
+    if (active && !was.current) refresh();
+    was.current = active;
+  }, [active, refresh]);
 }
 
 /** Back from the category browser returns to the landing page instead of leaving the section. */
@@ -199,12 +235,14 @@ export const homeSeries = (series: SeriesRow): HomeItem => ({ id: series.id, nam
 /** Movies: a landing page of rows (continue watching, my list, top rated, recently added, genres). `browsing` (the nav bar's Browse all) shows every category instead. */
 export function MoviesScreen({
   sourceId,
+  active = true,
   browsing,
   onBrowseDone,
   onOpen,
   onPlay,
 }: {
   sourceId: string | null;
+  active?: boolean;
   browsing: boolean;
   onBrowseDone: () => void;
   onOpen: (movie: { id: string; title: string }) => void;
@@ -212,8 +250,9 @@ export function MoviesScreen({
 }) {
   const { db, version, sync } = useApp();
   const [tick, setTick] = useState(0);
+  useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
   useBackTo(browsing, onBrowseDone);
-  const shelves = useBuilt(movieRows, db, version, sourceId);
+  const shelves = useBuilt(movieRows, db, version, sourceId, "movies");
   const fetchDetail = useCallback(
     async (id: string) => {
       const target = getMoviePlaybackTarget(db, id);
@@ -264,11 +303,12 @@ export function MoviesScreen({
 }
 
 /** Series: the same landing page, with recently watched in place of continue watching. */
-export function SeriesScreen({ sourceId, browsing, onBrowseDone, onOpen }: { sourceId: string | null; browsing: boolean; onBrowseDone: () => void; onOpen: (series: { id: string; title: string }) => void }) {
+export function SeriesScreen({ sourceId, active = true, browsing, onBrowseDone, onOpen }: { sourceId: string | null; active?: boolean; browsing: boolean; onBrowseDone: () => void; onOpen: (series: { id: string; title: string }) => void }) {
   const { db, version, sync } = useApp();
   const [tick, setTick] = useState(0);
+  useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
   useBackTo(browsing, onBrowseDone);
-  const shelves = useBuilt(seriesRows, db, version, sourceId);
+  const shelves = useBuilt(seriesRows, db, version, sourceId, "series");
   const recentIds = useRef(new Set<string>());
   const rows = useMemo<HomeRow[] | null>(() => {
     if (shelves === null) return null;

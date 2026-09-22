@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View } from "react-native";
 import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
 import { browseChannels, listCategories, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite, type ChannelRow } from "@testcard/core/src/db/queries.js";
@@ -7,7 +7,7 @@ import { useApp } from "../state/app";
 import { memoByVersion } from "../state/memoByVersion";
 import { styleSheet } from "../theme";
 import { BrowseScreen, type BrowseItem, type BrowseSource, type Guide } from "./Browse";
-import { useBackTo } from "./Catalogue";
+import { Loading, useBackTo, useRefreshOnShow } from "./Catalogue";
 import { makePinning } from "./pinning";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
@@ -50,23 +50,33 @@ const clock = (ms: number): string => {
  */
 export function LiveScreen({
   sourceId,
+  active = true,
   browsing,
   onBrowseDone,
   onPlay,
 }: {
   sourceId: string | null;
+  active?: boolean;
   browsing: boolean;
   onBrowseDone: () => void;
   onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
   const { db, version, sync } = useApp();
   const [tick, setTick] = useState(0);
+  useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
   useBackTo(browsing, onBrowseDone);
   const own = useCallback((channel: ChannelRow) => sourceId === null || channel.source_id === sourceId, [sourceId]);
 
   const recentIds = useRef(new Set<string>());
+  // Reading every row costs a moment on a small device, so the first paint is the outline and the rows follow it.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setReady(true), 30);
+    return () => clearTimeout(timer);
+  }, []);
   const rows = useMemo<HomeRow[]>(() => {
     void tick;
+    if (!ready) return [];
     const categories = channelCategories(db, version, sourceId ?? undefined);
     const scope = sourceId !== null ? { sourceId } : {};
     const recents = listRecentChannels(db, 60).filter(own).slice(0, 30);
@@ -82,7 +92,7 @@ export function LiveScreen({
       if (channels.length > 0) list.push({ key: category.id, label: category.label, items: channels.map(toHomeItem), channels: true });
     }
     return list;
-  }, [db, version, sourceId, tick, own]);
+  }, [db, version, sourceId, tick, own, ready]);
 
   const fetchDetail = useCallback(
     async (id: string) => {
@@ -139,6 +149,7 @@ export function LiveScreen({
     [db, sync, play],
   );
 
+  if (!ready && !browsing) return <Loading noun="channels" />;
   if (browsing || rows.length === 0) return <Browsing sourceId={sourceId} own={own} onPlay={onPlay} />;
   return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={play} />;
 }

@@ -1,17 +1,18 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { browseChannels, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite } from "@testcard/core/src/db/queries.js";
-import { listHomePins } from "@testcard/core/src/sync/sourcePins.js";
+import { listHomePins, unpinCategory } from "@testcard/core/src/sync/sourcePins.js";
 import { listWatchedLately } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
-import { browseMovies, listFavouriteMovies, listRecentMovies, getMovieById, getMoviePlaybackTarget, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
-import { browseSeries, listFavouriteSeries, listRecentSeries, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
+import { browseMovies, listFavouriteMovies, listRecentMovies, getMovieById, getMoviePlaybackTarget, removeMovieFromHistory, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
+import { browseSeries, listFavouriteSeries, listRecentSeries, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { fetchGuide } from "../playback/airing";
 import { getCredentials } from "../platform/secrets";
 import { useApp } from "../state/app";
 import { colors, type, styleSheet } from "../theme";
-import { Loading, homeMovie, homeSeries, movieRows, seriesRows, shelfRow, useBuilt } from "./Catalogue";
+import { Loading, homeMovie, homeSeries, movieRows, seriesRows, shelfRow, useBuilt, useRefreshOnShow } from "./Catalogue";
+import type { DetailAction } from "../ui/DetailActions";
 import { HomeScreen, type HeroActions, type HomeDetail, type HomeItem, type HomeRow } from "./Home";
 import { toHomeItem } from "./Live";
 
@@ -36,12 +37,14 @@ const clock = (ms: number): string => {
  */
 export function StartScreen({
   sourceId,
+  active = true,
   onOpenMovie,
   onPlayMovie,
   onOpenSeries,
   onPlayChannel,
 }: {
   sourceId: string | null;
+  active?: boolean;
   onOpenMovie: (movie: { id: string; title: string }) => void;
   onPlayMovie: (movie: { id: string; title: string }, resume: boolean) => void;
   onOpenSeries: (series: { id: string; title: string }) => void;
@@ -49,8 +52,9 @@ export function StartScreen({
 }) {
   const { db, version, sync } = useApp();
   const [tick, setTick] = useState(0);
-  const movieShelves = useBuilt(movieRows, db, version, sourceId);
-  const seriesShelves = useBuilt(seriesRows, db, version, sourceId);
+  useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
+  const movieShelves = useBuilt(movieRows, db, version, sourceId, "movies");
+  const seriesShelves = useBuilt(seriesRows, db, version, sourceId, "series");
 
   const recentChannelIds = useRef(new Set<string>());
   const rows = useMemo<HomeRow[] | null>(() => {
@@ -115,7 +119,7 @@ export function StartScreen({
     [rows, onPlayChannel],
   );
 
-  const heroActions = useCallback(
+  const baseActions = useCallback(
     (item: HomeItem): HeroActions => {
       const { kind, id } = untag(item.id);
       if (kind === "movie") {
@@ -184,6 +188,43 @@ export function StartScreen({
       };
     },
     [db, changed, onOpenMovie, onPlayMovie, onOpenSeries, play],
+  );
+
+  // What the row the remote is on adds: clearing an entry from Continue watching, or taking a pinned row off Home.
+  const heroActions = useCallback(
+    (item: HomeItem, rowKey: string): HeroActions => {
+      const base = baseActions(item);
+      const { kind, id } = untag(item.id);
+      const extra: DetailAction[] = [];
+      if (rowKey === "continue" && kind !== "channel") {
+        extra.push({
+          key: "forget-continue",
+          label: "Remove from Continue watching",
+          glyph: "cross",
+          onPress: () => {
+            if (kind === "movie") removeMovieFromHistory(db, id);
+            else removeSeriesFromRecents(db, id);
+            changed();
+          },
+        });
+      }
+      if (rowKey.startsWith("pin:")) {
+        const pin = listHomePins(db).find((entry) => `pin:${entry.sourceId}:${entry.kind}:${entry.key}` === rowKey);
+        if (pin?.categoryId != null) {
+          extra.push({
+            key: "unpin",
+            label: "Remove this row from Home",
+            glyph: "cross",
+            onPress: () => {
+              unpinCategory(db, pin.kind, pin.categoryId as string);
+              changed();
+            },
+          });
+        }
+      }
+      return extra.length === 0 ? base : { ...base, actions: [...base.actions, ...extra] };
+    },
+    [baseActions, changed, db],
   );
 
   const onSelect = useCallback(

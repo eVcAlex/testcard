@@ -336,6 +336,8 @@ export function getSkipWindow(db: Database.Database, seriesId: string): SkipWind
 
 /** Remembers a skip at the start of an episode so the same stretch is offered in the next ones. */
 export function saveSkipWindow(db: Database.Database, seriesId: string, fromSecs: number, toSecs: number): void {
+  // The source is marked as edited so the skip is pushed to the account with it.
+  db.prepare(`UPDATE sources SET sync_updated_at = MAX(?, COALESCE(sync_updated_at, 0) + 1) WHERE id = (SELECT source_id FROM series WHERE id = ?)`).run(Date.now(), seriesId);
   db.prepare(
     `INSERT INTO series_skip (series_id, from_secs, to_secs, updated_at) VALUES (?, ?, ?, ?)
      ON CONFLICT(series_id) DO UPDATE SET from_secs = excluded.from_secs, to_secs = excluded.to_secs, updated_at = excluded.updated_at`,
