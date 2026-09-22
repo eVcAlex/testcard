@@ -25,11 +25,14 @@ export interface SetupProgress {
 const ORDER: readonly ImportStage[] = ["live", "movies", "series", "saving"];
 
 /**
- * The first-run and refresh screen: null when there is nothing to wait for. `firstSync` is true while a signed-in
- * device that has no sources yet is waiting for its first sync to bring them in.
+ * The first-run screen only: null once this device has something to show, even while a source is
+ * mid-refresh. `firstSync` is true while a signed-in device that has no sources yet is waiting for
+ * its first sync to bring them in — that's the only time it's worth blocking the whole app behind
+ * this; a later refresh of an existing source runs quietly behind whatever is already on screen
+ * (Sources shows its own per-row "Refreshing" label) instead of interrupting an active session.
  */
 export function describeSetup({ firstSync, imports }: { firstSync: boolean; imports: readonly ImportProgress[] }): SetupProgress | null {
-  if (!firstSync && imports.length === 0) return null;
+  if (!firstSync) return null;
   const wants = {
     live: imports.length === 0 || imports.some((entry) => entry.wants.live),
     movies: imports.length === 0 || imports.some((entry) => entry.wants.movies),
