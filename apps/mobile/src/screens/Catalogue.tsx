@@ -5,9 +5,10 @@ import { movieHome, seriesHome } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { getCredentials } from "../platform/secrets";
 import { browseMovies, getMovieById, getMoviePlaybackTarget, listFavouriteMovies, listMovieCategories, listRecentMovies, toggleMovieFavourite, type MovieRow } from "@testcard/core/src/db/vodQueries.js";
-import { browseSeries, listFavouriteSeries, listRecentSeries, listSeriesCategories, removeSeriesFromRecents, toggleSeriesFavourite, type SeriesRow } from "@testcard/core/src/db/seriesQueries.js";
+import { browseSeries, getUpNextEpisode, listFavouriteSeries, listRecentSeries, listSeriesCategories, removeSeriesFromRecents, toggleSeriesFavourite, type SeriesRow } from "@testcard/core/src/db/seriesQueries.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { useApp } from "../state/app";
+import { episodeTitle, seriesTitle } from "../ui/titles";
 import { colors, type, styleSheet } from "../theme";
 import { memoByVersion } from "../state/memoByVersion";
 import { makePinning } from "./pinning";
@@ -26,6 +27,7 @@ const toMovieItem = (movie: MovieRow): BrowseItem => ({
   imageUrl: movie.poster_url,
   progress: movie.position_secs !== null && movie.duration_secs !== null && movie.duration_secs > 0 ? movie.position_secs / movie.duration_secs : null,
   resume: movie.position_secs !== null && shouldPromptResume(movie.position_secs, movie.duration_secs),
+  watched: movie.watched === 1,
 });
 const toSeriesItem = (series: SeriesRow): BrowseItem => ({ id: series.id, title: series.name, imageUrl: series.poster_url });
 
@@ -224,6 +226,7 @@ export const homeMovie = (movie: MovieRow): HomeItem => ({
   name: movie.name,
   posterUrl: movie.poster_url,
   progress: movie.position_secs !== null && movie.duration_secs !== null && movie.duration_secs > 0 ? movie.position_secs / movie.duration_secs : null,
+  watched: movie.watched === 1,
   rating: movie.rating,
   plot: movie.plot,
   durationSecs: movie.duration_secs,
@@ -231,6 +234,27 @@ export const homeMovie = (movie: MovieRow): HomeItem => ({
   resume: movie.position_secs !== null && shouldPromptResume(movie.position_secs, movie.duration_secs),
 });
 export const homeSeries = (series: SeriesRow): HomeItem => ({ id: series.id, name: series.name, posterUrl: series.poster_url, progress: null, rating: series.rating, plot: series.plot, durationSecs: null, favourite: series.is_favourite === 1, resume: false });
+
+/**
+ * A series row's primary action: resume or play the episode you were on, falling back to "View
+ * episodes" for a series nothing has been watched of yet. Shared by every screen with a series
+ * row (Home, the Series landing page) so pressing one actually starts playing.
+ */
+export function seriesPrimaryAction(
+  db: Parameters<typeof getUpNextEpisode>[0],
+  item: HomeItem,
+  onOpenSeries: (series: { id: string; title: string }) => void,
+  onPlayEpisode: (episodeId: string, title: string, resume: boolean, seriesId: string) => void,
+): HeroActions["primary"] {
+  const upNext = getUpNextEpisode(db, item.id);
+  if (upNext === undefined) return { label: "View episodes", onPress: () => onOpenSeries({ id: item.id, title: item.name }) };
+  const { episode } = upNext;
+  return {
+    label: upNext.resume ? "Resume" : "Play",
+    onPress: () => onPlayEpisode(episode.id, `${seriesTitle(item.name)} · ${episodeTitle(episode.name)}`, upNext.resume, item.id),
+    progress: upNext.resume && episode.position_secs !== null && episode.duration_secs !== null && episode.duration_secs > 0 ? episode.position_secs / episode.duration_secs : undefined,
+  };
+}
 
 /** Movies: a landing page of rows (continue watching, my list, top rated, recently added, genres). `browsing` (the nav bar's Browse all) shows every category instead. */
 export function MoviesScreen({
@@ -303,7 +327,21 @@ export function MoviesScreen({
 }
 
 /** Series: the same landing page, with recently watched in place of continue watching. */
-export function SeriesScreen({ sourceId, active = true, browsing, onBrowseDone, onOpen }: { sourceId: string | null; active?: boolean; browsing: boolean; onBrowseDone: () => void; onOpen: (series: { id: string; title: string }) => void }) {
+export function SeriesScreen({
+  sourceId,
+  active = true,
+  browsing,
+  onBrowseDone,
+  onOpen,
+  onPlayEpisode,
+}: {
+  sourceId: string | null;
+  active?: boolean;
+  browsing: boolean;
+  onBrowseDone: () => void;
+  onOpen: (series: { id: string; title: string }) => void;
+  onPlayEpisode: (episodeId: string, title: string, resume: boolean, seriesId: string) => void;
+}) {
   const { db, version, sync } = useApp();
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
@@ -323,8 +361,9 @@ export function SeriesScreen({ sourceId, active = true, browsing, onBrowseDone, 
   }, [db, version, shelves, tick]);
   const heroActions = useCallback(
     (item: HomeItem): HeroActions => ({
-      primary: { label: "View episodes", onPress: () => onOpen({ id: item.id, title: item.name }) },
+      primary: seriesPrimaryAction(db, item, onOpen, onPlayEpisode),
       actions: [
+        { key: "info", label: "View episodes", glyph: "info", onPress: () => onOpen({ id: item.id, title: item.name }) },
         {
           key: "list",
           label: item.favourite ? "Remove from My list" : "Add to My list",
@@ -351,7 +390,7 @@ export function SeriesScreen({ sourceId, active = true, browsing, onBrowseDone, 
           : []),
       ],
     }),
-    [db, sync, onOpen],
+    [db, sync, onOpen, onPlayEpisode],
   );
 
   if (browsing || (rows !== null && rows.length === 0)) return <Padded><SeriesBrowse sourceId={sourceId} onOpen={onOpen} /></Padded>;

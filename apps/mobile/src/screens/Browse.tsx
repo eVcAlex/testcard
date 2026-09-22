@@ -18,6 +18,7 @@ export interface BrowseItem {
   readonly number?: number | null;
   /** A film that has a saved position worth offering to resume. */
   readonly resume?: boolean;
+  readonly watched?: boolean;
 }
 
 /** What is on a channel: the programme airing and the one after it. Either can be missing. */
@@ -398,6 +399,7 @@ const PosterTile = memo(function PosterTile({ item, onSelect, onFocusTile }: { i
     name: item.title,
     posterUrl: item.imageUrl,
     progress: item.progress ?? null,
+    watched: item.watched ?? false,
   };
   return <PosterCard grid item={poster} onPress={() => onSelect(item)} onFocusItem={() => onFocusTile(item)} />;
 });

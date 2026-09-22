@@ -214,6 +214,7 @@ function Root() {
               onOpenMovie={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
               onPlayMovie={(movie, resume) => setRoute({ name: "play", item: { kind: "movie", id: movie.id, title: movie.title }, resume, returnTo: { name: "home" } })}
               onOpenSeries={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
+              onPlayEpisode={(episodeId, title, resume, seriesId) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title }, seriesId, resume, returnTo: { name: "home" } })}
               onPlayChannel={playChannel}
             />,
           )}
@@ -230,7 +231,14 @@ function Root() {
           )}
           {pane(
             "series",
-            <SeriesScreen sourceId={sourceId} active={section === "series"} browsing={browsing && section === "series"} onBrowseDone={onBrowseDone} onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })} />,
+            <SeriesScreen
+              sourceId={sourceId}
+              active={section === "series"}
+              browsing={browsing && section === "series"}
+              onBrowseDone={onBrowseDone}
+              onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
+              onPlayEpisode={(episodeId, title, resume, seriesId) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title }, seriesId, resume, returnTo: { name: "home" } })}
+            />,
           )}
           {pane("live", <LiveScreen sourceId={liveSource?.id ?? null} active={section === "live"} browsing={browsing && section === "live"} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
           {pane(
