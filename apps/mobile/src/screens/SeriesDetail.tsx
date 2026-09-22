@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BackHandler, FlatList, Image, Text, TVFocusGuideView, View } from "react-native";
-import { getSeriesDetail, getSeriesSource } from "@testcard/core/src/db/seriesQueries.js";
+import { getSeriesDetail, getSeriesSource, getUpNextEpisode } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { getCredentials } from "../platform/secrets";
@@ -74,9 +74,8 @@ export function SeriesDetailScreen({
   const seasonLabel = (season: { name: string | null; season_number: number }) => season.name ?? `Season ${season.season_number}`;
   const rowLength = Math.round(EPISODE_ROW * uiScale);
   // The big button: carry on with what you were watching, else the first episode you have not seen.
-  const all = seasons.flatMap((season) => season.episodes.map((episode) => ({ episode, season })));
-  const upNext = all.find(({ episode }) => episode.position_secs !== null && episode.watched !== 1 && shouldPromptResume(episode.position_secs, episode.duration_secs)) ?? all.find(({ episode }) => episode.watched !== 1) ?? all[0];
-  const upNextResume = upNext !== undefined && upNext.episode.position_secs !== null && shouldPromptResume(upNext.episode.position_secs, upNext.episode.duration_secs);
+  const upNext = useMemo(() => (loading ? undefined : getUpNextEpisode(db, seriesId)), [db, seriesId, version, loading]);
+  const upNextResume = upNext?.resume ?? false;
 
   return (
     <View style={styles.screen}>

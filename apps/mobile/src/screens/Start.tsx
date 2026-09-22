@@ -11,7 +11,7 @@ import { fetchGuide } from "../playback/airing";
 import { getCredentials } from "../platform/secrets";
 import { useApp } from "../state/app";
 import { colors, type, styleSheet } from "../theme";
-import { Loading, homeMovie, homeSeries, movieRows, seriesRows, shelfRow, useBuilt, useRefreshOnShow } from "./Catalogue";
+import { Loading, homeMovie, homeSeries, movieRows, seriesPrimaryAction, seriesRows, shelfRow, useBuilt, useRefreshOnShow } from "./Catalogue";
 import type { DetailAction } from "../ui/DetailActions";
 import { HomeScreen, type HeroActions, type HomeDetail, type HomeItem, type HomeRow } from "./Home";
 import { toHomeItem } from "./Live";
@@ -41,6 +41,7 @@ export function StartScreen({
   onOpenMovie,
   onPlayMovie,
   onOpenSeries,
+  onPlayEpisode,
   onPlayChannel,
 }: {
   sourceId: string | null;
@@ -48,6 +49,7 @@ export function StartScreen({
   onOpenMovie: (movie: { id: string; title: string }) => void;
   onPlayMovie: (movie: { id: string; title: string }, resume: boolean) => void;
   onOpenSeries: (series: { id: string; title: string }) => void;
+  onPlayEpisode: (episodeId: string, title: string, resume: boolean, seriesId: string) => void;
   onPlayChannel: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
   const { db, version, sync } = useApp();
@@ -144,9 +146,13 @@ export function StartScreen({
         };
       }
       if (kind === "series") {
+        // `item.id` is tagged ("series|<id>") to keep it unique among the mixed-kind rows this page
+        // draws; `seriesPrimaryAction` looks episodes up by the provider's own id, so it needs the
+        // tag stripped back off here first.
         return {
-          primary: { label: "View episodes", onPress: () => onOpenSeries({ id, title: item.name }) },
+          primary: seriesPrimaryAction(db, { ...item, id }, onOpenSeries, onPlayEpisode),
           actions: [
+            { key: "info", label: "View episodes", glyph: "info", onPress: () => onOpenSeries({ id, title: item.name }) },
             {
               key: "list",
               label: item.favourite ? "Remove from My list" : "Add to My list",
@@ -187,7 +193,7 @@ export function StartScreen({
         ],
       };
     },
-    [db, changed, onOpenMovie, onPlayMovie, onOpenSeries, play],
+    [db, changed, onOpenMovie, onPlayMovie, onOpenSeries, onPlayEpisode, play],
   );
 
   // What the row the remote is on adds: clearing an entry from Continue watching, or taking a pinned row off Home.

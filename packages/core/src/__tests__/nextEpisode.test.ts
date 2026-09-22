@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import Database from "better-sqlite3";
 import { migrateDatabase } from "../db/migrateDatabase.js";
-import { findNextEpisode } from "../db/seriesQueries.js";
+import { findNextEpisode, getUpNextEpisode } from "../db/seriesQueries.js";
+import { setPlaybackProgress } from "../db/progressQueries.js";
 
 function seed() {
   const db = migrateDatabase(new Database(":memory:"));
@@ -28,6 +29,25 @@ describe("the next episode", () => {
   it("is nothing after the last episode, or for an unknown one", () => {
     expect(findNextEpisode(seed(), "e22")).toBeUndefined();
     expect(findNextEpisode(seed(), "nope")).toBeUndefined();
+  });
+});
+
+describe("the up-next episode (Home's Continue watching, and the series page's big button)", () => {
+  it("is the first episode when nothing has been watched", () => {
+    expect(getUpNextEpisode(seed(), "sr")).toMatchObject({ episode: { id: "e11" }, resume: false });
+  });
+  it("resumes the episode left partway through", () => {
+    const db = seed();
+    setPlaybackProgress(db, "episode", "e12", 200, 1200); // well under the watched threshold
+    expect(getUpNextEpisode(db, "sr")).toMatchObject({ episode: { id: "e12" }, resume: true });
+  });
+  it("moves on to the next unwatched episode once one is finished", () => {
+    const db = seed();
+    setPlaybackProgress(db, "episode", "e11", 1150, 1200); // crosses the watched threshold
+    expect(getUpNextEpisode(db, "sr")).toMatchObject({ episode: { id: "e12" }, resume: false });
+  });
+  it("is nothing for a series with no episodes yet", () => {
+    expect(getUpNextEpisode(seed(), "unknown")).toBeUndefined();
   });
 });
 

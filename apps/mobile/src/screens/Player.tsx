@@ -173,7 +173,7 @@ function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
 }
 
 function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, onExit }: { onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
-  const { db } = useApp();
+  const { db, sync } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
   const started = useRef(false);
@@ -592,7 +592,9 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     ),
   );
 
-  // Recents on first play; progress every few seconds for films and episodes.
+  // Recents on first play; progress every few seconds for films and episodes. Each write also
+  // nudges sync, so another device picks up "what I'm watching" within seconds, not the up-to-a-
+  // minute periodic tick — notifyLocalChange is cheap to call this often, it just coalesces.
   useEffect(() => {
     if (!started.current) {
       started.current = true;
@@ -601,19 +603,23 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       }
       else if (item.kind === "movie") recordMovieRecent(db, item.id);
       else if (seriesId !== undefined) recordSeriesRecent(db, seriesId);
+      sync.notifyLocalChange();
     }
     if (!vod) return;
     const save = () => {
       const { position: at, duration: length } = latest.current;
       // No known length means nothing has played (a failed start), so there is no position worth keeping.
-      if (at > 0 && length > 0) setPlaybackProgress(db, item.kind as "movie" | "episode", item.id, Math.floor(at), Math.floor(length));
+      if (at > 0 && length > 0) {
+        setPlaybackProgress(db, item.kind as "movie" | "episode", item.id, Math.floor(at), Math.floor(length));
+        sync.notifyLocalChange();
+      }
     };
     const timer = setInterval(save, PROGRESS_EVERY_MS);
     return () => {
       clearInterval(timer);
       save();
     };
-  }, [db, item, seriesId, timeshift, vod]);
+  }, [db, item, seriesId, timeshift, vod, sync]);
 
   if (failing) {
     return (

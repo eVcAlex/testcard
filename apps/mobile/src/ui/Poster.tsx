@@ -11,6 +11,8 @@ export interface PosterItem {
   readonly posterUrl: string | null;
   /** 0 to 1 when started and not finished. */
   readonly progress?: number | null;
+  /** Already seen: shows a quiet checkmark instead of the progress bar. */
+  readonly watched?: boolean;
 }
 
 const POSTER_WIDTH = 200;
@@ -67,6 +69,11 @@ export const PosterCard = memo(function PosterCard({
         {progress !== null && (
           <View style={styles.progress}>
             <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          </View>
+        )}
+        {progress === null && item.watched === true && (
+          <View style={styles.watched}>
+            <Text style={styles.watchedMark}>{"✓"}</Text>
           </View>
         )}
       </View>
@@ -132,6 +139,8 @@ const styles = styleSheet({
   badgeText: { color: colors.foreground, fontSize: 17, fontWeight: "600", letterSpacing: 0.5 },
   source: { position: "absolute", left: 10, bottom: 14, maxWidth: "85%", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3" },
   sourceText: { color: colors.foreground, fontSize: 17, fontWeight: "600" },
+  watched: { position: "absolute", right: 10, top: 10, width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: "#000000b3" },
+  watchedMark: { color: colors.accent, fontSize: 17, fontWeight: "700" },
   progress: { position: "absolute", left: 0, right: 0, bottom: 0, height: 5, backgroundColor: "#0008" },
   progressFill: { height: "100%", backgroundColor: colors.accent },
 });

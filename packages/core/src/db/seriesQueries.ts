@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 import type { Source } from "../source/types.js";
 import { clearPlaybackProgress } from "./progressQueries.js";
+import { shouldPromptResume } from "../playback/progressPolicy.js";
 
 export interface SeriesRow {
   readonly id: string;
@@ -202,6 +203,27 @@ export function getSeriesDetail(db: Database.Database, seriesId: string): Series
     series,
     seasons: seasons.map((season) => ({ ...season, episodes: episodesBySeason.all(season.id) as EpisodeRow[] })),
   };
+}
+
+export interface UpNextEpisode {
+  readonly episode: EpisodeRow;
+  readonly season: SeasonRow;
+  readonly resume: boolean;
+}
+
+/**
+ * Carry on with what you were watching, else the first episode you have not seen, else the first
+ * episode there is. Shared by the series page's big button and Home's Continue watching row, so
+ * both send the viewer to the same episode.
+ */
+export function getUpNextEpisode(db: Database.Database, seriesId: string): UpNextEpisode | undefined {
+  const detail = getSeriesDetail(db, seriesId);
+  if (detail === undefined) return undefined;
+  const all = detail.seasons.flatMap((season) => season.episodes.map((episode) => ({ episode, season: season as SeasonRow })));
+  const upNext = all.find(({ episode }) => episode.position_secs !== null && episode.watched !== 1 && shouldPromptResume(episode.position_secs, episode.duration_secs)) ?? all.find(({ episode }) => episode.watched !== 1) ?? all[0];
+  if (upNext === undefined) return undefined;
+  const resume = upNext.episode.position_secs !== null && shouldPromptResume(upNext.episode.position_secs, upNext.episode.duration_secs);
+  return { episode: upNext.episode, season: upNext.season, resume };
 }
 
 /** Resolves a series id to its source, for the `series.episodes` IPC handler's lazy-fetch gate. */
