@@ -54,14 +54,6 @@ jobs:
           EXPO_TV: ${{ matrix.tv }}
         run: pnpm exec expo prebuild --platform android --no-install --clean
 
-      # The generated gradle.properties caps the heap at 2 GB, which throttles the
-      # parallel module and R8 work. This override applies here only, not locally.
-      - name: Tune Gradle
-        working-directory: apps/mobile/android
-        run: |
-          sed -i "/^org.gradle.jvmargs=/d" gradle.properties
-          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> gradle.properties
-
       - name: Build the release APK
         working-directory: apps/mobile/android
         run: ./gradlew ${{ matrix.task }} --no-daemon --build-cache
