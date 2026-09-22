@@ -56,7 +56,7 @@ jobs:
 
       - name: Build the release APK
         working-directory: apps/mobile/android
-        run: ./gradlew ${{ matrix.task }} --no-daemon
+        run: ./gradlew ${{ matrix.task }} --no-daemon --build-cache
 
       - name: Name the APK
         run: cp apps/mobile/android/app/build/outputs/apk/${{ matrix.apk }} testcard-${{ matrix.target }}.apk
