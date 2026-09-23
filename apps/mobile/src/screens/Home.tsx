@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Text, TVFocusGuideView, View, type CellRendererProps, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ViewProps } from "react-native";
+import { FlatList, Text, TVFocusGuideView, View, type CellRendererProps, type ViewProps } from "react-native";
 import { Image } from "expo-image";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, styleSheet, uiScale } from "../theme";
@@ -100,7 +100,11 @@ export function HomeScreen({
   const [details, setDetails] = useState<ReadonlyMap<string, HomeDetail>>(new Map());
   const asked = useRef(new Set<string>());
 
-  const shown = (focusedId !== undefined ? byId.get(focusedId) : undefined) ?? (first !== undefined ? { item: first, row: rows[0]?.label ?? "", rowKey: rows[0]?.key ?? "" } : undefined);
+  // Kept as the same object while the highlighted title is the same, so the hero's buttons are not rebuilt on every render.
+  const shown = useMemo(
+    () => (focusedId !== undefined ? byId.get(focusedId) : undefined) ?? (first !== undefined ? { item: first, row: rows[0]?.label ?? "", rowKey: rows[0]?.key ?? "" } : undefined),
+    [byId, focusedId, first, rows],
+  );
 
   // A highlighted title with no plot or length gets them fetched once the remote has rested on it for a moment.
   const shownId = shown?.item.id;
@@ -113,30 +117,27 @@ export function HomeScreen({
         .then((detail) => {
           if (detail !== null) setDetails((previous) => new Map(previous).set(shownId, detail));
         })
-        .catch(() => undefined); // the hero works without them
+        // The hero works without them. Asked again next time the remote rests here, since a failure (or a
+        // lookup dropped because the remote moved on first) is not an answer.
+        .catch(() => asked.current.delete(shownId));
     }, DETAIL_AFTER_MS);
     return () => clearTimeout(timer);
   }, [fetchDetail, shownId, missing]);
 
-  // The row the remote is on is lined up under the hero, so it is never left half cut off at the edge.
-  const listRef = useRef<FlatList<HomeRow>>(null);
-  const alignedRow = useRef(-1);
-  // Where each drawn row starts, as laid out. Rows differ in height (posters, a top 10, channel cards), so the
-  // list's own estimate for scrollToIndex lands in the wrong place and then corrects itself: two scrolls, a
-  // visible jump, on a row change. A row the remote is on has been drawn, so its measured offset is known.
-  const rowTops = useRef(new Map<number, number>());
+  // The row the remote is on is lined up just below the top band (styles.rowsFade), so it is never left half cut off
+  // at the edge. Android does it, in the one scroll it makes to bring the focused poster into view: each row declares
+  // where it should land (scrollSnapOffset) and the list snaps by item. Lining it up from JS as well, after focus
+  // moved, raced that native scroll, so a row change left the list at one offset and slid it to another a moment later.
   const Cell = useMemo(
     () =>
-      function Cell({ index, onLayout, onFocusCapture, style, children }: CellRendererProps<HomeRow>) {
+      function Cell({ onLayout, onFocusCapture, style, children }: CellRendererProps<HomeRow>) {
         return (
           <View
             style={style}
+            scrollSnapOffset={BAND_DP}
             // The list's focus event type and View's differ only in the TV fork's typings; they are the same event.
             onFocusCapture={onFocusCapture as ViewProps["onFocusCapture"]}
-            onLayout={(event: LayoutChangeEvent) => {
-              rowTops.current.set(index, event.nativeEvent.layout.y);
-              onLayout?.(event);
-            }}
+            onLayout={onLayout}
           >
             {children}
           </View>
@@ -144,37 +145,40 @@ export function HomeScreen({
       },
     [],
   );
-  const alignRow = useCallback((index: number) => {
-    // Moving along a row must not ask the list to scroll again: only a change of row does.
-    if (alignedRow.current === index) return;
-    alignedRow.current = index;
-    // Lined up just below the top band (styles.rowsFade), so its title is not left under that scrim.
-    const top = rowTops.current.get(index);
-    if (top !== undefined) listRef.current?.scrollToOffset({ offset: Math.max(0, top - BAND_DP), animated: true });
-    else listRef.current?.scrollToIndex({ index, viewPosition: 0, viewOffset: BAND_DP, animated: true });
-  }, []);
 
   // Worked out once per highlighted title: a series' button reads its next episode from the database, which an
   // unrelated re-render (a plot arriving for another title) should not repeat.
   const actions = useMemo(() => (shown !== undefined ? heroActions(shown.item, shown.rowKey) : undefined), [heroActions, shown]);
 
-  // The band over the top of the rows is only wanted once they have scrolled: at rest it would sit over the first
-  // row's title.
+  // The band over the top of the rows is only wanted below the first row: at rest it would sit over the first row's
+  // title. Keyed to the row the remote is on, not the scroll offset: the scroll back to the top does not reliably
+  // report its final position, which left the band drawn over the first row's title after coming back up to it.
+  const rowIndex = useMemo(() => new Map(rows.map((row, index) => [row.key, index])), [rows]);
+  const rowIndexRef = useRef(rowIndex);
+  rowIndexRef.current = rowIndex;
   const [scrolled, setScrolled] = useState(false);
-  const scrolledRef = useRef(false);
-  const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const next = event.nativeEvent.contentOffset.y > 2;
-    if (next === scrolledRef.current) return;
-    scrolledRef.current = next;
-    setScrolled(next);
-  }, []);
+
+  // One focus handler per row, made once and reused: a fresh one on every render would defeat the rows' memo, so a
+  // hero change (or anything else that re-renders this screen) would redraw every card on screen.
+  const focusHandlers = useRef(new Map<string, (item: PosterItem) => void>());
+  const focusFor = useCallback(
+    (rowKey: string) => {
+      let handler = focusHandlers.current.get(rowKey);
+      if (handler === undefined) {
+        handler = (item: PosterItem) => {
+          setScrolled((rowIndexRef.current.get(rowKey) ?? 0) > 0);
+          onFocusItem(item, rowKey);
+        };
+        focusHandlers.current.set(rowKey, handler);
+      }
+      return handler;
+    },
+    [onFocusItem],
+  );
 
   const renderRow = useCallback(
-    ({ item: row, index }: { item: HomeRow; index: number }) => {
-      const focus = (item: PosterItem) => {
-        alignRow(index);
-        onFocusItem(item, row.key);
-      };
+    ({ item: row }: { item: HomeRow }) => {
+      const focus = focusFor(row.key);
       return row.channels === true ? (
         <ChannelShelf title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} pinned={row.pinned === true} />
       ) : row.ranked === true ? (
@@ -183,7 +187,7 @@ export function HomeScreen({
         <PosterRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} pinned={row.pinned === true} />
       );
     },
-    [onSelect, onFocusItem, alignRow],
+    [onSelect, focusFor],
   );
 
   return (
@@ -206,21 +210,18 @@ export function HomeScreen({
           </View>
         ) : null}
         <FlatList
-          ref={listRef}
           data={rows}
           keyExtractor={(row) => row.key}
           renderItem={renderRow}
           CellRendererComponent={Cell}
-          onScrollToIndexFailed={(info) => listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true })}
           // Enough rows drawn ahead that the remote always has a next row to land on; with fewer, the first Down press finds nothing yet.
           initialNumToRender={4}
           maxToRenderPerBatch={4}
           windowSize={9}
           removeClippedSubviews={false}
+          snapToAlignment="item"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
-          onScroll={onScroll}
-          scrollEventThrottle={32}
         />
         {/* The next row's title peeks in at the bottom edge; faded out rather than sliced through. */}
         <View style={styles.rowsBottomFade} pointerEvents="none">
@@ -232,6 +233,10 @@ export function HomeScreen({
 }
 
 function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem; row: string } | undefined; plot: string | null; durationSecs: number | null; actions: HeroActions | undefined }) {
+  // A title that wraps to a second line takes the plot's second line, so the buttons always stay inside the hero
+  // instead of running off its foot under the rows.
+  const [titleLines, setTitleLines] = useState(1);
+  const wrapped = titleLines > 1;
   const channel = shown?.item.channelNumber !== undefined;
   const parts = shown !== undefined ? (channel ? { title: shown.item.name, year: null, is4k: false } : splitTitle(shown.item.name)) : undefined;
   const rating = shown?.item.rating !== null && shown?.item.rating !== undefined && Number(shown.item.rating) > 0 && Number(shown.item.rating) <= 10 ? Number(shown.item.rating).toFixed(1) : null;
@@ -266,13 +271,13 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
         <Text style={styles.kicker} numberOfLines={1}>
           {shown?.row ?? ""}
         </Text>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={styles.title} numberOfLines={2} onTextLayout={(event) => setTitleLines(event.nativeEvent.lines.length)}>
           {parts?.title ?? ""}
         </Text>
         <View style={styles.factsSlot}>
           <Facts facts={facts} />
         </View>
-        <Text style={styles.plot} numberOfLines={2}>
+        <Text style={[styles.plot, wrapped && styles.plotShort]} numberOfLines={wrapped ? 1 : 2}>
           {plot ?? ""}
         </Text>
         {/* Coming down from the nav bar lands on the main button, not on whichever button is nearest sideways. */}
@@ -333,8 +338,9 @@ const styles = styleSheet({
   heroText: { position: "absolute", left: 52, top: 118, width: 1000, gap: 12 },
   factsSlot: { height: 44 },
   kicker: { color: colors.accent, fontSize: 24, fontWeight: "600", letterSpacing: 1 },
-  title: { color: colors.foreground, fontSize: 68, fontWeight: "600", letterSpacing: -1.5 },
+  title: { color: colors.foreground, fontSize: 68, lineHeight: 78, fontWeight: "600", letterSpacing: -1.5 },
   plot: { height: 72, color: "#c3c9ce", fontSize: 25, lineHeight: 36, marginTop: 2 },
+  plotShort: { height: 36 },
   rows: { flex: 1, paddingHorizontal: 44 },
   rowsFade: { position: "absolute", left: 0, right: 0, top: 0, height: ROWS_BAND, zIndex: 1 },
   rowsFadeSolid: { height: ROWS_BAND - 16, backgroundColor: colors.background },

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BackHandler, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { getMovieById, getMoviePlaybackTarget, removeMovieFromHistory, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
+import { getMovieById, getMoviePlaybackTarget, listMovieVersions, removeMovieFromHistory, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { getCredentials } from "../platform/secrets";
@@ -11,6 +11,8 @@ import { colors, styleSheet } from "../theme";
 import { BackArrow } from "../ui/BackArrow";
 import { Backdrop, DetailActions, Facts } from "../ui/DetailActions";
 import { Button } from "../ui/controls";
+import { OptionsSheet } from "../ui/OptionsSheet";
+import { setWatched } from "@testcard/core/src/db/progressQueries.js";
 
 /** "1h 36m" / "42m" from seconds. */
 function runtime(secs: number): string {
@@ -31,8 +33,19 @@ function position(secs: number): string {
  * A film's own page: poster, what it is, and what you can do with it (play, resume, start over, add to
  * My list). Its plot and length are fetched from the provider the first time it is opened.
  */
-export function MovieDetailScreen({ movieId, onPlay, onBack }: { movieId: string; onPlay: (resume: boolean) => void; onBack: () => void }) {
-  const { db, sync, version, updateStatus } = useApp();
+export function MovieDetailScreen({
+  movieId,
+  onPlay,
+  onBack,
+  onOpenVersion,
+}: {
+  movieId: string;
+  onPlay: (resume: boolean) => void;
+  onBack: () => void;
+  /** Opens another copy of this film (another quality or source) in place of this one. */
+  onOpenVersion: (movie: { id: string; title: string }) => void;
+}) {
+  const { db, sync, version, updateStatus, sources } = useApp();
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -50,6 +63,18 @@ export function MovieDetailScreen({ movieId, onPlay, onBack }: { movieId: string
   }, [db, movieId, version, tick]);
 
   const needsDetails = movie !== undefined && movie.details_fetched_at === null;
+
+  // The same film filed again by the provider (a 4K copy, a "TOP" list) or offered by another source: the lists show
+  // it once, and this is where the other copies are picked from.
+  const versions = useMemo(() => listMovieVersions(db, movieId), [db, movieId]);
+  const [choosingVersion, setChoosingVersion] = useState(false);
+  const versionLabel = (row: { name: string; source_id: string }) => {
+    const tag = /^(.{1,12}?)\s+-\s+/.exec(row.name.trim())?.[1];
+    // Named only when the copies come from more than one source; otherwise every line would say the same thing.
+    const mixed = versions.some((entry) => entry.source_id !== movie?.source_id);
+    const source = mixed ? sources.find((entry) => entry.id === row.source_id)?.name : undefined;
+    return [splitTitle(row.name).is4k ? "4K" : "HD", tag !== undefined && tag !== "4K" ? tag.replace(/^4K-?/, "") : undefined, source].filter((part) => part !== undefined && part !== "").join("  ·  ");
+  };
   useEffect(() => {
     if (!needsDetails) return;
     const target = getMoviePlaybackTarget(db, movieId);
@@ -110,6 +135,17 @@ export function MovieDetailScreen({ movieId, onPlay, onBack }: { movieId: string
                 setTick((value) => value + 1);
               },
             },
+            {
+              key: "watched",
+              label: movie.watched === 1 ? "Mark as unwatched" : "Mark as watched",
+              glyph: movie.watched === 1 ? ("unwatched" as const) : ("watched" as const),
+              onPress: () => {
+                setWatched(db, "movie", [movieId], movie.watched !== 1);
+                sync.notifyLocalChange();
+                setTick((value) => value + 1);
+              },
+            },
+            ...(versions.length > 0 ? [{ key: "versions", label: `Other versions (${versions.length})`, glyph: "versions" as const, onPress: () => setChoosingVersion(true) }] : []),
             ...(resume
               ? [
                   {
@@ -128,6 +164,17 @@ export function MovieDetailScreen({ movieId, onPlay, onBack }: { movieId: string
           ]}
         />
       </View>
+      {choosingVersion ? (
+        <OptionsSheet
+          title={`Other versions of ${title}`}
+          options={versions.map((row) => ({ id: row.id, label: versionLabel(row) }))}
+          onChoose={(id) => {
+            const row = versions.find((entry) => entry.id === id);
+            if (row !== undefined) onOpenVersion({ id: row.id, title: row.name });
+          }}
+          onClose={() => setChoosingVersion(false)}
+        />
+      ) : null}
     </View>
   );
 }

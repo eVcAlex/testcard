@@ -14,6 +14,10 @@ plays back through an embedded `mpv`, stores everything locally.
   `get.php` link, vs. structured Xtream host/username/password fields) that both still end up
   as the same normalised shape below; the app never special-cases "Xtream" vs "M3U" outside
   `packages/core/src/source/`.
+- **Source pick** — on the TV app, which Source every page shows: "All sources" (the default) or one. A single
+  setting for Home, Live TV, Movies, Series and Search, your own rows (Continue watching, favourites, pins)
+  included; kept on the device across launches, not synced. Chosen from a list under the nav bar's Source button,
+  which only appears with two or more Sources.
 - **Channel** — one logical live-TV channel as a human thinks of it — "TNT Sports 1". Has a
   **stable internal id** that survives playlist refreshes, independent of whatever id the
   provider assigns.

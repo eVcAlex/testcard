@@ -8,8 +8,9 @@ import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "./src/state/app";
 import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
-import { colors, styleSheet } from "./src/theme";
+import { colors, styleSheet, uiScale } from "./src/theme";
 import { focusedNow, lastFocused } from "./src/ui/Focusable";
+import { SourcePicker } from "./src/ui/SourcePicker";
 import { NavTab } from "./src/ui/NavTab";
 import { SetupOverlay } from "./src/ui/SetupOverlay";
 import { SourceNames } from "./src/ui/Poster";
@@ -42,9 +43,10 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "sources", label: "Sources" },
 ];
 
-/** A bare magnifying glass, sized to sit in the nav bar's icon-only tab. */
+/** A bare magnifying glass, sized to sit in the nav bar's icon-only tab. Icons take dp, not design units, so it is scaled like the styles. */
+const SEARCH_GLYPH = Math.round(30 * uiScale);
 function SearchGlyph(color: string) {
-  return <Search color={color} width={28} height={28} strokeWidth={1.75} />;
+  return <Search color={color} width={SEARCH_GLYPH} height={SEARCH_GLYPH} strokeWidth={1.75} />;
 }
 
 export default function App() {
@@ -61,39 +63,50 @@ export default function App() {
 }
 
 function Root() {
-  const { status, sources, db, version, setup } = useApp();
+  const { status, sources, db, setup, syncing } = useApp();
   const { available } = useUpdate();
   const [section, setSection] = useState<Section>("home");
   const [route, setRoute] = useState<Route>({ name: "home" });
-  // Which source the browse screens show: all of them, or one. Forgotten if that source is later removed.
-  const [pickedSource, setPickedSource] = useState<string | null>(null);
+  // The source every page shows: all of them, or one. One setting for the whole app (Home, Live TV, Movies, Series
+  // and Search alike), kept across launches, and treated as All if that source is later removed.
+  const [pickedSource, setPickedSource] = useState<string | null>(() => readSourcePick(db));
   const sourceId = pickedSource !== null && sources.some((entry) => entry.id === pickedSource) ? pickedSource : null;
-  const cycleSource = useCallback(() => {
-    const ids = [null, ...sources.map((entry) => entry.id)];
-    setPickedSource(ids[(ids.indexOf(sourceId) + 1) % ids.length] ?? null);
-  }, [sourceId, sources]);
-
-  // Live TV shows one source at a time, never all together: its own pick, among the sources that have channels.
-  const liveSources = useMemo(() => {
-    void version;
-    const withChannels = new Set((db.prepare("SELECT DISTINCT source_id AS id FROM channels").all() as { id: string }[]).map((row) => row.id));
-    return sources.filter((entry) => withChannels.has(entry.id));
-  }, [db, version, sources]);
-  const [pickedLive, setPickedLive] = useState<string | null>(null);
-  const liveSource = liveSources.find((entry) => entry.id === pickedLive) ?? liveSources[0] ?? null;
-  const cycleLive = useCallback(() => {
-    const at = liveSources.findIndex((entry) => entry.id === liveSource?.id);
-    setPickedLive(liveSources[(at + 1) % liveSources.length]?.id ?? null);
-  }, [liveSource, liveSources]);
+  const [picking, setPicking] = useState(false);
+  // Focus goes back to the Source button when the picker closes; it had focus when it was pressed.
+  const pickerOpener = useRef<typeof lastFocused.current>(null);
+  const openPicker = useCallback(() => {
+    pickerOpener.current = lastFocused.current;
+    setPicking(true);
+  }, []);
+  const closePicker = useCallback(() => {
+    setPicking(false);
+    setTimeout(() => pickerOpener.current?.requestTVFocus?.(), 0);
+  }, []);
+  const pickSource = useCallback(
+    (id: string | null) => {
+      setPickedSource(id);
+      writeSourcePick(db, id);
+      closePicker();
+    },
+    [db, closePicker],
+  );
 
   // Movies and series may mix sources ("Source: All"); each poster then names its own.
-  const sourceNames = useMemo(() => (sourceId === null && sources.length > 1 ? new Map(sources.map((entry) => [entry.id, entry.name])) : null), [sourceId, sources]);
+  // Only when more than one source actually has films or series: a live-only source beside a VOD one would put the
+  // same name on every poster.
+  const sourceNames = useMemo(
+    () => (sourceId === null && sources.filter((entry) => entry.movies + entry.series > 0).length > 1 ? new Map(sources.map((entry) => [entry.id, entry.name])) : null),
+    [sourceId, sources],
+  );
 
   const goHome = useCallback(() => setRoute({ name: "home" }), []);
   // Movies and Series open on a landing page of rows; "Browse all" in the nav bar swaps it for the full category list.
   const [browsing, setBrowsing] = useState(false);
   const [visited, setVisited] = useState<ReadonlySet<Section>>(() => new Set(["home"]));
+  // Choosing Search opens the keyboard at once: a search page is only ever opened to type into.
+  const [searchOpens, setSearchOpens] = useState(0);
   const pickSection = useCallback((key: string) => {
+    if (key === "search") setSearchOpens((count) => count + 1);
     setSection(key as Section);
     setVisited((current) => (current.has(key as Section) ? current : new Set(current).add(key as Section)));
     setBrowsing(false);
@@ -176,6 +189,7 @@ function Root() {
         key={route.id}
         movieId={route.id}
         onBack={goHome}
+        onOpenVersion={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
         onPlay={(resume) => setRoute({ name: "play", item: { kind: "movie", id: route.id, title: route.title }, resume, returnTo: route })}
       />
     ) : route.name === "series" ? (
@@ -216,10 +230,10 @@ function Root() {
           {SECTIONS.map((entry) => (
             <NavTab key={entry.key} id={entry.key} preferred={section === entry.key} active={section === entry.key} label={entry.label} badge={entry.key === "sources" && available !== null} onPressId={pickSection} />
           ))}
+          {syncing ? <Text style={styles.syncing}>Syncing…</Text> : null}
           <View style={styles.scope}>
             {section === "movies" || section === "series" || section === "live" ? <NavTab id="browse" active={browsing} label={browsing ? "Home" : "Browse all"} onPressId={toggleBrowse} /> : null}
-            {section === "live" && liveSources.length > 1 ? <NavTab id="scope" active={false} label={`Source: ${liveSource?.name ?? ""}`} onPressId={cycleLive} /> : null}
-            {section !== "live" && sources.length > 1 && section !== "sources" ? <NavTab id="scope" active={false} label={`Source: ${sources.find((entry) => entry.id === sourceId)?.name ?? "All"}`} onPressId={cycleSource} /> : null}
+            {sources.length > 1 && section !== "sources" ? <NavTab id="scope" active={picking} label={sources.find((entry) => entry.id === sourceId)?.name ?? "All sources"} onPressId={openPicker} /> : null}
             <NavTab id="search" active={section === "search"} icon={SearchGlyph} onPressId={pickSection} />
           </View>
         </TVFocusGuideView>
@@ -259,12 +273,13 @@ function Root() {
               onPlayEpisode={(episodeId, title, resume, seriesId) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title }, seriesId, resume, returnTo: { name: "home" } })}
             />,
           )}
-          {pane("live", <LiveScreen sourceId={liveSource?.id ?? null} active={section === "live" && !covered} browsing={browsing && section === "live"} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
+          {pane("live", <LiveScreen sourceId={sourceId} active={section === "live" && !covered} browsing={browsing && section === "live"} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
           {pane(
             "search",
             <View style={styles.padded}>
               <SearchScreen
                 sourceId={sourceId}
+                openKeyboard={searchOpens}
                 onOpenMovie={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
                 onOpenSeries={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
                 onPlayChannel={playChannel}
@@ -278,6 +293,7 @@ function Root() {
             </View>,
           )}
         </View>
+        {picking ? <SourcePicker sources={sources} picked={sourceId} onPick={pickSource} onClose={closePicker} /> : null}
         {exitHint && (
           <View style={styles.toast} pointerEvents="none">
             <Text style={styles.toastText}>Press back again to exit</Text>
@@ -288,12 +304,33 @@ function Root() {
   );
 }
 
+/** Where the source pick is kept between launches: this device's own setting, not synced. */
+const SOURCE_PICK_KEY = "ui:source";
+
+function readSourcePick(db: ReturnType<typeof useApp>["db"]): string | null {
+  try {
+    const row = db.prepare(`SELECT value FROM schema_meta WHERE key = ?`).get(SOURCE_PICK_KEY) as { value: string } | undefined;
+    return row === undefined || row.value === "" ? null : row.value;
+  } catch {
+    return null;
+  }
+}
+
+function writeSourcePick(db: ReturnType<typeof useApp>["db"], sourceId: string | null): void {
+  try {
+    db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(SOURCE_PICK_KEY, sourceId ?? "");
+  } catch {
+    // Only the next launch would miss it.
+  }
+}
+
 const styles = styleSheet({
   shell: { flex: 1, backgroundColor: colors.background },
   // The nav bar floats over the page so the Movies and Series art can run behind it; other screens start below it.
   nav: { position: "absolute", left: 0, right: 0, top: 0, zIndex: 10, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 44, paddingTop: 28, paddingBottom: 12 },
   brand: { color: colors.foreground, fontSize: 30, fontWeight: "600", letterSpacing: -0.5, marginRight: 40 },
   brandAccent: { color: colors.accent },
+  syncing: { color: colors.faint, fontSize: 22, marginLeft: 16 },
   scope: { flex: 1, flexDirection: "row", justifyContent: "flex-end", gap: 8 },
   content: { flex: 1 },
   hidden: { display: "none" },

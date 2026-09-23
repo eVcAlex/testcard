@@ -1,22 +1,27 @@
+/** A data version: the app's counter, or the catalogue's stamp (which only changes when a source imports). */
+export type Version = number | string;
+
 /**
- * Remembers expensive results per database until its `version` changes (a sync or import). For reads
- * that walk the whole catalogue, like category counts, which would otherwise repeat on every screen visit.
- * An optional key keeps one result per scope (the source being browsed).
+ * Remembers expensive results per database until its `version` changes. For reads that walk the whole catalogue,
+ * like category counts and the landing shelves, keyed by the catalogue stamp so a sync that only brought favourites
+ * or progress does not rebuild them. An optional key keeps one result per scope (the source being browsed).
  */
 export function memoByVersion<Db extends object, T>(
   build: (db: Db, key?: string) => T,
-): ((db: Db, version: number, key?: string) => T) & {
-  cached: (db: Db, version: number, key?: string) => T | undefined;
+): ((db: Db, version: Version, key?: string) => T) & {
+  cached: (db: Db, version: Version, key?: string) => T | undefined;
   /** The newest result for this key from any version: out of date, but better on screen than a blank while the fresh one builds. */
   stale: (db: Db, key?: string) => T | undefined;
+  /** Takes a result built earlier (kept from the last launch) as this version's, so it is not built again. */
+  prime: (db: Db, version: Version, key: string | undefined, value: T) => void;
 } {
   const newest = new Map<string, T>();
-  let last: { db: Db; version: number; values: Map<string, T> } | undefined;
-  const values = (db: Db, version: number): Map<string, T> => {
+  let last: { db: Db; version: Version; values: Map<string, T> } | undefined;
+  const values = (db: Db, version: Version): Map<string, T> => {
     if (last === undefined || last.db !== db || last.version !== version) last = { db, version, values: new Map() };
     return last.values;
   };
-  const read = (db: Db, version: number, key?: string): T => {
+  const read = (db: Db, version: Version, key?: string): T => {
     const map = values(db, version);
     const id = key ?? "";
     if (map.has(id)) return map.get(id) as T;
@@ -27,7 +32,11 @@ export function memoByVersion<Db extends object, T>(
   };
   // `cached` is the remembered result, or undefined when nothing has built it yet, so a screen can build after its first paint.
   return Object.assign(read, {
-    cached: (db: Db, version: number, key?: string) => values(db, version).get(key ?? ""),
+    cached: (db: Db, version: Version, key?: string) => values(db, version).get(key ?? ""),
     stale: (_db: Db, key?: string) => newest.get(key ?? ""),
+    prime: (db: Db, version: Version, key: string | undefined, value: T) => {
+      values(db, version).set(key ?? "", value);
+      newest.set(key ?? "", value);
+    },
   });
 }

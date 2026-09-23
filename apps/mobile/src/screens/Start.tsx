@@ -52,21 +52,23 @@ export function StartScreen({
   onPlayEpisode: (episodeId: string, title: string, resume: boolean, seriesId: string) => void;
   onPlayChannel: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
-  const { db, version: latestVersion, sync } = useApp();
+  const { db, version: latestVersion, catalogue, sync } = useApp();
   const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
-  const movieShelves = useBuilt(movieRows, db, version, sourceId, "movies");
-  const seriesShelves = useBuilt(seriesRows, db, version, sourceId, "series");
+  const movieShelves = useBuilt(movieRows, db, catalogue, sourceId, "movies");
+  const seriesShelves = useBuilt(seriesRows, db, catalogue, sourceId, "series");
 
   const recentChannelIds = useRef(new Set<string>());
   const rows = useMemo<HomeRow[] | null>(() => {
     if (movieShelves === null || seriesShelves === null) return null;
     const asMovie = (movie: Parameters<typeof homeMovie>[0]) => tag("movie", homeMovie(movie));
     const asSeries = (series: Parameters<typeof homeSeries>[0]) => tag("series", homeSeries(series));
+    // The source pick holds for your own rows too, or picking one source still left the others' history on Home.
+    const own = <T extends { source_id: string }>(row: T) => sourceId === null || row.source_id === sourceId;
     // One row for what you were last watching, films and shows together, the most recent first: films only while unfinished.
-    const recentMovies = new Map(listRecentMovies(db, 60).map((movie) => [movie.id, movie]));
-    const recentSeries = new Map(listRecentSeries(db, 60).map((show) => [show.id, show]));
+    const recentMovies = new Map(listRecentMovies(db, 60).filter(own).map((movie) => [movie.id, movie]));
+    const recentSeries = new Map(listRecentSeries(db, 60).filter(own).map((show) => [show.id, show]));
     const continuing: HomeItem[] = [];
     for (const entry of listWatchedLately(db, 60)) {
       if (entry.kind === "movie") {
@@ -77,10 +79,10 @@ export function StartScreen({
         if (show !== undefined) continuing.push(asSeries(show));
       }
     }
-    const recentChannels = listRecentChannels(db, 30);
+    const recentChannels = listRecentChannels(db, 60).filter(own).slice(0, 30);
     recentChannelIds.current = new Set(recentChannels.map((channel) => channel.id));
-    const myList = [...listFavouriteMovies(db).map(asMovie), ...listFavouriteSeries(db).map(asSeries)].slice(0, 30);
-    const favouriteChannels = listFavouriteChannels(db).slice(0, 30);
+    const myList = [...listFavouriteMovies(db).filter(own).map(asMovie), ...listFavouriteSeries(db).filter(own).map(asSeries)].slice(0, 30);
+    const favouriteChannels = listFavouriteChannels(db).filter(own).slice(0, 30);
     const list: HomeRow[] = [];
     const add = (key: string, label: string, items: readonly HomeItem[], channels = false, pinned = false) => {
       if (items.length > 0) list.push({ key, label, items, ...(channels ? { channels: true } : {}), ...(pinned ? { pinned: true } : {}) });
@@ -91,7 +93,7 @@ export function StartScreen({
     add("favourite-channels", "Favourite channels", favouriteChannels.map((channel) => tag("channel", toHomeItem(channel))), true);
     // Categories pinned from Browse all, in the order they were pinned. A pin whose category is not here yet (a fresh import) waits.
     for (const pin of listHomePins(db)) {
-      if (pin.categoryId === null) continue;
+      if (pin.categoryId === null || (sourceId !== null && pin.sourceId !== sourceId)) continue;
       const key = `pin:${pin.sourceId}:${pin.kind}:${pin.key}`;
       if (pin.kind === "live") add(key, pin.label, browseChannels(db, { categoryId: pin.categoryId, limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true, true);
       else if (pin.kind === "movies") add(key, pin.label, browseMovies(db, { categoryId: pin.categoryId, limit: 30 }).map(asMovie), false, true);
@@ -104,7 +106,7 @@ export function StartScreen({
     const top = movieShelves.find((shelf) => shelf.key === "top");
     if (top !== undefined) list.push({ ...shelfRow(top, asMovie), key: "top-movies", label: top.label.replace("Top 10 this year", "Top 10 movies this year") });
     return list;
-  }, [db, version, movieShelves, seriesShelves, tick]);
+  }, [db, version, sourceId, movieShelves, seriesShelves, tick]);
 
   const changed = useCallback(() => {
     sync.notifyLocalChange();
