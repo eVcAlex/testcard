@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, useTVEventHandler, View } from "react-native";
 import { useEvent } from "expo";
+import { Host, Icon } from "@expo/ui";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
@@ -34,7 +35,7 @@ let carriedSelection: Control | undefined;
 let channelHistory: { current?: PlayItem; previous?: PlayItem } = {};
 const PROGRESS_EVERY_MS = 5000;
 
-type Control = "exit" | "seek" | "back" | "play" | "forward" | "info" | "captions" | "next" | "last" | "live" | "catchup";
+type Control = "exit" | "seek" | "back" | "play" | "forward" | "captions" | "next" | "last" | "live" | "catchup";
 
 /** A length written in 1920 px design units, for the shapes below that are sized in code. */
 const u = (n: number) => Math.round(n * uiScale);
@@ -194,12 +195,9 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const { isPlaying } = useEvent(player, "playingChange", { isPlaying: player.playing });
   const { videoTrack } = useEvent(player, "videoTrackChange", { videoTrack: player.videoTrack });
   const facts = streamFacts(videoTrack);
-  // Each time the picture stops to refill after it has started is one stall, shown in the info panel.
-  const [stalls, setStalls] = useState(0);
   const everPlayed = useRef(false);
   useEffect(() => {
     if (status === "readyToPlay") everPlayed.current = true;
-    else if (status === "loading" && everPlayed.current) setStalls((count) => count + 1);
   }, [status]);
   // Live TV: a picture that stays stuck refilling is asked for again from the start, a few times, before giving up.
   const reloads = useRef(0);
@@ -261,7 +259,6 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       clearTimeout(timer);
     };
   }, [db, item.id, timeshift, vod]);
-  const [statsOn, setStatsOn] = useState(false);
   // Captions the file carries, chosen from a list: Off, then each track.
   const tracks = useEvent(player, "availableSubtitleTracksChange", { availableSubtitleTracks: player.availableSubtitleTracks }).availableSubtitleTracks;
   const captionTrack = useEvent(player, "subtitleTrackChange", { subtitleTrack: player.subtitleTrack, oldSubtitleTrack: null }).subtitleTrack;
@@ -274,6 +271,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     setCaptionAt(Math.max(0, currentCaption));
     setCaptionsOpen(true);
   }, [currentCaption]);
+  const captionsScroll = useRef<ScrollView>(null);
+  useEffect(() => captionsScroll.current?.scrollTo({ y: Math.max(0, captionAt - 3) * u(GUIDE_ROW), animated: false }), [captionAt]);
   const chooseCaption = useCallback(
     (index: number) => {
       player.subtitleTrack = captionOptions[index] ?? null;
@@ -499,9 +498,10 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   if (item.kind === "channel" && !timeshift && channelHistory.current?.id !== item.id) channelHistory = { previous: channelHistory.current, current: item };
   const previousChannel = zapping ? channelHistory.previous : undefined;
   const more: Control[] = [...(previousChannel !== undefined ? (["last"] as const) : []), ...(archive !== undefined ? (["catchup"] as const) : [])];
-  const captionsKey: Control[] = vod && tracks.length > 0 ? ["captions"] : [];
+  // The side-right keys (captions, next) join the transport row's navigation order when they exist.
+  const captionsKey: Control[] = tracks.length > 0 ? ["captions"] : [];
   const nextKey: Control[] = next !== undefined && onNextEpisode !== undefined ? ["next"] : [];
-  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward"], [...captionsKey, ...nextKey, "info"]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
+  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, ...nextKey]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
   const [selected, setSelected] = useState<Control>(() => {
     const carried = carriedSelection;
     carriedSelection = undefined;
@@ -514,7 +514,6 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         if (zapping) carriedSelection = control;
         step(control === "back" ? -1 : 1);
       }
-      else if (control === "info") setStatsOn((on) => !on);
       else if (control === "captions") openCaptions();
       else if (control === "next") goNext();
       else if (control === "last") {
@@ -685,19 +684,6 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         </View>
       ) : null}
 
-      {statsOn && vod ? (
-        <View style={styles.stats} pointerEvents="none">
-          <Text style={styles.statsTitle}>Stream info</Text>
-          <Fact label="Quality" value={facts.quality !== null && facts.size !== null ? `${facts.quality}  (${facts.size})` : (facts.size ?? "Waiting for video")} />
-          <Fact label="Frame rate" value={facts.fps ?? "Not reported"} />
-          <Fact label="Video" value={[facts.codec, facts.hdr].filter((part) => part !== null).join("  ") || "Not reported"} />
-          <Fact label="Bitrate" value={facts.bitrate ?? "Not reported"} />
-          <Fact label="Buffered" value={`${Math.max(0, Math.round(time.bufferedPosition - time.currentTime))} s ahead`} />
-          <Fact label="Stalls" value={String(stalls)} />
-          <Fact label="State" value={loading ? "Buffering" : isPlaying ? "Playing" : "Paused"} />
-        </View>
-      ) : null}
-
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]} pointerEvents={chrome ? "box-none" : "none"}>
         <View style={styles.top} pointerEvents="box-none">
           <Scrim from="top" />
@@ -780,19 +766,22 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
               ) : null}
             </View>
             <View style={[styles.side, styles.sideRight]} pointerEvents="box-none">
+              {vod ? (
+                <Key selected={lit("captions")} active={false} disabled={tracks.length === 0} onPress={openCaptions}>
+                  {(ink) => <CcGlyph on={captionTrack !== null} color={ink} />}
+                </Key>
+              ) : null}
+              {nextKey.length > 0 ? (
+                <Key selected={lit("next")} active={false} onPress={goNext}>
+                  {(ink) => <NextGlyph color={ink} />}
+                </Key>
+              ) : null}
               {previousChannel !== undefined ? <TextKey label={previousChannel.title.length > 16 ? `Last: ${previousChannel.title.slice(0, 15)}...` : `Last: ${previousChannel.title}`} selected={lit("last")} onPress={() => press("last")} /> : null}
               {archive !== undefined ? <TextKey label="Catch up" selected={lit("catchup")} onPress={() => press("catchup")} /> : null}
             </View>
           </View>
           {/* Hidden until the remote is pressed Down onto this row (a phone has no Down, so it always shows). */}
-          {vod && (!tv || rows[rows.length - 1]?.includes(selected) === true) ? (
-            <View style={styles.secondary} pointerEvents="box-none">
-              {tracks.length > 0 ? <TextKey label="Captions" selected={lit("captions")} onPress={() => press("captions")} /> : null}
-              {next !== undefined && onNextEpisode !== undefined ? <TextKey label="Next episode" selected={lit("next")} onPress={() => press("next")} /> : null}
-              <TextKey label={statsOn ? "Hide info" : "Stream info"} selected={lit("info")} onPress={() => press("info")} />
-            </View>
-          ) : null}
-        </View>
+          </View>
       </Animated.View>
 
       {inIntro && !nearEnd ? (
@@ -816,7 +805,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       {captionsOpen ? (
         <View style={styles.guide}>
           <Text style={styles.statsTitle}>Captions</Text>
-          <View style={styles.guideList}>
+          <ScrollView ref={captionsScroll} style={styles.guideList} scrollEnabled={!tv} showsVerticalScrollIndicator={false}>
             {captionOptions.map((track, index) => {
               const lit = tv && index === captionAt;
               return (
@@ -828,7 +817,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
           {tv ? <Text style={styles.guideNote}>Up and down to choose, OK to select, Back to close</Text> : null}
         </View>
       ) : null}
@@ -871,15 +860,15 @@ const INK = "#0b0e10";
 const clock24 = (ms: number): string => `${two(new Date(ms).getHours())}:${two(new Date(ms).getMinutes())}`;
 
 /** A transport key: a bare glyph at rest, a solid white disc with a dark glyph when the remote's highlight is on it. */
-function Key({ big = false, selected = false, active = false, onPress, children }: { big?: boolean; selected?: boolean; active?: boolean; onPress: () => void; children: (ink: string) => ReactNode }) {
+function Key({ big = false, selected = false, active = false, disabled = false, onPress, children }: { big?: boolean; selected?: boolean; active?: boolean; disabled?: boolean; onPress: () => void; children: (ink: string) => ReactNode }) {
   const filled = selected || active;
   return (
     <Pressable
       focusable={false}
-      onPress={onPress}
-      style={[styles.key, big ? styles.keyBig : styles.keySmall, filled && styles.keyFilled, filled && { transform: [{ scale: 1.08 }] }]}
+      onPress={disabled ? undefined : onPress}
+      style={[styles.key, big ? styles.keyBig : styles.keySmall, filled && styles.keyFilled, filled && { transform: [{ scale: 1.08 }] }, disabled && styles.keyDisabled]}
     >
-      {children(filled ? INK : colors.foreground)}
+      {children(filled ? INK : disabled ? "#ffffff42" : colors.foreground)}
     </Pressable>
   );
 }
@@ -892,6 +881,38 @@ function TextKey({ label, dot = false, selected = false, onPress }: { label: str
       <Text style={[styles.textKeyLabel, selected && { color: INK }]}>{label}</Text>
     </Pressable>
   );
+}
+
+/** The SF Symbol nearest to each Material Symbol, used only if this ever runs on Apple TV; Android renders the XML drawable. */
+const SF = (name: string) => name as Parameters<typeof Icon.select>[0]["ios"];
+
+const GO_BACK = Icon.select({ ios: SF("arrow.left"), android: import("@expo/material-symbols/arrow_back.xml") });
+const PLAY = Icon.select({ ios: SF("play.fill"), android: import("@expo/material-symbols/play_arrow.xml") });
+const PAUSE = Icon.select({ ios: SF("pause.fill"), android: import("@expo/material-symbols/pause.xml") });
+const REPLAY_30 = Icon.select({ ios: SF("gobackward.30"), android: import("@expo/material-symbols/replay_30.xml") });
+const FORWARD_30 = Icon.select({ ios: SF("forward.30"), android: import("@expo/material-symbols/forward_30.xml") });
+const CAPTIONS = Icon.select({ ios: SF("captions.bubble"), android: import("@expo/material-symbols/closed_caption.xml") });
+const SKIP_NEXT = Icon.select({ ios: SF("forward.end"), android: import("@expo/material-symbols/skip_next.xml") });
+const CHANNEL_BACK = Icon.select({ ios: SF("chevron.left"), android: import("@expo/material-symbols/chevron_left.xml") });
+const CHANNEL_FORWARD = Icon.select({ ios: SF("chevron.right"), android: import("@expo/material-symbols/chevron_right.xml") });
+
+/** A Material symbol rendered where @expo/ui can compose it: Compose views must hang directly off a Host, so each glyph hosts its own Icon at exactly the size the design gives it. */
+function Glyph({ name, size, color }: { name: Parameters<typeof Icon>[0]["name"]; size: number; color: string }) {
+  return (
+    <Host matchContents pointerEvents="none">
+      <Icon name={name} size={size} color={color} />
+    </Host>
+  );
+}
+
+/** The closed-captions mark: cream as an icon while a track is on. */
+function CcGlyph({ on, color }: { on: boolean; color: string }) {
+  return <Glyph name={CAPTIONS} size={u(40)} color={on ? colors.accent : color} />;
+}
+
+/** Skip-to-next: the streaming apps' "next episode" mark. */
+function NextGlyph({ color }: { color: string }) {
+  return <Glyph name={SKIP_NEXT} size={u(42)} color={color} />;
 }
 
 /**
@@ -924,104 +945,26 @@ function Chip({ label }: { label: string }) {
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.fact}>
-      <Text style={styles.factLabel}>{label}</Text>
-      <Text style={styles.factValue}>{value}</Text>
-    </View>
-  );
-}
-
 function ChevronGlyph({ color }: { color: string }) {
-  return (
-    <View
-      style={{
-        width: u(18),
-        height: u(18),
-        marginLeft: u(6),
-        borderLeftWidth: u(4),
-        borderBottomWidth: u(4),
-        borderColor: color,
-        transform: [{ rotate: "45deg" }],
-      }}
-    />
-  );
+  return <Glyph name={GO_BACK} size={u(34)} color={color} />;
 }
 
-/** "|<" / ">|": previous and next channel. */
+/** Previous and next channel. */
 function ChannelGlyph({ direction, color }: { direction: "back" | "forward"; color: string }) {
-  const back = direction === "back";
-  const bar = <View key="bar" style={{ width: u(5), height: u(30), backgroundColor: color, borderRadius: u(2) }} />;
-  const head = (
-    <View
-      key="head"
-      style={{
-        width: 0,
-        height: 0,
-        borderTopWidth: u(15),
-        borderBottomWidth: u(15),
-        borderTopColor: "transparent",
-        borderBottomColor: "transparent",
-        ...(back ? { borderRightWidth: u(24), borderRightColor: color } : { borderLeftWidth: u(24), borderLeftColor: color }),
-      }}
-    />
-  );
-  return <View style={{ flexDirection: "row", alignItems: "center", gap: u(4) }}>{back ? [bar, head] : [head, bar]}</View>;
+  return <Glyph name={direction === "back" ? CHANNEL_BACK : CHANNEL_FORWARD} size={u(42)} color={color} />;
 }
 
 function PauseGlyph({ color }: { color: string }) {
-  return (
-    <View style={{ flexDirection: "row", gap: u(9) }}>
-      <View style={{ width: u(11), height: u(32), backgroundColor: color, borderRadius: u(3) }} />
-      <View style={{ width: u(11), height: u(32), backgroundColor: color, borderRadius: u(3) }} />
-    </View>
-  );
+  return <Glyph name={PAUSE} size={u(44)} color={color} />;
 }
 
 function PlayGlyph({ color }: { color: string }) {
-  return (
-    <View
-      style={{
-        marginLeft: u(6),
-        width: 0,
-        height: 0,
-        borderTopWidth: u(18),
-        borderBottomWidth: u(18),
-        borderLeftWidth: u(30),
-        borderTopColor: "transparent",
-        borderBottomColor: "transparent",
-        borderLeftColor: color,
-      }}
-    />
-  );
+  return <Glyph name={PLAY} size={u(46)} color={color} />;
 }
 
-/** An open ring with an arrowhead where it is open and the number of seconds inside: the usual "replay 10". */
+/** Replay and advance by the seek step. */
 function SkipGlyph({ direction, color }: { direction: "back" | "forward"; color: string }) {
-  const size = u(54);
-  const head = u(8);
-  const forward = direction === "forward";
-  return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-      <View style={{ position: "absolute", width: size, height: size, borderRadius: size / 2, borderWidth: u(4), borderColor: color, borderTopColor: "transparent" }} />
-      <View
-        style={{
-          position: "absolute",
-          top: u(2) - head,
-          left: size / 2 - (forward ? u(6) : u(9)),
-          width: 0,
-          height: 0,
-          borderTopWidth: head,
-          borderBottomWidth: head,
-          borderTopColor: "transparent",
-          borderBottomColor: "transparent",
-          ...(forward ? { borderLeftWidth: u(13), borderLeftColor: color } : { borderRightWidth: u(13), borderRightColor: color }),
-        }}
-      />
-      <Text style={{ color, fontSize: u(20), fontFamily: "Inter_600SemiBold" }}>{SEEK_STEP_SECS}</Text>
-    </View>
-  );
+  return <Glyph name={direction === "back" ? REPLAY_30 : FORWARD_30} size={u(46)} color={color} />;
 }
 
 const styles = styleSheet({
@@ -1066,11 +1009,7 @@ const styles = styleSheet({
   chips: { flexDirection: "row", gap: 10, marginTop: -12 },
   chip: { borderRadius: 7, borderWidth: 2, borderColor: "#ffffff66", paddingHorizontal: 12, paddingVertical: 3 },
   chipText: { color: colors.foreground, fontSize: 20, fontWeight: "600", letterSpacing: 0.5 },
-  stats: { position: "absolute", right: 96, top: 140, width: 520, gap: 10, padding: 28, borderRadius: 18, backgroundColor: "#000000b3" },
   statsTitle: { color: colors.muted, fontSize: 20, fontWeight: "500", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 },
-  fact: { flexDirection: "row", justifyContent: "space-between", gap: 24 },
-  factLabel: { color: colors.muted, fontSize: 24 },
-  factValue: { color: colors.foreground, fontSize: 24, fontWeight: "500", flexShrink: 1, textAlign: "right" },
   clock: { color: colors.foreground, fontSize: 28, fontWeight: "500" },
   clockDim: { color: colors.foreground, opacity: 0.6, fontSize: 28, fontWeight: "400" },
   transport: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 24 },
@@ -1078,13 +1017,13 @@ const styles = styleSheet({
   keySmall: { width: 80, height: 80, borderRadius: 40 },
   keyBig: { width: 92, height: 92, borderRadius: 46 },
   keyFilled: { backgroundColor: colors.foreground, borderColor: "transparent" },
+  keyDisabled: { opacity: 0.35 },
   textKey: { height: 80, borderRadius: 40, paddingHorizontal: 32, backgroundColor: "#ffffff24", flexDirection: "row", gap: 12 },
   keyDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.live },
   liveRow: { flexDirection: "row", alignItems: "center", gap: 24 },
   programme: { color: colors.foreground, opacity: 0.75, fontSize: 26, marginTop: -14 },
   textKeyLabel: { color: colors.foreground, fontSize: 26, fontWeight: "500" },
 
-  secondary: { flexDirection: "row", justifyContent: "center", gap: 20 },
   guide: { position: "absolute", right: 96, top: 110, bottom: 110, width: 780, gap: 12, padding: 28, borderRadius: 18, backgroundColor: "#000000e0" },
   guideList: { flex: 1 },
   guideRow: { height: GUIDE_ROW, flexDirection: "row", alignItems: "center", gap: 20, paddingHorizontal: 18, borderRadius: 12 },

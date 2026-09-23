@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
+    "@expo/material-symbols": "^0.1.1",
+    "@expo/ui": "~57.0.19",
     "@testcard/core": "workspace:*",
     "@testcard/sync-schema": "workspace:*",
     "expo": "~57.0.24",
