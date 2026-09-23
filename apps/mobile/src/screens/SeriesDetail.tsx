@@ -1,22 +1,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, BackHandler, Easing, FlatList, Text, TVFocusGuideView, View } from "react-native";
+import { Animated, BackHandler, Easing, FlatList, Text, TVFocusGuideView, useTVEventHandler, View } from "react-native";
 import { Image } from "expo-image";
 import { Check, Movie } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { getSeriesDetail, getSeriesSource, getUpNextEpisode, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
+import { setWatched } from "@testcard/core/src/db/progressQueries.js";
 import { getCredentials } from "../platform/secrets";
 import { useApp } from "../state/app";
 import { colors, type, styleSheet, uiScale } from "../theme";
 import { BackArrow } from "../ui/BackArrow";
 import { Muted } from "../ui/controls";
 import { Backdrop, DetailActions, Facts, type DetailAction } from "../ui/DetailActions";
-import { Focusable } from "../ui/Focusable";
+import { Focusable, lastFocused } from "../ui/Focusable";
+import { OptionsSheet } from "../ui/OptionsSheet";
 import { Pill } from "../ui/Pill";
 import { episodeTitle, seriesTitle } from "../ui/titles";
 
-const INK = "#0b0e10";
+/** The focus ring every card carries (Focusable's border, rounded to whole dp as styleSheet does), outside its thumbnail: the grid has to leave room for it. */
+const CARD_RING = 3;
+/** Icons take dp, not the 1920-wide design units the styles are written in. */
+const u = (n: number) => Math.round(n * uiScale);
 
 /** "42m" / "1h 5m" from seconds. */
 function runtime(secs: number): string {
@@ -37,8 +42,34 @@ function position(secs: number): string {
 function FilmGlyph() {
   return (
     <View style={styles.placeholder}>
-      <Movie color="#ffffff40" width={44} height={44} strokeWidth={1.5} />
+      <Movie color="#ffffff40" width={u(44)} height={u(44)} strokeWidth={1.5} />
     </View>
+  );
+}
+
+/**
+ * An episode card's picture: its own still, else a borrowed poster, blurred behind a veil so it reads as a stand-in
+ * rather than the episode's own picture, else the film glyph. A link that fails to load moves on to the next.
+ */
+function EpisodeArt({ episodeId, still, fallbacks }: { episodeId: string; still: string | null; fallbacks: readonly string[] }) {
+  const candidates = useMemo(() => [...(still !== null && still !== "" ? [still] : []), ...fallbacks], [still, fallbacks]);
+  const [failed, setFailed] = useState(0);
+  const uri = candidates[failed];
+  if (uri === undefined) return <FilmGlyph />;
+  const borrowed = uri !== still;
+  return (
+    <>
+      <Image
+        source={{ uri }}
+        style={styles.thumbImage}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        recyclingKey={`${episodeId}:${failed}`}
+        {...(borrowed ? { blurRadius: 18 } : {})}
+        onError={() => setFailed((count) => count + 1)}
+      />
+      {borrowed ? <View style={styles.fallbackVeil} pointerEvents="none" /> : null}
+    </>
   );
 }
 
@@ -146,7 +177,10 @@ export function SeriesDetailScreen({
   const seasons = detail?.seasons ?? [];
   const series = detail?.series;
   // The big button: carry on with what you were watching, else the first episode you have not seen.
-  const upNext = useMemo(() => (loading ? undefined : getUpNextEpisode(db, seriesId)), [db, seriesId, version, loading]);
+  const upNext = useMemo(() => {
+    void tick;
+    return loading ? undefined : getUpNextEpisode(db, seriesId);
+  }, [db, seriesId, version, loading, tick]);
   const upNextResume = upNext?.resume ?? false;
   // Opens on the season Resume points to, so the highlighted pill always agrees with the big button
   // (rather than a separately computed "first unwatched" that could land on a different season).
@@ -154,6 +188,44 @@ export function SeriesDetailScreen({
   const episodes = active?.episodes ?? [];
   const nextIndex = Math.max(0, episodes.findIndex((episode) => episode.watched !== 1));
   const seasonLabel = (season: { name: string | null; season_number: number }) => season.name ?? `Season ${season.season_number}`;
+  // Providers often send no still for some episodes (or a dead link): those borrow the season's, else the show's, poster.
+  const fallbackArt = useMemo(() => [active?.poster_url, series?.poster_url].filter((url): url is string => url !== null && url !== undefined && url !== ""), [active?.poster_url, series?.poster_url]);
+  const seasonWatched = episodes.length > 0 && episodes.every((episode) => episode.watched === 1);
+
+  // Marking by hand: a whole season from the action row, or one episode (or everything before it) from the sheet
+  // that holding select on it opens. Synced like any other progress.
+  const markWatched = useCallback(
+    (ids: readonly string[], watched: boolean) => {
+      setWatched(db, "episode", ids, watched);
+      sync.notifyLocalChange();
+      setTick((value) => value + 1);
+    },
+    [db, sync],
+  );
+  const [optionsFor, setOptionsFor] = useState<{ index: number; episode: (typeof episodes)[number] } | null>(null);
+  const optionsOpener = useRef<typeof lastFocused.current>(null);
+  const openOptions = (index: number, episode: (typeof episodes)[number]) => {
+    optionsOpener.current = lastFocused.current;
+    setOptionsFor({ index, episode });
+  };
+  // Holding select: the TV fork reports a select only on release (a press-in on key down needs a native flag this
+  // build does not set), so Pressable's onLongPress never fires. The remote's own "longSelect" event does, repeatedly,
+  // while the button is held: it opens the sheet for the focused card, and the press on release is ignored.
+  const focusedEpisode = useRef<{ index: number; episode: (typeof episodes)[number] } | null>(null);
+  const heldAt = useRef(0);
+  const optionsOpen = useRef(false);
+  optionsOpen.current = optionsFor !== null;
+  useTVEventHandler((event) => {
+    if (event.eventType !== "longSelect") return;
+    heldAt.current = Date.now();
+    if (optionsOpen.current || focusedEpisode.current === null) return;
+    openOptions(focusedEpisode.current.index, focusedEpisode.current.episode);
+  });
+  const closeOptions = useCallback(() => {
+    setOptionsFor(null);
+    // Back to the card that was held, which the sheet took focus from.
+    setTimeout(() => optionsOpener.current?.requestTVFocus?.(), 0);
+  }, []);
 
   // Episodes are a grid like the app's posters: several cards to a row, sized to fit the screen width.
   const [gridWidth, setGridWidth] = useState(0);
@@ -232,6 +304,16 @@ export function SeriesDetailScreen({
                     } as DetailAction,
                   ]
                 : []),
+              ...(active !== undefined && episodes.length > 0
+                ? [
+                    {
+                      key: "season-watched",
+                      label: seasonWatched ? `Mark ${seasonLabel(active)} as unwatched` : `Mark ${seasonLabel(active)} as watched`,
+                      glyph: seasonWatched ? ("unwatched" as const) : ("watched" as const),
+                      onPress: () => markWatched(episodes.map((episode) => episode.id), !seasonWatched),
+                    },
+                  ]
+                : []),
               ...(upNext !== undefined
                 ? [
                     {
@@ -262,6 +344,7 @@ export function SeriesDetailScreen({
         <Muted>This series has no episodes.</Muted>
       ) : (
         <TVFocusGuideView style={styles.body}>
+          <View style={styles.seasonsRow}>
           {seasons.length > 1 ? (
             <TVFocusGuideView style={styles.seasons}>
               <FlatList
@@ -274,6 +357,8 @@ export function SeriesDetailScreen({
               />
             </TVFocusGuideView>
           ) : null}
+            <Text style={styles.holdHint}>Hold select on an episode for more</Text>
+          </View>
           <TVFocusGuideView autoFocus style={styles.episodes}>
             <FlatList
               ref={gridRef}
@@ -296,16 +381,29 @@ export function SeriesDetailScreen({
                   <Focusable
                     preferred={false}
                     onLayout={index === 0 ? (event) => (measuredRow.current = event.nativeEvent.layout.height + cardDp(30)) : undefined}
-                    onFocus={() => alignEpisodeRow(index)} onPress={() => onPlayEpisode(episode.id, `${seriesTitle(title)} · ${episodeTitle(episode.name)}`, started)} style={styles.card} focusedStyle={styles.cardFocused}>
+                    onFocus={() => {
+                      focusedEpisode.current = { index, episode };
+                      alignEpisodeRow(index);
+                    }}
+                    onBlur={() => {
+                      if (focusedEpisode.current?.episode.id === episode.id) focusedEpisode.current = null;
+                    }}
+                    onPress={() => {
+                      // The release that ends a hold: the sheet has opened instead.
+                      if (Date.now() - heldAt.current < 1000) return;
+                      onPlayEpisode(episode.id, `${seriesTitle(title)} · ${episodeTitle(episode.name)}`, started);
+                    }}
+                    style={styles.card} focusedStyle={styles.cardFocused}>
                     {({ focused }) => (
                       <>
-                        <View style={[styles.thumb, focused && styles.thumbFocused, { width: cardDp(cardWidth), height: cardDp(thumbHeight) }]}>
-                          {episode.image_url ? <Image source={{ uri: episode.image_url }} style={styles.thumbImage} contentFit="cover" cachePolicy="memory-disk" recyclingKey={episode.id} /> : <FilmGlyph />}
+                        <View style={[styles.thumb, focused && styles.thumbFocused, { width: Math.floor(cardWidth * uiScale) - 2 * Math.max(1, Math.round(CARD_RING * uiScale)), height: cardDp(thumbHeight) }]}>
+                          <EpisodeArt episodeId={episode.id} still={episode.image_url} fallbacks={fallbackArt} />
                           {done ? <View style={styles.thumbDone} pointerEvents="none" /> : null}
                           <Text style={styles.cardNumber}>E{episode.episode_number}</Text>
                           {done ? (
                             <View style={styles.watchedBadge}>
-                              <Check color={INK} width={18} height={18} strokeWidth={3} />
+                              <Check color={colors.accent} width={u(20)} height={u(20)} strokeWidth={2.5} />
+                              <Text style={styles.watchedText}>Watched</Text>
                             </View>
                           ) : null}
                           {ratio > 0 ? (
@@ -314,11 +412,11 @@ export function SeriesDetailScreen({
                             </View>
                           ) : null}
                         </View>
-                        <Text style={[styles.cardTitle, focused && styles.cardTitleFocused, done && styles.cardTitleDone]} numberOfLines={1}>
+                        <Text style={[styles.cardTitle, focused && styles.cardTitleFocused]} numberOfLines={1}>
                           {episodeTitle(episode.name)}
                         </Text>
-                        <Text style={[styles.cardMeta, done ? styles.metaDone : started && styles.metaResume]}>
-                          {done ? (duration !== "" ? `${duration}  ·  Watched` : "Watched") : started && episode.position_secs !== null ? `Resume from ${position(episode.position_secs)}` : duration}
+                        <Text style={[styles.cardMeta, started && styles.metaResume]}>
+                          {started && episode.position_secs !== null ? `Resume from ${position(episode.position_secs)}` : duration}
                         </Text>
                       </>
                     )}
@@ -329,6 +427,23 @@ export function SeriesDetailScreen({
           </TVFocusGuideView>
         </TVFocusGuideView>
       )}
+      {optionsFor !== null ? (
+        <OptionsSheet
+          title={`E${optionsFor.episode.episode_number} · ${episodeTitle(optionsFor.episode.name)}`}
+          options={[
+            optionsFor.episode.watched === 1 ? { id: "unwatched", label: "Mark as unwatched" } : { id: "watched", label: "Mark as watched" },
+            ...(optionsFor.index > 0 ? [{ id: "before", label: "Mark watched up to here" }] : []),
+            { id: "start", label: "Play from the start" },
+          ]}
+          onChoose={(id) => {
+            const { index, episode } = optionsFor;
+            if (id === "watched" || id === "unwatched") markWatched([episode.id], id === "watched");
+            else if (id === "before") markWatched(episodes.slice(0, index + 1).map((entry) => entry.id), true);
+            else onPlayEpisode(episode.id, `${seriesTitle(title)} · ${episodeTitle(episode.name)}`, false);
+          }}
+          onClose={closeOptions}
+        />
+      ) : null}
     </View>
   );
 }
@@ -353,7 +468,9 @@ const styles = styleSheet({
   title: { color: colors.foreground, fontSize: 56, fontWeight: "600", letterSpacing: -1 },
   plot: { color: colors.muted, fontSize: 26, lineHeight: 38, maxWidth: 1000 },
   body: { flex: 1, gap: 24 },
-  seasons: {},
+  seasonsRow: { flexDirection: "row", alignItems: "center", gap: 28 },
+  seasons: { flexShrink: 1 },
+  holdHint: { color: colors.faint, fontSize: 20 },
   seasonList: { gap: 14, paddingVertical: 4 },
   episodes: { flex: 1 },
   episodeList: { gap: 30, paddingBottom: 28 },
@@ -363,19 +480,19 @@ const styles = styleSheet({
   thumbFocused: { borderColor: colors.accent },
   thumbImage: { position: "absolute", left: 0, top: 0, width: "100%", height: "100%" },
   cardNumber: { position: "absolute", left: 12, top: 10, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3", color: colors.foreground, fontSize: 18, fontWeight: "600" },
-  // A solid accent-filled badge (not just an outline) and a dimmed thumbnail so a watched episode reads
-  // at a glance, the way Netflix greys out a finished card instead of relying on a small corner mark.
-  thumbDone: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "#00000099" },
-  watchedBadge: { position: "absolute", right: 10, top: 8, width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.accent },
-  progress: { height: 5, backgroundColor: "#00000080" },
-  progressFill: { height: 5, backgroundColor: colors.accent },
+  // A watched episode keeps its picture under a light veil, and says so in a chip drawn like the episode number's
+  // across from it. The bar is left to mean what it means elsewhere: how far into an episode you are.
+  thumbDone: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "#00000047" },
+  watchedBadge: { position: "absolute", right: 12, top: 10, flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 8, paddingRight: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3" },
+  watchedText: { color: colors.foreground, fontSize: 18, fontWeight: "600" },
+  progress: { height: 6, backgroundColor: "#00000080" },
+  progressFill: { height: 6, backgroundColor: colors.accent },
+  fallbackVeil: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "#0000006b" },
   placeholder: { flex: 1, alignItems: "center", justifyContent: "center" },
   cardTitle: { color: colors.muted, fontSize: 24, fontWeight: "500" },
   cardTitleFocused: { color: colors.foreground },
-  cardTitleDone: { opacity: 0.6 },
   cardMeta: { color: colors.faint, fontSize: 21 },
   metaResume: { color: colors.accent },
-  metaDone: { color: colors.faint },
   error: { color: colors.fault, fontSize: type.body },
   skeletonActions: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 6 },
   skeletonPrimary: { width: 250, height: 68, borderRadius: 34, backgroundColor: colors.cardActive },

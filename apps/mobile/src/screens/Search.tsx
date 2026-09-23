@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Text, TVFocusGuideView, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { FlatList, Platform, Text, TextInput, TVFocusGuideView, View } from "react-native";
 import { Image } from "expo-image";
+import { Search } from "iconoir-react-native";
 import { MIN_SEARCH_LENGTH, searchAll, type SearchResults } from "@testcard/core/src/db/searchQueries.js";
 import type { ChannelRow } from "@testcard/core/src/db/queries.js";
 import { useApp } from "../state/app";
-import { colors, styleSheet } from "../theme";
-import { Field } from "../ui/controls";
+import { colors, styleSheet, uiScale } from "../theme";
 import { Focusable } from "../ui/Focusable";
 import { PosterRow, type PosterItem } from "../ui/Poster";
 
@@ -14,17 +14,22 @@ let remembered = "";
 
 type Section = { key: "movies"; items: PosterItem[] } | { key: "series"; items: PosterItem[] } | { key: "channels"; items: ChannelRow[] };
 
+const u = (n: number) => Math.round(n * uiScale);
+
 /**
- * One search box for everything: films, series and live channels, updating as you type. Select on the box opens
- * the system keyboard, on the TV as on a phone.
+ * One search box for everything: films, series and live channels, updating as you type. Opening Search from the
+ * nav bar opens the system keyboard straight away; select on the box opens it again.
  */
 export function SearchScreen({
   sourceId,
+  openKeyboard,
   onOpenMovie,
   onOpenSeries,
   onPlayChannel,
 }: {
   sourceId: string | null;
+  /** Bumped each time Search is chosen in the nav bar: the keyboard opens, ready to type. */
+  openKeyboard: number;
   onOpenMovie: (movie: { id: string; title: string }) => void;
   onOpenSeries: (series: { id: string; title: string }) => void;
   onPlayChannel: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
@@ -35,6 +40,14 @@ export function SearchScreen({
     remembered = next;
     setQueryState(next);
   }, []);
+
+  const input = useRef<TextInput>(null);
+  useEffect(() => {
+    if (openKeyboard === 0) return;
+    // A moment's wait: the pane was hidden until this render, and a hidden field cannot take focus.
+    const timer = setTimeout(() => input.current?.focus(), 60);
+    return () => clearTimeout(timer);
+  }, [openKeyboard]);
 
   const [results, setResults] = useState<SearchResults | null>(null);
   useEffect(() => {
@@ -87,7 +100,7 @@ export function SearchScreen({
   return (
     <View style={styles.screen}>
       <View style={styles.left}>
-        <Field label="Search" preferred value={query} onChangeText={setQuery} autoCapitalize="none" autoCorrect={false} returnKeyType="search" />
+        <SearchBar inputRef={input} value={query} onChangeText={setQuery} />
       </View>
       <TVFocusGuideView autoFocus style={styles.right}>
         {sections.length > 0 ? (
@@ -100,6 +113,42 @@ export function SearchScreen({
         )}
       </TVFocusGuideView>
     </View>
+  );
+}
+
+/**
+ * The search box. On a TV it is a focus stop that opens the keyboard on select (so moving past it never throws the
+ * keyboard up); focused, it takes the accent ring every other focus stop in the app has.
+ */
+function SearchBar({ inputRef, value, onChangeText }: { inputRef: RefObject<TextInput | null>; value: string; onChangeText: (text: string) => void }) {
+  const tv = Platform.isTV;
+  const [typing, setTyping] = useState(false);
+  const bar = (focused: boolean) => (
+    <>
+      <Search color={focused || typing ? colors.foreground : colors.muted} width={u(30)} height={u(30)} strokeWidth={1.75} />
+      <TextInput
+        ref={inputRef}
+        focusable={!tv}
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setTyping(true)}
+        onBlur={() => setTyping(false)}
+        placeholder="Movies, series, channels"
+        placeholderTextColor={colors.faint}
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="search"
+        underlineColorAndroid="transparent"
+        selectionColor={colors.accent}
+        style={styles.input}
+      />
+    </>
+  );
+  if (!tv) return <View style={[styles.bar, typing && styles.barFocused]}>{bar(false)}</View>;
+  return (
+    <Focusable preferred onPress={() => inputRef.current?.focus()} style={[styles.bar, typing && styles.barFocused]} focusedStyle={styles.barFocused}>
+      {({ focused }) => bar(focused)}
+    </Focusable>
   );
 }
 
@@ -137,6 +186,9 @@ function ChannelTile({ channel, onPress }: { channel: ChannelRow; onPress: (chan
 const styles = styleSheet({
   screen: { flex: 1, flexDirection: "row", gap: 40 },
   left: { width: 570, gap: 22 },
+  bar: { height: 76, flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 26, borderRadius: 38, borderColor: colors.border, backgroundColor: colors.raised },
+  barFocused: { borderColor: colors.accent, backgroundColor: colors.card },
+  input: { flex: 1, height: "100%", padding: 0, color: colors.foreground, fontSize: 28 },
   right: { flex: 1 },
   list: { paddingBottom: 80 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
@@ -146,7 +198,7 @@ const styles = styleSheet({
   sectionTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600", letterSpacing: -0.3, paddingLeft: 8 },
   channelList: { gap: 16, paddingVertical: 8, paddingHorizontal: 8 },
   channel: { width: 360, flexDirection: "row", alignItems: "center", gap: 16, padding: 14, backgroundColor: colors.raised, borderRadius: 16 },
-  channelFocused: { backgroundColor: "#ffffff24", borderColor: "transparent" },
+  channelFocused: { backgroundColor: colors.card },
   logo: { width: 96, height: 64, borderRadius: 10, backgroundColor: colors.sunken, overflow: "hidden" },
   logoImage: { width: "100%", height: "100%" },
   channelName: { flex: 1, color: colors.foreground, fontSize: 24, fontWeight: "500" },

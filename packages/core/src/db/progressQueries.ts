@@ -62,3 +62,36 @@ export function clearPlaybackProgress(db: Database.Database, itemType: "movie" |
   });
   clear();
 }
+
+/**
+ * Marks titles watched or not by hand ("Mark as watched" / "Mark as unwatched"). Watched sits at the end (so nothing
+ * offers to resume it); unwatched goes back to the start. Either way it is a fresh write, stamped now, so it reaches
+ * the account's other devices like any other progress, and it overrules the 95% rule until the title is played again.
+ */
+export function setWatched(db: Database.Database, itemType: "movie" | "episode", itemIds: readonly string[], watched: boolean): void {
+  const table = itemType === "movie" ? "movies" : "episodes";
+  const now = Date.now();
+  const readItem = db.prepare(`SELECT remote_key, duration_secs FROM ${table} WHERE id = ?`);
+  const readProgress = db.prepare(`SELECT duration_secs FROM playback_progress WHERE item_type = ? AND item_id = ?`);
+  const write = db.prepare(
+    `INSERT INTO playback_progress (item_type, item_id, position_secs, duration_secs, watched, updated_at, remote_key)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(item_type, item_id) DO UPDATE SET
+       position_secs = excluded.position_secs,
+       duration_secs = excluded.duration_secs,
+       watched       = excluded.watched,
+       updated_at    = excluded.updated_at,
+       remote_key    = COALESCE(excluded.remote_key, playback_progress.remote_key),
+       deleted_at    = NULL`,
+  );
+  const apply = db.transaction(() => {
+    for (const itemId of itemIds) {
+      const item = readItem.get(itemId) as { remote_key: string | null; duration_secs: number | null } | undefined;
+      if (item === undefined) continue;
+      const known = readProgress.get(itemType, itemId) as { duration_secs: number | null } | undefined;
+      const durationSecs = known?.duration_secs ?? item.duration_secs;
+      write.run(itemType, itemId, watched ? (durationSecs ?? 0) : 0, durationSecs, watched ? 1 : 0, now, item.remote_key);
+    }
+  });
+  apply();
+}

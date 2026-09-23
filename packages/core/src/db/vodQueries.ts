@@ -1,6 +1,8 @@
 import type Database from "better-sqlite3";
 import type { Source } from "../source/types.js";
 import { clearPlaybackProgress } from "./progressQueries.js";
+import { isDatedTitle, titleKey } from "../normalise/titleKey.js";
+import { splitTitle } from "../normalise/splitTitle.js";
 
 export interface MovieRow {
   readonly id: string;
@@ -231,4 +233,21 @@ export function movieShelves(
      ORDER BY (m.poster_url IS NULL OR m.poster_url = ''), CAST(m.rating AS REAL) DESC, m.rowid LIMIT ?`,
   );
   return chosen.map((category) => ({ category, items: select.all(category.id, perShelf) as MovieRow[] }));
+}
+
+/**
+ * The other copies of a film: the same dated title in another quality, category or source ("4K-EN - Dune (2021)"
+ * beside "EN - Dune (2021)"). Empty for an undated name, which is too often a show's episode to match on.
+ */
+export function listMovieVersions(db: Database.Database, movieId: string): MovieRow[] {
+  const movie = db.prepare(`SELECT name FROM movies WHERE id = ?`).get(movieId) as { name: string } | undefined;
+  if (movie === undefined || !isDatedTitle(movie.name)) return [];
+  const key = titleKey(movie.name);
+  const { title, year } = splitTitle(movie.name);
+  const words = title.replace(/^\d{1,3}\.\s+/, "").replace(/[%_\\]/g, (char) => `\\${char}`);
+  return (
+    db
+      .prepare(`SELECT ${MOVIE_COLUMNS} FROM movies m WHERE m.id != ? AND m.name LIKE ? ESCAPE '\\' AND m.name LIKE ? ORDER BY m.rowid LIMIT 40`)
+      .all(movieId, `%${words}%`, `%(${year})%`) as MovieRow[]
+  ).filter((row) => titleKey(row.name) === key);
 }

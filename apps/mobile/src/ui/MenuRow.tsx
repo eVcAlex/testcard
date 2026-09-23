@@ -19,6 +19,7 @@ export const MenuRow = memo(function MenuRow({
   active = false,
   indent = false,
   open,
+  preferred = false,
   onPressId,
   onFocusId,
 }: {
@@ -28,6 +29,8 @@ export const MenuRow = memo(function MenuRow({
   indent?: boolean;
   /** Present on an expandable heading: whether it is expanded. */
   open?: boolean | undefined;
+  /** Takes focus when it appears (the chosen row of a menu that has just opened). */
+  preferred?: boolean;
   onPressId: (id: string) => void;
   onFocusId?: ((id: string) => void) | undefined;
 }) {
@@ -38,6 +41,7 @@ export const MenuRow = memo(function MenuRow({
     <Pressable
       ref={tracking.ref}
       focusable
+      hasTVPreferredFocus={preferred}
       onPress={() => onPressId(id)}
       onFocus={() => {
         tracking.focused();

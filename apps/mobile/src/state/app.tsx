@@ -35,9 +35,16 @@ interface AppState {
   readonly status: SyncStatus;
   /** Bumps whenever stored data may have changed (sync applied, a source imported), so screens re-query. */
   readonly version: number;
+  /**
+   * Changes only when the catalogue does (a source imported, added or removed), never for favourites or progress.
+   * Reads that walk the whole catalogue key on this, so a sync that only brought history does not rebuild them.
+   */
+  readonly catalogue: string;
   readonly sources: readonly SourceSummary[];
   /** Set while this device is fetching its data for the first time or refreshing a source: the app waits on it. */
   readonly setup: SetupProgress | null;
+  /** True while the app is catching up with the account on launch or on coming back to the front. */
+  readonly syncing: boolean;
   refreshSource(sourceId: string): Promise<void>;
   /** Takes a source off this device and, through sync, off the user's others. */
   removeSource(sourceId: string): Promise<void>;
@@ -204,14 +211,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [sync, bump]);
   useEffect(() => () => sync.dispose(), [sync]);
-  // Android holds JS timers while the app is in the background, so the periodic sync can be well overdue when the
-  // viewer comes back: catch up at once, so what they watched on another device is there when they look.
+  // On launch, and whenever the app comes back to the front, catch up with the account at once, so what was watched
+  // or changed on another device is there when the viewer looks. (Android holds JS timers in the background, so the
+  // periodic sync can be well overdue.) The screens re-read as soon as it lands rather than on the next status
+  // poll, and the nav bar says it is happening.
+  const [syncing, setSyncing] = useState(false);
+  const catchUp = useCallback(() => {
+    if (sync.status().account !== "signed-in") return;
+    setSyncing(true);
+    sync
+      .triggerNow()
+      .then(updateStatus, () => undefined)
+      .finally(() => setSyncing(false));
+  }, [sync, updateStatus]);
   useEffect(() => {
+    catchUp();
     const subscription = AppLifecycle.addEventListener("change", (state) => {
-      if (state === "active") void sync.triggerNow().then(updateStatus, () => undefined);
+      if (state === "active") catchUp();
     });
     return () => subscription.remove();
-  }, [sync, updateStatus]);
+  }, [catchUp]);
 
   const sources = useMemo<SourceSummary[]>(() => {
     void version;
@@ -230,6 +249,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [db, version, refreshing, errors]);
 
+  const catalogue = useMemo(() => sources.map((entry) => `${entry.id}:${entry.lastRefreshedAt ?? 0}`).join(","), [sources]);
+
   // The app waits while a signed-in device with no sources is waiting for its first sync, and while anything is
   // importing: the sync only brings the source rows down, and importing their channels, movies and series (the
   // slow part) follows, on the first load and on every Refresh.
@@ -239,8 +260,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setup = useMemo(() => describeSetup({ firstSync, imports: [...progress.values()] }), [firstSync, progress]);
 
   const value = useMemo<AppState>(
-    () => ({ db, sync, status, version, sources, setup, refreshSource, removeSource, updateStatus }),
-    [db, sync, status, version, sources, setup, refreshSource, removeSource, updateStatus],
+    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, refreshSource, removeSource, updateStatus }),
+    [db, sync, status, version, catalogue, sources, setup, syncing, refreshSource, removeSource, updateStatus],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

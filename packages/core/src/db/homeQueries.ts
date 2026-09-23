@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { GENRE_LABELS } from "../normalise/genres.js";
-import { splitTitle } from "../normalise/splitTitle.js";
+import { titleKey } from "../normalise/titleKey.js";
 import { MOVIE_COLUMNS, type MovieRow } from "./vodQueries.js";
 import { SERIES_COLUMNS, type SeriesRow } from "./seriesQueries.js";
 
@@ -44,11 +44,7 @@ const SERIES: Kind = { table: "series", alias: "sr", categories: "series_categor
 /** Over-fetch by this much, since duplicates (quality variants of one title) are dropped afterwards. */
 const SPARE = 5;
 
-/** The same title in another quality or category: lower-cased, punctuation and the catalogue tag gone. */
-export function titleKey(name: string): string {
-  const { title, year } = splitTitle(name);
-  return `${title.toLowerCase().replace(/[^a-z0-9À-￿]+/g, " ").trim()}|${year ?? ""}`;
-}
+export { titleKey };
 
 function build<T extends { readonly id: string; readonly name: string }>(db: Database.Database, kind: Kind, opts: HomeOptions): HomeShelf<T>[] {
   const perShelf = opts.perShelf ?? 16;

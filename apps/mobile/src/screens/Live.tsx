@@ -45,8 +45,8 @@ const clock = (ms: number): string => {
 
 /**
  * Live TV, laid out like Movies and Series: a hero for the channel the remote rests on (what is airing and
- * what follows, asked of the provider for that one channel) and rows of channel cards under it. Live shows
- * one source at a time, so every row here is that source's. Browse all is the full category list.
+ * what follows, asked of the provider for that one channel) and rows of channel cards under it. Like every
+ * page it follows the app's source pick: all sources, or only the one chosen. Browse all is the full category list.
  */
 export function LiveScreen({
   sourceId,
@@ -61,7 +61,7 @@ export function LiveScreen({
   onBrowseDone: () => void;
   onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
-  const { db, version: latestVersion, sync } = useApp();
+  const { db, version: latestVersion, catalogue, sync } = useApp();
   const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
@@ -78,7 +78,7 @@ export function LiveScreen({
   const rows = useMemo<HomeRow[]>(() => {
     void tick;
     if (!ready) return [];
-    const categories = channelCategories(db, version, sourceId ?? undefined);
+    const categories = channelCategories(db, catalogue, sourceId ?? undefined);
     const scope = sourceId !== null ? { sourceId } : {};
     const recents = listRecentChannels(db, 60).filter(own).slice(0, 30);
     recentIds.current = new Set(recents.map((channel) => channel.id));
@@ -86,14 +86,12 @@ export function LiveScreen({
     const list: HomeRow[] = [];
     if (recents.length > 0) list.push({ key: "recent", label: "Recently watched", items: recents.map(toHomeItem), channels: true });
     if (favourites.length > 0) list.push({ key: "favourites", label: "Favourites", items: favourites.slice(0, 30).map(toHomeItem), channels: true });
-    const sports = browseChannels(db, { genre: "sports", limit: ROW_SIZE, ...scope });
-    if (sports.length > 0) list.push({ key: "sports", label: "Sports", items: sports.map(toHomeItem), channels: true });
     for (const category of categories.filter((entry) => entry.count > 0).slice(0, CATEGORY_ROWS)) {
       const channels = browseChannels(db, { categoryId: category.id, limit: ROW_SIZE, ...scope });
       if (channels.length > 0) list.push({ key: category.id, label: category.label, items: channels.map(toHomeItem), channels: true });
     }
     return list;
-  }, [db, version, sourceId, tick, own, ready]);
+  }, [db, version, catalogue, sourceId, tick, own, ready]);
 
   const fetchDetail = useCallback(
     async (id: string) => {
@@ -157,10 +155,10 @@ export function LiveScreen({
 
 /** Every category as a row of pills, channels beneath. */
 function Browsing({ sourceId, own, onPlay }: { sourceId: string | null; own: (channel: ChannelRow) => boolean; onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void }) {
-  const { db, version, sync } = useApp();
+  const { db, version, catalogue, sync } = useApp();
   const source = useMemo<BrowseSource>(() => {
     const scope = sourceId !== null ? { sourceId } : {};
-    const categories = channelCategories(db, version, sourceId ?? undefined);
+    const categories = channelCategories(db, catalogue, sourceId ?? undefined);
     const favourites = listFavouriteChannels(db).filter(own);
     const recents = listRecentChannels(db, 60).filter(own).slice(0, 30);
     return {
@@ -187,7 +185,7 @@ function Browsing({ sourceId, own, onPlay }: { sourceId: string | null; own: (ch
         return browseChannels(db, { limit, ...scope }).map(toItem);
       },
     };
-  }, [db, version, sourceId, own, sync]);
+  }, [db, version, catalogue, sourceId, own, sync]);
 
   return (
     <View style={styles.padded}>
