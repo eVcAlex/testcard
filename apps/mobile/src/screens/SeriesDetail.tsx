@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BackHandler, FlatList, Text, TVFocusGuideView, View } from "react-native";
 import { Image } from "expo-image";
+import { Movie } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { getSeriesDetail, getSeriesSource, getUpNextEpisode, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
@@ -34,14 +35,7 @@ function position(secs: number): string {
 function FilmGlyph() {
   return (
     <View style={styles.placeholder}>
-      <View style={styles.filmHoles}>
-        <View style={styles.filmHole} />
-        <View style={styles.filmHole} />
-        <View style={styles.filmHole} />
-      </View>
-      <View style={styles.filmFrame}>
-        <View style={styles.playTriangle} />
-      </View>
+      <Movie color="#ffffff40" width={44} height={44} strokeWidth={1.5} />
     </View>
   );
 }
@@ -294,11 +288,7 @@ const styles = styleSheet({
   watchedMark: { color: colors.accent, fontSize: 18, fontWeight: "700" },
   progress: { height: 5, backgroundColor: "#00000080" },
   progressFill: { height: 5, backgroundColor: colors.accent },
-  placeholder: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14 },
-  filmHoles: { flexDirection: "row", gap: 14 },
-  filmHole: { width: 14, height: 10, borderRadius: 2, backgroundColor: "#ffffff18" },
-  filmFrame: { width: 68, height: 68, borderRadius: 34, borderWidth: 3, borderColor: "#ffffff40", alignItems: "center", justifyContent: "center" },
-  playTriangle: { width: 0, height: 0, borderTopWidth: 15, borderBottomWidth: 15, borderLeftWidth: 25, borderTopColor: "transparent", borderBottomColor: "transparent", borderLeftColor: "#ffffff55", marginLeft: 5 },
+  placeholder: { flex: 1, alignItems: "center", justifyContent: "center" },
   cardTitle: { color: colors.muted, fontSize: 24, fontWeight: "500" },
   cardTitleFocused: { color: colors.foreground },
   cardTitleDone: { opacity: 0.6 },

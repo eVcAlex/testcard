@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
 import { useFonts } from "expo-font";
-import { Host, Icon } from "@expo/ui";
+import { Search } from "iconoir-react-native";
 import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
 import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
 import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
@@ -41,16 +41,9 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "sources", label: "Sources" },
 ];
 
-/** The SF Symbol nearest the search glyph, used only if this ever runs on Apple TV; Android renders the XML drawable. */
-const SEARCH_ICON = Icon.select({ ios: "magnifyingglass" as Parameters<typeof Icon.select>[0]["ios"], android: import("@expo/material-symbols/search.xml") });
-
 /** A bare magnifying glass, sized to sit in the nav bar's icon-only tab. */
 function SearchGlyph(color: string) {
-  return (
-    <Host matchContents pointerEvents="none">
-      <Icon name={SEARCH_ICON} size={28} color={color} />
-    </Host>
-  );
+  return <Search color={color} width={28} height={28} strokeWidth={1.75} />;
 }
 
 export default function App() {

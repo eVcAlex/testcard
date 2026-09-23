@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { Check, InfoCircle, Play, Plus, Restart, Xmark } from "iconoir-react-native";
 import { colors, styleSheet, uiScale } from "../theme";
 
 const u = (n: number) => Math.round(n * uiScale);
@@ -8,63 +9,15 @@ const INK = "#0b0e10";
 
 export type ActionGlyph = "restart" | "plus" | "check" | "cross" | "info";
 
+const ACTION_GLYPHS = { restart: Restart, plus: Plus, check: Check, cross: Xmark, info: InfoCircle };
+
 function Glyph({ kind, color }: { kind: ActionGlyph; color: string }) {
-  const size = u(30);
-  const bar = { position: "absolute" as const, backgroundColor: color, borderRadius: u(2) };
-  if (kind === "plus") {
-    return (
-      <View style={{ width: size, height: size }}>
-        <View style={{ ...bar, left: 0, right: 0, top: size / 2 - u(2), height: u(4) }} />
-        <View style={{ ...bar, top: 0, bottom: 0, left: size / 2 - u(2), width: u(4) }} />
-      </View>
-    );
-  }
-  if (kind === "cross") {
-    return (
-      <View style={{ width: size, height: size }}>
-        <View style={{ ...bar, left: 0, right: 0, top: size / 2 - u(2), height: u(4), transform: [{ rotate: "45deg" }] }} />
-        <View style={{ ...bar, left: 0, right: 0, top: size / 2 - u(2), height: u(4), transform: [{ rotate: "-45deg" }] }} />
-      </View>
-    );
-  }
-  if (kind === "check") {
-    return <View style={{ width: u(14), height: u(26), borderRightWidth: u(4), borderBottomWidth: u(4), borderColor: color, transform: [{ rotate: "45deg" }, { translateY: -u(3) }] }} />;
-  }
-  if (kind === "info") {
-    // a ring with a dot and a stem
-    return (
-      <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-        <View style={{ position: "absolute", width: size, height: size, borderRadius: size / 2, borderWidth: u(3), borderColor: color }} />
-        <View style={{ position: "absolute", top: u(6), width: u(4), height: u(4), borderRadius: u(2), backgroundColor: color }} />
-        <View style={{ position: "absolute", top: u(12), width: u(4), height: u(11), borderRadius: u(2), backgroundColor: color }} />
-      </View>
-    );
-  }
-  // restart: an open ring with an arrowhead
-  return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-      <View style={{ position: "absolute", width: size, height: size, borderRadius: size / 2, borderWidth: u(4), borderColor: color, borderTopColor: "transparent" }} />
-      <View
-        style={{
-          position: "absolute",
-          top: u(2) - u(7),
-          left: size / 2 - u(8),
-          width: 0,
-          height: 0,
-          borderTopWidth: u(7),
-          borderBottomWidth: u(7),
-          borderTopColor: "transparent",
-          borderBottomColor: "transparent",
-          borderRightWidth: u(12),
-          borderRightColor: color,
-        }}
-      />
-    </View>
-  );
+  const Icon = ACTION_GLYPHS[kind];
+  return <Icon color={color} width={u(30)} height={u(30)} strokeWidth={1.75} />;
 }
 
 function PlayGlyph({ color }: { color: string }) {
-  return <View style={{ width: 0, height: 0, borderTopWidth: u(14), borderBottomWidth: u(14), borderLeftWidth: u(22), borderTopColor: "transparent", borderBottomColor: "transparent", borderLeftColor: color, marginLeft: u(4) }} />;
+  return <Play color={color} width={u(28)} height={u(28)} strokeWidth={1.75} />;
 }
 
 export interface DetailAction {
