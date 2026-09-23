@@ -1,5 +1,6 @@
 import { memo, useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
+import { useFocusTracking } from "./Focusable";
 import { colors, styleSheet } from "../theme";
 
 /** A section tab in the top bar: grey at rest, white with an accent underline when open, a glass pill under the remote's focus. */
@@ -24,14 +25,22 @@ export const NavTab = memo(function NavTab({
   onPressId: (id: string) => void;
 }) {
   const [focused, setFocused] = useState(false);
+  const tracking = useFocusTracking();
   const on = focused || active;
   return (
     <Pressable
+      ref={tracking.ref}
       focusable
       hasTVPreferredFocus={preferred}
       onPress={() => onPressId(id)}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
+      onFocus={() => {
+        setFocused(true);
+        tracking.focused();
+      }}
+      onBlur={() => {
+        setFocused(false);
+        tracking.blurred();
+      }}
       style={[styles.tab, icon !== undefined && label === undefined && styles.iconTab, focused && styles.tabFocused]}
     >
       {icon?.(on ? colors.foreground : colors.muted)}

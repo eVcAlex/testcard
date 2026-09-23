@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { useFocusTracking } from "./Focusable";
 import { Image } from "expo-image";
 import { Check, InfoCircle, Play, Plus, Restart, Xmark } from "iconoir-react-native";
 import { colors, styleSheet, uiScale } from "../theme";
@@ -46,18 +47,24 @@ export function DetailActions({
 }) {
   const [hint, setHint] = useState("");
   const [playFocused, setPlayFocused] = useState(false);
+  const playTracking = useFocusTracking();
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
         <Pressable
+          ref={playTracking.ref}
           focusable
           hasTVPreferredFocus={preferred}
           onPress={primary.onPress}
           onFocus={() => {
             setPlayFocused(true);
             setHint("");
+            playTracking.focused();
           }}
-          onBlur={() => setPlayFocused(false)}
+          onBlur={() => {
+            setPlayFocused(false);
+            playTracking.blurred();
+          }}
           style={[styles.play, playFocused && styles.playFocused]}
         >
           <PlayGlyph color={playFocused ? INK : colors.foreground} />
@@ -80,17 +87,21 @@ export function DetailActions({
 
 function IconButton({ action, onHint }: { action: DetailAction; onHint: (label: string) => void }) {
   const [focused, setFocused] = useState(false);
+  const tracking = useFocusTracking();
   return (
     <Pressable
+      ref={tracking.ref}
       focusable
       onPress={action.onPress}
       onFocus={() => {
         setFocused(true);
         onHint(action.label);
+        tracking.focused();
       }}
       onBlur={() => {
         setFocused(false);
         onHint("");
+        tracking.blurred();
       }}
       style={[styles.icon, focused && styles.iconFocused]}
     >

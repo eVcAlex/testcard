@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { BackHandler, Text, View } from "react-native";
+import { BackHandler, View } from "react-native";
 import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
 import { movieHome, seriesHome } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
@@ -202,6 +202,16 @@ export function useRefreshOnShow(active: boolean, refresh: () => void) {
   }, [active, refresh]);
 }
 
+/**
+ * The data version a mounted section reads by. A hidden section keeps the one it last showed with, so a sync
+ * bump does not re-run its queries behind whatever is on screen; being shown again catches it up.
+ */
+export function useVersionWhileShown(active: boolean, version: number): number {
+  const shown = useRef(version);
+  if (active) shown.current = version;
+  return shown.current;
+}
+
 /** Back from the category browser returns to the landing page instead of leaving the section. */
 export function useBackTo(active: boolean, back: () => void) {
   useEffect(() => {
@@ -272,7 +282,8 @@ export function MoviesScreen({
   onOpen: (movie: { id: string; title: string }) => void;
   onPlay: (movie: { id: string; title: string }, resume: boolean) => void;
 }) {
-  const { db, version, sync } = useApp();
+  const { db, version: latestVersion, sync } = useApp();
+  const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
   useBackTo(browsing, onBrowseDone);
@@ -342,7 +353,8 @@ export function SeriesScreen({
   onOpen: (series: { id: string; title: string }) => void;
   onPlayEpisode: (episodeId: string, title: string, resume: boolean, seriesId: string) => void;
 }) {
-  const { db, version, sync } = useApp();
+  const { db, version: latestVersion, sync } = useApp();
+  const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
   useBackTo(browsing, onBrowseDone);

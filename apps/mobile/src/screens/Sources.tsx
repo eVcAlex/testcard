@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Modal, ScrollView, Text, View } from "react-native";
-import { useApp } from "../state/app";
+import { WarningCircle } from "iconoir-react-native";
+import { useApp, type SourceSummary } from "../state/app";
 import { useUpdate } from "../update/UpdateProvider";
 import { installedVersion } from "../update/update";
-import { colors, space, type, styleSheet } from "../theme";
+import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
 import { Focusable } from "../ui/Focusable";
 import { withCommas } from "../ui/MenuRow";
@@ -64,7 +65,7 @@ export function SourcesScreen() {
 
         <View style={styles.list}>
           {sources.map((source) => (
-            <View key={source.id} style={styles.row}>
+            <View key={source.id} style={[styles.row, source.failures.length > 0 && !source.refreshing && styles.rowFailed]}>
               <View style={styles.rowText}>
                 <Text style={styles.rowName} numberOfLines={1}>
                   {source.name}
@@ -73,18 +74,16 @@ export function SourcesScreen() {
                 <Text style={styles.rowMeta}>{source.refreshing ? "Loading..." : counts(source.channels, source.movies, source.series)}</Text>
               </View>
               <View style={styles.rowStatus}>
-                {source.error !== undefined ? (
-                  <Text style={styles.error} numberOfLines={1}>
-                    {source.error}
-                  </Text>
-                ) : source.refreshing ? (
+                {source.refreshing ? (
                   <Text style={styles.rowSynced}>Refreshing...</Text>
-                ) : source.lastRefreshedAt !== null ? (
-                  <Text style={styles.rowSynced}>{`✓ Synced ${ago(source.lastRefreshedAt)}`}</Text>
-                ) : null}
+                ) : source.failures.length > 0 ? (
+                  <Problem source={source} />
+                ) : (
+                  source.lastRefreshedAt !== null && <Text style={styles.rowSynced}>{`✓ Synced ${ago(source.lastRefreshedAt)}`}</Text>
+                )}
               </View>
               <View style={styles.rowActions}>
-                <SmallButton label={source.refreshing ? "Refreshing" : "Refresh"} disabled={source.refreshing} onPress={() => void refreshSource(source.id)} />
+                <SmallButton label={source.refreshing ? "Refreshing" : source.failures.length > 0 ? "Try again" : "Refresh"} disabled={source.refreshing} onPress={() => void refreshSource(source.id)} />
                 <SmallButton
                   muted
                   label={confirming === source.id ? "Press again to remove" : "Remove"}
@@ -106,6 +105,8 @@ export function SourcesScreen() {
             <Text style={styles.footerDot}>{"  ·  "}</Text>
             {!update.configured
               ? "Updates are not set up for this build."
+              : update.error !== undefined && update.phase !== "downloading" && update.phase !== "checking"
+                ? <Text style={styles.footerError}>{`Couldn't ${update.available !== null ? "download the update" : "check for updates"}. ${plainReason(update.error, "the update server")}`}</Text>
               : update.phase === "downloading"
                 ? `Downloading ${Math.round(update.progress * 100)}%`
                 : update.phase === "checking"
@@ -116,7 +117,6 @@ export function SourcesScreen() {
                       ? "You are up to date."
                       : "Not checked yet."}
           </Text>
-          {update.error !== undefined && <Text style={styles.error}>{update.error}</Text>}
           {update.configured && (
             <SmallButton
               primary={update.available !== null}
@@ -164,6 +164,60 @@ function SmallButton({ label, onPress, primary = false, muted = false, disabled 
   );
 }
 
+/**
+ * A failure in words for a person on a sofa: what the provider's or the network's error means, not a Java class
+ * name. What is not recognised is passed through, tidied.
+ */
+function plainReason(message: string, who = "the provider"): string {
+  if (/UnknownHost|resolve host|ENOTFOUND|No address associated|Network request failed|unreachable|ECONNREFUSED|ConnectException/i.test(message))
+    return `Couldn't reach ${who}. Check the TV's internet connection.`;
+  if (/did not respond|timed? ?out|ETIMEDOUT|SocketTimeout/i.test(message)) return `${who[0]!.toUpperCase()}${who.slice(1)} didn't respond.`;
+  if (/\b(401|403)\b|unauthori[sz]ed|forbidden|credentials|login|password/i.test(message))
+    return "The provider turned down the login. Check this source's account in Testcard on your computer.";
+  if (/\b5\d\d\b/.test(message)) return "The provider's server had a problem.";
+  const tidy = message
+    .replace(/^fetch failed:\s*/i, "")
+    .replace(/\b(?:[a-z]+\.)+[A-Z]\w*(?:Exception|Error):\s*/g, "")
+    .replace(/\s*Try again[^.]*\.?$/i, "")
+    .trim();
+  if (tidy === "") return "";
+  const sentence = tidy[0]!.toUpperCase() + tidy.slice(1);
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+}
+
+/**
+ * What went wrong with a source's last import, in two lines: what did not load, then why and what is left.
+ * Each reason is said once, in plain words (see plainReason).
+ */
+function Problem({ source }: { source: SourceSummary }) {
+  const parts = new Set(source.failures.map((failure) => failure.part));
+  const title = parts.has("all")
+    ? "Couldn't refresh this source"
+    : parts.has("movies") && parts.has("series")
+      ? "Movies and series didn't load"
+      : parts.has("movies")
+        ? "Movies didn't load"
+        : "Series didn't load";
+  const reasons = [...new Set(source.failures.map((failure) => plainReason(failure.message)))].filter((reason) => reason !== "");
+  const kept = parts.has("all") ? source.channels + source.movies + source.series > 0 : (parts.has("movies") && source.movies > 0) || (parts.has("series") && source.series > 0);
+  const detail = [...reasons, kept ? "What loaded last time is still here." : null].filter((line): line is string => line !== null).join(" ");
+  return (
+    <View style={styles.problem}>
+      <WarningCircle width={30 * uiScale} height={30 * uiScale} color={colors.fault} strokeWidth={2} />
+      <View style={styles.problemText}>
+        <Text style={styles.problemTitle} numberOfLines={1}>
+          {title}
+        </Text>
+        {detail !== "" ? (
+          <Text style={styles.rowMeta} numberOfLines={2}>
+            {detail}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 /** Only the kinds of content a source actually has: a live-only provider does not say "0 movies". */
 function counts(channels: number, movies: number, series: number): string {
   const parts = [
@@ -203,13 +257,18 @@ const styles = styleSheet({
   rowKind: { color: colors.faint, fontSize: type.small, fontWeight: "500" },
   rowMeta: { color: colors.muted, fontSize: type.small },
   rowStatus: { flex: 1 },
+  rowFailed: { borderColor: "#f0745c59" },
   rowSynced: { color: colors.accent, fontSize: type.small },
+  problem: { flexDirection: "row", alignItems: "center", gap: 14 },
+  problemText: { flex: 1, gap: 2 },
+  problemTitle: { color: colors.fault, fontSize: type.small, fontWeight: "600" },
   error: { color: colors.fault, fontSize: type.small },
   rowActions: { flexDirection: "row", gap: space.s },
 
   footer: { flexDirection: "row", alignItems: "center", gap: space.l, marginTop: space.xl, paddingTop: space.l, borderTopWidth: 1, borderTopColor: colors.border },
   footerText: { flex: 1, color: colors.faint, fontSize: type.small },
   footerDot: { color: colors.border },
+  footerError: { color: colors.fault },
 
   scrim: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(5, 8, 11, 0.8)" },
   dialog: { width: 760, gap: space.l, padding: space.xl, backgroundColor: colors.raised, borderRadius: 18, borderWidth: 1, borderColor: colors.border },

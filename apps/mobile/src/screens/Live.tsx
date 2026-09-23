@@ -7,7 +7,7 @@ import { useApp } from "../state/app";
 import { memoByVersion } from "../state/memoByVersion";
 import { styleSheet } from "../theme";
 import { BrowseScreen, type BrowseItem, type BrowseSource, type Guide } from "./Browse";
-import { Loading, useBackTo, useRefreshOnShow } from "./Catalogue";
+import { Loading, useBackTo, useRefreshOnShow, useVersionWhileShown } from "./Catalogue";
 import { makePinning } from "./pinning";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
@@ -61,7 +61,8 @@ export function LiveScreen({
   onBrowseDone: () => void;
   onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
-  const { db, version, sync } = useApp();
+  const { db, version: latestVersion, sync } = useApp();
+  const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
   useBackTo(browsing, onBrowseDone);

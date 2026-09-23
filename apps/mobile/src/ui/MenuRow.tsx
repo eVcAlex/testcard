@@ -1,5 +1,6 @@
 import { memo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { useFocusTracking } from "./Focusable";
 import { colors, styleSheet } from "../theme";
 
 export const ROW_HEIGHT = 60;
@@ -31,16 +32,22 @@ export const MenuRow = memo(function MenuRow({
   onFocusId?: ((id: string) => void) | undefined;
 }) {
   const [focused, setFocused] = useState(false);
+  const tracking = useFocusTracking();
   const ink = focused || active ? colors.foreground : colors.muted;
   return (
     <Pressable
+      ref={tracking.ref}
       focusable
       onPress={() => onPressId(id)}
       onFocus={() => {
+        tracking.focused();
         setFocused(true);
         onFocusId?.(id);
       }}
-      onBlur={() => setFocused(false)}
+      onBlur={() => {
+        setFocused(false);
+        tracking.blurred();
+      }}
       style={[styles.row, indent && styles.indent, focused && styles.rowFocused]}
     >
       {active && !focused ? <View style={styles.tick} /> : null}

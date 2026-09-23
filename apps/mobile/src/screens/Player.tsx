@@ -17,8 +17,9 @@ import { streamFacts } from "../playback/streamInfo";
 import { channelCatchup, loadCatchupGuide, type CatchupGuide } from "../playback/catchup";
 import { fetchGuide, type Airing } from "../playback/airing";
 
-const SEEK_STEP_SECS = 10;
-/** Presses in a row (each within this of the last) reach further: 10 s, then 30 s, 1 min, 2 min. */
+/** 15 s, what the skip buttons' icons say (Iconoir only draws 15 s ones). */
+const SEEK_STEP_SECS = 15;
+/** Presses in a row (each within this of the last) reach further: 15 s, then 30 s, 1 min, 2 min. */
 const STREAK_WITHIN_MS = 600;
 const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4 ? 30 : count < 7 ? 60 : 120);
 const CHROME_HIDES_AFTER_MS = 4000;
@@ -494,8 +495,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   }, [player, pulse, wake]);
 
   // The D-pad drives a highlight (`selected`) over the controls: up/down change row, left/right change
-  // control (or scrub, on the bar), OK presses. With the controls hidden, any key only brings them up, so a
-  // stray press never skips. Playback always starts highlighted on Play/Pause, never the scrub bar.
+  // control (or scrub, on the bar), OK presses. With the controls hidden, left/right skip a film or episode and any
+  // other key only brings the controls up. Playback always starts highlighted on Play/Pause, never the scrub bar.
   // Live keeps up/down for changing channel, so its way out sits at the left end of the transport row.
   // Remember the channel; once there is an earlier one, a Last key flips back to it.
   if (item.kind === "channel" && !timeshift && channelHistory.current?.id !== item.id) channelHistory = { previous: channelHistory.current, current: item };
@@ -505,6 +506,10 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const captionsKey: Control[] = tracks.length > 0 ? ["captions"] : [];
   const nextKey: Control[] = next !== undefined && onNextEpisode !== undefined ? ["next"] : [];
   const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, ...nextKey]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
+  // Read through a ref by the key handler: the captions and next keys can appear after it was last rebuilt
+  // (subtitle tracks turn up a moment after the stream starts), and it must navigate to them straight away.
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
   const [selected, setSelected] = useState<Control>(() => {
     const carried = carriedSelection;
     carriedSelection = undefined;
@@ -527,7 +532,11 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         }
       }
       else if (control === "catchup") openGuide();
-      else if (control === "live") (timeshift ? onCatchup(undefined) : behindLive ? goLive() : wake());
+      else if (control === "live") {
+        if (timeshift) onCatchup(undefined);
+        else if (behindLive) goLive();
+        else wake();
+      }
       else togglePause();
     },
     [behindLive, openCaptions, goLive, goNext, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
@@ -569,18 +578,20 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         return zap(key === "down" ? 1 : -1);
       }
       if (!chrome) {
-        // Any key brings the controls up, highlighted on Play/Pause; pausing is the play key's job.
+        // Any key brings the controls up, highlighted on Play/Pause; pausing is the play key's job. Left and right
+        // skip straight away on a film or episode, as on every TV player: one press, not "over to the button, OK".
         setSelected("play");
+        if (vod && (key === "left" || key === "right")) return seek(key === "right" ? 1 : -1);
         return wake();
       }
       wake();
-      const row = rows.findIndex((r) => r.includes(selected));
+      const row = rowsRef.current.findIndex((r) => r.includes(selected));
       if (key === "up" || key === "down") {
-        const next = rows[Math.min(rows.length - 1, Math.max(0, row + (key === "down" ? 1 : -1)))];
+        const next = rowsRef.current[Math.min(rowsRef.current.length - 1, Math.max(0, row + (key === "down" ? 1 : -1)))];
         if (next !== undefined) setSelected(next.includes("play") ? "play" : (next[0] as Control));
       } else if (key === "left" || key === "right") {
         if (selected === "seek") return seek(key === "right" ? 1 : -1);
-        const controls = rows[row] ?? [];
+        const controls = rowsRef.current[row] ?? [];
         const at = controls.indexOf(selected);
         const next = controls[Math.min(controls.length - 1, Math.max(0, at + (key === "right" ? 1 : -1)))];
         if (next !== undefined) setSelected(next);

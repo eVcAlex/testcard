@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable } from "react-native";
 import { NavArrowLeft } from "iconoir-react-native";
 import { colors, styleSheet, uiScale } from "../theme";
 

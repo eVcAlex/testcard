@@ -44,7 +44,7 @@ export function SearchScreen({
       return;
     }
     // A moment after the last key, so typing stays quick and only the finished word is looked up.
-    const timer = setTimeout(() => setResults(searchAll(db, text, { ...(sourceId !== null ? { sourceId } : {}) })), 200);
+    const timer = setTimeout(() => setResults(searchAll(db, text, sourceId !== null ? { sourceId } : {})), 200);
     return () => clearTimeout(timer);
   }, [db, version, query, sourceId]);
 

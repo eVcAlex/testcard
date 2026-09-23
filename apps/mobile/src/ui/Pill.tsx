@@ -1,5 +1,6 @@
 import { memo, useState } from "react";
 import { Pressable, Text } from "react-native";
+import { useFocusTracking } from "./Focusable";
 import { colors, styleSheet } from "../theme";
 
 export const PILL_HEIGHT = 56;
@@ -23,15 +24,21 @@ export const Pill = memo(function Pill({
   onFocusId?: ((id: string) => void) | undefined;
 }) {
   const [focused, setFocused] = useState(false);
+  const tracking = useFocusTracking();
   return (
     <Pressable
+      ref={tracking.ref}
       focusable
       onPress={() => onPressId(id)}
       onFocus={() => {
+        tracking.focused();
         setFocused(true);
         onFocusId?.(id);
       }}
-      onBlur={() => setFocused(false)}
+      onBlur={() => {
+        setFocused(false);
+        tracking.blurred();
+      }}
       style={[styles.pill, active && styles.active, focused && styles.focused]}
     >
       <Text numberOfLines={1} style={[styles.label, active && !focused && styles.labelActive, focused && styles.labelFocused]}>
