@@ -298,6 +298,9 @@ export async function applyRemoteChanges(
       const table = row.itemType === "movie" ? "movies" : "episodes";
       const item = db.prepare(`SELECT id FROM ${table} WHERE remote_key = ?`).get(row.remoteKey) as { id: string } | undefined;
       if (!item) {
+        // A cleared position for a title this device does not have has nothing to clear here. Waiting for the title
+        // would hold the sync cursor back on it for good when it never comes (its source was removed).
+        if (row.deletedAt !== null) continue;
         if (minDeferred === undefined || row.updatedAt < minDeferred) minDeferred = row.updatedAt;
         continue;
       }

@@ -1,6 +1,7 @@
 import type { Category, ChannelVariant, Source, SourceAdapter } from "../types.js";
 import type { XtreamCredentials } from "./detect.js";
 import { groupVariants, type RawChannelEntry } from "../../normalise/groupVariants.js";
+import { fetchResponding } from "../fetchResponding.js";
 
 /** Looks up a Source's credentials from wherever the caller is storing secrets (the OS keychain in the desktop app). */
 export type CredentialsLookup = (sourceId: string) => Promise<XtreamCredentials>;
@@ -35,7 +36,7 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
     url.searchParams.set("action", action);
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
-    const response = await fetch(url.toString());
+    const response = await fetchResponding(url.toString());
     if (!response.ok) {
       // The provider's own words ("blocked", "too many connections") are what tell a user why. Never the URL: it carries the login.
       const reason = (await response.text().catch(() => "")).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
@@ -125,7 +126,7 @@ export async function fetchShortEpg(
   url.searchParams.set("stream_id", streamId);
   url.searchParams.set("limit", "2");
 
-  const response = await fetch(url.toString());
+  const response = await fetchResponding(url.toString());
   if (!response.ok) return [];
   const body = (await response.json()) as {
     epg_listings?: readonly { title: string; start_timestamp: string; stop_timestamp: string }[];

@@ -42,6 +42,31 @@ function seedPreV5Database(path: string): void {
       created_at INTEGER NOT NULL,
       last_refreshed_at INTEGER
     );
+
+    -- The v1 live-TV tables, before migration 7's classification columns. Later migrations alter
+    -- and clean these up, so a v4 device always has them.
+    CREATE TABLE categories (
+      id TEXT PRIMARY KEY,
+      source_id TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+      provider_id TEXT NOT NULL,
+      raw_name TEXT NOT NULL,
+      country TEXT
+    );
+    CREATE TABLE channels (
+      id TEXT PRIMARY KEY,
+      source_id TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+      category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+      normalised_name TEXT NOT NULL,
+      raw_name TEXT NOT NULL,
+      country TEXT,
+      logo_url TEXT,
+      channel_number INTEGER,
+      catchup_type TEXT,
+      catchup_days INTEGER,
+      tvg_id TEXT,
+      first_seen_at INTEGER NOT NULL,
+      last_seen_at INTEGER NOT NULL
+    );
   `);
   const v4 = MIGRATIONS.find((m) => m.version === 4);
   if (!v4) throw new Error("expected a version-4 migration to exist");

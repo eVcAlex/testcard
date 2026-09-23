@@ -64,10 +64,12 @@ export async function importVod(
 
   const providerHost = source.kind === "xtream" ? source.baseUrl : "";
   const remoteKeys = new Map<string, string>();
+  // A page's digests at once rather than one await per title: tens of thousands in a row held the thread (the UI's,
+  // on a TV) for seconds. A macrotask between pages lets the screen draw.
   for (const page of pages) {
-    for (const movie of page.movies) {
-      remoteKeys.set(movie.id, await remoteKeyFor(providerHost, movie.providerStreamId));
-    }
+    const keys = await Promise.all(page.movies.map((item) => remoteKeyFor(providerHost, item.providerStreamId)));
+    page.movies.forEach((item, index) => remoteKeys.set(item.id, keys[index]!));
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
   let movieCount = 0;
