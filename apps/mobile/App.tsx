@@ -17,7 +17,6 @@ import { StartScreen } from "./src/screens/Start";
 import { PlayerScreen } from "./src/screens/Player";
 import { MovieDetailScreen } from "./src/screens/MovieDetail";
 import { SeriesDetailScreen } from "./src/screens/SeriesDetail";
-import { EpisodeDetailScreen } from "./src/screens/EpisodeDetail";
 import { SignInScreen } from "./src/screens/SignIn";
 import { SourcesScreen } from "./src/screens/Sources";
 import { SearchScreen } from "./src/screens/Search";
@@ -28,7 +27,6 @@ type Route =
   | { name: "home" }
   | { name: "series"; id: string; title: string }
   | { name: "movie"; id: string; title: string }
-  | { name: "episode"; id: string; title: string; seriesId: string; seriesTitle: string }
   | { name: "play"; item: PlayItem; seriesId?: string; channels?: readonly PlayItem[] | undefined; resume: boolean; returnTo: Route };
 
 /** A second back press within this long leaves the app. */
@@ -154,18 +152,7 @@ function Root() {
         seriesId={route.id}
         title={route.title}
         onBack={goHome}
-        onOpenEpisode={(episodeId, episodeTitle) => setRoute({ name: "episode", id: episodeId, title: episodeTitle, seriesId: route.id, seriesTitle: route.title })}
         onPlayEpisode={(episodeId, episodeTitle, resume) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title: episodeTitle }, seriesId: route.id, resume, returnTo: route })}
-      />
-    );
-  }
-  if (route.name === "episode") {
-    return (
-      <EpisodeDetailScreen
-        seriesId={route.seriesId}
-        episodeId={route.id}
-        onBack={() => setRoute({ name: "series", id: route.seriesId, title: route.seriesTitle })}
-        onPlay={(resume) => setRoute({ name: "play", item: { kind: "episode", id: route.id, title: route.title }, seriesId: route.seriesId, resume, returnTo: route })}
       />
     );
   }

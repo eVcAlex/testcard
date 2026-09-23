@@ -69,13 +69,16 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
     };
   }, [db, item, resume, catchup, variantAt]);
 
+  // Once Playing is on screen it owns Back itself (hide the controls, then leave); this is only for the
+  // loading and failure states before that, which would otherwise have no way to leave on Back at all.
   useEffect(() => {
+    if (stream !== undefined && error === undefined) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       onExit();
       return true;
     });
     return () => subscription.remove();
-  }, [onExit]);
+  }, [onExit, stream, error]);
 
   if (error !== undefined) return <Failure title={item.title} message={error} onExit={onExit} />;
   if (stream === undefined) {
@@ -188,6 +191,9 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       ? { preferredForwardBufferDuration: 40, minBufferForPlayback: 2.5, maxBufferBytes: 64 * 1024 * 1024 }
       : { preferredForwardBufferDuration: 60, minBufferForPlayback: 2.5, maxBufferBytes: 48 * 1024 * 1024 };
     if (stream.resumeSecs !== null) instance.currentTime = stream.resumeSecs;
+    // Some providers flag a subtitle track as the stream's default, which the native player would otherwise
+    // turn on by itself; captions only come on here when the CC button is pressed.
+    instance.subtitleTrack = null;
     instance.play();
   });
 
@@ -452,17 +458,23 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     });
     return () => subscription.remove();
   }, [captionsOpen]);
-  // Back with the controls showing hides them, playing or paused; with them hidden it leaves.
+  // Back with the controls showing hides them, playing or paused; with them hidden it leaves. This is the
+  // only Back handler once Playing is mounted (PlayerScreen's own only covers loading/failure, before this),
+  // so there is never a race between two components over the same press.
   useEffect(() => {
-    if (!chrome || guideOpen || captionsOpen) return;
+    if (guideOpen || captionsOpen) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      clearTimeout(hideTimer.current);
-      setAwake(false);
-      setMuted(true);
+      if (chrome) {
+        clearTimeout(hideTimer.current);
+        setAwake(false);
+        setMuted(true);
+      } else {
+        onExit();
+      }
       return true;
     });
     return () => subscription.remove();
-  }, [chrome, guideOpen, captionsOpen]);
+  }, [chrome, guideOpen, captionsOpen, onExit]);
   const guideScroll = useRef<ScrollView>(null);
   useEffect(() => guideScroll.current?.scrollTo({ y: Math.max(0, guideAt - 3) * u(GUIDE_ROW), animated: false }), [guideAt]);
   const lastToggle = useRef(0);
@@ -530,66 +542,70 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     [behindLive, openCaptions, goLive, goNext, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
   );
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
-  useTVEventHandler(
-    useCallback(
-      (event: { eventType: string; eventKeyAction?: number | undefined }) => {
-        if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
-        const key = event.eventType;
-        // While the next episode is on offer, OK plays it; any other key means the viewer is still here, so the automatic start is off.
-        if (inIntro && key === "select" && (!chrome || selected === "seek" || selected === "play")) return skipIntro();
-        if (nearEnd) {
-          // OK on the bar or with the controls hidden means "yes, the next one"; on another control it does that control's job.
-          if (key === "select" && (!chrome || selected === "seek" || selected === "play")) return goNext();
-          setAutoCancelled(true);
-        }
-        if (captionsOpen) {
-          if (key === "up" || key === "down") setCaptionAt((at) => Math.min(captionOptions.length - 1, Math.max(0, at + (key === "down" ? 1 : -1))));
-          else if (key === "select") chooseCaption(captionAt);
-          else if (key === "left") setCaptionsOpen(false);
-          return;
-        }
-        if (guideOpen) {
-          const count = guide.state === "ready" ? guide.entries.length : 0;
-          if (key === "up" || key === "down") setGuideAt((at) => Math.min(Math.max(0, count - 1), Math.max(0, at + (key === "down" ? 1 : -1))));
-          else if (key === "select" && guide.state === "ready") {
-            const entry = guide.entries[guideAt];
-            if (entry !== undefined) playEntry(entry);
-          } else if (key === "left") setGuide(undefined);
-          return;
-        }
-        if (key === "playPause") return togglePause();
-        if (key === "rewind") return step(-1);
-        if (key === "fastForward") return step(1);
-        // Live: up and down change channel, as on any TV.
-        if (zapping && (key === "up" || key === "down")) {
-          wake();
-          carriedSelection = selected;
-          return zap(key === "down" ? 1 : -1);
-        }
-        if (!chrome) {
-          // Any key brings the controls up; pausing is the play key's job.
-          setSelected(vod ? "seek" : "play");
-          return wake();
-        }
+  const handleKey = useCallback(
+    (event: { eventType: string; eventKeyAction?: number | undefined }) => {
+      if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
+      const key = event.eventType;
+      // While the next episode is on offer, OK plays it; any other key means the viewer is still here, so the automatic start is off.
+      if (inIntro && key === "select" && (!chrome || selected === "seek" || selected === "play")) return skipIntro();
+      if (nearEnd) {
+        // OK on the bar or with the controls hidden means "yes, the next one"; on another control it does that control's job.
+        if (key === "select" && (!chrome || selected === "seek" || selected === "play")) return goNext();
+        setAutoCancelled(true);
+      }
+      if (captionsOpen) {
+        if (key === "up" || key === "down") setCaptionAt((at) => Math.min(captionOptions.length - 1, Math.max(0, at + (key === "down" ? 1 : -1))));
+        else if (key === "select") chooseCaption(captionAt);
+        else if (key === "left") setCaptionsOpen(false);
+        return;
+      }
+      if (guideOpen) {
+        const count = guide.state === "ready" ? guide.entries.length : 0;
+        if (key === "up" || key === "down") setGuideAt((at) => Math.min(Math.max(0, count - 1), Math.max(0, at + (key === "down" ? 1 : -1))));
+        else if (key === "select" && guide.state === "ready") {
+          const entry = guide.entries[guideAt];
+          if (entry !== undefined) playEntry(entry);
+        } else if (key === "left") setGuide(undefined);
+        return;
+      }
+      if (key === "playPause") return togglePause();
+      if (key === "rewind") return step(-1);
+      if (key === "fastForward") return step(1);
+      // Live: up and down change channel, as on any TV.
+      if (zapping && (key === "up" || key === "down")) {
         wake();
-        const row = rows.findIndex((r) => r.includes(selected));
-        if (key === "up" || key === "down") {
-          const next = rows[Math.min(rows.length - 1, Math.max(0, row + (key === "down" ? 1 : -1)))];
-          if (next !== undefined) setSelected(next.includes("play") ? "play" : (next[0] as Control));
-        } else if (key === "left" || key === "right") {
-          if (selected === "seek") return seek(key === "right" ? 1 : -1);
-          const controls = rows[row] ?? [];
-          const at = controls.indexOf(selected);
-          const next = controls[Math.min(controls.length - 1, Math.max(0, at + (key === "right" ? 1 : -1)))];
-          if (next !== undefined) setSelected(next);
-        } else if (key === "select") {
-          press(selected);
-        }
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [captionAt, captionOptions.length, captionsOpen, chooseCaption, chrome, goNext, guide, guideAt, guideOpen, inIntro, nearEnd, playEntry, skipIntro, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
-    ),
+        carriedSelection = selected;
+        return zap(key === "down" ? 1 : -1);
+      }
+      if (!chrome) {
+        // Any key brings the controls up; pausing is the play key's job.
+        setSelected(vod ? "seek" : "play");
+        return wake();
+      }
+      wake();
+      const row = rows.findIndex((r) => r.includes(selected));
+      if (key === "up" || key === "down") {
+        const next = rows[Math.min(rows.length - 1, Math.max(0, row + (key === "down" ? 1 : -1)))];
+        if (next !== undefined) setSelected(next.includes("play") ? "play" : (next[0] as Control));
+      } else if (key === "left" || key === "right") {
+        if (selected === "seek") return seek(key === "right" ? 1 : -1);
+        const controls = rows[row] ?? [];
+        const at = controls.indexOf(selected);
+        const next = controls[Math.min(controls.length - 1, Math.max(0, at + (key === "right" ? 1 : -1)))];
+        if (next !== undefined) setSelected(next);
+      } else if (key === "select") {
+        press(selected);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [captionAt, captionOptions.length, captionsOpen, chooseCaption, chrome, goNext, guide, guideAt, guideOpen, inIntro, nearEnd, playEntry, skipIntro, press, selected, seek, step, togglePause, vod, wake, zap, zapping],
   );
+  // The listener below re-subscribes to the native remote-event emitter whenever its callback identity
+  // changes; going through a ref keeps that identity fixed so a run of key presses doesn't churn the
+  // native subscription (which briefly drops it) or risk it seeing a handler mid-swap.
+  const handleKeyRef = useRef(handleKey);
+  handleKeyRef.current = handleKey;
+  useTVEventHandler(useCallback((event: { eventType: string; eventKeyAction?: number | undefined }) => handleKeyRef.current(event), []));
 
   // Recents on first play; progress every few seconds for films and episodes. Each write also
   // nudges sync, so another device picks up "what I'm watching" within seconds, not the up-to-a-
