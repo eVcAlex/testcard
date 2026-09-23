@@ -82,10 +82,13 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
 
   if (error !== undefined) return <Failure title={item.title} message={error} onExit={onExit} />;
   if (stream === undefined) {
+    // The same black screen and spinner the player itself shows while buffering, so starting an
+    // episode reads as one continuous action instead of a separate loading page first.
     return (
-      <View style={styles.centre}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.muted}>Loading...</Text>
+      <View style={styles.player}>
+        <View style={styles.centreLayer} pointerEvents="none">
+          <ActivityIndicator size={u(64)} color={colors.foreground} />
+        </View>
       </View>
     );
   }
@@ -442,39 +445,27 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     },
     [onCatchup],
   );
+  // Back closes an open overlay, else hides the controls (playing or paused), else leaves — checked in
+  // that order on every press. This is the only Back handler once Playing is mounted (PlayerScreen's own
+  // only covers loading/failure, before this) and it subscribes exactly once for the component's whole
+  // lifetime: `chrome` flips on every auto-hide tick, and re-subscribing on each flip (as this used to)
+  // reintroduces the same kind of race that made Back sometimes skip straight past hiding to exit.
+  const backStateRef = useRef({ guideOpen, captionsOpen, chrome, onExit });
+  backStateRef.current = { guideOpen, captionsOpen, chrome, onExit };
   useEffect(() => {
-    if (!guideOpen) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      setGuide(undefined);
-      return true;
-    });
-    return () => subscription.remove();
-  }, [guideOpen]);
-  useEffect(() => {
-    if (!captionsOpen) return;
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      setCaptionsOpen(false);
-      return true;
-    });
-    return () => subscription.remove();
-  }, [captionsOpen]);
-  // Back with the controls showing hides them, playing or paused; with them hidden it leaves. This is the
-  // only Back handler once Playing is mounted (PlayerScreen's own only covers loading/failure, before this),
-  // so there is never a race between two components over the same press.
-  useEffect(() => {
-    if (guideOpen || captionsOpen) return;
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (chrome) {
+      const state = backStateRef.current;
+      if (state.guideOpen) setGuide(undefined);
+      else if (state.captionsOpen) setCaptionsOpen(false);
+      else if (state.chrome) {
         clearTimeout(hideTimer.current);
         setAwake(false);
         setMuted(true);
-      } else {
-        onExit();
-      }
+      } else state.onExit();
       return true;
     });
     return () => subscription.remove();
-  }, [chrome, guideOpen, captionsOpen, onExit]);
+  }, []);
   const guideScroll = useRef<ScrollView>(null);
   useEffect(() => guideScroll.current?.scrollTo({ y: Math.max(0, guideAt - 3) * u(GUIDE_ROW), animated: false }), [guideAt]);
   const lastToggle = useRef(0);
@@ -504,7 +495,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
 
   // The D-pad drives a highlight (`selected`) over the controls: up/down change row, left/right change
   // control (or scrub, on the bar), OK presses. With the controls hidden, any key only brings them up, so a
-  // stray press never skips. Films and episodes start on the bar, so left and right scrub straight away.
+  // stray press never skips. Playback always starts highlighted on Play/Pause, never the scrub bar.
   // Live keeps up/down for changing channel, so its way out sits at the left end of the transport row.
   // Remember the channel; once there is an earlier one, a Last key flips back to it.
   if (item.kind === "channel" && !timeshift && channelHistory.current?.id !== item.id) channelHistory = { previous: channelHistory.current, current: item };
@@ -517,7 +508,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const [selected, setSelected] = useState<Control>(() => {
     const carried = carriedSelection;
     carriedSelection = undefined;
-    return carried ?? (vod ? "seek" : "play");
+    return carried ?? "play";
   });
   const press = useCallback(
     (control: Control) => {
@@ -578,8 +569,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         return zap(key === "down" ? 1 : -1);
       }
       if (!chrome) {
-        // Any key brings the controls up; pausing is the play key's job.
-        setSelected(vod ? "seek" : "play");
+        // Any key brings the controls up, highlighted on Play/Pause; pausing is the play key's job.
+        setSelected("play");
         return wake();
       }
       wake();
@@ -809,13 +800,16 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       ) : null}
 
       {nearEnd && next !== undefined ? (
-        <View style={styles.nextCard} pointerEvents="none">
+        <Pressable focusable={false} onPress={goNext} style={styles.nextCard}>
           <Text style={styles.nextKicker}>NEXT EPISODE</Text>
           <Text style={styles.nextTitle} numberOfLines={2}>
             {`S${next.seasonNumber} E${next.episodeNumber}: ${next.name}`}
           </Text>
-          <Text style={styles.nextHint}>{finished && !autoCancelled ? `Starting in ${Math.max(0, autoIn)}. Press any key to stay.` : "Press OK to play it now"}</Text>
-        </View>
+          <View style={styles.nextButton}>
+            <NextGlyph color={INK} />
+            <Text style={styles.nextButtonLabel}>{finished && !autoCancelled ? `Play now (${Math.max(0, autoIn)})` : "Play next episode"}</Text>
+          </View>
+        </Pressable>
       ) : null}
 
       {captionsOpen ? (
@@ -978,6 +972,8 @@ const styles = styleSheet({
   nextKicker: { color: colors.accent, fontSize: 22, fontWeight: "600", letterSpacing: 2 },
   nextTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600" },
   nextHint: { color: colors.muted, fontSize: 24 },
+  nextButton: { flexDirection: "row", alignItems: "center", gap: 12, alignSelf: "flex-start", marginTop: 6, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 30, backgroundColor: colors.foreground },
+  nextButtonLabel: { color: INK, fontSize: 24, fontWeight: "600" },
   bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 96, paddingBottom: 44, paddingTop: 220, gap: 28 },
   info: { flexDirection: "row", alignItems: "center", gap: 20 },
   heading: { flexShrink: 1, color: colors.foreground, fontSize: 44, fontWeight: "600", letterSpacing: -0.5 },

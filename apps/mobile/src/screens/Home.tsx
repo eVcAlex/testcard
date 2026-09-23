@@ -116,7 +116,9 @@ export function HomeScreen({
     // Moving along a row must not ask the list to scroll again: only a change of row does.
     if (alignedRow.current === index) return;
     alignedRow.current = index;
-    listRef.current?.scrollToIndex({ index, viewPosition: 0, animated: true });
+    // viewOffset clears the top fade (styles.rowsFade): without it, the row's title lands right under
+    // that scrim and reads as cut off until a further press scrolls it fully into view.
+    listRef.current?.scrollToIndex({ index, viewPosition: 0, viewOffset: 44, animated: true });
   }, []);
 
   const renderRow = useCallback(

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BackHandler, FlatList, Text, TVFocusGuideView, View } from "react-native";
 import { Image } from "expo-image";
-import { Movie } from "iconoir-react-native";
+import { Check, Movie } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { getSeriesDetail, getSeriesSource, getUpNextEpisode, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
@@ -15,6 +15,8 @@ import { Backdrop, DetailActions, Facts, type DetailAction } from "../ui/DetailA
 import { Focusable } from "../ui/Focusable";
 import { Pill } from "../ui/Pill";
 import { episodeTitle, seriesTitle } from "../ui/titles";
+
+const INK = "#0b0e10";
 
 /** "42m" / "1h 5m" from seconds. */
 function runtime(secs: number): string {
@@ -91,15 +93,15 @@ export function SeriesDetailScreen({
 
   const seasons = detail?.seasons ?? [];
   const series = detail?.series;
-  // Open on the season with something left to watch, and on its first unwatched episode.
-  const firstUnwatched = seasons.find((season) => season.episodes.some((episode) => episode.watched !== 1)) ?? seasons[0];
-  const active = seasons.find((season) => season.id === seasonId) ?? firstUnwatched;
-  const episodes = active?.episodes ?? [];
-  const nextIndex = Math.max(0, episodes.findIndex((episode) => episode.watched !== 1));
-  const seasonLabel = (season: { name: string | null; season_number: number }) => season.name ?? `Season ${season.season_number}`;
   // The big button: carry on with what you were watching, else the first episode you have not seen.
   const upNext = useMemo(() => (loading ? undefined : getUpNextEpisode(db, seriesId)), [db, seriesId, version, loading]);
   const upNextResume = upNext?.resume ?? false;
+  // Opens on the season Resume points to, so the highlighted pill always agrees with the big button
+  // (rather than a separately computed "first unwatched" that could land on a different season).
+  const active = seasons.find((season) => season.id === seasonId) ?? seasons.find((season) => season.id === upNext?.season.id) ?? seasons[0];
+  const episodes = active?.episodes ?? [];
+  const nextIndex = Math.max(0, episodes.findIndex((episode) => episode.watched !== 1));
+  const seasonLabel = (season: { name: string | null; season_number: number }) => season.name ?? `Season ${season.season_number}`;
 
   // Episodes are a grid like the app's posters: several cards to a row, sized to fit the screen width.
   const [gridWidth, setGridWidth] = useState(0);
@@ -224,10 +226,11 @@ export function SeriesDetailScreen({
                       <>
                         <View style={[styles.thumb, focused && styles.thumbFocused, { width: cardDp(cardWidth), height: cardDp(thumbHeight) }]}>
                           {episode.image_url ? <Image source={{ uri: episode.image_url }} style={styles.thumbImage} contentFit="cover" cachePolicy="memory-disk" recyclingKey={episode.id} /> : <FilmGlyph />}
+                          {done ? <View style={styles.thumbDone} pointerEvents="none" /> : null}
                           <Text style={styles.cardNumber}>E{episode.episode_number}</Text>
                           {done ? (
                             <View style={styles.watchedBadge}>
-                              <Text style={styles.watchedMark}>{"✓"}</Text>
+                              <Check color={INK} width={18} height={18} strokeWidth={3} />
                             </View>
                           ) : null}
                           {ratio > 0 ? (
@@ -284,8 +287,10 @@ const styles = styleSheet({
   thumbFocused: { borderColor: colors.accent },
   thumbImage: { position: "absolute", left: 0, top: 0, width: "100%", height: "100%" },
   cardNumber: { position: "absolute", left: 12, top: 10, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3", color: colors.foreground, fontSize: 18, fontWeight: "600" },
-  watchedBadge: { position: "absolute", right: 12, top: 10, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "#000000b3" },
-  watchedMark: { color: colors.accent, fontSize: 18, fontWeight: "700" },
+  // A solid accent-filled badge (not just an outline) and a dimmed thumbnail so a watched episode reads
+  // at a glance, the way Netflix greys out a finished card instead of relying on a small corner mark.
+  thumbDone: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "#00000099" },
+  watchedBadge: { position: "absolute", right: 10, top: 8, width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.accent },
   progress: { height: 5, backgroundColor: "#00000080" },
   progressFill: { height: 5, backgroundColor: colors.accent },
   placeholder: { flex: 1, alignItems: "center", justifyContent: "center" },

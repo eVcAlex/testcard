@@ -43,7 +43,9 @@ export const Pill = memo(function Pill({
 
 const styles = styleSheet({
   pill: { height: PILL_HEIGHT, justifyContent: "center", paddingHorizontal: 28, borderRadius: PILL_HEIGHT / 2, borderWidth: 3, borderColor: "transparent", backgroundColor: colors.card },
-  active: { backgroundColor: colors.cardActive },
+  // A quiet outline, not a fill: a filled "active" pill read as identical to a filled "focused" one, so
+  // moving the remote's cursor over another pill looked like it had switched the selection.
+  active: { borderColor: "#ffffff66" },
   focused: { backgroundColor: colors.accent, borderColor: colors.accent },
   label: { color: colors.muted, fontSize: 24, fontWeight: "400" },
   labelActive: { color: colors.foreground, fontWeight: "500" },
