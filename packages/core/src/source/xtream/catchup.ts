@@ -1,5 +1,6 @@
 import type { Source } from "../types.js";
 import { base64Decode, type CredentialsLookup } from "./client.js";
+import { fetchResponding } from "../fetchResponding.js";
 
 /**
  * Catch-up TV (Xtream "tv_archive"): past programmes of a channel that the provider keeps for a few days,
@@ -50,7 +51,7 @@ export async function fetchCatchupProgrammes(source: Source, streamId: string, g
   url.searchParams.set("action", "get_simple_data_table");
   url.searchParams.set("stream_id", streamId);
 
-  const response = await fetch(url.toString());
+  const response = await fetchResponding(url.toString());
   if (!response.ok) return [];
   const body = (await response.json()) as { epg_listings?: readonly ListingDTO[] };
 

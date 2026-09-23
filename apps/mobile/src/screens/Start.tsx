@@ -11,7 +11,7 @@ import { fetchGuide } from "../playback/airing";
 import { getCredentials } from "../platform/secrets";
 import { useApp } from "../state/app";
 import { colors, type, styleSheet } from "../theme";
-import { Loading, homeMovie, homeSeries, movieRows, seriesPrimaryAction, seriesRows, shelfRow, useBuilt, useRefreshOnShow } from "./Catalogue";
+import { Loading, homeMovie, homeSeries, movieRows, seriesPrimaryAction, seriesRows, shelfRow, useBuilt, useRefreshOnShow, useVersionWhileShown } from "./Catalogue";
 import type { DetailAction } from "../ui/DetailActions";
 import { HomeScreen, type HeroActions, type HomeDetail, type HomeItem, type HomeRow } from "./Home";
 import { toHomeItem } from "./Live";
@@ -52,7 +52,8 @@ export function StartScreen({
   onPlayEpisode: (episodeId: string, title: string, resume: boolean, seriesId: string) => void;
   onPlayChannel: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
-  const { db, version, sync } = useApp();
+  const { db, version: latestVersion, sync } = useApp();
+  const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
   const movieShelves = useBuilt(movieRows, db, version, sourceId, "movies");

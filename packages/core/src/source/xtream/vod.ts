@@ -1,5 +1,6 @@
 import type { Category, Episode, Movie, Season, Series, Source } from "../types.js";
 import type { CredentialsLookup } from "./client.js";
+import { fetchResponding } from "../fetchResponding.js";
 
 /**
  * VOD/series methods live outside `SourceAdapter` — Xtream-only, so there's no M3U
@@ -86,7 +87,7 @@ async function call<T>(
   url.searchParams.set("action", action);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
-  const response = await fetch(url.toString());
+  const response = await fetchResponding(url.toString());
   if (!response.ok) throw new Error(`Xtream ${action} failed: HTTP ${response.status}`);
   return (await response.json()) as T;
 }

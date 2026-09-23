@@ -27,7 +27,7 @@ export function Button({
       style={[styles.button, primary ? styles.primary : styles.secondary, wide && styles.wide, disabled && styles.disabled]}
       focusedStyle={primary ? styles.primaryFocused : undefined}
     >
-      <Text style={[styles.buttonLabel, primary && styles.primaryLabel]}>{label}</Text>
+      {({ focused }) => <Text style={[styles.buttonLabel, primary && focused && styles.primaryLabel]}>{label}</Text>}
     </Focusable>
   );
 }
@@ -82,8 +82,10 @@ export function Muted({ children }: { children: string }) {
 
 const styles = styleSheet({
   button: { height: 72, paddingHorizontal: 40, alignItems: "center", justifyContent: "center", borderRadius: 36 },
-  primary: { backgroundColor: colors.foreground },
-  primaryFocused: { borderColor: colors.accent },
+  // Quiet like `secondary` at rest; only the button the remote is actually on fills bright. A permanently
+  // filled "primary" made it look selected even when a sibling button (e.g. "Sign out") had real focus.
+  primary: { backgroundColor: "#ffffff1f" },
+  primaryFocused: { backgroundColor: colors.foreground, borderColor: colors.accent },
   wide: { width: 560 },
   secondary: { backgroundColor: "#ffffff1f" },
   disabled: { opacity: 0.5 },

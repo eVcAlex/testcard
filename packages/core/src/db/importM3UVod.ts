@@ -5,6 +5,28 @@ import { remoteKeyForPlaylistItem } from "../sync/remoteKey.js";
 import type { Source } from "../source/types.js";
 import { categoryClassificationParams } from "./categoryClassification.js";
 import { parseName } from "../normalise/parseName.js";
+import { applyInSlices, yieldToEventLoop } from "./applyInSlices.js";
+
+/**
+ * Remote keys for many items, a batch of digests at a time with a macrotask between batches: one await per title
+ * held the thread (the UI's, on a TV) for seconds on a big playlist.
+ */
+async function keysFor<T extends { id: string }>(items: Iterable<T>, keyOf: (item: T) => Promise<string>): Promise<Map<string, string>> {
+  const keys = new Map<string, string>();
+  let batch: T[] = [];
+  const flush = async () => {
+    const digests = await Promise.all(batch.map(keyOf));
+    batch.forEach((item, index) => keys.set(item.id, digests[index]!));
+    batch = [];
+    await yieldToEventLoop();
+  };
+  for (const item of items) {
+    batch.push(item);
+    if (batch.length >= 500) await flush();
+  }
+  if (batch.length > 0) await flush();
+  return keys;
+}
 
 /**
  * Imports the films and episodes found in an M3U playlist into the same tables Xtream VOD uses,
@@ -83,13 +105,10 @@ export async function importM3UVod(
     }
   }
 
-  // Hashing is async, so every remote key is computed before the (synchronous) transaction.
-  const movieKeys = new Map<string, string>();
-  for (const movie of prepared.movies.values()) movieKeys.set(movie.id, await remoteKeyForPlaylistItem(playlistUrl, `movie|${movie.key}`));
-  const seriesKeys = new Map<string, string>();
-  for (const show of prepared.series.values()) seriesKeys.set(show.id, await remoteKeyForPlaylistItem(playlistUrl, `series|${show.key}`));
-  const episodeKeys = new Map<string, string>();
-  for (const episode of prepared.episodes.values()) episodeKeys.set(episode.id, await remoteKeyForPlaylistItem(playlistUrl, `episode|${episode.key}`));
+  // Hashing is async, so every remote key is computed before the (synchronous) writes.
+  const movieKeys = await keysFor(prepared.movies.values(), (movie) => remoteKeyForPlaylistItem(playlistUrl, `movie|${movie.key}`));
+  const seriesKeys = await keysFor(prepared.series.values(), (show) => remoteKeyForPlaylistItem(playlistUrl, `series|${show.key}`));
+  const episodeKeys = await keysFor(prepared.episodes.values(), (episode) => remoteKeyForPlaylistItem(playlistUrl, `episode|${episode.key}`));
 
   const categoryParams = (id: string, rawName: string) => ({
     id,
@@ -139,20 +158,26 @@ export async function importM3UVod(
       name = excluded.name, container_extension = excluded.container_extension, remote_key = excluded.remote_key
   `);
 
+  // Written in slices with the event loop let in between, like the other imports: one transaction over tens of
+  // thousands of titles froze a TV's screen for seconds. Parents go before children (categories, then titles,
+  // then seasons, then episodes), so every slice's rows have what they point at.
+  const one = () => 1;
   db.transaction(() => {
     for (const category of prepared.movieCategories.values()) upsertMovieCategory.run(categoryParams(category.id, category.rawName));
-    for (const movie of prepared.movies.values()) {
-      upsertMovie.run({ id: movie.id, sourceId: source.id, categoryId: movie.categoryId, url: movie.url, name: movie.title, poster: movie.poster, extension: movie.extension, now, remoteKey: movieKeys.get(movie.id) });
-    }
     for (const category of prepared.seriesCategories.values()) upsertSeriesCategory.run(categoryParams(category.id, category.rawName));
-    for (const show of prepared.series.values()) {
-      upsertSeries.run({ id: show.id, sourceId: source.id, categoryId: show.categoryId, providerSeriesId: show.key, name: show.title, poster: show.poster, now, remoteKey: seriesKeys.get(show.id) });
-    }
-    for (const season of prepared.seasons.values()) upsertSeason.run(season.id, season.seriesId, season.number);
-    for (const episode of prepared.episodes.values()) {
-      upsertEpisode.run({ id: episode.id, seasonId: episode.seasonId, seriesId: episode.seriesId, url: episode.url, number: episode.number, name: episode.name, extension: episode.extension, remoteKey: episodeKeys.get(episode.id) });
-    }
   })();
+  await applyInSlices(db, [...prepared.movies.values()], one, (movie) => {
+    upsertMovie.run({ id: movie.id, sourceId: source.id, categoryId: movie.categoryId, url: movie.url, name: movie.title, poster: movie.poster, extension: movie.extension, now, remoteKey: movieKeys.get(movie.id) });
+  });
+  await applyInSlices(db, [...prepared.series.values()], one, (show) => {
+    upsertSeries.run({ id: show.id, sourceId: source.id, categoryId: show.categoryId, providerSeriesId: show.key, name: show.title, poster: show.poster, now, remoteKey: seriesKeys.get(show.id) });
+  });
+  await applyInSlices(db, [...prepared.seasons.values()], one, (season) => {
+    upsertSeason.run(season.id, season.seriesId, season.number);
+  });
+  await applyInSlices(db, [...prepared.episodes.values()], one, (episode) => {
+    upsertEpisode.run({ id: episode.id, seasonId: episode.seasonId, seriesId: episode.seriesId, url: episode.url, number: episode.number, name: episode.name, extension: episode.extension, remoteKey: episodeKeys.get(episode.id) });
+  });
 
   return { movies: prepared.movies.size, series: prepared.series.size, episodes: prepared.episodes.size };
 }

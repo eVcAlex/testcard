@@ -2,6 +2,7 @@ import type { Category, ChannelPage, Source, SourceAdapter } from "../types.js";
 import { groupVariants, type RawChannelEntry } from "../../normalise/groupVariants.js";
 import { classifyEntry } from "./classifyEntry.js";
 import { parseM3U } from "./parseM3U.js";
+import { fetchResponding } from "../fetchResponding.js";
 
 /** A film found in a playlist. `url` is the direct stream URL (M3U has nothing else to identify it by). */
 export interface M3UMovieItem {
@@ -41,7 +42,9 @@ export type M3UAdapter = SourceAdapter & { loadPlaylist(source: Source): Promise
 /**
  * The M3U path is a fallback for providers `xtream/detect.ts` can't extract credentials for.
  * Unlike the Xtream adapter it must fetch and parse the *whole* playlist to get categories
- * (M3U has no "list categories" call), but streams it rather than buffering — see `parseM3U`.
+ * (M3U has no "list categories" call). The download is parsed as it streams (see `parseM3U`), never held
+ * as text, but the parsed entries are collected: a category's channels can be spread across the whole file,
+ * and grouping variants needs all of them. Raw entries are let go as each category is grouped.
  */
 export function createM3UAdapter(): M3UAdapter {
   async function loadEntries(source: Source): Promise<{
@@ -51,7 +54,7 @@ export function createM3UAdapter(): M3UAdapter {
   }> {
     if (source.kind !== "m3u") throw new Error(`createM3UAdapter used with a non-m3u source: ${source.kind}`);
 
-    const response = await fetch(source.playlistUrl);
+    const response = await fetchResponding(source.playlistUrl);
     if (!response.ok || response.body === null) {
       throw new Error(`Failed to fetch playlist: HTTP ${response.status}`);
     }
@@ -125,10 +128,12 @@ export function createM3UAdapter(): M3UAdapter {
     categories: Map<string, Category>,
     entriesByCategory: Map<string, RawChannelEntry[]>,
   ): ChannelPage[] {
-    return [...categories.values()].map((category) => ({
-      category,
-      channels: groupVariants(entriesByCategory.get(category.id) ?? [], (key) => `${source.id}:${key}`),
-    }));
+    // Each category's raw entries are let go once grouped, so the playlist is not held twice over (raw and grouped).
+    return [...categories.values()].map((category) => {
+      const channels = groupVariants(entriesByCategory.get(category.id) ?? [], (key) => `${source.id}:${key}`);
+      entriesByCategory.delete(category.id);
+      return { category, channels };
+    });
   }
 
   return {
@@ -154,7 +159,7 @@ export function createM3UAdapter(): M3UAdapter {
       if (source.kind !== "m3u") return undefined;
       // Only the `#EXTM3U` line is needed — `parseM3U` yields the header first, so read one
       // item and let breaking out of the loop cancel the rest of the download.
-      const response = await fetch(source.playlistUrl);
+      const response = await fetchResponding(source.playlistUrl);
       if (!response.ok || response.body === null) return undefined;
       for await (const item of parseM3U(response.body)) {
         return item.kind === "header" ? item.header.urlTvg : undefined;

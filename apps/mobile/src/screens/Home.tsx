@@ -1,8 +1,8 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Text, TVFocusGuideView, View } from "react-native";
+import { FlatList, Text, TVFocusGuideView, View, type CellRendererProps, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ViewProps } from "react-native";
 import { Image } from "expo-image";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { colors, styleSheet } from "../theme";
+import { colors, styleSheet, uiScale } from "../theme";
 import { DetailActions, Facts, type DetailAction } from "../ui/DetailActions";
 import { Fade } from "../ui/Fade";
 import { ChannelShelf } from "../ui/ChannelCard";
@@ -50,8 +50,14 @@ function runtime(secs: number): string {
   return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`;
 }
 
+/** The band at the top of the rows that a row scrolls up under; the focused row is lined up just below it. */
+const ROWS_BAND = 56;
+/** The same band in layout units: styleSheet() scales style numbers by uiScale, but scroll offsets are not styles. */
+const BAND_DP = Math.round(ROWS_BAND * uiScale);
 /** How long the remote must rest on a poster before the hero changes, so flicking along a row does not redraw it every step. */
-const HERO_AFTER_MS = 140;
+// Past the remote's key-repeat interval, so holding a direction along a row does not swap (and decode) the
+// hero's art on every step.
+const HERO_AFTER_MS = 240;
 /** Longer, since this one costs a request to the provider. */
 const DETAIL_AFTER_MS = 700;
 
@@ -79,7 +85,10 @@ export function HomeScreen({
     return map;
   }, [rows]);
   const first = rows[0]?.items[0];
-  const [focusedId, setFocusedId] = useState<string | undefined>(first !== undefined && rows[0] !== undefined ? `${rows[0].key}|${first.id}` : undefined);
+  // Unset until the remote rests on a poster: until then the hero follows the first row's first title, which
+  // is Continue watching once the history has synced in. Seeding it here instead would freeze the hero on
+  // whatever row happened to be first when Home mounted, before that history arrived.
+  const [focusedId, setFocusedId] = useState<string | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -112,11 +121,52 @@ export function HomeScreen({
   // The row the remote is on is lined up under the hero, so it is never left half cut off at the edge.
   const listRef = useRef<FlatList<HomeRow>>(null);
   const alignedRow = useRef(-1);
+  // Where each drawn row starts, as laid out. Rows differ in height (posters, a top 10, channel cards), so the
+  // list's own estimate for scrollToIndex lands in the wrong place and then corrects itself: two scrolls, a
+  // visible jump, on a row change. A row the remote is on has been drawn, so its measured offset is known.
+  const rowTops = useRef(new Map<number, number>());
+  const Cell = useMemo(
+    () =>
+      function Cell({ index, onLayout, onFocusCapture, style, children }: CellRendererProps<HomeRow>) {
+        return (
+          <View
+            style={style}
+            // The list's focus event type and View's differ only in the TV fork's typings; they are the same event.
+            onFocusCapture={onFocusCapture as ViewProps["onFocusCapture"]}
+            onLayout={(event: LayoutChangeEvent) => {
+              rowTops.current.set(index, event.nativeEvent.layout.y);
+              onLayout?.(event);
+            }}
+          >
+            {children}
+          </View>
+        );
+      },
+    [],
+  );
   const alignRow = useCallback((index: number) => {
     // Moving along a row must not ask the list to scroll again: only a change of row does.
     if (alignedRow.current === index) return;
     alignedRow.current = index;
-    listRef.current?.scrollToIndex({ index, viewPosition: 0, animated: true });
+    // Lined up just below the top band (styles.rowsFade), so its title is not left under that scrim.
+    const top = rowTops.current.get(index);
+    if (top !== undefined) listRef.current?.scrollToOffset({ offset: Math.max(0, top - BAND_DP), animated: true });
+    else listRef.current?.scrollToIndex({ index, viewPosition: 0, viewOffset: BAND_DP, animated: true });
+  }, []);
+
+  // Worked out once per highlighted title: a series' button reads its next episode from the database, which an
+  // unrelated re-render (a plot arriving for another title) should not repeat.
+  const actions = useMemo(() => (shown !== undefined ? heroActions(shown.item, shown.rowKey) : undefined), [heroActions, shown]);
+
+  // The band over the top of the rows is only wanted once they have scrolled: at rest it would sit over the first
+  // row's title.
+  const [scrolled, setScrolled] = useState(false);
+  const scrolledRef = useRef(false);
+  const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = event.nativeEvent.contentOffset.y > 2;
+    if (next === scrolledRef.current) return;
+    scrolledRef.current = next;
+    setScrolled(next);
   }, []);
 
   const renderRow = useCallback(
@@ -142,17 +192,25 @@ export function HomeScreen({
         shown={shown}
         plot={shown !== undefined ? (shown.item.plot !== null && shown.item.plot !== "" ? shown.item.plot : (details.get(shown.item.id)?.plot ?? null)) : null}
         durationSecs={shown !== undefined ? (shown.item.durationSecs ?? details.get(shown.item.id)?.durationSecs ?? null) : null}
-        actions={shown !== undefined ? heroActions(shown.item, shown.rowKey) : undefined}
+        actions={actions}
       />
       <TVFocusGuideView autoFocus style={styles.rows}>
-        <View style={styles.rowsFade} pointerEvents="none">
-          <Fade from="top" />
-        </View>
+        {/* Solid, with only its lower edge fading: the strip above the focused row holds the bottom of the row
+            before it, and a see-through scrim left that row's titles floating there with no posters. */}
+        {scrolled ? (
+          <View style={styles.rowsFade} pointerEvents="none">
+            <View style={styles.rowsFadeSolid} />
+            <View style={styles.rowsFadeEdge}>
+              <Fade from="top" />
+            </View>
+          </View>
+        ) : null}
         <FlatList
           ref={listRef}
           data={rows}
           keyExtractor={(row) => row.key}
           renderItem={renderRow}
+          CellRendererComponent={Cell}
           onScrollToIndexFailed={(info) => listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true })}
           // Enough rows drawn ahead that the remote always has a next row to land on; with fewer, the first Down press finds nothing yet.
           initialNumToRender={4}
@@ -161,7 +219,13 @@ export function HomeScreen({
           removeClippedSubviews={false}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
+          onScroll={onScroll}
+          scrollEventThrottle={32}
         />
+        {/* The next row's title peeks in at the bottom edge; faded out rather than sliced through. */}
+        <View style={styles.rowsBottomFade} pointerEvents="none">
+          <Fade from="bottom" />
+        </View>
       </TVFocusGuideView>
     </View>
   );
@@ -185,6 +249,11 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
         <View style={styles.art} pointerEvents="none">
           <Image source={{ uri: art }} style={styles.artImage} contentFit="cover" cachePolicy="memory-disk" transition={300} />
           <Fade from="left" />
+          {/* The picture dissolves into the page at its own foot: cut off square above the hero's fade, it left a
+              hard line and a dark strip before the rows. */}
+          <View style={styles.artFoot}>
+            <Fade from="bottom" />
+          </View>
         </View>
       ) : null}
       <View style={styles.topFade} pointerEvents="none">
@@ -253,8 +322,9 @@ const RankedRow = memo(function RankedRow({
 
 const styles = styleSheet({
   screen: { flex: 1, backgroundColor: colors.background },
-  hero: { height: 600, backgroundColor: colors.background, overflow: "hidden" },
-  art: { position: "absolute", top: 0, right: 0, width: 1180, height: 520, overflow: "hidden" },
+  hero: { height: 570, backgroundColor: colors.background, overflow: "hidden" },
+  art: { position: "absolute", top: 0, right: 0, width: 1180, height: 570, overflow: "hidden" },
+  artFoot: { position: "absolute", left: 0, right: 0, bottom: 0, height: 280 },
   artImage: { position: "absolute", left: 0, top: -270, width: 1180, height: 1770 },
   logoPanel: { position: "absolute", top: 130, right: 120, width: 440, height: 280, padding: 28, borderRadius: 24, backgroundColor: colors.raised },
   logoImage: { width: "100%", height: "100%" },
@@ -266,8 +336,11 @@ const styles = styleSheet({
   title: { color: colors.foreground, fontSize: 68, fontWeight: "600", letterSpacing: -1.5 },
   plot: { height: 72, color: "#c3c9ce", fontSize: 25, lineHeight: 36, marginTop: 2 },
   rows: { flex: 1, paddingHorizontal: 44 },
-  rowsFade: { position: "absolute", left: 0, right: 0, top: 0, height: 44, zIndex: 1 },
-  list: { paddingTop: 30, paddingBottom: 100 },
+  rowsFade: { position: "absolute", left: 0, right: 0, top: 0, height: ROWS_BAND, zIndex: 1 },
+  rowsFadeSolid: { height: ROWS_BAND - 16, backgroundColor: colors.background },
+  rowsFadeEdge: { height: 16 },
+  rowsBottomFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 72, zIndex: 1 },
+  list: { paddingTop: 20, paddingBottom: 100 },
   ranked: { gap: 16, marginBottom: 24 },
   rankedTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600", letterSpacing: -0.3, paddingLeft: 8 },
   rankedList: { gap: 4, paddingVertical: 8, paddingHorizontal: 8 },

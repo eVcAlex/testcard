@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
 import { useFonts } from "expo-font";
 import { Search } from "iconoir-react-native";
@@ -8,7 +8,8 @@ import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "./src/state/app";
 import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
-import { colors, space, type, styleSheet } from "./src/theme";
+import { colors, styleSheet } from "./src/theme";
+import { focusedNow, lastFocused } from "./src/ui/Focusable";
 import { NavTab } from "./src/ui/NavTab";
 import { SetupOverlay } from "./src/ui/SetupOverlay";
 import { SourceNames } from "./src/ui/Poster";
@@ -125,11 +126,41 @@ function Root() {
     return () => clearTimeout(timer);
   }, [exitHint]);
 
+  // The player and detail pages cover the shell (see `overlay` below), and so does the getting-ready screen while a
+  // source imports. Hiding it drops remote focus from it; on the way back, hand focus to what had it (the poster or
+  // button that opened the page, the Refresh that was pressed), or the first key press lands on whatever is first on
+  // screen instead.
+  const settingUp = setup !== null && route.name === "home";
+  const covered = route.name !== "home" || settingUp;
+  const shellFocus = useRef<typeof lastFocused.current>(null);
+  useLayoutEffect(() => {
+    if (covered) {
+      shellFocus.current = lastFocused.current;
+      return;
+    }
+    // Whatever held focus a moment ago was on the page that just closed (or in the hidden shell, which reports no
+    // blur when it is hidden): it no longer counts as having focus.
+    focusedNow.current = null;
+    const target = shellFocus.current;
+    if (target === null) return;
+    // Asked again over a moment: the shell re-reads its rows as it comes back, and a request made mid-render can
+    // be dropped. Stops once the target has focus, or once the viewer has moved it to something else.
+    const timers = [0, 120, 300, 600].map((delay) =>
+      setTimeout(() => {
+        if (focusedNow.current !== null) return;
+        target.requestTVFocus?.();
+      }, delay),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [covered]);
+
   // Signed out (or the session ended): only the sign-in screen makes sense.
   if (status.account !== "signed-in") return <SignInScreen />;
 
-  if (route.name === "play") {
-    return (
+  // The player and the detail pages cover the shell rather than replace it: the shell stays mounted underneath,
+  // so Back returns to the same scroll position and highlighted poster instead of rebuilding Home from the top.
+  const overlay: ReactNode =
+    route.name === "play" ? (
       <PlayerScreen
         key={route.item.id}
         item={route.item}
@@ -140,27 +171,22 @@ function Root() {
         onExit={() => setRoute(route.returnTo)}
         {...(route.seriesId !== undefined ? { seriesId: route.seriesId } : {})}
       />
-    );
-  }
-  if (route.name === "movie") {
-    return (
+    ) : route.name === "movie" ? (
       <MovieDetailScreen
+        key={route.id}
         movieId={route.id}
         onBack={goHome}
         onPlay={(resume) => setRoute({ name: "play", item: { kind: "movie", id: route.id, title: route.title }, resume, returnTo: route })}
       />
-    );
-  }
-  if (route.name === "series") {
-    return (
+    ) : route.name === "series" ? (
       <SeriesDetailScreen
+        key={route.id}
         seriesId={route.id}
         title={route.title}
         onBack={goHome}
         onPlayEpisode={(episodeId, episodeTitle, resume) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title: episodeTitle }, seriesId: route.id, resume, returnTo: route })}
       />
-    );
-  }
+    ) : null;
 
   const playChannel = (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) =>
     setRoute({
@@ -177,12 +203,12 @@ function Root() {
       </View>
     ) : null;
 
-  // First sync or a refresh: nothing else is drawn, so there is nothing to navigate to until it finishes.
-  if (setup !== null) return <SetupOverlay setup={setup} hint={exitHint ? "Press back again to exit" : null} />;
-
   return (
     <SourceNames.Provider value={sourceNames}>
-    <View style={styles.shell}>
+    {/* First sync or a refresh: the shell stays mounted but hidden, so there is nothing to navigate to until it
+        finishes, and afterwards every section is where it was rather than rebuilt from the top. */}
+    {settingUp ? <SetupOverlay setup={setup} hint={exitHint ? "Press back again to exit" : null} /> : overlay}
+    <View style={covered ? styles.hidden : styles.shell}>
         <TVFocusGuideView autoFocus style={styles.nav}>
           <Text style={styles.brand}>
             test<Text style={styles.brandAccent}>card</Text>
@@ -203,7 +229,7 @@ function Root() {
             "home",
             <StartScreen
               sourceId={sourceId}
-              active={section === "home"}
+              active={section === "home" && !covered}
               onOpenMovie={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
               onPlayMovie={(movie, resume) => setRoute({ name: "play", item: { kind: "movie", id: movie.id, title: movie.title }, resume, returnTo: { name: "home" } })}
               onOpenSeries={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
@@ -215,7 +241,7 @@ function Root() {
             "movies",
             <MoviesScreen
               sourceId={sourceId}
-              active={section === "movies"}
+              active={section === "movies" && !covered}
               browsing={browsing && section === "movies"}
               onBrowseDone={onBrowseDone}
               onOpen={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
@@ -226,14 +252,14 @@ function Root() {
             "series",
             <SeriesScreen
               sourceId={sourceId}
-              active={section === "series"}
+              active={section === "series" && !covered}
               browsing={browsing && section === "series"}
               onBrowseDone={onBrowseDone}
               onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
               onPlayEpisode={(episodeId, title, resume, seriesId) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title }, seriesId, resume, returnTo: { name: "home" } })}
             />,
           )}
-          {pane("live", <LiveScreen sourceId={liveSource?.id ?? null} active={section === "live"} browsing={browsing && section === "live"} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
+          {pane("live", <LiveScreen sourceId={liveSource?.id ?? null} active={section === "live" && !covered} browsing={browsing && section === "live"} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
           {pane(
             "search",
             <View style={styles.padded}>

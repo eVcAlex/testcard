@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { useFocusTracking } from "./Focusable";
 import { Image } from "expo-image";
 import { Check, InfoCircle, Play, Plus, Restart, Xmark } from "iconoir-react-native";
 import { colors, styleSheet, uiScale } from "../theme";
@@ -46,22 +47,28 @@ export function DetailActions({
 }) {
   const [hint, setHint] = useState("");
   const [playFocused, setPlayFocused] = useState(false);
+  const playTracking = useFocusTracking();
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
         <Pressable
+          ref={playTracking.ref}
           focusable
           hasTVPreferredFocus={preferred}
           onPress={primary.onPress}
           onFocus={() => {
             setPlayFocused(true);
             setHint("");
+            playTracking.focused();
           }}
-          onBlur={() => setPlayFocused(false)}
+          onBlur={() => {
+            setPlayFocused(false);
+            playTracking.blurred();
+          }}
           style={[styles.play, playFocused && styles.playFocused]}
         >
-          <PlayGlyph color={INK} />
-          <Text style={styles.playLabel}>{primary.label}</Text>
+          <PlayGlyph color={playFocused ? INK : colors.foreground} />
+          <Text style={[styles.playLabel, { color: playFocused ? INK : colors.foreground }]}>{primary.label}</Text>
           {primary.progress !== undefined && primary.progress > 0 ? (
             <View style={styles.playTrack}>
               <View style={[styles.playFill, { width: `${Math.min(100, primary.progress * 100)}%` }]} />
@@ -80,17 +87,21 @@ export function DetailActions({
 
 function IconButton({ action, onHint }: { action: DetailAction; onHint: (label: string) => void }) {
   const [focused, setFocused] = useState(false);
+  const tracking = useFocusTracking();
   return (
     <Pressable
+      ref={tracking.ref}
       focusable
       onPress={action.onPress}
       onFocus={() => {
         setFocused(true);
         onHint(action.label);
+        tracking.focused();
       }}
       onBlur={() => {
         setFocused(false);
         onHint("");
+        tracking.blurred();
       }}
       style={[styles.icon, focused && styles.iconFocused]}
     >
@@ -127,11 +138,14 @@ export function Backdrop({ uri }: { uri: string | null }) {
 const styles = styleSheet({
   wrap: { gap: 14, marginTop: 12 },
   row: { flexDirection: "row", alignItems: "center", gap: 16 },
-  play: { height: 72, flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 36, borderRadius: 36, backgroundColor: colors.foreground, borderWidth: 3, borderColor: "transparent", opacity: 0.75 },
-  playFocused: { borderColor: colors.accent, opacity: 1, transform: [{ scale: 1.04 }] },
-  playTrack: { position: "absolute", left: 40, right: 40, bottom: 7, height: 3, borderRadius: 2, backgroundColor: "#0b0e1026" },
+  // At rest this reads the same as the round icon buttons beside it (quiet, translucent) so only the
+  // remote's actual focus target ever looks "filled" — a permanently bright pill used to make Resume
+  // look selected even when focus had moved elsewhere.
+  play: { height: 72, flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 36, borderRadius: 36, backgroundColor: "#ffffff1f", borderWidth: 3, borderColor: "transparent" },
+  playFocused: { backgroundColor: colors.foreground, borderColor: colors.accent, transform: [{ scale: 1.04 }] },
+  playTrack: { position: "absolute", left: 40, right: 40, bottom: 7, height: 3, borderRadius: 2, backgroundColor: "#ffffff33" },
   playFill: { height: 3, borderRadius: 2, backgroundColor: colors.accent },
-  playLabel: { color: INK, fontSize: 26, fontWeight: "600" },
+  playLabel: { fontSize: 26, fontWeight: "600" },
   icon: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: "#ffffff1f" },
   iconFocused: { backgroundColor: colors.foreground, transform: [{ scale: 1.06 }] },
   facts: { flexDirection: "row", gap: 12 },

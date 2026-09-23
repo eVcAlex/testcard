@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { BackHandler, FlatList, Text, TVFocusGuideView, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, BackHandler, Easing, FlatList, Text, TVFocusGuideView, View } from "react-native";
 import { Image } from "expo-image";
-import { Movie } from "iconoir-react-native";
+import { Check, Movie } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { getSeriesDetail, getSeriesSource, getUpNextEpisode, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
@@ -15,6 +15,8 @@ import { Backdrop, DetailActions, Facts, type DetailAction } from "../ui/DetailA
 import { Focusable } from "../ui/Focusable";
 import { Pill } from "../ui/Pill";
 import { episodeTitle, seriesTitle } from "../ui/titles";
+
+const INK = "#0b0e10";
 
 /** "42m" / "1h 5m" from seconds. */
 function runtime(secs: number): string {
@@ -37,6 +39,55 @@ function FilmGlyph() {
     <View style={styles.placeholder}>
       <Movie color="#ffffff40" width={44} height={44} strokeWidth={1.5} />
     </View>
+  );
+}
+
+/** A slow native pulse for the loading outlines, so it keeps going while the episode list is being written. */
+function usePulse() {
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.timing(pulse, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.quad), useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  return pulse.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.45, 1, 0.45] });
+}
+
+/** Where the buttons will be, while the episodes (which the big button depends on) load. */
+function ActionsSkeleton() {
+  const opacity = usePulse();
+  return (
+    <Animated.View style={[styles.skeletonActions, { opacity }]} pointerEvents="none">
+      <View style={styles.skeletonPrimary} />
+      {[0, 1, 2].map((key) => (
+        <View key={key} style={styles.skeletonCircle} />
+      ))}
+    </Animated.View>
+  );
+}
+
+/** The shape of the season pills and episode cards, sized like the real grid, while the episode list is fetched. */
+function EpisodesSkeleton({ columns, cardWidth, thumbHeight, onWidth }: { columns: number; cardWidth: number; thumbHeight: number; onWidth: (width: number) => void }) {
+  const opacity = usePulse();
+  const dp = (n: number) => Math.round(n * uiScale);
+  return (
+    <Animated.View style={[styles.body, { opacity }]} pointerEvents="none" onLayout={(event) => onWidth(event.nativeEvent.layout.width)}>
+      <View style={styles.skeletonPills}>
+        {[150, 150, 150].map((width, key) => (
+          <View key={key} style={[styles.skeletonPill, { width: dp(width) }]} />
+        ))}
+      </View>
+      <View style={[styles.skeletonGrid, { columnGap: dp(28) }]}>
+        {Array.from({ length: columns * 2 }, (_, key) => (
+          // Rounded down: rounding each card up can push the last one of a row onto the next.
+          <View key={key} style={[styles.card, { width: Math.floor(cardWidth * uiScale) }]}>
+            <View style={[styles.skeletonThumb, { height: dp(thumbHeight) }]} />
+            <View style={[styles.skeletonLine, { width: dp(cardWidth * 0.7) }]} />
+            <View style={[styles.skeletonLine, styles.skeletonLineShort, { width: dp(cardWidth * 0.35) }]} />
+          </View>
+        ))}
+      </View>
+    </Animated.View>
   );
 }
 
@@ -83,23 +134,26 @@ export function SeriesDetailScreen({
     };
   }, [db, seriesId]);
 
+  // Read straight away, not after the episode fetch: the poster, plot and rating are already stored, so the page
+  // shows them while the episodes load (and re-reads once they have).
   const detail = useMemo(() => {
     void version;
     void tick;
-    return loading ? undefined : getSeriesDetail(db, seriesId);
+    void loading;
+    return getSeriesDetail(db, seriesId);
   }, [db, seriesId, version, tick, loading]);
 
   const seasons = detail?.seasons ?? [];
   const series = detail?.series;
-  // Open on the season with something left to watch, and on its first unwatched episode.
-  const firstUnwatched = seasons.find((season) => season.episodes.some((episode) => episode.watched !== 1)) ?? seasons[0];
-  const active = seasons.find((season) => season.id === seasonId) ?? firstUnwatched;
-  const episodes = active?.episodes ?? [];
-  const nextIndex = Math.max(0, episodes.findIndex((episode) => episode.watched !== 1));
-  const seasonLabel = (season: { name: string | null; season_number: number }) => season.name ?? `Season ${season.season_number}`;
   // The big button: carry on with what you were watching, else the first episode you have not seen.
   const upNext = useMemo(() => (loading ? undefined : getUpNextEpisode(db, seriesId)), [db, seriesId, version, loading]);
   const upNextResume = upNext?.resume ?? false;
+  // Opens on the season Resume points to, so the highlighted pill always agrees with the big button
+  // (rather than a separately computed "first unwatched" that could land on a different season).
+  const active = seasons.find((season) => season.id === seasonId) ?? seasons.find((season) => season.id === upNext?.season.id) ?? seasons[0];
+  const episodes = active?.episodes ?? [];
+  const nextIndex = Math.max(0, episodes.findIndex((episode) => episode.watched !== 1));
+  const seasonLabel = (season: { name: string | null; season_number: number }) => season.name ?? `Season ${season.season_number}`;
 
   // Episodes are a grid like the app's posters: several cards to a row, sized to fit the screen width.
   const [gridWidth, setGridWidth] = useState(0);
@@ -112,9 +166,29 @@ export function SeriesDetailScreen({
   const ROW = thumbHeight + 108;
   const cardDp = (n: number) => Math.round(n * uiScale);
 
+  // The row the remote is on is brought to the top of the grid, so the row above is not left cut through under the
+  // season pills (its "Resume from" line hanging there with no card).
+  const gridRef = useRef<FlatList<(typeof episodes)[number]>>(null);
+  const gridRow = useRef(-1);
+  // A row's real height (a card plus the gap below it), measured from the first card: the estimate (ROW) drifts
+  // a few pixels a row, which adds up down a long season.
+  const measuredRow = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    gridRow.current = -1;
+  }, [active?.id, columns]);
+  const alignEpisodeRow = (index: number) => {
+    const row = Math.floor(index / columns);
+    if (gridRow.current === row) return;
+    gridRow.current = row;
+    gridRef.current?.scrollToOffset({ offset: row * (measuredRow.current ?? cardDp(ROW)), animated: true });
+  };
+
   return (
     <View style={styles.screen}>
       <Backdrop uri={series?.poster_url ?? null} />
+      <View style={styles.back}>
+        <BackArrow onPress={onBack} />
+      </View>
       <View style={styles.head}>
         <View style={styles.poster}>
           {series?.poster_url !== null && series?.poster_url !== undefined && series?.poster_url !== "" ? <Image source={{ uri: series.poster_url }} style={styles.posterImage} contentFit="cover" cachePolicy="memory-disk" /> : null}
@@ -175,16 +249,15 @@ export function SeriesDetailScreen({
                 : []),
             ]}
           />
+        ) : loading && error === undefined ? (
+          <ActionsSkeleton />
         ) : null}
-        </View>
-        <View style={styles.back}>
-          <BackArrow onPress={onBack} />
         </View>
       </View>
       {error !== undefined ? (
         <Text style={styles.error}>{error}</Text>
       ) : loading ? (
-        <Muted>Loading episodes...</Muted>
+        <EpisodesSkeleton columns={columns} cardWidth={cardWidth} thumbHeight={thumbHeight} onWidth={setGridWidth} />
       ) : seasons.length === 0 ? (
         <Muted>This series has no episodes.</Muted>
       ) : (
@@ -203,6 +276,7 @@ export function SeriesDetailScreen({
           ) : null}
           <TVFocusGuideView autoFocus style={styles.episodes}>
             <FlatList
+              ref={gridRef}
               key={`${active?.id}-${columns}`}
               data={episodes}
               keyExtractor={(episode) => episode.id}
@@ -213,21 +287,25 @@ export function SeriesDetailScreen({
               onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}
               initialScrollIndex={gridDesign > 0 && nextIndex > columns * 2 ? Math.max(0, Math.floor(nextIndex / columns) - 1) : 0}
               getItemLayout={(_, index) => ({ length: cardDp(ROW), offset: Math.floor(index / columns) * cardDp(ROW), index })}
-              renderItem={({ item: episode }) => {
+              renderItem={({ item: episode, index }) => {
                 const started = episode.position_secs !== null && shouldPromptResume(episode.position_secs, episode.duration_secs);
                 const done = episode.watched === 1;
                 const ratio = started && episode.position_secs !== null && episode.duration_secs !== null && episode.duration_secs > 0 ? Math.min(1, episode.position_secs / episode.duration_secs) : 0;
                 const duration = episode.duration_secs !== null && episode.duration_secs > 0 ? runtime(episode.duration_secs) : "";
                 return (
-                  <Focusable preferred={false} onPress={() => onPlayEpisode(episode.id, `${seriesTitle(title)} · ${episodeTitle(episode.name)}`, started)} style={styles.card} focusedStyle={styles.cardFocused}>
+                  <Focusable
+                    preferred={false}
+                    onLayout={index === 0 ? (event) => (measuredRow.current = event.nativeEvent.layout.height + cardDp(30)) : undefined}
+                    onFocus={() => alignEpisodeRow(index)} onPress={() => onPlayEpisode(episode.id, `${seriesTitle(title)} · ${episodeTitle(episode.name)}`, started)} style={styles.card} focusedStyle={styles.cardFocused}>
                     {({ focused }) => (
                       <>
                         <View style={[styles.thumb, focused && styles.thumbFocused, { width: cardDp(cardWidth), height: cardDp(thumbHeight) }]}>
                           {episode.image_url ? <Image source={{ uri: episode.image_url }} style={styles.thumbImage} contentFit="cover" cachePolicy="memory-disk" recyclingKey={episode.id} /> : <FilmGlyph />}
+                          {done ? <View style={styles.thumbDone} pointerEvents="none" /> : null}
                           <Text style={styles.cardNumber}>E{episode.episode_number}</Text>
                           {done ? (
                             <View style={styles.watchedBadge}>
-                              <Text style={styles.watchedMark}>{"✓"}</Text>
+                              <Check color={INK} width={18} height={18} strokeWidth={3} />
                             </View>
                           ) : null}
                           {ratio > 0 ? (
@@ -267,7 +345,8 @@ function factsOf(detail: { series: { name: string; rating: string | number | nul
 const styles = styleSheet({
   screen: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 120, paddingTop: 44, gap: 34 },
   head: { flexDirection: "row", alignItems: "center", gap: 56, paddingTop: 10 },
-  back: { position: "absolute", left: 0, top: 0, elevation: 40, zIndex: 2 },
+  // In the page's left margin, clear of the poster (which starts at the 120 padding), level with its top edge.
+  back: { position: "absolute", left: 24, top: 44, elevation: 40, zIndex: 2 },
   poster: { width: 360, aspectRatio: 2 / 3, borderRadius: 20, backgroundColor: colors.raised, overflow: "hidden", elevation: 24 },
   posterImage: { width: "100%", height: "100%" },
   info: { flex: 1, gap: 18 },
@@ -284,8 +363,10 @@ const styles = styleSheet({
   thumbFocused: { borderColor: colors.accent },
   thumbImage: { position: "absolute", left: 0, top: 0, width: "100%", height: "100%" },
   cardNumber: { position: "absolute", left: 12, top: 10, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3", color: colors.foreground, fontSize: 18, fontWeight: "600" },
-  watchedBadge: { position: "absolute", right: 12, top: 10, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "#000000b3" },
-  watchedMark: { color: colors.accent, fontSize: 18, fontWeight: "700" },
+  // A solid accent-filled badge (not just an outline) and a dimmed thumbnail so a watched episode reads
+  // at a glance, the way Netflix greys out a finished card instead of relying on a small corner mark.
+  thumbDone: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "#00000099" },
+  watchedBadge: { position: "absolute", right: 10, top: 8, width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.accent },
   progress: { height: 5, backgroundColor: "#00000080" },
   progressFill: { height: 5, backgroundColor: colors.accent },
   placeholder: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -296,4 +377,13 @@ const styles = styleSheet({
   metaResume: { color: colors.accent },
   metaDone: { color: colors.faint },
   error: { color: colors.fault, fontSize: type.body },
+  skeletonActions: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 6 },
+  skeletonPrimary: { width: 250, height: 68, borderRadius: 34, backgroundColor: colors.cardActive },
+  skeletonCircle: { width: 68, height: 68, borderRadius: 34, backgroundColor: colors.card },
+  skeletonPills: { flexDirection: "row", gap: 14, paddingVertical: 4 },
+  skeletonPill: { height: 52, borderRadius: 26, backgroundColor: colors.card },
+  skeletonGrid: { flexDirection: "row", flexWrap: "wrap", rowGap: 30 },
+  skeletonThumb: { borderRadius: 12, backgroundColor: colors.card },
+  skeletonLine: { height: 22, borderRadius: 6, marginTop: 6, backgroundColor: colors.cardActive },
+  skeletonLineShort: { height: 18, marginTop: 2, backgroundColor: colors.card },
 });

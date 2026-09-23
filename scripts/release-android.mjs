@@ -16,8 +16,8 @@ console.log(`Using run ${runId}`);
 
 const dir = mkdtempSync(join(tmpdir(), "testcard-release-"));
 run("gh", ["run", "download", runId, "-D", dir]);
-// A run can build one target or both; publish whichever it built.
-const targets = ["firetv", "phone"].filter((target) => existsSync(join(dir, `testcard-${target}`, `testcard-${target}.apk`)));
+// Only the Fire TV build is published (phones are not supported for now).
+const targets = ["firetv"].filter((target) => existsSync(join(dir, `testcard-${target}`, `testcard-${target}.apk`)));
 if (targets.length === 0) throw new Error("That run built no APK.");
 const build = JSON.parse(readFileSync(join(dir, `testcard-${targets[0]}`, "build.json"), "utf8"));
 

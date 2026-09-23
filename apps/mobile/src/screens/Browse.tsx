@@ -266,16 +266,18 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
   // The row the remote is on is brought to a steady place in the frame, so it is never left half cut off at an edge.
   const gridRef = useRef<FlatList<BrowseItem | undefined>>(null);
   const gridRow = useRef(-1);
+  // Looked up on every key press in the grid, so a map rather than a scan of up to MAX_ITEMS titles each time.
+  const indexOf = useMemo(() => new Map(items.map((entry, index) => [entry.id, index])), [items]);
   const alignGridRow = useCallback(
     (item: BrowseItem) => {
-      const index = items.findIndex((entry) => entry.id === item.id);
-      if (index < 0) return;
+      const index = indexOf.get(item.id);
+      if (index === undefined) return;
       const row = Math.floor(index / columns);
       if (gridRow.current === row) return;
       gridRow.current = row;
       gridRef.current?.scrollToIndex({ index: row, viewPosition: 0.3, animated: true });
     },
-    [columns, items],
+    [columns, indexOf],
   );
   useEffect(() => {
     gridRow.current = -1;

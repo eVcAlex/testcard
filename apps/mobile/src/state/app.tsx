@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { AppState as AppLifecycle } from "react-native";
 import type Database from "better-sqlite3";
 import { SyncController, type SyncStatus } from "@testcard/core/src/sync/syncController.js";
 import { removeSourceRows } from "@testcard/core/src/sync/sourceRemoval.js";
@@ -7,7 +8,13 @@ import { createM3UAdapter } from "@testcard/core/src/source/m3u/adapter.js";
 import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js";
 import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
-import { describeSetup, type ImportProgress, type ImportStage, type SetupProgress } from "./setup";
+import { describeSetup, type ContentKind, type ImportProgress, type ImportStage, type SetupProgress } from "./setup";
+
+/** Something a source's last import could not load: its movies, its series, or (a thrown import) all of it. */
+export interface SourceFailure {
+  readonly part: "movies" | "series" | "all";
+  readonly message: string;
+}
 
 export interface SourceSummary {
   readonly id: string;
@@ -18,7 +25,8 @@ export interface SourceSummary {
   readonly movies: number;
   readonly series: number;
   readonly refreshing: boolean;
-  readonly error: string | undefined;
+  /** Empty unless the last import failed, in part or whole. */
+  readonly failures: readonly SourceFailure[];
 }
 
 interface AppState {
@@ -35,6 +43,8 @@ interface AppState {
   removeSource(sourceId: string): Promise<void>;
   updateStatus(): void;
 }
+
+const noFailures: readonly SourceFailure[] = [];
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
@@ -59,45 +69,74 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return entry === undefined || entry.at === at ? current : new Map(current).set(sourceId, { ...entry, at });
     });
   }, []);
-  const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
+  const [errors, setErrors] = useState<Readonly<Record<string, readonly SourceFailure[]>>>({});
   const bump = useCallback(() => setVersion((current) => current + 1), []);
 
-  // A second import of a source that is already importing would interleave with the first.
-  const inFlight = useRef(new Set<string>());
+  // A second import of a source that is already importing would interleave with the first; a removal waits for it.
+  const inFlight = useRef(new Map<string, Promise<void>>());
 
-  const refreshSource = useCallback(
+  const importSource = useCallback(
     async (sourceId: string) => {
-      if (inFlight.current.has(sourceId)) return;
       const row = db
         .prepare(
           `SELECT id, kind, name, base_url AS baseUrl, playlist_url AS playlistUrl, epg_url AS epgUrl,
-                  include_live AS includeLive, include_movies AS includeMovies, include_series AS includeSeries
+                  include_live AS includeLive, include_movies AS includeMovies, include_series AS includeSeries,
+                  last_refreshed_at AS lastRefreshedAt,
+                  (SELECT COUNT(*) FROM channels WHERE source_id = sources.id) AS channelCount,
+                  (SELECT COUNT(*) FROM movies WHERE source_id = sources.id) AS movieCount,
+                  (SELECT COUNT(*) FROM series WHERE source_id = sources.id) AS seriesCount
            FROM sources WHERE id = ?`,
         )
-        .get(sourceId) as unknown as CatalogueSource | undefined;
+        .get(sourceId) as unknown as
+        | (CatalogueSource & { lastRefreshedAt: number | null; channelCount: number; movieCount: number; seriesCount: number })
+        | undefined;
       if (row === undefined) return;
-      inFlight.current.add(sourceId);
       const wants = { live: row.includeLive !== 0, movies: row.includeMovies !== 0, series: row.includeSeries !== 0 };
-      setProgress((current) => new Map(current).set(sourceId, { name: row.name, wants, at: wants.live ? "live" : wants.movies ? "movies" : wants.series ? "series" : "saving" }));
+      // Described by what it held last time: a playlist set to import films that has never had any is live-only.
+      // A playlist's first load cannot know; an Xtream source's lists are fetched separately, so its settings say.
+      const held: Record<ContentKind, number> = { live: row.channelCount, movies: row.movieCount, series: row.seriesCount };
+      const kinds = (["live", "movies", "series"] as const).filter((kind) => wants[kind]);
+      const shows = row.lastRefreshedAt !== null ? kinds.filter((kind) => held[kind] > 0) : row.kind === "xtream" ? kinds : null;
+      setProgress((current) =>
+        new Map(current).set(sourceId, { name: row.name, wants, shows, at: wants.live ? "live" : wants.movies ? "movies" : wants.series ? "series" : "saving" }),
+      );
       setRefreshing((current) => new Set(current).add(sourceId));
       setErrors(({ [sourceId]: _cleared, ...rest }) => rest);
+      // Movies and series are best-effort (the import carries on without them), so their failures arrive
+      // as events rather than a throw. Kept on the row, or a VOD-only source just reads "Nothing loaded yet".
+      const failed = (part: SourceFailure["part"], message: string) => {
+        console.warn(`Import of ${row.name} failed (${part}): ${message}`);
+        setErrors((current) => ({ ...current, [sourceId]: [...(current[sourceId] ?? []), { part, message }] }));
+      };
       try {
         await importCatalogue(db, row, adapters(), {
           live: ({ phase }) => {
             if (phase === "done") stage(sourceId, wants.movies ? "movies" : wants.series ? "series" : "saving");
           },
-          vod: ({ phase }) => stage(sourceId, phase === "fetching" ? "movies" : wants.series ? "series" : "saving"),
-          series: ({ phase }) => stage(sourceId, phase === "fetching" ? "series" : "saving"),
+          vod: (event) => {
+            if (event.phase === "error") failed("movies", event.message ?? "The provider sent nothing back.");
+            stage(sourceId, event.phase === "fetching" ? "movies" : wants.series ? "series" : "saving");
+          },
+          series: (event) => {
+            if (event.phase === "error") failed("series", event.message ?? "The provider sent nothing back.");
+            stage(sourceId, event.phase === "fetching" ? "series" : "saving");
+          },
         });
+        // Favourites, recents and progress that point at titles not imported yet were held back by the sync
+        // until they exist. Now they do: sync straight away, rather than on the next periodic tick a minute on,
+        // so the app opens with its history in place.
+        stage(sourceId, "history");
+        await syncRef.current?.triggerNow().catch(() => undefined);
       } catch (error) {
         const message = error instanceof Error ? error.message : "The import failed.";
-        setErrors((current) => ({ ...current, [sourceId]: message }));
+        console.warn(`Import of ${row.name} failed: ${message}`);
+        setErrors((current) => ({ ...current, [sourceId]: [{ part: "all", message }] }));
       } finally {
-        inFlight.current.delete(sourceId);
+        // Kept, ticked, until every source importing alongside it is done; then the setup screen goes.
         setProgress((current) => {
-          const next = new Map(current);
-          next.delete(sourceId);
-          return next;
+          const entry = current.get(sourceId);
+          const next = entry === undefined ? new Map(current) : new Map(current).set(sourceId, { ...entry, at: "done" });
+          return [...next.values()].every((other) => other.at === "done") ? new Map() : next;
         });
         setRefreshing((current) => {
           const next = new Set(current);
@@ -108,6 +147,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
     [db, bump, stage],
+  );
+  const refreshSource = useCallback(
+    (sourceId: string) => {
+      const running = inFlight.current.get(sourceId);
+      if (running !== undefined) return running;
+      const run = importSource(sourceId).finally(() => inFlight.current.delete(sourceId));
+      inFlight.current.set(sourceId, run);
+      return run;
+    },
+    [importSource],
   );
 
   const syncRef = useRef<SyncController | undefined>(undefined);
@@ -121,6 +170,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const removeSource = useCallback(
     async (sourceId: string) => {
+      // Removed mid-import, the import's next write would hit a source that is gone and report a failure.
+      await inFlight.current.get(sourceId)?.catch(() => undefined);
       removeSourceRows(db, sourceId, { recordTombstone: true });
       await deleteCredentials(sourceId).catch(() => undefined);
       sync.notifyLocalChange();
@@ -153,6 +204,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [sync, bump]);
   useEffect(() => () => sync.dispose(), [sync]);
+  // Android holds JS timers while the app is in the background, so the periodic sync can be well overdue when the
+  // viewer comes back: catch up at once, so what they watched on another device is there when they look.
+  useEffect(() => {
+    const subscription = AppLifecycle.addEventListener("change", (state) => {
+      if (state === "active") void sync.triggerNow().then(updateStatus, () => undefined);
+    });
+    return () => subscription.remove();
+  }, [sync, updateStatus]);
 
   const sources = useMemo<SourceSummary[]>(() => {
     void version;
@@ -167,12 +226,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       movies: count("movies", row.id),
       series: count("series", row.id),
       refreshing: refreshing.has(row.id),
-      error: errors[row.id],
+      failures: errors[row.id] ?? noFailures,
     }));
   }, [db, version, refreshing, errors]);
 
-  // A signed-in device with no sources has not had its first sync yet, unless that sync already failed or finished.
-  const firstSync = status.account === "signed-in" && sources.length === 0 && status.lastSyncedAt === undefined && status.lastError === undefined;
+  // The app waits while a signed-in device with no sources is waiting for its first sync, and while anything is
+  // importing: the sync only brings the source rows down, and importing their channels, movies and series (the
+  // slow part) follows, on the first load and on every Refresh.
+  const signedIn = status.account === "signed-in";
+  const waitingForSources = sources.length === 0 && status.lastSyncedAt === undefined && status.lastError === undefined;
+  const firstSync = signedIn && (waitingForSources || progress.size > 0);
   const setup = useMemo(() => describeSetup({ firstSync, imports: [...progress.values()] }), [firstSync, progress]);
 
   const value = useMemo<AppState>(

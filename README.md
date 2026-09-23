@@ -67,7 +67,7 @@ app and your sources, favourites and progress arrive; sources are added on the d
 To get it on a Fire Stick: in GitHub, open the repo's **Actions** tab, run **Android APK**, then
 download `testcard-firetv` from the finished run. Install it with Downloader (enter the file's
 address) or `adb install testcard-firetv.apk`; on the stick, allow "Install unknown apps" first.
-`testcard-phone` is the same app for an Android phone.
+Phones are not supported for now: the layout is drawn for a TV.
 
 Working on it locally needs no Android SDK for the checks that matter here:
 

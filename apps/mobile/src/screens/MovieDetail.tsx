@@ -139,5 +139,5 @@ const styles = styleSheet({
   info: { flex: 1, gap: 24 },
   title: { color: colors.foreground, fontSize: 72, fontWeight: "600", letterSpacing: -1.5 },
   plot: { color: colors.muted, fontSize: 28, lineHeight: 42, maxWidth: 1000 },
-  back: { position: "absolute", left: 60, top: 44 },
+  back: { position: "absolute", left: 24, top: 44 },
 });

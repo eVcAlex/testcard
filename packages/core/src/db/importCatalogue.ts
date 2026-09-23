@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import type { M3UAdapter, M3UPlaylist } from "../source/m3u/adapter.js";
+import type { M3UAdapter, M3UPlaylist, M3UVodCatalog } from "../source/m3u/adapter.js";
 import type { CredentialsLookup } from "../source/xtream/client.js";
 import type { Source, SourceAdapter } from "../source/types.js";
 import { importM3UVod, removeVodFromLive } from "./importM3UVod.js";
@@ -51,21 +51,26 @@ export async function importCatalogue(
   deps: CatalogueDeps,
   events: CatalogueEvents = {},
 ): Promise<CatalogueResult> {
-  let playlist: M3UPlaylist | undefined;
+  // Only the playlist's films and episodes are kept past the live import: its channel pages (most of a big
+  // playlist) are let go once written, rather than held through the VOD import.
+  let vod: M3UVodCatalog | undefined;
   let live: typeof NO_LIVE;
   if (row.includeLive !== 0) events.live?.({ phase: "fetching" });
 
   if (row.kind === "m3u") {
-    const loaded = await deps.m3uAdapter.loadPlaylist(row);
-    playlist = loaded;
+    let loaded: M3UPlaylist | undefined = await deps.m3uAdapter.loadPlaylist(row);
+    vod = loaded.vod;
+    let livePages: M3UPlaylist["livePages"] | undefined = loaded.livePages;
+    loaded = undefined;
     live =
       row.includeLive === 0
         ? NO_LIVE
         : await importSource(db, row, {
             async *importAll() {
-              yield* loaded.livePages;
+              yield* livePages ?? [];
             },
           });
+    livePages = undefined;
   } else {
     live = row.includeLive === 0 ? NO_LIVE : await importSource(db, row, deps.xtreamAdapter);
   }
@@ -74,13 +79,13 @@ export async function importCatalogue(
   let movies: number | undefined;
   let series: number | undefined;
 
-  if (playlist !== undefined) {
+  if (vod !== undefined) {
     events.vod?.({ phase: "fetching" });
-    const imported = await importM3UVod(db, row, playlist.vod, {
+    removeVodFromLive(db, row.id, vod);
+    const imported = await importM3UVod(db, row, vod, {
       movies: row.includeMovies !== 0,
       series: row.includeSeries !== 0,
     });
-    removeVodFromLive(db, row.id, playlist.vod);
     if (row.includeMovies !== 0) movies = imported.movies;
     if (row.includeSeries !== 0) series = imported.series;
   }
@@ -103,6 +108,11 @@ export async function importCatalogue(
     } catch (error) {
       events.series?.({ phase: "error", message: error instanceof Error ? error.message : "The series catalog could not be updated." });
     }
+  }
+
+  // The live import stamps the refresh time; a movies/series-only source has none, so stamp it once either landed.
+  if (row.includeLive === 0 && (movies !== undefined || series !== undefined)) {
+    db.prepare(`UPDATE sources SET last_refreshed_at = ? WHERE id = ?`).run(Date.now(), row.id);
   }
 
   return { ...live, ...(movies !== undefined ? { movies } : {}), ...(series !== undefined ? { series } : {}) };

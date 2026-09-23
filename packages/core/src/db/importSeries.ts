@@ -60,10 +60,12 @@ export async function importSeries(
 
   const providerHost = source.kind === "xtream" ? source.baseUrl : "";
   const remoteKeys = new Map<string, string>();
+  // A page's digests at once rather than one await per title: tens of thousands in a row held the thread (the UI's,
+  // on a TV) for seconds. A macrotask between pages lets the screen draw.
   for (const page of pages) {
-    for (const series of page.series) {
-      remoteKeys.set(series.id, await remoteKeyFor(providerHost, series.providerSeriesId));
-    }
+    const keys = await Promise.all(page.series.map((item) => remoteKeyFor(providerHost, item.providerSeriesId)));
+    page.series.forEach((item, index) => remoteKeys.set(item.id, keys[index]!));
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
   let seriesCount = 0;

@@ -43,11 +43,12 @@ export function SetupOverlay({ setup, hint }: { setup: SetupProgress; hint: stri
         </View>
         <View style={styles.steps}>
           {setup.steps.map((step) => (
-            <View key={step.label} style={styles.step}>
+            <View key={step.key} style={styles.step}>
               <View style={[styles.ring, step.state === "done" && styles.ringDone, step.state === "active" && styles.ringActive]}>
                 {step.state === "done" ? <Text style={styles.tick}>{"✓"}</Text> : null}
               </View>
               <Text style={[styles.stepLabel, step.state === "waiting" && styles.stepWaiting, step.state === "done" && styles.stepDone]}>{step.label}</Text>
+              {step.note !== undefined ? <Text style={styles.stepNote}>{step.note}</Text> : null}
             </View>
           ))}
         </View>
@@ -83,6 +84,7 @@ const styles = styleSheet({
   stepLabel: { color: colors.foreground, fontSize: 32 },
   stepWaiting: { color: colors.faint },
   stepDone: { color: colors.foreground },
+  stepNote: { color: colors.faint, fontSize: 24 },
   note: { color: colors.faint, fontSize: 24, marginTop: 24 },
   toast: { position: "absolute", left: 0, right: 0, bottom: 60, alignItems: "center" },
   toastText: { color: colors.foreground, fontSize: 26, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 999, backgroundColor: "#000000d9", overflow: "hidden" },
