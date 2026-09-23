@@ -7,16 +7,17 @@
 //   pnpm android:log        show the app's log (JS errors, native crashes) from the device
 // Native code is built by CI, not here: pnpm's deep node_modules paths break CMake on Windows (250 chars).
 // The device can be the emulator or a Fire Stick over the network (adb connect <ip>).
-// The SDK lives in C:/Android; override with ANDROID_HOME / JAVA_HOME.
+// The SDK lives in C:/Android on Windows, and where Android Studio puts it on a Mac; override with ANDROID_HOME / JAVA_HOME.
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { homedir, tmpdir } from "node:os";
+import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(fileURLToPath(import.meta.url), "..", "..");
-const sdk = process.env.ANDROID_HOME ?? "C:/Android/sdk";
-const jdk = process.env.JAVA_HOME ?? "C:/Android/jdk17";
+const mac = process.platform === "darwin";
+const sdk = process.env.ANDROID_HOME ?? (mac ? join(homedir(), "Library/Android/sdk") : "C:/Android/sdk");
+const jdk = process.env.JAVA_HOME ?? (mac ? "/Applications/Android Studio.app/Contents/jbr/Contents/Home" : "C:/Android/jdk17");
 // `pnpm android:stick <ip>` remembers a Fire Stick here so every command below targets it, not the emulator.
 const deviceFile = join(root, ".android-device");
 const device = existsSync(deviceFile) ? readFileSync(deviceFile, "utf8").trim() : "";
@@ -26,7 +27,7 @@ const env = {
   ANDROID_HOME: sdk,
   ANDROID_SDK_ROOT: sdk,
   JAVA_HOME: jdk,
-  PATH: [join(jdk, "bin"), join(sdk, "platform-tools"), join(sdk, "emulator"), process.env.PATH].join(";"),
+  PATH: [join(jdk, "bin"), join(sdk, "platform-tools"), join(sdk, "emulator"), process.env.PATH].join(delimiter),
 };
 
 const run = (command, args, options = {}) =>
