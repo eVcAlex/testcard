@@ -197,7 +197,7 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
         <Text style={styles.kicker} numberOfLines={1}>
           {shown?.row ?? ""}
         </Text>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={styles.title} numberOfLines={2}>
           {parts?.title ?? ""}
         </Text>
         <View style={styles.factsSlot}>
@@ -253,7 +253,7 @@ const RankedRow = memo(function RankedRow({
 
 const styles = styleSheet({
   screen: { flex: 1, backgroundColor: colors.background },
-  hero: { height: 520, backgroundColor: colors.background, overflow: "hidden" },
+  hero: { height: 600, backgroundColor: colors.background, overflow: "hidden" },
   art: { position: "absolute", top: 0, right: 0, width: 1180, height: 520, overflow: "hidden" },
   artImage: { position: "absolute", left: 0, top: -270, width: 1180, height: 1770 },
   logoPanel: { position: "absolute", top: 130, right: 120, width: 440, height: 280, padding: 28, borderRadius: 24, backgroundColor: colors.raised },

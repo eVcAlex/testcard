@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
 import { useFonts } from "expo-font";
+import { Host, Icon } from "@expo/ui";
 import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
 import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
 import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
@@ -34,12 +35,23 @@ const EXIT_WINDOW_MS = 2500;
 
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "home", label: "Home" },
-  { key: "search", label: "Search" },
   { key: "live", label: "Live TV" },
   { key: "movies", label: "Movies" },
   { key: "series", label: "Series" },
   { key: "sources", label: "Sources" },
 ];
+
+/** The SF Symbol nearest the search glyph, used only if this ever runs on Apple TV; Android renders the XML drawable. */
+const SEARCH_ICON = Icon.select({ ios: "magnifyingglass" as Parameters<typeof Icon.select>[0]["ios"], android: import("@expo/material-symbols/search.xml") });
+
+/** A bare magnifying glass, sized to sit in the nav bar's icon-only tab. */
+function SearchGlyph(color: string) {
+  return (
+    <Host matchContents pointerEvents="none">
+      <Icon name={SEARCH_ICON} size={28} color={color} />
+    </Host>
+  );
+}
 
 export default function App() {
   const [fontsReady] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
@@ -189,6 +201,7 @@ function Root() {
             {section === "movies" || section === "series" || section === "live" ? <NavTab id="browse" active={browsing} label={browsing ? "Home" : "Browse all"} onPressId={toggleBrowse} /> : null}
             {section === "live" && liveSources.length > 1 ? <NavTab id="scope" active={false} label={`Source: ${liveSource?.name ?? ""}`} onPressId={cycleLive} /> : null}
             {section !== "live" && sources.length > 1 && section !== "sources" ? <NavTab id="scope" active={false} label={`Source: ${sources.find((entry) => entry.id === sourceId)?.name ?? "All"}`} onPressId={cycleSource} /> : null}
+            <NavTab id="search" active={section === "search"} icon={SearchGlyph} onPressId={pickSection} />
           </View>
         </TVFocusGuideView>
         <View style={styles.content}>
