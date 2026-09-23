@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { colors, styleSheet } from "../theme";
 
@@ -6,13 +6,17 @@ import { colors, styleSheet } from "../theme";
 export const NavTab = memo(function NavTab({
   id,
   label,
+  icon,
   active,
   preferred = false,
   badge = false,
   onPressId,
 }: {
   id: string;
-  label: string;
+  /** Omit for an icon-only tab. */
+  label?: string;
+  /** An icon-only tab's glyph, given the colour it should draw in (matches the label's focus/active colour). */
+  icon?: (color: string) => ReactNode;
   active: boolean;
   preferred?: boolean;
   /** A small accent dot: something here wants attention (an update). */
@@ -20,6 +24,7 @@ export const NavTab = memo(function NavTab({
   onPressId: (id: string) => void;
 }) {
   const [focused, setFocused] = useState(false);
+  const on = focused || active;
   return (
     <Pressable
       focusable
@@ -27,9 +32,10 @@ export const NavTab = memo(function NavTab({
       onPress={() => onPressId(id)}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
-      style={[styles.tab, focused && styles.tabFocused]}
+      style={[styles.tab, icon !== undefined && label === undefined && styles.iconTab, focused && styles.tabFocused]}
     >
-      <Text style={[styles.label, { color: focused || active ? colors.foreground : colors.muted }, (focused || active) && styles.labelOn]}>{label}</Text>
+      {icon?.(on ? colors.foreground : colors.muted)}
+      {label !== undefined ? <Text style={[styles.label, { color: on ? colors.foreground : colors.muted }, on && styles.labelOn]}>{label}</Text> : null}
       {badge ? <View style={styles.badge} /> : null}
       {active && !focused ? <View style={styles.underline} /> : null}
     </Pressable>
@@ -38,6 +44,7 @@ export const NavTab = memo(function NavTab({
 
 const styles = styleSheet({
   tab: { height: 60, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 28, borderRadius: 30 },
+  iconTab: { width: 60, paddingHorizontal: 0, justifyContent: "center" },
   tabFocused: { backgroundColor: "#ffffff1f" },
   label: { fontSize: 26, fontWeight: "400" },
   labelOn: { fontWeight: "500" },
