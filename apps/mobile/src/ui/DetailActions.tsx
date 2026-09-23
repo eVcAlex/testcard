@@ -174,8 +174,8 @@ export function Backdrop({ uri }: { uri: string | null }) {
 const styles = styleSheet({
   wrap: { gap: 14, marginTop: 12 },
   row: { flexDirection: "row", alignItems: "center", gap: 16 },
-  play: { height: 72, flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 36, borderRadius: 36, backgroundColor: colors.foreground, borderWidth: 3, borderColor: "transparent" },
-  playFocused: { borderColor: colors.accent, transform: [{ scale: 1.04 }] },
+  play: { height: 72, flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 36, borderRadius: 36, backgroundColor: colors.foreground, borderWidth: 3, borderColor: "transparent", opacity: 0.75 },
+  playFocused: { borderColor: colors.accent, opacity: 1, transform: [{ scale: 1.04 }] },
   playTrack: { position: "absolute", left: 40, right: 40, bottom: 7, height: 3, borderRadius: 2, backgroundColor: "#0b0e1026" },
   playFill: { height: 3, borderRadius: 2, backgroundColor: colors.accent },
   playLabel: { color: INK, fontSize: 26, fontWeight: "600" },

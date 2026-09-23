@@ -53,13 +53,11 @@ function FilmGlyph() {
 export function SeriesDetailScreen({
   seriesId,
   title,
-  onOpenEpisode,
   onPlayEpisode,
   onBack,
 }: {
   seriesId: string;
   title: string;
-  onOpenEpisode: (episodeId: string, title: string) => void;
   onPlayEpisode: (episodeId: string, title: string, resume: boolean) => void;
   onBack: () => void;
 }) {
@@ -205,7 +203,7 @@ export function SeriesDetailScreen({
                 keyExtractor={(season) => season.id}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.seasonList}
-                renderItem={({ item: season }) => <Pill id={season.id} label={seasonLabel(season)} active={season.id === active?.id} onPressId={pickSeason} onFocusId={pickSeason} />}
+                renderItem={({ item: season }) => <Pill id={season.id} label={seasonLabel(season)} active={season.id === active?.id} onPressId={pickSeason} />}
               />
             </TVFocusGuideView>
           ) : null}
@@ -227,7 +225,7 @@ export function SeriesDetailScreen({
                 const ratio = started && episode.position_secs !== null && episode.duration_secs !== null && episode.duration_secs > 0 ? Math.min(1, episode.position_secs / episode.duration_secs) : 0;
                 const duration = episode.duration_secs !== null && episode.duration_secs > 0 ? runtime(episode.duration_secs) : "";
                 return (
-                  <Focusable preferred={false} onPress={() => onOpenEpisode(episode.id, `${seriesTitle(title)} · ${episodeTitle(episode.name)}`)} style={styles.card} focusedStyle={styles.cardFocused}>
+                  <Focusable preferred={false} onPress={() => onPlayEpisode(episode.id, `${seriesTitle(title)} · ${episodeTitle(episode.name)}`, started)} style={styles.card} focusedStyle={styles.cardFocused}>
                     {({ focused }) => (
                       <>
                         <View style={[styles.thumb, focused && styles.thumbFocused, { width: cardDp(cardWidth), height: cardDp(thumbHeight) }]}>

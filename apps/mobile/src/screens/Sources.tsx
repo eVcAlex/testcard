@@ -77,6 +77,8 @@ export function SourcesScreen() {
                   <Text style={styles.error} numberOfLines={1}>
                     {source.error}
                   </Text>
+                ) : source.refreshing ? (
+                  <Text style={styles.rowSynced}>Refreshing...</Text>
                 ) : source.lastRefreshedAt !== null ? (
                   <Text style={styles.rowSynced}>{`✓ Synced ${ago(source.lastRefreshedAt)}`}</Text>
                 ) : null}
