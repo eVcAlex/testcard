@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, useTVEventHandler, View } from "react-native";
 import { useEvent } from "expo";
-import { Host, Icon } from "@expo/ui";
+import { ArrowLeft, Backward15Seconds, ClosedCaptionsTag, Forward15Seconds, NavArrowLeft, NavArrowRight, Pause, Play, SkipNext } from "iconoir-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
@@ -899,36 +899,14 @@ function TextKey({ label, dot = false, selected = false, onPress }: { label: str
   );
 }
 
-/** The SF Symbol nearest to each Material Symbol, used only if this ever runs on Apple TV; Android renders the XML drawable. */
-const SF = (name: string) => name as Parameters<typeof Icon.select>[0]["ios"];
-
-const GO_BACK = Icon.select({ ios: SF("arrow.left"), android: import("@expo/material-symbols/arrow_back.xml") });
-const PLAY = Icon.select({ ios: SF("play.fill"), android: import("@expo/material-symbols/play_arrow.xml") });
-const PAUSE = Icon.select({ ios: SF("pause.fill"), android: import("@expo/material-symbols/pause.xml") });
-const REPLAY_30 = Icon.select({ ios: SF("gobackward.30"), android: import("@expo/material-symbols/replay_30.xml") });
-const FORWARD_30 = Icon.select({ ios: SF("forward.30"), android: import("@expo/material-symbols/forward_30.xml") });
-const CAPTIONS = Icon.select({ ios: SF("captions.bubble"), android: import("@expo/material-symbols/closed_caption.xml") });
-const SKIP_NEXT = Icon.select({ ios: SF("forward.end"), android: import("@expo/material-symbols/skip_next.xml") });
-const CHANNEL_BACK = Icon.select({ ios: SF("chevron.left"), android: import("@expo/material-symbols/chevron_left.xml") });
-const CHANNEL_FORWARD = Icon.select({ ios: SF("chevron.right"), android: import("@expo/material-symbols/chevron_right.xml") });
-
-/** A Material symbol rendered where @expo/ui can compose it: Compose views must hang directly off a Host, so each glyph hosts its own Icon at exactly the size the design gives it. */
-function Glyph({ name, size, color }: { name: Parameters<typeof Icon>[0]["name"]; size: number; color: string }) {
-  return (
-    <Host matchContents pointerEvents="none">
-      <Icon name={name} size={size} color={color} />
-    </Host>
-  );
-}
-
 /** The closed-captions mark: cream as an icon while a track is on. */
 function CcGlyph({ on, color }: { on: boolean; color: string }) {
-  return <Glyph name={CAPTIONS} size={u(40)} color={on ? colors.accent : color} />;
+  return <ClosedCaptionsTag color={on ? colors.accent : color} width={u(38)} height={u(38)} strokeWidth={1.75} />;
 }
 
 /** Skip-to-next: the streaming apps' "next episode" mark. */
 function NextGlyph({ color }: { color: string }) {
-  return <Glyph name={SKIP_NEXT} size={u(42)} color={color} />;
+  return <SkipNext color={color} width={u(38)} height={u(38)} strokeWidth={1.75} />;
 }
 
 /**
@@ -962,25 +940,27 @@ function Chip({ label }: { label: string }) {
 }
 
 function ChevronGlyph({ color }: { color: string }) {
-  return <Glyph name={GO_BACK} size={u(34)} color={color} />;
+  return <ArrowLeft color={color} width={u(32)} height={u(32)} strokeWidth={1.75} />;
 }
 
 /** Previous and next channel. */
 function ChannelGlyph({ direction, color }: { direction: "back" | "forward"; color: string }) {
-  return <Glyph name={direction === "back" ? CHANNEL_BACK : CHANNEL_FORWARD} size={u(42)} color={color} />;
+  const Icon = direction === "back" ? NavArrowLeft : NavArrowRight;
+  return <Icon color={color} width={u(40)} height={u(40)} strokeWidth={1.75} />;
 }
 
 function PauseGlyph({ color }: { color: string }) {
-  return <Glyph name={PAUSE} size={u(44)} color={color} />;
+  return <Pause color={color} width={u(42)} height={u(42)} strokeWidth={1.75} />;
 }
 
 function PlayGlyph({ color }: { color: string }) {
-  return <Glyph name={PLAY} size={u(46)} color={color} />;
+  return <Play color={color} width={u(44)} height={u(44)} strokeWidth={1.75} />;
 }
 
 /** Replay and advance by the seek step. */
 function SkipGlyph({ direction, color }: { direction: "back" | "forward"; color: string }) {
-  return <Glyph name={direction === "back" ? REPLAY_30 : FORWARD_30} size={u(46)} color={color} />;
+  const Icon = direction === "back" ? Backward15Seconds : Forward15Seconds;
+  return <Icon color={color} width={u(44)} height={u(44)} strokeWidth={1.75} />;
 }
 
 const styles = styleSheet({

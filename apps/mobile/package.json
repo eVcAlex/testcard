@@ -10,8 +10,6 @@
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
-    "@expo/material-symbols": "^0.1.1",
-    "@expo/ui": "~57.0.19",
     "@testcard/core": "workspace:*",
     "@testcard/sync-schema": "workspace:*",
     "expo": "~57.0.24",
@@ -28,17 +26,18 @@
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "expo-video": "~57.0.4",
+    "iconoir-react-native": "^7.12.1",
     "qrcode-generator": "^2.0.4",
     "react": "19.2.3",
     "react-native": "npm:react-native-tvos@0.86-stable",
     "react-native-nitro-modules": "^0.37.1",
-    "react-native-quick-crypto": "^1.1.7"
+    "react-native-quick-crypto": "^1.1.7",
+    "react-native-svg": "^15.12.0"
   },
   "devDependencies": {
     "@react-native-tvos/config-tv": "^0.1.6",
     "@types/better-sqlite3": "^7.6.13",
     "@types/react": "~19.2.2",
-    "babel-preset-expo": "~57.0.12",
     "typescript": "~6.0.3"
   },
   "expo": {
