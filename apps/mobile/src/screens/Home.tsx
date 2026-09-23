@@ -233,6 +233,10 @@ export function HomeScreen({
 }
 
 function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem; row: string } | undefined; plot: string | null; durationSecs: number | null; actions: HeroActions | undefined }) {
+  // A title that wraps to a second line takes the plot's second line, so the buttons always stay inside the hero
+  // instead of running off its foot under the rows.
+  const [titleLines, setTitleLines] = useState(1);
+  const wrapped = titleLines > 1;
   const channel = shown?.item.channelNumber !== undefined;
   const parts = shown !== undefined ? (channel ? { title: shown.item.name, year: null, is4k: false } : splitTitle(shown.item.name)) : undefined;
   const rating = shown?.item.rating !== null && shown?.item.rating !== undefined && Number(shown.item.rating) > 0 && Number(shown.item.rating) <= 10 ? Number(shown.item.rating).toFixed(1) : null;
@@ -267,13 +271,13 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
         <Text style={styles.kicker} numberOfLines={1}>
           {shown?.row ?? ""}
         </Text>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={styles.title} numberOfLines={2} onTextLayout={(event) => setTitleLines(event.nativeEvent.lines.length)}>
           {parts?.title ?? ""}
         </Text>
         <View style={styles.factsSlot}>
           <Facts facts={facts} />
         </View>
-        <Text style={styles.plot} numberOfLines={2}>
+        <Text style={[styles.plot, wrapped && styles.plotShort]} numberOfLines={wrapped ? 1 : 2}>
           {plot ?? ""}
         </Text>
         {/* Coming down from the nav bar lands on the main button, not on whichever button is nearest sideways. */}
@@ -334,8 +338,9 @@ const styles = styleSheet({
   heroText: { position: "absolute", left: 52, top: 118, width: 1000, gap: 12 },
   factsSlot: { height: 44 },
   kicker: { color: colors.accent, fontSize: 24, fontWeight: "600", letterSpacing: 1 },
-  title: { color: colors.foreground, fontSize: 68, fontWeight: "600", letterSpacing: -1.5 },
+  title: { color: colors.foreground, fontSize: 68, lineHeight: 78, fontWeight: "600", letterSpacing: -1.5 },
   plot: { height: 72, color: "#c3c9ce", fontSize: 25, lineHeight: 36, marginTop: 2 },
+  plotShort: { height: 36 },
   rows: { flex: 1, paddingHorizontal: 44 },
   rowsFade: { position: "absolute", left: 0, right: 0, top: 0, height: ROWS_BAND, zIndex: 1 },
   rowsFadeSolid: { height: ROWS_BAND - 16, backgroundColor: colors.background },
