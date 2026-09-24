@@ -31,10 +31,10 @@ plays back through an embedded `mpv`, stores everything locally.
   `docs/adr/0011-tv-profiles.md`.
 - **Player options row** — below the TV player's transport keys, reached with Down: Audio (the soundtrack, whose
   language is picked again on the next film), Picture (Fit, Fill or Stretch, kept per channel) and Speed (never kept).
-- **Credits offer** — the "Watch credits / Next episode" buttons at the end of an episode. Where credits start is
-  learned per series from when the viewer moves on to the next episode (`playback/credits.ts`, device-local); once
-  learned, the next episode also starts after a countdown. Until then an estimate is used, with no countdown before
-  the episode actually ends.
+- **Next episode offer** — when an episode ends, the next one is offered and starts after a short countdown. There is
+  no Skip intro or Watch credits: guessed from the viewer's own skips, they came up mid-episode, so they were removed.
+- **Update offer** — a new Fire TV build is offered in a dialog listing what changed (the commit subjects since the
+  build before), checked shortly after launch and every six hours unless switched off. See ADR 0010.
 - **Channel** — one logical live-TV channel as a human thinks of it — "TNT Sports 1". Has a
   **stable internal id** that survives playlist refreshes, independent of whatever id the
   provider assigns.
