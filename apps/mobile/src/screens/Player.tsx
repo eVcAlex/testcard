@@ -612,26 +612,36 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const guideScroll = useRef<ScrollView>(null);
   useEffect(() => guideScroll.current?.scrollTo({ y: Math.max(0, guideAt - 3) * u(GUIDE_ROW), animated: false }), [guideAt]);
   const lastToggle = useRef(0);
+  /** The on-screen play/pause key (OK on it, or a tap). */
   const togglePause = useCallback(() => {
-    // One press of the remote's play/pause key can reach us twice, and the system's media session can act on the same
-    // press after we have: the picture plays, then pauses straight away. So a second toggle this soon is ignored,
-    // and a moment later the picture is put back where this press left it if something else moved it.
     const now = Date.now();
     if (now - lastToggle.current < 500) return;
     lastToggle.current = now;
-    const wantPlaying = !player.playing;
-    if (wantPlaying) player.play();
-    else player.pause();
+    if (player.playing) player.pause();
+    else player.play();
+    pulse("play");
+    wake();
+  }, [player, pulse, wake]);
+  /**
+   * The remote's own play/pause key. Android hands that key to the player's media session too, which toggles by
+   * itself; toggling here as well paused, played and paused again. So this leaves it to the session, and toggles only
+   * if nothing has changed a moment later (no session took the key). One press can also reach here twice: the
+   * second is ignored.
+   */
+  const remotePlayPause = useCallback(() => {
+    const now = Date.now();
+    if (now - lastToggle.current < 500) return;
+    lastToggle.current = now;
+    const before = player.playing;
     setTimeout(() => {
       try {
-        if (player.playing !== wantPlaying) {
-          if (wantPlaying) player.play();
-          else player.pause();
-        }
+        if (player.playing !== before) return;
+        if (before) player.pause();
+        else player.play();
       } catch {
         // The player was released in the meantime (the viewer left).
       }
-    }, 350);
+    }, 450);
     pulse("play");
     wake();
   }, [player, pulse, wake]);
@@ -727,7 +737,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         } else if (key === "left") setGuide(undefined);
         return;
       }
-      if (key === "playPause") return togglePause();
+      if (key === "playPause") return remotePlayPause();
       if (key === "rewind") return step(-1);
       if (key === "fastForward") return step(1);
       // Live: up and down change channel, as on any TV, unless the viewer has stopped to use the controls.
@@ -761,7 +771,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [audioAt, audioOpen, audioTracks.length, chooseAudio, captionAt, captionOptions.length, captionRows, captions, captionsOpen, cardAt, cardUp, changeCaptions, chooseCaption, chrome, finished, goNext, guide, guideAt, guideOpen, inIntro, playEntry, skipIntro, press, selected, seek, step, togglePause, vod, watchCredits, wake, zap, zapping],
+    [audioAt, audioOpen, audioTracks.length, chooseAudio, captionAt, captionOptions.length, captionRows, captions, captionsOpen, cardAt, cardUp, changeCaptions, chooseCaption, chrome, finished, goNext, guide, guideAt, guideOpen, inIntro, playEntry, skipIntro, press, remotePlayPause, selected, seek, step, togglePause, vod, watchCredits, wake, zap, zapping],
   );
   // The listener below re-subscribes to the native remote-event emitter whenever its callback identity
   // changes; going through a ref keeps that identity fixed so a run of key presses doesn't churn the
