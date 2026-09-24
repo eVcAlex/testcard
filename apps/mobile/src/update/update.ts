@@ -49,6 +49,8 @@ export async function downloadAndInstall(info: UpdateInfo, onProgress: (fraction
   await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
     data: contentUri,
     type: "application/vnd.android.package-archive",
-    flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
+    // The installer opens in a task of its own (FLAG_ACTIVITY_NEW_TASK), not on top of this app. In this app's task,
+    // the replaced app's dead screen stayed under it and came back half-alive after the install, needing a force stop.
+    flags: 0x1 | 0x10000000, // FLAG_GRANT_READ_URI_PERMISSION | FLAG_ACTIVITY_NEW_TASK
   });
 }

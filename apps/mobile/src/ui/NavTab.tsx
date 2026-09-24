@@ -26,7 +26,7 @@ export const NavTab = memo(function NavTab({
   preferred?: boolean;
   /** A small accent dot: something here wants attention (an update). */
   badge?: boolean;
-  /** Drawn as an outlined chip: a filter on what the pages show, not a place to go. */
+  /** A filter on what the pages show rather than a place to go: never underlined, and its trailing glyph sits closer. */
   chip?: boolean;
   /** A glyph after the label (a chip's drop-down arrow), in the label's colour. */
   trailing?: (color: string) => ReactNode;
@@ -64,7 +64,7 @@ export const NavTab = memo(function NavTab({
       style={[styles.tab, icon !== undefined && label === undefined && styles.iconTab, chip && styles.chip, focused && styles.tabFocused]}
     >
       {icon?.(on ? colors.foreground : colors.muted)}
-      {label !== undefined ? <Text style={[styles.label, chip && styles.chipLabel, { color: on ? colors.foreground : colors.muted }, on && styles.labelOn]}>{label}</Text> : null}
+      {label !== undefined ? <Text style={[styles.label, { color: on ? colors.foreground : colors.muted }, on && styles.labelOn]}>{label}</Text> : null}
       {trailing?.(on ? colors.foreground : colors.muted)}
       {badge ? <View style={[styles.badge, label === undefined && styles.badgeCorner]} /> : null}
       {active && !focused && !chip ? <View style={[styles.underline, label === undefined && styles.underlineShort]} /> : null}
@@ -78,8 +78,7 @@ const styles = styleSheet({
   tabFocused: { backgroundColor: "#ffffff1f" },
   label: { fontSize: 26, fontWeight: "400" },
   labelOn: { fontWeight: "500" },
-  chip: { height: 52, paddingHorizontal: 22, gap: 8, borderWidth: 2, borderColor: colors.border },
-  chipLabel: { fontSize: 22 },
+  chip: { gap: 6, paddingRight: 22 },
   badge: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
   badgeCorner: { position: "absolute", top: 10, right: 10 },
   underlineShort: { left: 18, right: 18 },
