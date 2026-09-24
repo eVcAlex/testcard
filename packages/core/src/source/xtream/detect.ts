@@ -72,3 +72,39 @@ export async function probeXtream(
     ? { authenticated, ...(body?.server_info !== undefined ? { serverInfo: body.server_info } : {}) }
     : { authenticated: false };
 }
+
+/** What an Xtream provider says about the account itself: when it ends and how many streams it may run at once. */
+export interface XtreamAccount {
+  /** Unix ms; null when the provider gives none (an account that does not expire). */
+  readonly expiresAt: number | null;
+  readonly maxConnections: number | null;
+  readonly activeConnections: number | null;
+  /** The provider's word for it: "Active", "Expired", "Banned", "Disabled"... */
+  readonly status: string | null;
+  readonly trial: boolean;
+}
+
+const numberOrNull = (value: unknown): number | null => {
+  const n = typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
+  return Number.isFinite(n) ? n : null;
+};
+
+/** The account's `user_info` from `player_api.php`. Null when the provider does not answer with one. */
+export async function fetchXtreamAccount(credentials: XtreamCredentials, fetchImpl: typeof fetch = fetch): Promise<XtreamAccount | null> {
+  const url = new URL(`${credentials.baseUrl}/player_api.php`);
+  url.searchParams.set("username", credentials.username);
+  url.searchParams.set("password", credentials.password);
+  const response = await fetchImpl(url.toString(), { method: "GET" });
+  if (!response.ok) return null;
+  const body = (await response.json().catch(() => null)) as { user_info?: Record<string, unknown> } | null;
+  const info = body?.user_info;
+  if (info === undefined || info === null || typeof info !== "object") return null;
+  const expires = numberOrNull(info["exp_date"]);
+  return {
+    expiresAt: expires !== null && expires > 0 ? expires * 1000 : null,
+    maxConnections: numberOrNull(info["max_connections"]),
+    activeConnections: numberOrNull(info["active_cons"]),
+    status: typeof info["status"] === "string" && info["status"] !== "" ? info["status"] : null,
+    trial: info["is_trial"] === "1" || info["is_trial"] === 1,
+  };
+}

@@ -60,6 +60,8 @@ export interface BrowseSource {
   readonly pinning?: {
     readonly isPinned: (categoryId: string) => boolean;
     readonly toggle: (categoryId: string, label: string) => void;
+    /** Takes the category out of every list (Settings brings it back). */
+    readonly hide: (categoryId: string, label: string) => void;
   };
 }
 
@@ -182,6 +184,8 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
   // A real category (not Continue watching, My list or a genre) can be pinned to Home.
   const [, setPinTick] = useState(0);
   const [pinNote, setPinNote] = useState<string>();
+  // Hiding asks for a second press, as removing a source does.
+  const [confirmHide, setConfirmHide] = useState<string>();
   useEffect(() => {
     if (pinNote === undefined) return;
     const timer = setTimeout(() => setPinNote(undefined), 3000);
@@ -331,6 +335,16 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
                 }}
               >
                 {({ focused }) => <Text style={[styles.pinText, pinned && styles.pinTextOn, focused && styles.pinTextFocused]}>{pinned ? "Pinned to Home. Press to remove" : "Pin to Home"}</Text>}
+              </Focusable>
+              <Focusable
+                style={styles.pin}
+                onPress={() => {
+                  if (confirmHide !== pinnable.id) return setConfirmHide(pinnable.id);
+                  setConfirmHide(undefined);
+                  source.pinning?.hide(pinnable.id, pinnable.label);
+                }}
+              >
+                {({ focused }) => <Text style={[styles.pinText, focused && styles.pinTextFocused]}>{confirmHide === pinnable.id ? "Press again to hide it" : "Hide category"}</Text>}
               </Focusable>
               {pinNote !== undefined ? <Text style={styles.pinNote}>{pinNote}</Text> : null}
             </View>
@@ -489,7 +503,7 @@ const styles = styleSheet({
   paneHead: { flexDirection: "row", alignItems: "baseline", gap: 20, paddingTop: 12, paddingBottom: 24, paddingHorizontal: 8 },
   paneTitle: { flexShrink: 1, color: colors.foreground, fontSize: 38, fontWeight: "600", letterSpacing: -0.5 },
   paneCount: { color: colors.faint, fontSize: 24 },
-  pinRow: { flexDirection: "row", paddingHorizontal: 8, paddingBottom: 16, marginTop: -10 },
+  pinRow: { flexDirection: "row", gap: 12, paddingHorizontal: 8, paddingBottom: 16, marginTop: -10 },
   pin: { paddingHorizontal: 22, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.card },
   pinNote: { color: colors.accent, fontSize: 24, marginLeft: 20, alignSelf: "center" },
   pinTextOn: { color: colors.accent },

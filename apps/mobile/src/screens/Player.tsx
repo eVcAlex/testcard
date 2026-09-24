@@ -3,15 +3,18 @@ import { ActivityIndicator, Animated, BackHandler, Easing, Platform, Pressable, 
 import { useEvent } from "expo";
 import { ArrowLeft, Backward15Seconds, ClosedCaptionsTag, DashboardSpeed, Forward15Seconds, Headset, NavArrowLeft, NavArrowRight, Pause, Play, ScaleFrameEnlarge, SkipNext } from "iconoir-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
+import type Database from "better-sqlite3";
+import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
-import { recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
+import { listMoviePlayOrder, recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
 import { findNextEpisode, getSkipWindow, recordSeriesRecent, saveSkipWindow } from "@testcard/core/src/db/seriesQueries.js";
 import type { CatchupProgramme } from "@testcard/core/src/source/xtream/catchup.js";
 import { playerTitle } from "../ui/titles";
 import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
 import { listChannelFeeds, type ChannelFeed } from "@testcard/core/src/db/channelFeeds.js";
 import { useApp } from "../state/app";
+import { accountProblem, xtreamSourceOf } from "../state/account";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button } from "../ui/controls";
 import { streamFacts } from "../playback/streamInfo";
@@ -70,20 +73,37 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   const feeds = useMemo(() => (item.kind === "channel" ? listChannelFeeds(db, item.id) : []), [db, item]);
   const feed: ChannelFeed | undefined = feeds[feedAt];
   const failOver = useCallback(() => setFeedAt((at) => at + 1), []);
+  // A film is the same: its copies (another quality, another source) are tried in turn, the best first. The copy
+  // playing is the one whose position is saved.
+  const copies = useMemo(() => (item.kind === "movie" ? listMoviePlayOrder(db, item.id, resume) : []), [db, item, resume]);
+  const [copyAt, setCopyAt] = useState(0);
+  const copyId = copies[copyAt];
+  const playing = useMemo<PlayItem>(() => (copyId !== undefined && copyId !== item.id ? { ...item, id: copyId } : item), [item, copyId]);
+  const nextCopy = useCallback(() => setCopyAt((at) => at + 1), []);
+  // Where the first copy was to start, so the next one picks up at the same place.
+  const startedFrom = useRef<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setError(undefined);
     // Cleared first, or the dead feed is mounted again under the new key while the next one resolves.
     setStream(undefined);
-    resolveStream(db, item, resume, catchup, feedAt > 0 ? feed : undefined).then(
-      (resolved) => !cancelled && setStream(resolved),
-      (failure: unknown) => !cancelled && setError(failure instanceof Error ? failure.message : "This couldn't be played."),
+    resolveStream(db, playing, resume, catchup, feedAt > 0 ? feed : undefined).then(
+      (resolved) => {
+        if (cancelled) return;
+        if (copyAt === 0) startedFrom.current = resolved.resumeSecs;
+        setStream(copyAt > 0 && resolved.resumeSecs === null ? { ...resolved, resumeSecs: startedFrom.current } : resolved);
+      },
+      (failure: unknown) => {
+        if (cancelled) return;
+        if (copyAt + 1 < copies.length) nextCopy();
+        else setError(failure instanceof Error ? failure.message : "This couldn't be played.");
+      },
     );
     return () => {
       cancelled = true;
     };
-  }, [db, item, resume, catchup, feedAt, feed]);
+  }, [db, playing, resume, catchup, feedAt, feed, copyAt, copies.length, nextCopy]);
 
   // Once Playing is on screen it owns Back itself (hide the controls, then leave); this is only for the
   // loading and failure states before that, which would otherwise have no way to leave on Back at all.
@@ -96,7 +116,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
     return () => subscription.remove();
   }, [onExit, stream, error]);
 
-  if (error !== undefined) return <Failure title={item.title} message={error} onExit={onExit} />;
+  if (error !== undefined) return <Failure title={item.title} message={error} onExit={onExit} sourceId={xtreamSourceOf(db, item.kind, item.id)} />;
   if (stream === undefined) {
     // The same black screen and spinner the player itself shows while buffering, so starting an
     // episode reads as one continuous action instead of a separate loading page first.
@@ -110,17 +130,17 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   }
   return (
     <Playing
-      key={`${catchup === undefined ? "live" : catchup.serverStart}:${feedAt}`}
-      item={item}
+      key={`${catchup === undefined ? "live" : catchup.serverStart}:${feedAt}:${copyAt}`}
+      item={playing}
       stream={stream}
       catchup={catchup}
       onCatchup={(programme) => setPicked(programme === undefined ? undefined : { channelId: item.id, programme })}
       channels={channels}
       onZap={onZap}
       onNextEpisode={onNextEpisode}
-      moreFeeds={feedAt + 1 < feeds.length}
-      onFailOver={failOver}
-      fellBack={feedAt > 0 && feed !== undefined ? fellBackLabel(item.title, feed) : undefined}
+      moreFeeds={item.kind === "movie" ? copyAt + 1 < copies.length : feedAt + 1 < feeds.length}
+      onFailOver={item.kind === "movie" ? nextCopy : failOver}
+      fellBack={item.kind === "movie" ? (copyAt > 0 ? copyLabel(db, playing.id) : undefined) : feedAt > 0 && feed !== undefined ? fellBackLabel(item.title, feed) : undefined}
       onExit={() => {
         sync.notifyLocalChange();
         updateStatus();
@@ -131,13 +151,31 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   );
 }
 
+/** What the viewer is told once a film is playing from a copy other than the first. */
+function copyLabel(db: Database.Database, movieId: string): string {
+  const row = db.prepare(`SELECT m.name, s.name AS source FROM movies m JOIN sources s ON s.id = m.source_id WHERE m.id = ?`).get(movieId) as { name: string; source: string } | undefined;
+  if (row === undefined) return "Playing another copy instead";
+  return `Playing the ${splitTitle(row.name).is4k ? "4K" : "HD"} copy from ${row.source} instead`;
+}
+
 /** What the viewer is told once a channel is playing on a feed other than the first. */
 function fellBackLabel(title: string, feed: ChannelFeed): string {
   if (feed.name !== title) return `Playing ${feed.name} instead`;
   return feed.quality !== null ? `Playing the ${feed.quality} feed instead` : "Playing a backup feed instead";
 }
 
-function Failure({ title, message, detail, onRetry, onExit }: { title: string; message: string; detail?: string; onRetry?: () => void; onExit: () => void }) {
+function Failure({ title, message: given, detail, onRetry, onExit, sourceId }: { title: string; message: string; detail?: string; onRetry?: () => void; onExit: () => void; sourceId?: string | null }) {
+  // A refused stream is often the account (every stream it allows in use, or it has ended): the provider says which.
+  const [problem, setProblem] = useState<string | null>(null);
+  useEffect(() => {
+    if (sourceId === undefined || sourceId === null) return;
+    let live = true;
+    void accountProblem(sourceId).then((found) => live && setProblem(found));
+    return () => {
+      live = false;
+    };
+  }, [sourceId]);
+  const message = problem ?? given;
   return (
     <View style={styles.centre}>
       <Text style={styles.title} numberOfLines={2}>
@@ -243,12 +281,18 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     return () => clearTimeout(timer);
   }, [player, status, stream.url, timeshift, vod]);
   // A live channel that errors is tried on its next feed, if it has one.
-  const failing = status === "error" && !vod && !timeshift && moreFeeds;
+  // A film's next copy is only tried when this one never really played (a 4K copy the hardware cannot decode fails
+  // just after it is ready): one that fails part-way through says so instead.
+  const playingSince = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (failing) onFailOver();
-  }, [failing, onFailOver]);
+    if (isPlaying) playingSince.current ??= Date.now();
+  }, [isPlaying]);
+  const failing = status === "error" && !timeshift && moreFeeds;
+  useEffect(() => {
+    if (failing && (!vod || playingSince.current === undefined || Date.now() - playingSince.current < 8000)) onFailOver();
+  }, [failing, onFailOver, vod]);
   // Some dead streams never error, they just never start: after a while, the next feed is tried instead.
-  const neverStarted = !vod && !timeshift && moreFeeds && status !== "readyToPlay" && status !== "error";
+  const neverStarted = !timeshift && moreFeeds && status !== "readyToPlay" && status !== "error";
   useEffect(() => {
     if (!neverStarted || everPlayed.current) return;
     const timer = setTimeout(() => {
@@ -833,6 +877,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       <Failure
         title={vod ? playerTitle(stream.title) : stream.title}
         message={message}
+        sourceId={undecodable ? null : xtreamSourceOf(db, item.kind, item.id)}
         {...(known ? {} : { detail: raw })}
         {...(undecodable
           ? {}
@@ -881,7 +926,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       ) : null}
       {fellBackShown && fellBack !== undefined ? (
         <View style={styles.fellBack} pointerEvents="none">
-          <Text style={styles.fellBackText}>{`That feed wouldn't play. ${fellBack}.`}</Text>
+          <Text style={styles.fellBackText}>{`${vod ? "That copy" : "That feed"} wouldn't play. ${fellBack}.`}</Text>
         </View>
       ) : null}
 

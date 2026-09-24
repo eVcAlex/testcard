@@ -23,6 +23,7 @@ export const PERSONAL_TABLES: readonly string[] = [
   "playback_progress",
   "home_pins",
   "sync_tombstones",
+  "pending_channel_sync",
 ];
 
 const STASH_SQL = `

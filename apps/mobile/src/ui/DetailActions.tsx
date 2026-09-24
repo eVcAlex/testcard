@@ -3,15 +3,15 @@ import { Pressable, Text, View } from "react-native";
 import { useFocusTracking } from "./Focusable";
 import { Image } from "expo-image";
 import { sized } from "./imageSize";
-import { Check, Eye, EyeClosed, InfoCircle, MultiplePages, Play, Plus, Restart, Xmark } from "iconoir-react-native";
+import { Check, Eye, EyeClosed, InfoCircle, MultiplePages, NavArrowLeft, NavArrowRight, Play, Plus, Restart, Xmark } from "iconoir-react-native";
 import { colors, styleSheet, uiScale } from "../theme";
 
 const u = (n: number) => Math.round(n * uiScale);
 const INK = "#0b0e10";
 
-export type ActionGlyph = "restart" | "plus" | "check" | "cross" | "info" | "watched" | "unwatched" | "versions";
+export type ActionGlyph = "restart" | "plus" | "check" | "cross" | "info" | "watched" | "unwatched" | "versions" | "hide" | "earlier" | "later";
 
-const ACTION_GLYPHS = { restart: Restart, plus: Plus, check: Check, cross: Xmark, info: InfoCircle, watched: Eye, unwatched: EyeClosed, versions: MultiplePages };
+const ACTION_GLYPHS = { restart: Restart, plus: Plus, check: Check, cross: Xmark, info: InfoCircle, watched: Eye, unwatched: EyeClosed, versions: MultiplePages, hide: EyeClosed, earlier: NavArrowLeft, later: NavArrowRight };
 
 function Glyph({ kind, color }: { kind: ActionGlyph; color: string }) {
   const Icon = ACTION_GLYPHS[kind];

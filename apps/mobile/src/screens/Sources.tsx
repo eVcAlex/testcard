@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Modal, ScrollView, Text, TVFocusGuideView, View } from "react-native";
 import { WarningCircle } from "iconoir-react-native";
 import { useApp, type SourceSummary } from "../state/app";
@@ -10,6 +10,9 @@ import { CaptionSettings } from "../ui/CaptionSettings";
 import { ProfileSettings } from "../ui/ProfileSettings";
 import { Focusable } from "../ui/Focusable";
 import { MenuRow, withCommas } from "../ui/MenuRow";
+import { SourceForm } from "../ui/SourceForm";
+import { listHidden, unhide } from "@testcard/core/src/sync/hidden.js";
+import { describeAccount, useSourceAccount } from "../state/account";
 
 /** "just now", "5 min ago", "3 hours ago", "2 days ago". */
 function ago(at: number): string {
@@ -22,16 +25,17 @@ function ago(at: number): string {
   return `${days} ${days === 1 ? "day" : "days"} ago`;
 }
 
-type Pane = "sources" | "profiles" | "captions" | "account";
+type Pane = "sources" | "hidden" | "profiles" | "captions" | "account";
 const PANES: { id: Pane; label: string }[] = [
   { id: "sources", label: "Sources" },
+  { id: "hidden", label: "Hidden" },
   { id: "profiles", label: "Profiles" },
   { id: "captions", label: "Captions" },
   { id: "account", label: "Account and updates" },
 ];
 
 /**
- * The Settings tab: a short menu down the left (Sources, Profiles, Captions, Account and updates) and the chosen one beside
+ * The Settings tab: a short menu down the left (Sources, Hidden, Profiles, Captions, Account and updates) and the chosen one beside
  * it. The pane follows the remote as it moves down the menu, as the category lists do; Right goes into it.
  */
 export function SourcesScreen() {
@@ -44,7 +48,7 @@ export function SourcesScreen() {
           <MenuRow key={entry.id} id={entry.id} label={entry.label} active={pane === entry.id} onPressId={choose} onFocusId={choose} />
         ))}
       </TVFocusGuideView>
-      <View style={styles.pane}>{pane === "sources" ? <SourcesPane /> : pane === "profiles" ? <ProfileSettings /> : pane === "captions" ? <CaptionSettings /> : <AccountPane />}</View>
+      <View style={styles.pane}>{pane === "sources" ? <SourcesPane /> : pane === "hidden" ? <HiddenPane /> : pane === "profiles" ? <ProfileSettings /> : pane === "captions" ? <CaptionSettings /> : <AccountPane />}</View>
     </View>
   );
 }
@@ -53,16 +57,24 @@ function SourcesPane() {
   const { sources, refreshSource, removeSource, status } = useApp();
   // Removing is permanent (and reaches the other devices), so it takes a second press.
   const [confirming, setConfirming] = useState<string>();
+  // The source being edited: an id, "new" for one being added, or nothing.
+  const [editing, setEditing] = useState<string>();
+  const closeForm = useCallback(() => setEditing(undefined), []);
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <View style={styles.main}>
-        <Heading>Sources</Heading>
-        <Muted>
-          {status.account === "signed-in"
-            ? "Add or edit sources in Testcard on your computer and they appear here. Removing one here removes it everywhere."
-            : "Sign in to load your sources."}
-        </Muted>
+        <View style={styles.headRow}>
+          <View style={styles.headText}>
+            <Heading>Sources</Heading>
+            <Muted>
+              {status.account === "signed-in"
+                ? "Adding, editing or removing a source here changes it on all your devices."
+                : "Sign in to load your sources."}
+            </Muted>
+          </View>
+          {status.account === "signed-in" ? <SmallButton primary label="Add source" onPress={() => setEditing("new")} /> : null}
+        </View>
         {status.lastError !== undefined && <Text style={styles.error}>{status.lastError}</Text>}
         {sources.length === 0 && <Muted>No sources have arrived yet. Sync runs every minute, or press Sync now in Account and updates.</Muted>}
 
@@ -75,6 +87,7 @@ function SourcesPane() {
                   <Text style={styles.rowKind}>{`   ${source.kind === "xtream" ? "Xtream" : "M3U"}`}</Text>
                 </Text>
                 <Text style={styles.rowMeta}>{source.refreshing ? "Loading..." : counts(source.channels, source.movies, source.series)}</Text>
+                <AccountLine sourceId={source.id} kind={source.kind} />
               </View>
               <View style={styles.rowStatus}>
                 {source.refreshing ? (
@@ -87,6 +100,7 @@ function SourcesPane() {
               </View>
               <View style={styles.rowActions}>
                 <SmallButton label={source.refreshing ? "Refreshing" : source.failures.length > 0 ? "Try again" : "Refresh"} disabled={source.refreshing} onPress={() => void refreshSource(source.id)} />
+                <SmallButton label="Edit" disabled={source.refreshing} onPress={() => setEditing(source.id)} />
                 <SmallButton
                   muted
                   label={confirming === source.id ? "Press again to remove" : "Remove"}
@@ -98,6 +112,51 @@ function SourcesPane() {
                   }}
                 />
               </View>
+            </View>
+          ))}
+        </View>
+      </View>
+      {editing !== undefined ? <SourceForm sourceId={editing === "new" ? undefined : editing} onClose={closeForm} /> : null}
+    </ScrollView>
+  );
+}
+
+const HIDDEN_KIND = { live: "Live TV category", movies: "Movies category", series: "Series category", channel: "Channel" } as const;
+
+/** What was hidden, on any device, each with a way to bring it back. */
+function HiddenPane() {
+  const { db, sync, version, updateStatus, sources } = useApp();
+  const entries = useMemo(() => {
+    void version;
+    return listHidden(db);
+  }, [db, version]);
+  const mixed = sources.length > 1;
+  return (
+    <ScrollView contentContainerStyle={styles.page}>
+      <View style={styles.main}>
+        <Heading>Hidden</Heading>
+        <Muted>
+          {entries.length === 0
+            ? "Nothing is hidden. Hide a category from its page in Browse all, or a channel from its options."
+            : "These are left out of every list, row and search, on all your devices."}
+        </Muted>
+        <View style={styles.list}>
+          {entries.map((entry) => (
+            <View key={`${entry.sourceId}|${entry.kind}|${entry.key}`} style={styles.row}>
+              <View style={styles.hiddenText}>
+                <Text style={styles.rowName} numberOfLines={1}>
+                  {entry.label}
+                </Text>
+                <Text style={styles.rowMeta}>{mixed ? `${HIDDEN_KIND[entry.kind]}  ·  ${entry.sourceName}` : HIDDEN_KIND[entry.kind]}</Text>
+              </View>
+              <SmallButton
+                label="Show again"
+                onPress={() => {
+                  unhide(db, entry);
+                  sync.notifyLocalChange();
+                  updateStatus();
+                }}
+              />
             </View>
           ))}
         </View>
@@ -209,7 +268,7 @@ function plainReason(message: string, who = "the provider"): string {
     return `Couldn't reach ${who}. Check the TV's internet connection.`;
   if (/did not respond|timed? ?out|ETIMEDOUT|SocketTimeout/i.test(message)) return `${who[0]!.toUpperCase()}${who.slice(1)} didn't respond.`;
   if (/\b(401|403)\b|unauthori[sz]ed|forbidden|credentials|login|password/i.test(message))
-    return "The provider turned down the login. Check this source's account in Testcard on your computer.";
+    return "The provider turned down the login. Press Edit to check it.";
   if (/\b5\d\d\b/.test(message)) return "The provider's server had a problem.";
   const tidy = message
     .replace(/^fetch failed:\s*/i, "")
@@ -254,6 +313,18 @@ function Problem({ source }: { source: SourceSummary }) {
   );
 }
 
+/** When an Xtream account ends and how many of its streams are in use, from the provider. Nothing for a playlist. */
+function AccountLine({ sourceId, kind }: { sourceId: string; kind: "xtream" | "m3u" }) {
+  const account = useSourceAccount(sourceId, kind);
+  if (account === undefined || account === null) return null;
+  const { text, warn } = describeAccount(account);
+  return (
+    <Text style={[styles.rowMeta, warn && styles.accountWarn]} numberOfLines={1}>
+      {text}
+    </Text>
+  );
+}
+
 /** Only the kinds of content a source actually has: a live-only provider does not say "0 movies". */
 function counts(channels: number, movies: number, series: number): string {
   const parts = [
@@ -282,20 +353,24 @@ const styles = styleSheet({
   pane: { flex: 1 },
   page: { padding: space.xl },
   main: { gap: space.m },
-  // Slim, low-key: this page is about sources, not the account.
-  accountStrip: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingBottom: space.l, marginBottom: space.m, borderBottomWidth: 1, borderBottomColor: colors.border },
+  headRow: { flexDirection: "row", alignItems: "flex-start", gap: space.l },
+  headText: { flex: 1, gap: space.m },
+  // Account and app, one card each, like the source rows.
+  accountStrip: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   accountText: { gap: 2 },
-  accountEmail: { color: colors.muted, fontSize: type.body, fontWeight: "500" },
+  accountEmail: { color: colors.foreground, fontSize: type.body, fontWeight: "500" },
   accountSynced: { color: colors.faint, fontSize: type.small },
   accountActions: { flexDirection: "row", gap: space.s },
 
   list: { gap: space.m, marginTop: space.s },
   row: { flexDirection: "row", alignItems: "center", gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
-  rowText: { width: 420, gap: 4 },
+  rowText: { width: 500, gap: 4 },
   rowName: { color: colors.foreground, fontSize: type.lead, fontWeight: "600" },
   rowKind: { color: colors.faint, fontSize: type.small, fontWeight: "500" },
   rowMeta: { color: colors.muted, fontSize: type.small },
   rowStatus: { flex: 1 },
+  hiddenText: { flex: 1, gap: 4 },
+  accountWarn: { color: colors.fault },
   rowFailed: { borderColor: "#f0745c59" },
   rowSynced: { color: colors.accent, fontSize: type.small },
   problem: { flexDirection: "row", alignItems: "center", gap: 14 },
@@ -304,8 +379,8 @@ const styles = styleSheet({
   error: { color: colors.fault, fontSize: type.small },
   rowActions: { flexDirection: "row", gap: space.s },
 
-  footer: { flexDirection: "row", alignItems: "center", gap: space.l, marginTop: space.xl, paddingTop: space.l, borderTopWidth: 1, borderTopColor: colors.border },
-  footerText: { flex: 1, color: colors.faint, fontSize: type.small },
+  footer: { flexDirection: "row", alignItems: "center", gap: space.l, padding: space.l, backgroundColor: colors.raised, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
+  footerText: { flex: 1, color: colors.muted, fontSize: type.body },
   footerDot: { color: colors.border },
   footerError: { color: colors.fault },
 

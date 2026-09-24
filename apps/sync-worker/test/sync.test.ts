@@ -207,4 +207,39 @@ describe("POST /sync/push then GET /sync/pull", () => {
     );
     expect(res.status).toBe(200);
   });
+
+  it("syncs favourite and recent channels, with the favourites' order, per profile", async () => {
+    const app = testApp();
+    const ctx = createExecutionContext();
+    const push = await app.request(
+      "/sync/push",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sources: [],
+          movieFavourites: [],
+          movieRecents: [],
+          seriesFavourites: [],
+          seriesRecents: [],
+          progress: [],
+          channelFavourites: [
+            { remoteKey: "ch.one", addedAt: 3000, position: 1, updatedAt: 3000, deletedAt: null },
+            { remoteKey: "p.kid1.ch.two", addedAt: 3001, updatedAt: 3001, deletedAt: null },
+          ],
+          channelRecents: [{ remoteKey: "ch.one", playedAt: 3002, updatedAt: 3002, deletedAt: null }],
+        }),
+      },
+      env,
+      ctx,
+    );
+    expect(push.status).toBe(200);
+    expect((await push.json()).newCursor).toBe(3002);
+
+    const main = await (await app.request("/sync/pull?since=2999", {}, env, ctx)).json();
+    expect(main.channelFavourites).toEqual([{ remoteKey: "ch.one", addedAt: 3000, position: 1, updatedAt: 3000, deletedAt: null }]);
+    expect(main.channelRecents.map((row: { remoteKey: string }) => row.remoteKey)).toEqual(["ch.one"]);
+    const kid = await (await app.request("/sync/pull?since=2999&profile=kid1", {}, env, ctx)).json();
+    expect(kid.channelFavourites).toEqual([{ remoteKey: "p.kid1.ch.two", addedAt: 3001, position: null, updatedAt: 3001, deletedAt: null }]);
+  });
 });

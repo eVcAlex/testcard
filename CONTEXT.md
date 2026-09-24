@@ -91,7 +91,8 @@ plays back through an embedded `mpv`, stores everything locally.
   destructive rebuild — Favourites and Recents survive a renumber/rename. EPG is
   delete-then-insert per source (see `docs/adr/0003`), best-effort: a bad guide URL never
   fails the channel refresh. The EPG URL is the user's explicit one, else auto-detected
-  (M3U `url-tvg` header / Xtream `xmltv.php`). Manual by default; a Source may also set a
+  (M3U `url-tvg` header / Xtream `xmltv.php`). The explicit one syncs, inside the source's sealed
+  record (`epgUrl`; null for none, absent from older devices). Manual by default; a Source may also set a
   `refresh_interval_hours` (Off/6h/12h/24h), checked every 15 minutes by a background
   scheduler (`main/refreshScheduler.ts`) that's guarded against double-running a Source
   that's already mid-refresh.
@@ -121,7 +122,28 @@ plays back through an embedded `mpv`, stores everything locally.
   (spring-press buttons, a gliding focus ring, a logo-loading shimmer). See
   `docs/adr/0006-theme-system.md`.
 - **EPG import** streams XMLTV on source refresh, batched to keep the app responsive, with
-  progress pushed on `IPC_TASK_CHANNEL`. See `docs/adr/0003-epg-import.md`.
+  progress pushed on `IPC_TASK_CHANNEL`. See `docs/adr/0003-epg-import.md`. The parser is plain
+  JavaScript (sax's callback parser, fflate's gunzip, gzip told by its magic bytes) so the TV app
+  runs it too: `playback/guideImport.ts` reads each source's guide in the background after an
+  import and when it is 12 hours old or its address changed, keeping 36 hours ahead. Now/next and
+  the guide grid read the imported guide first and fall back to Xtream's `get_short_epg`.
+- **Hidden** — a category or channel the viewer hid (`sync/hidden.ts`): left out of every list, row,
+  search and the channels the player steps through, on all devices (the set rides in the source's
+  sealed record, like pins; account-wide, not per profile). Settings → Hidden brings one back.
+- **Copies of a title** — the same dated title in another quality or source (`titleKey`). Lists
+  show it once; its page offers "Other versions"; playing a film tries the copies in turn, 4K
+  and the first source first (`listMoviePlayOrder`), moving on when one never really starts.
+- **Channel history** — favourite and recently watched channels sync like films' (worker tables
+  `channel_favourites` / `channel_recents`, per profile under `p.<id>.`), favourites with their
+  order (`favourites.position`). A channel's account key is `ch.` + a 64-bit hash of its
+  source's key and the provider's channel key (`sync/channelHistory.ts`). A row for a channel
+  not imported here waits in `pending_channel_sync` (30 days) instead of holding the cursor.
+- **Account** (Xtream) — `user_info` from `player_api.php`: expiry, streams allowed and in use.
+  Shown on each source's card; a refused stream says when every stream is in use or the
+  subscription has expired (`apps/mobile/src/state/account.ts`).
+- **Sources on the TV** can be added and edited there too (`state/sourceEdit.ts`, the same checks
+  as the desktop form: the login is tried with the provider before it is kept). A change of
+  server or playlist changes the source's remote key, so the old key is tombstoned.
 - **Aspect ratio** (fit/fill/16:9/4:3) is an mpv property re-applied per load and persisted
   like volume; **channel logos** are served through the `testcard-logo:` privileged scheme
   backed by a main-process disk cache. See `docs/adr/0004-player-refinements.md`.

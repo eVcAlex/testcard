@@ -253,6 +253,7 @@ function Root() {
         seriesId={route.id}
         title={route.title}
         onBack={goHome}
+        onOpenVersion={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
         onPlayEpisode={(episodeId, episodeTitle, resume) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title: episodeTitle }, seriesId: route.id, resume, returnTo: route })}
       />
     ) : null;

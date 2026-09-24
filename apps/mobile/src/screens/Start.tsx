@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { browseChannels, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite } from "@testcard/core/src/db/queries.js";
 import { listHomePins, unpinCategory } from "@testcard/core/src/sync/sourcePins.js";
+import { channelExtras } from "./channelActions";
 import { displayName } from "@testcard/core/src/normalise/displayName.js";
 import { listWatchedLately } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
@@ -51,7 +52,7 @@ export function StartScreen({
   onPlayEpisode: (episodeId: string, title: string, resume: boolean, seriesId: string) => void;
   onPlayChannel: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
-  const { db, version: latestVersion, catalogue, sync } = useApp();
+  const { db, version: latestVersion, catalogue, sync, updateStatus } = useApp();
   const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
@@ -225,6 +226,10 @@ export function StartScreen({
           },
         });
       }
+      if (kind === "channel") extra.push(...channelExtras(db, sync, { id, name: item.name }, rowKey === "favourite-channels", () => {
+        setTick((value) => value + 1);
+        updateStatus();
+      }));
       if (rowKey.startsWith("pin:")) {
         const pin = listHomePins(db).find((entry) => `pin:${entry.sourceId}:${entry.kind}:${entry.key}` === rowKey);
         if (pin?.categoryId != null) {
@@ -241,7 +246,7 @@ export function StartScreen({
       }
       return extra.length === 0 ? base : { ...base, actions: [...base.actions, ...extra] };
     },
-    [baseActions, changed, db],
+    [baseActions, changed, db, sync, updateStatus],
   );
 
   const onSelect = useCallback(

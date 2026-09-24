@@ -19,7 +19,7 @@ function seed() {
   return db;
 }
 
-const empty: SyncPullResponse = { sources: [], movieFavourites: [], movieRecents: [], seriesFavourites: [], seriesRecents: [], progress: [], profiles: [], serverCursor: 0 };
+const empty: SyncPullResponse = { sources: [], movieFavourites: [], movieRecents: [], seriesFavourites: [], seriesRecents: [], progress: [], profiles: [], channelFavourites: [], channelRecents: [], serverCursor: 0 };
 const noSource = async () => undefined;
 
 describe("profile sync", () => {

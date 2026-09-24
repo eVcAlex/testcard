@@ -1,3 +1,5 @@
+import { hiddenForSource } from "./hidden.js";
+import { applyChannelHistory, collectChannelHistory } from "./channelHistory.js";
 import type Database from "better-sqlite3";
 import { decryptCredentials, decryptJson, encryptCredentials, encryptJson } from "./credentialCrypto.js";
 import { keyPrefix, MAIN_PROFILE } from "../db/profiles.js";
@@ -99,6 +101,18 @@ function skipsField(db: Database.Database, sourceId: string): { skips?: SourceSk
   return skips.length > 0 ? { skips } : {};
 }
 
+const blankToNull = (value: string | null) => (value === null || value.trim() === "" ? null : value.trim());
+
+/**
+ * Sources given a guide address before it was synced were pushed without one. Once, mark those as changed, so the
+ * next push carries it to the other devices.
+ */
+function resendSourceGuides(db: Database.Database): void {
+  if (db.prepare(`SELECT 1 FROM schema_meta WHERE key = 'sync_epg_urls_sent'`).get() !== undefined) return;
+  db.prepare(`UPDATE sources SET sync_updated_at = ? WHERE remote_key IS NOT NULL AND epg_url IS NOT NULL AND TRIM(epg_url) <> ''`).run(Date.now());
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('sync_epg_urls_sent', '1')`).run();
+}
+
 /** The profiles changed since `sinceMs`, sealed, or as tombstones. */
 async function collectProfiles(db: Database.Database, sinceMs: number, accountPassword: string, salt: string): Promise<SyncProfile[]> {
   const rows = db
@@ -132,23 +146,24 @@ export async function collectLocalChanges(
   const prefix = keyPrefix(profile);
   const pinsFor = (sourceId: string) => (profile === MAIN_PROFILE ? { pins: pinsForSource(db, sourceId) } : {});
   await backfillSourceKeys(db, getCredentials);
+  resendSourceGuides(db);
   const sourceRows = db
     .prepare(
-      `SELECT id, kind, playlist_url AS playlistUrl, remote_key, name, sync_updated_at,
+      `SELECT id, kind, playlist_url AS playlistUrl, epg_url AS epgUrl, remote_key, name, sync_updated_at,
               include_live AS live, include_movies AS movies, include_series AS series, sort_order AS position FROM sources
        WHERE kind IN ('xtream', 'm3u') AND remote_key IS NOT NULL AND sync_updated_at > ?`,
     )
-    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; remote_key: string; name: string; sync_updated_at: number; live: number; movies: number; series: number; position: number | null }[];
+    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; epgUrl: string | null; remote_key: string; name: string; sync_updated_at: number; live: number; movies: number; series: number; position: number | null }[];
 
   const sources: SyncSource[] = [];
   for (const row of sourceRows) {
     let payload: SourceCredentialsPayload;
     if (row.kind === "m3u") {
       if (row.playlistUrl === null || row.playlistUrl === "") continue;
-      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), ...pinsFor(row.id), ...skipsField(db, row.id) };
+      payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), ...pinsFor(row.id), ...skipsField(db, row.id), epgUrl: blankToNull(row.epgUrl), hidden: hiddenForSource(db, row.id) };
     } else {
       const credentials = await getCredentials(row.id);
-      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), ...pinsFor(row.id), ...skipsField(db, row.id) };
+      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), ...pinsFor(row.id), ...skipsField(db, row.id), epgUrl: blankToNull(row.epgUrl), hidden: hiddenForSource(db, row.id) };
     }
     const encrypted = await encryptCredentials(payload, accountPassword, salt);
     sources.push({ remoteKey: row.remote_key, label: row.name, credentialsBlob: encrypted.blob, credentialsIv: encrypted.iv, updatedAt: row.sync_updated_at, deletedAt: null });
@@ -196,8 +211,11 @@ export async function collectLocalChanges(
     .all(sinceMs) as { remote_key: string; item_type: "movie" | "episode"; position_secs: number; duration_secs: number | null; watched: 0 | 1; updated_at: number; deleted_at: number | null }[];
 
   const mine = <T extends { remoteKey: string }>(rows: readonly T[]): T[] => rows.map((row) => ({ ...row, remoteKey: `${prefix}${row.remoteKey}` }));
+  const channels = collectChannelHistory(db, sinceMs);
   return {
     sources,
+    channelFavourites: mine(channels.channelFavourites),
+    channelRecents: mine(channels.channelRecents),
     movieFavourites: mine(withTombstones("movie_favourites", collectFavouritesOrRecents(db, "movie_favourites", "added_at", sinceMs) as SyncFavourite[], "addedAt")),
     movieRecents: mine(withTombstones("movie_recents", collectFavouritesOrRecents(db, "movie_recents", "played_at", sinceMs) as SyncRecent[], "playedAt")),
     seriesFavourites: mine(withTombstones("series_favourites", collectFavouritesOrRecents(db, "series_favourites", "added_at", sinceMs) as SyncFavourite[], "addedAt")),
@@ -236,7 +254,11 @@ export function clearTombstones(db: Database.Database, beforeMs: number): void {
  */
 export async function applyRemoteChanges(
   db: Database.Database,
-  pulled: Omit<SyncPullResponse, "profiles"> & { readonly profiles?: SyncPullResponse["profiles"] },
+  pulled: Omit<SyncPullResponse, "profiles" | "channelFavourites" | "channelRecents"> & {
+    readonly profiles?: SyncPullResponse["profiles"];
+    readonly channelFavourites?: SyncPullResponse["channelFavourites"];
+    readonly channelRecents?: SyncPullResponse["channelRecents"];
+  },
   accountPassword: string,
   salt: string,
   onDecryptedSource: (remoteKey: string, label: string, payload: SourceCredentialsPayload, updatedAt: number) => Promise<void>,
@@ -257,6 +279,8 @@ export async function applyRemoteChanges(
     seriesFavourites: mine(pulled.seriesFavourites),
     seriesRecents: mine(pulled.seriesRecents),
     progress: mine(pulled.progress),
+    channelFavourites: mine(pulled.channelFavourites ?? []),
+    channelRecents: mine(pulled.channelRecents ?? []),
   };
 
   // Profiles: last write wins. A deleted one goes, with its rows on this device, unless it is the one watching now.
@@ -383,5 +407,7 @@ export async function applyRemoteChanges(
     }
   });
   applyAll();
+  // Channels: never deferred (see channelHistory.ts); waiting ones are tried again on every pull.
+  applyChannelHistory(db, response.channelFavourites, response.channelRecents);
   return { deferredBeforeMs: minDeferred };
 }

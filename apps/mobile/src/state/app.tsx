@@ -10,6 +10,8 @@ import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
 import { readAudioLanguage, writeAudioLanguage } from "../playback/viewing";
+import { refreshGuides } from "../playback/guideImport";
+import { saveSource as saveStoredSource, type SourceDraft } from "./sourceEdit";
 import { forgetProfile, swapProfile } from "@testcard/core/src/db/profileSwap.js";
 import { deleteProfile as deleteStoredProfile, saveProfile as saveStoredProfile } from "@testcard/core/src/db/profiles.js";
 import { MAIN_PROFILE, PROFILE_META_KEYS, readActiveProfile, readProfiles, writeActiveProfile, type Profile } from "./profiles";
@@ -69,6 +71,8 @@ interface AppState {
   refreshSource(sourceId: string): Promise<void>;
   /** Takes a source off this device and, through sync, off the user's others. */
   removeSource(sourceId: string): Promise<void>;
+  /** Adds a source (no id) or changes one, once the provider has accepted it; synced. Throws a message to show. */
+  saveSource(sourceId: string | undefined, draft: SourceDraft): Promise<void>;
   updateStatus(): void;
 }
 
@@ -160,6 +164,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // so the app opens with its history in place.
         stage(sourceId, "history");
         await syncRef.current?.triggerNow().catch(() => undefined);
+        // The TV guide comes after, in the background: the app does not wait on it.
+        refreshGuides(db, adapters(), bump, [sourceId]);
       } catch (error) {
         const message = error instanceof Error ? error.message : "The import failed.";
         console.warn(`Import of ${row.name} failed: ${message}`);
@@ -219,6 +225,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [db, sync, bump],
   );
 
+  const saveSource = useCallback(
+    async (sourceId: string | undefined, draft: SourceDraft) => {
+      if (sourceId !== undefined) await inFlight.current.get(sourceId)?.catch(() => undefined);
+      const saved = await saveStoredSource(db, sourceId, draft, () => globalThis.crypto.randomUUID());
+      sync.notifyLocalChange();
+      bump();
+      if (saved.reload) void refreshSource(saved.id);
+      // A new guide address is read straight away (see guideImport's staleness).
+      else refreshGuides(db, adapters(), bump);
+    },
+    [db, sync, bump, refreshSource],
+  );
+
   const [status, setStatus] = useState<SyncStatus>(() => sync.status());
   const updateStatus = useCallback(() => {
     setStatus(sync.status());
@@ -238,10 +257,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (next.lastChangedAt !== lastChangedAt.current) {
         lastChangedAt.current = next.lastChangedAt;
         bump();
+        // A guide address set on another device is read as soon as it arrives.
+        refreshGuides(db, adapters(), bump);
       }
     }, 4000);
     return () => clearInterval(timer);
-  }, [sync, bump]);
+  }, [db, sync, bump]);
   useEffect(() => () => sync.dispose(), [sync]);
   // On launch, and whenever the app comes back to the front, catch up with the account at once, so what was watched
   // or changed on another device is there when the viewer looks. (Android holds JS timers in the background, so the
@@ -275,11 +296,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   useEffect(() => {
     catchUp(true);
+    refreshGuides(db, adapters(), bump);
     const subscription = AppLifecycle.addEventListener("change", (state) => {
-      if (state === "active") catchUp(false);
+      if (state !== "active") return;
+      catchUp(false);
+      refreshGuides(db, adapters(), bump);
     });
     return () => subscription.remove();
-  }, [catchUp]);
+  }, [catchUp, db, bump]);
 
   const sources = useMemo<SourceSummary[]>(() => {
     void version;
@@ -298,7 +322,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [db, version, refreshing, errors]);
 
-  const catalogue = useMemo(() => sources.map((entry) => `${entry.id}:${entry.lastRefreshedAt ?? 0}`).join(","), [sources]);
+  // Hiding a category or channel (here or on another device) changes what the lists hold, so it is part of the key.
+  const hiddenStamp = useMemo(() => {
+    void version;
+    const row = db
+      .prepare(`SELECT (SELECT COUNT(*) || '.' || COALESCE(MAX(hidden_at), 0) FROM hidden_categories) || '/' || (SELECT COUNT(*) || '.' || COALESCE(MAX(hidden_at), 0) FROM hidden_channels) AS stamp`)
+      .get() as { stamp: string };
+    return row.stamp;
+  }, [db, version]);
+  const catalogue = useMemo(() => `${sources.map((entry) => `${entry.id}:${entry.lastRefreshedAt ?? 0}`).join(",")}|${hiddenStamp}`, [sources, hiddenStamp]);
 
   // The app waits while a signed-in device with no sources is waiting for its first sync, and while anything is
   // importing: the sync only brings the source rows down, and importing their channels, movies and series (the
@@ -380,8 +412,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AppState>(
-    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfile, deleteProfile, refreshSource, removeSource, updateStatus }),
-    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfile, deleteProfile, refreshSource, removeSource, updateStatus],
+    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfile, deleteProfile, refreshSource, removeSource, saveSource, updateStatus }),
+    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfile, deleteProfile, refreshSource, removeSource, saveSource, updateStatus],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

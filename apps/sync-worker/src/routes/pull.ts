@@ -23,7 +23,7 @@ export async function handlePull(c: AppContext): Promise<Response> {
   const mine = profile === undefined || profile === "main" ? `remote_key NOT LIKE 'p.%'` : `remote_key LIKE '${profileKeyPrefix(profile)}%'`;
   const db = c.env.DB;
 
-  const [sources, movieFavourites, movieRecents, seriesFavourites, seriesRecents, progress, profiles] = await Promise.all([
+  const [sources, movieFavourites, movieRecents, seriesFavourites, seriesRecents, progress, profiles, channelFavourites, channelRecents] = await Promise.all([
     db
       .prepare(
         `SELECT remote_key AS remoteKey, label, credentials_blob AS credentialsBlob, credentials_iv AS credentialsIv,
@@ -65,6 +65,16 @@ export async function handlePull(c: AppContext): Promise<Response> {
                 FROM profiles WHERE user_id = ? AND updated_at > ?`)
       .bind(userId, since)
       .all<Row>(),
+    db
+      .prepare(`SELECT remote_key AS remoteKey, added_at AS addedAt, position, updated_at AS updatedAt, deleted_at AS deletedAt
+                FROM channel_favourites WHERE user_id = ? AND updated_at > ? AND ${mine}`)
+      .bind(userId, since)
+      .all<Row>(),
+    db
+      .prepare(`SELECT remote_key AS remoteKey, played_at AS playedAt, updated_at AS updatedAt, deleted_at AS deletedAt
+                FROM channel_recents WHERE user_id = ? AND updated_at > ? AND ${mine}`)
+      .bind(userId, since)
+      .all<Row>(),
   ]);
 
   /**
@@ -84,6 +94,8 @@ export async function handlePull(c: AppContext): Promise<Response> {
     seriesRecents.results,
     progress.results,
     profiles.results,
+    channelFavourites.results,
+    channelRecents.results,
   ]
     .flat()
     .reduce((max, row) => Math.max(max, Number(row.updatedAt)), since);
@@ -96,6 +108,8 @@ export async function handlePull(c: AppContext): Promise<Response> {
     seriesRecents: seriesRecents.results,
     progress: progress.results.map((row) => ({ ...row, watched: Boolean(row.watched) })),
     profiles: profiles.results,
+    channelFavourites: channelFavourites.results,
+    channelRecents: channelRecents.results,
     serverCursor,
   });
 

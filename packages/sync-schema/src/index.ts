@@ -25,6 +25,18 @@ export type SourcePin = z.infer<typeof SourcePinSchema>;
  */
 export const SourceSkipSchema = z.object({ key: z.string().min(1), from: z.number().int().nonnegative(), to: z.number().int().positive() });
 export type SourceSkip = z.infer<typeof SourceSkipSchema>;
+/**
+ * The source's own TV guide (XMLTV) address, when one was typed in. Null when there is none (the source's own guide
+ * is used); left out by an older device, and a device that gets none keeps what it has.
+ */
+export const SourceEpgUrlSchema = z.string().min(1).nullable().optional();
+/**
+ * A category or channel the viewer hid. Rides in the source's encrypted record like pins; `key` is the category's
+ * provider id, or for a channel its id less the source's (both the same on every device). Optional: an older device
+ * leaves it out, and a device that gets none keeps what it has.
+ */
+export const SourceHiddenSchema = z.object({ kind: z.enum(["live", "movies", "series", "channel"]), key: z.string().min(1), label: z.string() });
+export type SourceHidden = z.infer<typeof SourceHiddenSchema>;
 export const XtreamCredentialsPayloadSchema = z.object({
   host: z.string().min(1),
   username: z.string().min(1),
@@ -33,6 +45,8 @@ export const XtreamCredentialsPayloadSchema = z.object({
   position: z.number().int().optional(),
   pins: z.array(SourcePinSchema).optional(),
   skips: z.array(SourceSkipSchema).optional(),
+  epgUrl: SourceEpgUrlSchema,
+  hidden: z.array(SourceHiddenSchema).optional(),
 });
 export const PlaylistPayloadSchema = z.object({
   playlistUrl: z.string().min(1),
@@ -40,6 +54,8 @@ export const PlaylistPayloadSchema = z.object({
   position: z.number().int().optional(),
   pins: z.array(SourcePinSchema).optional(),
   skips: z.array(SourceSkipSchema).optional(),
+  epgUrl: SourceEpgUrlSchema,
+  hidden: z.array(SourceHiddenSchema).optional(),
 });
 export const SourceCredentialsPayloadSchema = z.union([XtreamCredentialsPayloadSchema, PlaylistPayloadSchema]);
 export type SourceCredentialsPayload = z.infer<typeof SourceCredentialsPayloadSchema>;
@@ -93,6 +109,12 @@ export const SyncRecentSchema = SyncedRowSchema.extend({
 });
 export type SyncRecent = z.infer<typeof SyncRecentSchema>;
 
+/** A favourite live channel. `position` is the viewer's order once they have moved one (null: newest first). */
+export const SyncChannelFavouriteSchema = SyncFavouriteSchema.extend({
+  position: z.number().int().nullable().default(null),
+});
+export type SyncChannelFavourite = z.infer<typeof SyncChannelFavouriteSchema>;
+
 export const SyncProgressSchema = SyncedRowSchema.extend({
   itemType: z.enum(["movie", "episode"]),
   positionSecs: z.number().int().nonnegative(),
@@ -140,6 +162,9 @@ export const SyncPullResponseSchema = z.object({
   progress: z.array(SyncProgressSchema),
   /** Absent from a server that predates profiles. */
   profiles: z.array(SyncProfileSchema).default([]),
+  /** Absent from a server that predates synced channel history. */
+  channelFavourites: z.array(SyncChannelFavouriteSchema).default([]),
+  channelRecents: z.array(SyncRecentSchema).default([]),
   serverCursor: z.number().int().nonnegative(),
 });
 export type SyncPullResponse = z.infer<typeof SyncPullResponseSchema>;
@@ -153,6 +178,9 @@ export const SyncPushRequestSchema = z.object({
   progress: z.array(SyncProgressSchema),
   /** Absent from a device that predates profiles. */
   profiles: z.array(SyncProfileSchema).default([]),
+  /** Absent from a device that predates synced channel history. */
+  channelFavourites: z.array(SyncChannelFavouriteSchema).default([]),
+  channelRecents: z.array(SyncRecentSchema).default([]),
 });
 export type SyncPushRequest = z.infer<typeof SyncPushRequestSchema>;
 

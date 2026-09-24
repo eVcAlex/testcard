@@ -1,7 +1,7 @@
 import { SyncPushRequestSchema, SyncPushResponseSchema, type SyncPushRequest } from "@testcard/sync-schema";
 import { parseJsonBody, type AppContext } from "../validation.js";
 
-type FavouriteOrRecentTable = "movie_favourites" | "movie_recents" | "series_favourites" | "series_recents";
+type FavouriteOrRecentTable = "movie_favourites" | "movie_recents" | "series_favourites" | "series_recents" | "channel_recents";
 
 function upsertFavouriteOrRecent(
   db: D1Database,
@@ -39,6 +39,8 @@ function maxUpdatedAt(body: SyncPushRequest): number {
     ...body.seriesRecents,
     ...body.progress,
     ...body.profiles,
+    ...body.channelFavourites,
+    ...body.channelRecents,
   ];
   // An empty push moves nothing, so it must not move the cursor either: 0 leaves the client's own
   // stored cursor as the greater value, which is what it keeps using.
@@ -71,6 +73,18 @@ export async function handlePush(c: AppContext): Promise<Response> {
     ...body.movieRecents.map((r) => upsertFavouriteOrRecent(db, "movie_recents", "played_at", userId, r.remoteKey, r.playedAt, r.updatedAt, r.deletedAt)),
     ...body.seriesFavourites.map((f) => upsertFavouriteOrRecent(db, "series_favourites", "added_at", userId, f.remoteKey, f.addedAt, f.updatedAt, f.deletedAt)),
     ...body.seriesRecents.map((r) => upsertFavouriteOrRecent(db, "series_recents", "played_at", userId, r.remoteKey, r.playedAt, r.updatedAt, r.deletedAt)),
+    ...body.channelFavourites.map((f) =>
+      db
+        .prepare(
+          `INSERT INTO channel_favourites (user_id, remote_key, added_at, position, updated_at, deleted_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(user_id, remote_key) DO UPDATE SET
+             added_at = excluded.added_at, position = excluded.position, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at
+           WHERE excluded.updated_at > channel_favourites.updated_at`,
+        )
+        .bind(userId, f.remoteKey, f.addedAt, f.position, f.updatedAt, f.deletedAt),
+    ),
+    ...body.channelRecents.map((r) => upsertFavouriteOrRecent(db, "channel_recents", "played_at", userId, r.remoteKey, r.playedAt, r.updatedAt, r.deletedAt)),
     ...body.progress.map((p) =>
       db
         .prepare(

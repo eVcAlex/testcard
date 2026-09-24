@@ -14,6 +14,7 @@
   "dependencies": {
     "@testcard/sync-schema": "workspace:*",
     "better-sqlite3": "^12.4.1",
+    "fflate": "^0.8.3",
     "sax": "^1.4.1"
   },
   "devDependencies": {

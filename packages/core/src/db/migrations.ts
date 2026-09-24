@@ -333,6 +333,51 @@ CREATE INDEX IF NOT EXISTS idx_profile_stash_profile ON profile_stash(profile_id
 `);
     },
   },
+  {
+    version: 14,
+    up: (db) => {
+      // Hiding categories and channels, and the viewer's own order for favourite channels.
+      db.exec(`CREATE TABLE IF NOT EXISTS hidden_categories (
+  source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  kind          TEXT NOT NULL CHECK (kind IN ('live', 'movies', 'series')),
+  category_key  TEXT NOT NULL,
+  label         TEXT NOT NULL,
+  hidden_at     INTEGER NOT NULL,
+  PRIMARY KEY (source_id, kind, category_key)
+);
+CREATE TABLE IF NOT EXISTS hidden_channels (
+  source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  channel_key   TEXT NOT NULL,
+  label         TEXT NOT NULL,
+  hidden_at     INTEGER NOT NULL,
+  PRIMARY KEY (source_id, channel_key)
+);
+`);
+      // Channel favourites and recents sync from here on (sync/channelHistory.ts): the ones already here are sent once.
+      db.exec(`CREATE TABLE IF NOT EXISTS pending_channel_sync (
+  kind          TEXT NOT NULL CHECK (kind IN ('favourite', 'recent')),
+  remote_key    TEXT NOT NULL,
+  row           TEXT NOT NULL,
+  received_at   INTEGER NOT NULL,
+  PRIMARY KEY (kind, remote_key)
+);`);
+      // Only where the table is there without the column: a very old database gains the whole table later, from
+      // SCHEMA_SQL's shape.
+      const addColumn = (table: string, column: string) => {
+        const columns = db.prepare(`SELECT name FROM pragma_table_info('${table}')`).all() as { name: string }[];
+        if (columns.length > 0 && !columns.some((entry) => entry.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} INTEGER`);
+      };
+      addColumn("favourites", "position");
+      addColumn("favourites", "updated_at");
+      addColumn("recents", "updated_at");
+      const now = Date.now();
+      for (const table of ["favourites", "recents"]) {
+        if ((db.prepare(`SELECT name FROM pragma_table_info('${table}')`).all() as { name: string }[]).some((entry) => entry.name === "updated_at")) {
+          db.prepare(`UPDATE ${table} SET updated_at = ? WHERE updated_at IS NULL`).run(now);
+        }
+      }
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

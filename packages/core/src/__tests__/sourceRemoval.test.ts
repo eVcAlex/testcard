@@ -17,7 +17,7 @@ function seed() {
   return db;
 }
 
-const empty: Omit<SyncPullResponse, "sources"> = { movieFavourites: [], movieRecents: [], seriesFavourites: [], seriesRecents: [], progress: [], profiles: [], serverCursor: 0 };
+const empty: Omit<SyncPullResponse, "sources"> = { movieFavourites: [], movieRecents: [], seriesFavourites: [], seriesRecents: [], progress: [], profiles: [], channelFavourites: [], channelRecents: [], serverCursor: 0 };
 const noCredentials = async () => ({ baseUrl: "http://x", username: "u", password: "p" });
 
 describe("removeSourceRows", () => {

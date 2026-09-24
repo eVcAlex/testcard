@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { FlatList, Platform, Text, TextInput, TVFocusGuideView, View } from "react-native";
 import { ChannelLogo } from "../ui/ChannelLogo";
 import { Search } from "iconoir-react-native";
@@ -7,7 +7,7 @@ import type { ChannelRow } from "@testcard/core/src/db/queries.js";
 import { useApp } from "../state/app";
 import { colors, styleSheet, uiScale } from "../theme";
 import { Focusable } from "../ui/Focusable";
-import { PosterRow, type PosterItem } from "../ui/Poster";
+import { PosterRow, SourceNames, type PosterItem } from "../ui/Poster";
 
 /** What was typed last, so coming back from a film's page lands on the same results. */
 let remembered = "";
@@ -34,7 +34,7 @@ export function SearchScreen({
   onOpenSeries: (series: { id: string; title: string }) => void;
   onPlayChannel: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
-  const { db, version } = useApp();
+  const { db, version, sources } = useApp();
   const [query, setQueryState] = useState(remembered);
   const setQuery = useCallback((next: string) => {
     remembered = next;
@@ -79,6 +79,15 @@ export function SearchScreen({
     return list;
   }, [results]);
 
+  // Results from more than one source name theirs on each poster and channel, so the same film from two
+  // providers can be told apart. One source's results need no label.
+  const sourceNames = useMemo(() => {
+    if (results === null) return null;
+    const ids = new Set([...results.movies, ...results.series].map((entry) => entry.id.slice(0, Math.max(0, entry.id.indexOf(":")))));
+    for (const channel of results.channels) ids.add(channel.source_id);
+    return ids.size > 1 ? new Map(sources.map((entry) => [entry.id, entry.name])) : null;
+  }, [results, sources]);
+
   const openMovie = useCallback((item: PosterItem) => onOpenMovie({ id: item.id, title: item.name }), [onOpenMovie]);
   const openSeries = useCallback((item: PosterItem) => onOpenSeries({ id: item.id, title: item.name }), [onOpenSeries]);
   const channels = results?.channels ?? [];
@@ -104,7 +113,9 @@ export function SearchScreen({
       </View>
       <TVFocusGuideView autoFocus style={styles.right}>
         {sections.length > 0 ? (
-          <FlatList data={sections} keyExtractor={(section) => section.key} renderItem={renderSection} showsVerticalScrollIndicator={false} windowSize={5} contentContainerStyle={styles.list} />
+          <SourceNames.Provider value={sourceNames}>
+            <FlatList data={sections} keyExtractor={(section) => section.key} renderItem={renderSection} showsVerticalScrollIndicator={false} windowSize={5} contentContainerStyle={styles.list} extraData={sourceNames} />
+          </SourceNames.Provider>
         ) : (
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>{short ? "Search movies, series and channels" : results === null ? "" : `Nothing found for "${query.trim()}"`}</Text>
@@ -171,14 +182,22 @@ function ChannelSection({ channels, onPress }: { channels: readonly ChannelRow[]
 }
 
 function ChannelTile({ channel, onPress }: { channel: ChannelRow; onPress: (channel: ChannelRow) => void }) {
+  const sourceName = useContext(SourceNames)?.get(channel.source_id);
   return (
     <Focusable onPress={() => onPress(channel)} style={styles.channel} focusedStyle={styles.channelFocused}>
       <View style={styles.logo}>
         <ChannelLogo url={channel.logo_url} name={channel.normalised_name} size={24} recyclingKey={channel.id} />
       </View>
-      <Text style={styles.channelName} numberOfLines={2}>
-        {channel.normalised_name}
-      </Text>
+      <View style={styles.channelText}>
+        <Text style={styles.channelName} numberOfLines={sourceName !== undefined ? 1 : 2}>
+          {channel.normalised_name}
+        </Text>
+        {sourceName !== undefined ? (
+          <Text style={styles.channelSource} numberOfLines={1}>
+            {sourceName}
+          </Text>
+        ) : null}
+      </View>
     </Focusable>
   );
 }
@@ -200,5 +219,7 @@ const styles = styleSheet({
   channel: { width: 360, flexDirection: "row", alignItems: "center", gap: 16, padding: 14, backgroundColor: colors.raised, borderRadius: 16 },
   channelFocused: { backgroundColor: colors.card },
   logo: { width: 96, height: 64, borderRadius: 10, backgroundColor: colors.sunken, overflow: "hidden" },
-  channelName: { flex: 1, color: colors.foreground, fontSize: 24, fontWeight: "500" },
+  channelText: { flex: 1, gap: 2 },
+  channelName: { color: colors.foreground, fontSize: 24, fontWeight: "500" },
+  channelSource: { color: colors.muted, fontSize: 19, fontWeight: "500" },
 });

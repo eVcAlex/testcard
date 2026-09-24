@@ -4,6 +4,7 @@ import { generateSalt } from "./credentialCrypto.js";
 import { SyncClient } from "./client.js";
 import { removeSourceRows } from "./sourceRemoval.js";
 import { applySourceContent } from "./sourceContent.js";
+import { applySourceHidden } from "./hidden.js";
 import { applySourcePosition } from "./sourceOrder.js";
 import { applySourcePins, applySourceSkips, holdPinsForMain } from "./sourcePins.js";
 import { MAIN_PROFILE } from "../db/profiles.js";
@@ -349,6 +350,8 @@ export class SyncController {
           if (payload.position !== undefined) applySourcePosition(this.db, existing.id, payload.position);
           if (payload.pins !== undefined) this.applyPins(existing.id, payload.pins);
           if (payload.skips !== undefined) applySourceSkips(this.db, existing.id, payload.skips);
+          if (payload.epgUrl !== undefined) this.db.prepare(`UPDATE sources SET epg_url = ? WHERE id = ?`).run(payload.epgUrl, existing.id);
+          if (payload.hidden !== undefined) applySourceHidden(this.db, existing.id, payload.hidden);
           return;
         }
         const id = this.platform.randomId();
@@ -367,6 +370,8 @@ export class SyncController {
         if (payload.position !== undefined) applySourcePosition(this.db, id, payload.position);
         if (payload.pins !== undefined) this.applyPins(id, payload.pins);
         if (payload.skips !== undefined) applySourceSkips(this.db, id, payload.skips);
+        if (payload.epgUrl !== undefined) this.db.prepare(`UPDATE sources SET epg_url = ? WHERE id = ?`).run(payload.epgUrl, id);
+        if (payload.hidden !== undefined) applySourceHidden(this.db, id, payload.hidden);
         addedSourceIds.push(id);
       }, async (remoteKey, deletedAt) => {
         const existing = this.db.prepare(`SELECT id, sync_updated_at AS updatedAt FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string; updatedAt: number | null } | undefined;
@@ -382,7 +387,7 @@ export class SyncController {
       if (reread) this.db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('sync_source_edits_reread', '1')`).run();
       this.lastSyncedAt = Date.now();
       this.lastError = undefined;
-      if (pull.sources.length + pull.movieFavourites.length + pull.movieRecents.length + pull.seriesFavourites.length + pull.seriesRecents.length + pull.progress.length + pull.profiles.length > 0) this.lastChangedAt = Date.now();
+      if (pull.sources.length + pull.movieFavourites.length + pull.movieRecents.length + pull.seriesFavourites.length + pull.seriesRecents.length + pull.progress.length + pull.profiles.length + pull.channelFavourites.length + pull.channelRecents.length > 0) this.lastChangedAt = Date.now();
       if (addedSourceIds.length > 0) this.onSourcesAdded(addedSourceIds);
     } catch (error) {
       if (allowReauth && (error as { status?: number }).status === 401) {
