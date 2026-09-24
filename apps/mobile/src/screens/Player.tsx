@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Animated, BackHandler, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, useTVEventHandler, View } from "react-native";
 import { useEvent } from "expo";
-import { ArrowLeft, Backward15Seconds, ClosedCaptionsTag, Forward15Seconds, NavArrowLeft, NavArrowRight, Pause, Play, SkipNext } from "iconoir-react-native";
+import { ArrowLeft, Backward15Seconds, ClosedCaptionsTag, DashboardSpeed, Forward15Seconds, Headset, NavArrowLeft, NavArrowRight, Pause, Play, ScaleFrameEnlarge, SkipNext } from "iconoir-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
@@ -40,6 +40,8 @@ const AUTO_NEXT_SECS = 8;
 let carriedSelection: Control | undefined;
 /** The channel being watched and the one before it, kept across channel changes so "Last" can flip back, as on a TV remote. */
 let channelHistory: { current?: PlayItem; previous?: PlayItem } = {};
+/** Set when Up or Down changed channel, so the next channel keeps taking Up and Down as channel changes (see `surfing`). */
+let carriedSurfing = false;
 const PROGRESS_EVERY_MS = 5000;
 
 /** Presses of the remote, as opposed to the focus and blur events the same handler also receives. */
@@ -664,9 +666,14 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // (subtitle tracks turn up a moment after the stream starts), and it must navigate to them straight away.
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
-  // Live: while the viewer is going through channels (the controls only up because a channel changed), Up and Down
-  // keep changing channel. Any other key means they have stopped to use the controls, and Down then reaches the options row.
-  const surfing = useRef(true);
+  // Live: with the controls up, Down goes to the options row, as on a film. The exception is going through channels:
+  // after Up or Down has changed channel (which brings the controls up), they keep changing channel until another
+  // key is pressed. With the controls hidden, Up and Down always change channel.
+  const surfing = useRef(false);
+  if (carriedSurfing) {
+    carriedSurfing = false;
+    surfing.current = true;
+  }
   const [selected, setSelected] = useState<Control>(() => {
     const carried = carriedSelection;
     carriedSelection = undefined;
@@ -742,7 +749,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       if (key === "fastForward") return step(1);
       // Live: up and down change channel, as on any TV, unless the viewer has stopped to use the controls.
       if (zapping && (key === "up" || key === "down") && (!chrome || surfing.current)) {
-        surfing.current = true;
+        carriedSurfing = true;
         wake();
         carriedSelection = selected;
         return zap(key === "down" ? 1 : -1);
@@ -977,9 +984,9 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
           {/* Hidden until the remote is pressed Down onto this row (a phone has no Down, so it always shows). */}
           {!tv || options.includes(selected) ? (
             <View style={styles.secondary} pointerEvents="box-none">
-              {options.includes("audio") ? <TextKey label={`Audio: ${audioTrack !== null ? audioName(audioTrack) : "Default"}`} selected={lit("audio")} onPress={() => press("audio")} /> : null}
-              <TextKey label={`Picture: ${pictureLabel(fit)}`} selected={lit("picture")} onPress={() => press("picture")} />
-              {options.includes("speed") ? <TextKey label={`Speed: ${speedLabel(speed)}`} selected={lit("speed")} onPress={() => press("speed")} /> : null}
+              {options.includes("audio") ? <OptionKey icon={Headset} label="Audio" value={audioTrack !== null ? audioName(audioTrack) : "Default"} selected={lit("audio")} onPress={() => press("audio")} /> : null}
+              <OptionKey icon={ScaleFrameEnlarge} label="Picture" value={pictureLabel(fit)} selected={lit("picture")} onPress={() => press("picture")} />
+              {options.includes("speed") ? <OptionKey icon={DashboardSpeed} label="Speed" value={speedLabel(speed)} selected={lit("speed")} onPress={() => press("speed")} /> : null}
             </View>
           ) : null}
           </View>
@@ -1134,6 +1141,23 @@ function TextKey({ label, dot = false, selected = false, onPress }: { label: str
   );
 }
 
+/** A key of the options row: its symbol in a disc (white under the remote's highlight), what it is below, and what it is set to. */
+function OptionKey({ icon: Icon, label, value, selected = false, onPress }: { icon: typeof Headset; label: string; value: string; selected?: boolean; onPress: () => void }) {
+  return (
+    <Pressable focusable={false} onPress={onPress} style={styles.optionKey}>
+      <View style={[styles.key, styles.keySmall, styles.optionDisc, selected && styles.keyFilled, selected && { transform: [{ scale: 1.08 }] }]}>
+        <Icon color={selected ? INK : colors.foreground} width={u(36)} height={u(36)} strokeWidth={1.75} />
+      </View>
+      <Text style={[styles.optionLabel, selected && styles.optionLabelLit]} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={styles.optionValue} numberOfLines={1}>
+        {value}
+      </Text>
+    </Pressable>
+  );
+}
+
 /** The closed-captions mark: cream as an icon while a track is on. */
 function CcGlyph({ on, color }: { on: boolean; color: string }) {
   return <ClosedCaptionsTag color={on ? colors.accent : color} width={u(38)} height={u(38)} strokeWidth={1.75} />;
@@ -1248,7 +1272,12 @@ const styles = styleSheet({
 
   controls: { flexDirection: "row", alignItems: "center" },
   side: { flex: 1, alignItems: "flex-start" },
-  secondary: { flexDirection: "row", justifyContent: "center", gap: 20 },
+  secondary: { flexDirection: "row", justifyContent: "center", gap: 48 },
+  optionKey: { width: 170, alignItems: "center", gap: 6 },
+  optionDisc: { backgroundColor: "#ffffff1a", marginBottom: 4 },
+  optionLabel: { color: colors.foreground, opacity: 0.85, fontSize: 22, fontWeight: "500" },
+  optionLabelLit: { opacity: 1, fontWeight: "600" },
+  optionValue: { color: colors.muted, fontSize: 20, maxWidth: 170 },
   sideRight: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 20 },
   chips: { flexDirection: "row", gap: 10, marginTop: -12 },
   chip: { borderRadius: 7, borderWidth: 2, borderColor: "#ffffff66", paddingHorizontal: 12, paddingVertical: 3 },
