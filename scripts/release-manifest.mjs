@@ -8,6 +8,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 const MANIFEST_URL = "https://testcard-sync.evcalex.workers.dev/app/latest.json";
 const KEEP_BUILDS = 15;
 const MAX_LINES = 8;
+/** Commits that change nothing a viewer sees (docs, the build itself) are left out of what changed. */
+const BEHIND_THE_SCENES = /^(docs|ci|build|chore|test|tests|readme)\b[:(]?/i;
 
 const [buildFile, apk, commit, out] = process.argv.slice(2);
 if (out === undefined) throw new Error("usage: release-manifest.mjs <build.json> <apk> <commit> <out>");
@@ -31,7 +33,7 @@ const known = (sha) => {
   }
 };
 const range = typeof previous?.commit === "string" && known(previous.commit) ? [`${previous.commit}..${commit}`] : ["-n", "5", commit];
-const changes = [...new Set(git("log", "--no-merges", "--format=%s", ...range).split("\n").map((line) => line.trim()).filter((line) => line !== ""))].slice(0, MAX_LINES);
+const changes = [...new Set(git("log", "--no-merges", "--format=%s", ...range).split("\n").map((line) => line.trim()).filter((line) => line !== "" && !BEHIND_THE_SCENES.test(line)))].slice(0, MAX_LINES);
 
 const history = Array.isArray(previous?.notes) ? previous.notes.filter((entry) => entry.versionCode < build.versionCode) : [];
 const notes = [{ versionCode: build.versionCode, versionName: build.versionName, changes }, ...history].slice(0, KEEP_BUILDS);
