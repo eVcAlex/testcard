@@ -5,7 +5,7 @@ import { ArrowLeft, Backward15Seconds, ClosedCaptionsTag, DashboardSpeed, Forwar
 import { useVideoPlayer, VideoView } from "expo-video";
 import type Database from "better-sqlite3";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
+import { getPlaybackProgress, setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
 import { listMoviePlayOrder, recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
 import { findNextEpisode, getSkipWindow, recordSeriesRecent, saveSkipWindow } from "@testcard/core/src/db/seriesQueries.js";
@@ -281,7 +281,7 @@ function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
 }
 
 function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, fellBack, onExit, onResolveAgain, onServerDown }: { onResolveAgain: () => void; onServerDown: (raw: string) => Promise<boolean> | null; onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; fellBack: string | undefined; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
-  const { db, sync, captions, setCaptions, audioLanguage, setAudioLanguage } = useApp();
+  const { db, sync, version, captions, setCaptions, audioLanguage, setAudioLanguage } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
   const started = useRef(false);
@@ -508,6 +508,25 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // time this component's cleanup runs, and touching it then throws.
   const latest = useRef({ position: 0, duration: 0 });
   latest.current = { position, duration };
+  // The position last written here, and when: where the player started counts, so an untouched play writes nothing.
+  const saved = useRef({ position: stream.resumeSecs ?? 0, at: Date.now() });
+
+  // Paused here and watched further on another TV: once that arrives (the app syncs on coming back to the front), the
+  // player moves to it rather than offering the old place.
+  const [pickedUp, setPickedUp] = useState<string>();
+  useEffect(() => {
+    if (!vod || timeshift || isPlaying || status !== "readyToPlay") return;
+    const row = getPlaybackProgress(db, item.kind as "movie" | "episode", item.id);
+    if (row === undefined || row.updated_at <= saved.current.at || Math.abs(row.position_secs - latest.current.position) < 20) return;
+    player.currentTime = row.position_secs;
+    saved.current = { position: row.position_secs, at: row.updated_at };
+    setPickedUp(`Picked up at ${clock(row.position_secs)} from your other TV`);
+  }, [version, vod, timeshift, isPlaying, status, db, item, player]);
+  useEffect(() => {
+    if (pickedUp === undefined) return;
+    const timer = setTimeout(() => setPickedUp(undefined), 5000);
+    return () => clearTimeout(timer);
+  }, [pickedUp]);
 
   // An episode offers the next one once its credits start, as the streaming apps do: "Watch credits" or "Next
   // episode". Where the credits start is learned from the viewer (see playback/credits); once it is, the next
@@ -900,9 +919,12 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     if (!vod) return;
     const save = () => {
       const { position: at, duration: length } = latest.current;
-      // No known length means nothing has played (a failed start), so there is no position worth keeping.
-      if (at > 0 && length > 0) {
+      // No known length means nothing has played (a failed start), so there is no position worth keeping. Nor is one
+      // that has not moved: a player left paused must not keep stamping its old place as the newest, or it would win
+      // over where the viewer has since got to on another TV.
+      if (at > 0 && length > 0 && Math.abs(at - saved.current.position) >= 2) {
         setPlaybackProgress(db, item.kind as "movie" | "episode", item.id, Math.floor(at), Math.floor(length));
+        saved.current = { position: at, at: Date.now() };
         sync.notifyLocalChange();
       }
     };
@@ -988,6 +1010,11 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       {loading ? (
         <View style={styles.centreLayer} pointerEvents="none">
           <ActivityIndicator size={u(64)} color={colors.foreground} />
+        </View>
+      ) : null}
+      {pickedUp !== undefined ? (
+        <View style={styles.fellBack} pointerEvents="none">
+          <Text style={styles.fellBackText}>{pickedUp}</Text>
         </View>
       ) : null}
       {fellBackShown && fellBack !== undefined ? (
