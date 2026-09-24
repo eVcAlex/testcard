@@ -17,10 +17,8 @@ export type IconName =
   | "volume"
   | "volume-x"
   | "cc"
-  | "aspect"
   | "grid"
   | "back"
-  | "chevron-right"
   | "sun"
   | "moon"
   | "refresh"
@@ -96,12 +94,6 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M6.5 7c-.4-.5-1-.7-1.6-.4-.8.3-1 1.3-.6 2 .4.6 1.2.8 1.9.4M11.5 7c-.4-.5-1-.7-1.6-.4-.8.3-1 1.3-.6 2 .4.6 1.2.8 1.9.4" />
     </>
   ),
-  aspect: (
-    <>
-      <rect x="1.8" y="4" width="12.4" height="8" rx="1" />
-      <path d="M4.5 4v8M11.5 4v8" />
-    </>
-  ),
   grid: (
     <>
       <rect x="2" y="2.5" width="12" height="11" rx="1.2" />
@@ -109,7 +101,6 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   back: <path d="M10 3.5 5.5 8l4.5 4.5" />,
-  "chevron-right": <path d="M6 3.5 10.5 8 6 12.5" />,
   "arrow-up": <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />,
   "arrow-down": <path d="M8 3v10M3.5 8.5 8 13l4.5-4.5" />,
   sun: (

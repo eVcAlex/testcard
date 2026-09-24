@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon } from "../components/Icon.js";
 import { logoSrc } from "../lib/logo.js";
-import { splitTitle } from "../lib/title.js";
+import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { Removable } from "./Removable.js";
 
 /** The minimal shape `PosterGrid` needs — `MoviesView`/`SeriesView` map their rows into this. */

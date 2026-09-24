@@ -23,13 +23,7 @@
     "icons": "node scripts/brand/make-icons.mjs",
     "release:android": "node scripts/release-android.mjs",
     "release:desktop": "node scripts/release-desktop.mjs",
-    "android:stick": "node scripts/android-dev.mjs stick",
-    "android:emulator": "node scripts/android-dev.mjs emulator",
-    "android:run": "node scripts/android-dev.mjs run",
-    "android:type": "node scripts/android-dev.mjs type",
-    "android:key": "node scripts/android-dev.mjs key",
-    "android:log": "node scripts/android-dev.mjs log",
-    "android:install": "node scripts/android-dev.mjs install"
+    "android": "node scripts/android-dev.mjs"
   },
   "devDependencies": {
     "oxlint": "^1.24.0",

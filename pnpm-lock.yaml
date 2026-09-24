@@ -107,9 +107,6 @@ importers:
       expo-build-properties:
         specifier: ~57.0.21
         version: 57.0.21(expo@57.0.24)
-      expo-crypto:
-        specifier: ~57.0.3
-        version: 57.0.3(expo@57.0.24)
       expo-file-system:
         specifier: ~57.0.7
         version: 57.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0)
@@ -122,9 +119,6 @@ importers:
       expo-intent-launcher:
         specifier: ~57.0.1
         version: 57.0.1(expo@57.0.24)
-      expo-keep-awake:
-        specifier: ~57.0.2
-        version: 57.0.2(expo@57.0.24)(react@19.2.3)
       expo-secure-store:
         specifier: ~57.0.4
         version: 57.0.4(expo@57.0.24)
@@ -189,12 +183,6 @@ importers:
       hono:
         specifier: ^4.6.14
         version: 4.13.8
-      kysely:
-        specifier: ^0.28.17
-        version: 0.28.17
-      kysely-d1:
-        specifier: ^0.3.0
-        version: 0.3.0(kysely@0.28.17)
       zod:
         specifier: ^3.24.1
         version: 3.25.76
@@ -229,9 +217,6 @@ importers:
       sax:
         specifier: ^1.4.1
         version: 1.6.1
-      wretch:
-        specifier: ^2.11.0
-        version: 2.11.1
     devDependencies:
       '@types/better-sqlite3':
         specifier: ^7.6.13
@@ -3196,11 +3181,6 @@ packages:
       expo: '*'
       react-native: '*'
 
-  expo-crypto@57.0.3:
-    resolution: {integrity: sha512-SAWqEfF37nc8ot7bXsVmu9AFYwQdC2kGvH/eNAHiR3bmlcf1Vv8wu9AnGKT+a90r3T8YfwMpZP4QAYlo4vCn9w==}
-    peerDependencies:
-      expo: '*'
-
   expo-file-system@57.0.7:
     resolution: {integrity: sha512-1vkZRadOsIputFDBcclqBa1pO3iXOO6iIsdqJipQWw4V5TSnWgmRTuOF7ro8IzrVue+PHbum++KCG3Tawem4cg==}
     peerDependencies:
@@ -3752,11 +3732,6 @@ packages:
   kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
-
-  kysely-d1@0.3.0:
-    resolution: {integrity: sha512-9wTbE6ooLiYtBa4wPg9e4fjfcmvRtgE/2j9pAjYrIq+iz+EsH/Hj9YbtxpEXA6JoRgfulVQ1EtGj6aycGGRpYw==}
-    peerDependencies:
-      kysely: '*'
 
   kysely@0.28.17:
     resolution: {integrity: sha512-nbD8lB9EB3wNdMhOCdx5Li8DxnLbvKByylRLcJ1h+4SkrowVeECAyZlyiKMThF7xFdRz0jSQ2MoJr+wXux2y0Q==}
@@ -5193,10 +5168,6 @@ packages:
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
-
-  wretch@2.11.1:
-    resolution: {integrity: sha512-rJejp30zE8Igs4Mvo4pxXaiOKdSIGYLxyVaY+jZTlAMfQyi/hZsDwMRa9R09N0iS9Q8cLvplKfHwwyBv6XRWsg==}
-    engines: {node: '>=14'}
 
   ws@7.5.13:
     resolution: {integrity: sha512-rsKI6xDBFVf4r/x8XyChGK04QR/XHroxs/jUcoWvtEZM8TPU/X/uIY9B1CsSzYws9ZJb/6bbBu7dPhFW00CAoA==}
@@ -8325,10 +8296,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  expo-crypto@57.0.3(expo@57.0.24):
-    dependencies:
-      expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.2.8(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@6.0.3)
-
   expo-file-system@57.0.7(expo@57.0.24)(react-native-tvos@0.86.3-0):
     dependencies:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.2.8(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@6.0.3)
@@ -8913,10 +8880,6 @@ snapshots:
   kleur@3.0.3: {}
 
   kleur@4.1.5: {}
-
-  kysely-d1@0.3.0(kysely@0.28.17):
-    dependencies:
-      kysely: 0.28.17
 
   kysely@0.28.17: {}
 
@@ -10644,8 +10607,6 @@ snapshots:
       strip-ansi: 6.0.1
 
   wrappy@1.0.2: {}
-
-  wretch@2.11.1: {}
 
   ws@7.5.13: {}
 
