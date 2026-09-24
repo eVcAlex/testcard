@@ -60,12 +60,30 @@ export function fetchGuide(db: Database.Database, channelId: string): Promise<Ch
   return settled;
 }
 
+/** What is on now and next from the imported guide (see `guideImport.ts`), when it has this channel. */
+function storedGuide(db: Database.Database, channelId: string): ChannelGuide | null {
+  const at = Date.now();
+  const rows = programmesInWindow(db, [channelId], at, at + 24 * 60 * 60 * 1000);
+  const airing = (row: (typeof rows)[number] | undefined): Airing | null => (row === undefined ? null : { title: row.title, start: row.start_at, end: row.end_at });
+  const now = rows.find((row) => row.start_at <= at && at < row.end_at);
+  const next = rows.find((row) => row.start_at > at);
+  return now === undefined && next === undefined ? null : { now: airing(now), next: airing(next) };
+}
+
+/** Drops every answer kept, so a guide just imported is read from the next time a channel is asked about. */
+export function forgetGuides(): void {
+  answers.clear();
+  listings.clear();
+}
+
 /**
- * The short guide is tried first; some providers only list what is coming up there, so the full table (the one
+ * The imported guide is read first. Without one, the short guide is tried; some providers only list what is coming up there, so the full table (the one
  * catch-up reads) fills in the rest. That table can run to days of listings, parsed on the UI's thread, so it is
  * only read for a channel that keeps past programmes (the providers that fill it); for others it is empty anyway.
  */
 async function readGuide(db: Database.Database, channelId: string): Promise<ChannelGuide | null> {
+  const stored = storedGuide(db, channelId);
+  if (stored !== null) return stored;
   const target = getPlaybackTarget(db, channelId);
   if (target === undefined || target.source.kind !== "xtream") return null;
   const streamId = target.variant.providerStreamId;

@@ -9,6 +9,12 @@ import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js"
 import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
+import { readAudioLanguage, writeAudioLanguage } from "../playback/viewing";
+import { refreshGuides } from "../playback/guideImport";
+import { saveSource as saveStoredSource, type SourceDraft } from "./sourceEdit";
+import { forgetProfile, swapProfile } from "@testcard/core/src/db/profileSwap.js";
+import { deleteProfile as deleteStoredProfile, saveProfile as saveStoredProfile } from "@testcard/core/src/db/profiles.js";
+import { MAIN_PROFILE, PROFILE_META_KEYS, readActiveProfile, readProfiles, writeActiveProfile, type Profile } from "./profiles";
 import { describeSetup, type ContentKind, type ImportProgress, type ImportStage, type SetupProgress } from "./setup";
 
 /** Something a source's last import could not load: its movies, its series, or (a thrown import) all of it. */
@@ -49,9 +55,24 @@ interface AppState {
   /** How captions look and whether films and episodes start with them on. This device only. */
   readonly captions: CaptionPrefs;
   setCaptions(prefs: CaptionPrefs): void;
+  /** The two-letter language of the soundtrack last picked in the player, chosen again when a film offers it. This device only. */
+  readonly audioLanguage: string | null;
+  setAudioLanguage(language: string | null): void;
+  /** Who watches (the account's, synced), its own profile first. */
+  readonly profiles: readonly Profile[];
+  /** The one watching now: whose history, favourites and settings the app is showing. */
+  readonly profile: Profile;
+  /** Swaps in another profile's rows; from then on sync pushes and pulls theirs. */
+  switchProfile(id: string): Promise<void>;
+  /** Adds a profile or changes one (its name, avatar, PIN). Synced. */
+  saveProfile(profile: Profile): void;
+  /** Deletes a profile other than the one watching now, and everything it had. */
+  deleteProfile(id: string): void;
   refreshSource(sourceId: string): Promise<void>;
   /** Takes a source off this device and, through sync, off the user's others. */
   removeSource(sourceId: string): Promise<void>;
+  /** Adds a source (no id) or changes one, once the provider has accepted it; synced. Throws a message to show. */
+  saveSource(sourceId: string | undefined, draft: SourceDraft): Promise<void>;
   updateStatus(): void;
 }
 
@@ -143,6 +164,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // so the app opens with its history in place.
         stage(sourceId, "history");
         await syncRef.current?.triggerNow().catch(() => undefined);
+        // The TV guide comes after, in the background: the app does not wait on it.
+        refreshGuides(db, adapters(), bump, [sourceId]);
       } catch (error) {
         const message = error instanceof Error ? error.message : "The import failed.";
         console.warn(`Import of ${row.name} failed: ${message}`);
@@ -178,10 +201,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const syncRef = useRef<SyncController | undefined>(undefined);
   const refreshRef = useRef(refreshSource);
   refreshRef.current = refreshSource;
-  syncRef.current ??= new SyncController(db, syncPlatform, (ids) => {
-    // Sources that arrived from another device have no channels yet: import them now.
-    for (const id of ids) void refreshRef.current(id);
-  });
+  // Sync pushes and pulls the rows of whoever is watching (see switchProfile).
+  syncRef.current ??= new SyncController(
+    db,
+    syncPlatform,
+    (ids) => {
+      // Sources that arrived from another device have no channels yet: import them now.
+      for (const id of ids) void refreshRef.current(id);
+    },
+    { profile: readActiveProfile(db) },
+  );
   const sync = syncRef.current;
 
   const removeSource = useCallback(
@@ -194,6 +223,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       bump();
     },
     [db, sync, bump],
+  );
+
+  const saveSource = useCallback(
+    async (sourceId: string | undefined, draft: SourceDraft) => {
+      if (sourceId !== undefined) await inFlight.current.get(sourceId)?.catch(() => undefined);
+      const saved = await saveStoredSource(db, sourceId, draft, () => globalThis.crypto.randomUUID());
+      sync.notifyLocalChange();
+      bump();
+      if (saved.reload) void refreshSource(saved.id);
+      // A new guide address is read straight away (see guideImport's staleness).
+      else refreshGuides(db, adapters(), bump);
+    },
+    [db, sync, bump, refreshSource],
   );
 
   const [status, setStatus] = useState<SyncStatus>(() => sync.status());
@@ -210,15 +252,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const next = sync.status();
       // A new object every few seconds would re-render every screen that reads the app state; only a real change does.
       setStatus((previous) =>
-        previous.account === next.account && previous.email === next.email && previous.lastSyncedAt === next.lastSyncedAt && previous.lastChangedAt === next.lastChangedAt && previous.lastError === next.lastError ? previous : next,
+        previous.account === next.account && previous.email === next.email && previous.lastSyncedAt === next.lastSyncedAt && previous.lastChangedAt === next.lastChangedAt && previous.lastError === next.lastError && previous.paused === next.paused ? previous : next,
       );
       if (next.lastChangedAt !== lastChangedAt.current) {
         lastChangedAt.current = next.lastChangedAt;
         bump();
+        // A guide address set on another device is read as soon as it arrives.
+        refreshGuides(db, adapters(), bump);
       }
     }, 4000);
     return () => clearInterval(timer);
-  }, [sync, bump]);
+  }, [db, sync, bump]);
   useEffect(() => () => sync.dispose(), [sync]);
   // On launch, and whenever the app comes back to the front, catch up with the account at once, so what was watched
   // or changed on another device is there when the viewer looks. (Android holds JS timers in the background, so the
@@ -252,11 +296,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   useEffect(() => {
     catchUp(true);
+    refreshGuides(db, adapters(), bump);
     const subscription = AppLifecycle.addEventListener("change", (state) => {
-      if (state === "active") catchUp(false);
+      if (state !== "active") return;
+      catchUp(false);
+      refreshGuides(db, adapters(), bump);
     });
     return () => subscription.remove();
-  }, [catchUp]);
+  }, [catchUp, db, bump]);
 
   const sources = useMemo<SourceSummary[]>(() => {
     void version;
@@ -275,7 +322,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [db, version, refreshing, errors]);
 
-  const catalogue = useMemo(() => sources.map((entry) => `${entry.id}:${entry.lastRefreshedAt ?? 0}`).join(","), [sources]);
+  // Hiding a category or channel (here or on another device) changes what the lists hold, so it is part of the key.
+  const hiddenStamp = useMemo(() => {
+    void version;
+    const row = db
+      .prepare(`SELECT (SELECT COUNT(*) || '.' || COALESCE(MAX(hidden_at), 0) FROM hidden_categories) || '/' || (SELECT COUNT(*) || '.' || COALESCE(MAX(hidden_at), 0) FROM hidden_channels) AS stamp`)
+      .get() as { stamp: string };
+    return row.stamp;
+  }, [db, version]);
+  const catalogue = useMemo(() => `${sources.map((entry) => `${entry.id}:${entry.lastRefreshedAt ?? 0}`).join(",")}|${hiddenStamp}`, [sources, hiddenStamp]);
 
   // The app waits while a signed-in device with no sources is waiting for its first sync, and while anything is
   // importing: the sync only brings the source rows down, and importing their channels, movies and series (the
@@ -293,10 +348,72 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     [db],
   );
+  const [audioLanguage, setAudioLanguageState] = useState<string | null>(() => readAudioLanguage(db));
+  const setAudioLanguage = useCallback(
+    (language: string | null) => {
+      setAudioLanguageState(language);
+      writeAudioLanguage(db, language);
+    },
+    [db],
+  );
+
+  // The list comes from the database: a sync can bring a profile made on another TV, or a change to one.
+  const [profilesChanged, setProfilesChanged] = useState(0);
+  const profiles = useMemo(() => {
+    void version;
+    void profilesChanged;
+    return readProfiles(db);
+  }, [db, version, profilesChanged]);
+  const [profileId, setProfileId] = useState(() => readActiveProfile(db));
+  const profile = profiles.find((entry) => entry.id === profileId) ?? profiles[0]!;
+  const saveProfile = useCallback(
+    (next: Profile) => {
+      saveStoredProfile(db, next);
+      setProfilesChanged((count) => count + 1);
+      sync.notifyLocalChange();
+    },
+    [db, sync],
+  );
+  const switchProfile = useCallback(
+    async (id: string) => {
+      const from = readActiveProfile(db);
+      if (from === id) return;
+      // What the one leaving did is pushed first (briefly: a slow network only delays it to their next turn).
+      await Promise.race([sync.triggerNow().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 6000))]);
+      // Nothing may sync mid-swap.
+      await sync.setPaused(true);
+      swapProfile(db, from, id, PROFILE_META_KEYS);
+      writeActiveProfile(db, id);
+      sync.setProfile(id);
+      setProfileId(id);
+      setCaptionsState(readCaptionPrefs(db));
+      setAudioLanguageState(readAudioLanguage(db));
+      // Resuming syncs at once, fetching the new profile's history from the account.
+      void sync.setPaused(false).then(updateStatus);
+      bump();
+    },
+    [db, sync, bump, updateStatus],
+  );
+  // The profile watching here was deleted on another TV: back to the account's own.
+  const watchingGone = !profiles.some((entry) => entry.id === profileId);
+  useEffect(() => {
+    if (!watchingGone) return;
+    const gone = profileId;
+    void switchProfile(MAIN_PROFILE).then(() => forgetProfile(db, gone));
+  }, [db, profileId, watchingGone, switchProfile]);
+  const deleteProfile = useCallback(
+    (id: string) => {
+      if (id === MAIN_PROFILE || id === readActiveProfile(db)) return;
+      deleteStoredProfile(db, id);
+      setProfilesChanged((count) => count + 1);
+      sync.notifyLocalChange();
+    },
+    [db, sync],
+  );
 
   const value = useMemo<AppState>(
-    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, refreshSource, removeSource, updateStatus }),
-    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, refreshSource, removeSource, updateStatus],
+    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfile, deleteProfile, refreshSource, removeSource, saveSource, updateStatus }),
+    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfile, deleteProfile, refreshSource, removeSource, saveSource, updateStatus],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

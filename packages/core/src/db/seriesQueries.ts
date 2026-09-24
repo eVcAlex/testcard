@@ -1,7 +1,10 @@
 import type Database from "better-sqlite3";
+import { categoryShown, titleShown } from "../sync/hidden.js";
 import type { Source } from "../source/types.js";
 import { clearPlaybackProgress } from "./progressQueries.js";
 import { shouldPromptResume } from "../playback/progressPolicy.js";
+import { isDatedTitle, titleKey } from "../normalise/titleKey.js";
+import { splitTitle } from "../normalise/splitTitle.js";
 
 export interface SeriesRow {
   readonly id: string;
@@ -40,7 +43,7 @@ export function browseSeries(
 ): SeriesRow[] {
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
-  const clauses: string[] = [];
+  const clauses: string[] = [titleShown("sr", "series")];
   const filters: unknown[] = [];
   if (opts.categoryId !== undefined) {
     clauses.push("sr.category_id = ?");
@@ -78,7 +81,7 @@ export function listSeriesCategories(db: Database.Database, sourceId?: string): 
       `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(sr.id) AS series_count
        FROM series_categories cat
        JOIN series sr ON sr.category_id = cat.id
-       ${sourceId !== undefined ? "WHERE cat.source_id = ?" : ""}
+       WHERE ${categoryShown("cat", "series")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )
@@ -423,4 +426,21 @@ export function saveSkipWindow(db: Database.Database, seriesId: string, fromSecs
 /** Forgets it, for a skip that was wrong. */
 export function clearSkipWindow(db: Database.Database, seriesId: string): void {
   db.prepare(`DELETE FROM series_skip WHERE series_id = ?`).run(seriesId);
+}
+
+/**
+ * The other copies of a series: the same dated title in another quality, category or source. Empty for an undated
+ * name (too often a different show with the same words to match on).
+ */
+export function listSeriesVersions(db: Database.Database, seriesId: string): SeriesRow[] {
+  const show = db.prepare(`SELECT name FROM series WHERE id = ?`).get(seriesId) as { name: string } | undefined;
+  if (show === undefined || !isDatedTitle(show.name)) return [];
+  const key = titleKey(show.name);
+  const { title, year } = splitTitle(show.name);
+  const words = title.replace(/^\d{1,3}\.\s+/, "").replace(/[%_\\]/g, (char) => `\\${char}`);
+  return (
+    db
+      .prepare(`SELECT ${SERIES_COLUMNS} FROM series sr WHERE sr.id != ? AND sr.name LIKE ? ESCAPE '\\' AND sr.name LIKE ? ORDER BY sr.rowid LIMIT 40`)
+      .all(seriesId, `%${words}%`, `%(${year})%`) as SeriesRow[]
+  ).filter((row) => titleKey(row.name) === key);
 }

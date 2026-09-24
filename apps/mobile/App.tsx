@@ -25,6 +25,8 @@ import { SeriesDetailScreen } from "./src/screens/SeriesDetail";
 import { SignInScreen } from "./src/screens/SignIn";
 import { SourcesScreen } from "./src/screens/Sources";
 import { SearchScreen } from "./src/screens/Search";
+import { WhoIsWatching } from "./src/screens/WhoIsWatching";
+import { Avatar } from "./src/ui/Avatar";
 import type { PlayItem } from "./src/playback/resolveStream";
 
 type Section = "home" | "movies" | "series" | "live" | "search" | "sources";
@@ -73,7 +75,7 @@ export default function App() {
 
 function Root() {
   useImportPacing();
-  const { status, sources, db, setup, syncing } = useApp();
+  const { status, sources, db, setup, syncing, profiles, profile } = useApp();
   const { available } = useUpdate();
   const [section, setSection] = useState<Section>("home");
   const [route, setRoute] = useState<Route>({ name: "home" });
@@ -108,6 +110,19 @@ function Root() {
     () => (sourceId === null && sources.filter((entry) => entry.movies + entry.series > 0).length > 1 ? new Map(sources.map((entry) => [entry.id, entry.name])) : null),
     [sourceId, sources],
   );
+
+  // "Who's watching?": on launch when there is more than one profile, and from the profile button in the nav bar.
+  const [choosing, setChoosing] = useState<"launch" | "switch" | null>(() => (profiles.length > 1 ? "launch" : null));
+  const openProfiles = useCallback(() => setChoosing("switch"), []);
+  const cancelProfiles = useCallback(() => setChoosing(null), []);
+  // Another person's pages start from Home, drawn afresh from their own rows.
+  const profileChosen = useCallback(() => {
+    setChoosing(null);
+    setRoute({ name: "home" });
+    setSection("home");
+    setVisited(new Set(["home"]));
+    setBrowsing(false);
+  }, []);
 
   const goHome = useCallback(() => setRoute({ name: "home" }), []);
   // Movies and Series open on a landing page of rows; "Browse all" in the nav bar swaps it for the full category list.
@@ -208,6 +223,7 @@ function Root() {
 
   // Signed out (or the session ended): only the sign-in screen makes sense.
   if (status.account !== "signed-in") return <SignInScreen />;
+  if (choosing !== null) return <WhoIsWatching onDone={profileChosen} onCancel={choosing === "switch" ? cancelProfiles : undefined} />;
 
   // The player and the detail pages cover the shell rather than replace it: the shell stays mounted underneath,
   // so Back returns to the same scroll position and highlighted poster instead of rebuilding Home from the top.
@@ -237,6 +253,7 @@ function Root() {
         seriesId={route.id}
         title={route.title}
         onBack={goHome}
+        onOpenVersion={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
         onPlayEpisode={(episodeId, episodeTitle, resume) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title: episodeTitle }, seriesId: route.id, resume, returnTo: route })}
       />
     ) : null;
@@ -276,6 +293,7 @@ function Root() {
             {sources.length > 1 && section !== "sources" ? (
               <NavTab id="scope" chip active={picking} label={sources.find((entry) => entry.id === sourceId)?.name ?? "All sources"} trailing={ChipArrow} onFocusChange={onNavFocus} onPressId={openPicker} />
             ) : null}
+            {profiles.length > 1 ? <NavTab id="profile" active={false} icon={() => <Avatar profile={profile} size={46} />} onFocusChange={onNavFocus} onPressId={openProfiles} /> : null}
             <NavTab id="sources" preferred={section === "sources"} active={section === "sources"} icon={SettingsGlyph} badge={available !== null} handle={handleFor("sources")} onFocusChange={onNavFocus} onPressId={pickSection} />
           </View>
         </TVFocusGuideView>

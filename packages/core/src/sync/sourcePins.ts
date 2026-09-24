@@ -98,3 +98,22 @@ export function applySourceSkips(db: Database.Database, sourceId: string, skips:
     }
   })();
 }
+
+const HELD_PINS = "pins_for_main:";
+
+/**
+ * Pins that arrived for a source while another profile was watching: they are Main's, so they wait here and are
+ * put in place when Main is back (`applyHeldPins`), rather than landing among the other profile's own.
+ */
+export function holdPinsForMain(db: Database.Database, sourceId: string, pins: readonly SourcePin[]): void {
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(`${HELD_PINS}${sourceId}`, JSON.stringify(pins));
+}
+
+export function applyHeldPins(db: Database.Database): void {
+  const held = db.prepare(`SELECT key, value FROM schema_meta WHERE key LIKE ?`).all(`${HELD_PINS}%`) as { key: string; value: string }[];
+  for (const { key, value } of held) {
+    const sourceId = key.slice(HELD_PINS.length);
+    if (db.prepare(`SELECT 1 FROM sources WHERE id = ?`).get(sourceId) !== undefined) applySourcePins(db, sourceId, JSON.parse(value) as SourcePin[]);
+    db.prepare(`DELETE FROM schema_meta WHERE key = ?`).run(key);
+  }
+}

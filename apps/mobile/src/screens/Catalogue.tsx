@@ -47,7 +47,7 @@ const seriesCategories = memoByVersion((db: Parameters<typeof listSeriesCategori
 
 /** Every category the provider ships, with continue watching and my list first. Selecting a poster opens the film's page. */
 function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (movie: { id: string; title: string }) => void }) {
-  const { db, version, catalogue, sync } = useApp();
+  const { db, version, catalogue, sync, updateStatus } = useApp();
   const source = useMemo<BrowseSource>(() => {
     const scope = sourceId !== null ? { sourceId } : {};
     const categories = movieCategories(db, catalogue, sourceId ?? undefined);
@@ -59,7 +59,7 @@ function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
     const once = <T extends { name: string }>(rows: T[], limit: number) => dedupeTitles(rows, limit);
     return {
       layout: "poster",
-      pinning: makePinning(db, sync, "movies"),
+      pinning: makePinning(db, sync, "movies", updateStatus),
       noun: "movies",
       single: "movie",
       specials: [
@@ -76,7 +76,7 @@ function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
         return once(browseMovies(db, { limit: limit * 2, ...scope }), limit).map(toMovieItem);
       },
     };
-  }, [db, version, catalogue, sourceId, sync]);
+  }, [db, version, catalogue, sourceId, sync, updateStatus]);
 
   return (
     <BrowseScreen
@@ -89,7 +89,7 @@ function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
 
 /** Every category, with my list first. Selecting a poster opens its episodes. */
 function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (series: { id: string; title: string }) => void }) {
-  const { db, version, catalogue, sync } = useApp();
+  const { db, version, catalogue, sync, updateStatus } = useApp();
   const source = useMemo<BrowseSource>(() => {
     const scope = sourceId !== null ? { sourceId } : {};
     const categories = seriesCategories(db, catalogue, sourceId ?? undefined);
@@ -97,7 +97,7 @@ function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
     const once = <T extends { name: string }>(rows: T[], limit: number) => dedupeTitles(rows, limit);
     return {
       layout: "poster",
-      pinning: makePinning(db, sync, "series"),
+      pinning: makePinning(db, sync, "series", updateStatus),
       noun: "series",
       single: "series",
       specials: [
@@ -112,7 +112,7 @@ function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
         return once(browseSeries(db, { limit: limit * 2, ...scope }), limit).map(toSeriesItem);
       },
     };
-  }, [db, version, catalogue, sourceId, sync]);
+  }, [db, version, catalogue, sourceId, sync, updateStatus]);
 
   return (
     <BrowseScreen

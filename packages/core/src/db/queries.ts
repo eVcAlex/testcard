@@ -1,4 +1,6 @@
 import type Database from "better-sqlite3";
+import { recordChannelTombstone } from "../sync/channelHistory.js";
+import { categoryShown, channelShown } from "../sync/hidden.js";
 import type { ChannelVariant, Source } from "../source/types.js";
 
 export interface ChannelRow {
@@ -35,7 +37,7 @@ export function searchChannels(db: Database.Database, query: string, limit = 200
       `SELECT ${CHANNEL_COLUMNS}
        FROM channels_fts
        JOIN channels c ON c.rowid = channels_fts.rowid
-       WHERE channels_fts MATCH ?${sourceId !== undefined ? " AND c.source_id = ?" : ""}
+       WHERE channels_fts MATCH ? AND ${channelShown("c")}${sourceId !== undefined ? " AND c.source_id = ?" : ""}
        ORDER BY rank
        LIMIT ?`,
     )
@@ -60,7 +62,7 @@ export function browseChannels(
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
 
-  const where: string[] = [];
+  const where: string[] = [channelShown("c")];
   const filters: unknown[] = [];
   if (opts.categoryId !== undefined) {
     where.push("c.category_id = ?");
@@ -117,7 +119,7 @@ export function listCategories(db: Database.Database, sourceId?: string): Catego
       `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(ch.id) AS channel_count
        FROM categories cat
        JOIN channels ch ON ch.category_id = cat.id
-       ${sourceId !== undefined ? "WHERE cat.source_id = ?" : ""}
+       WHERE ${categoryShown("cat", "live")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )
@@ -131,20 +133,22 @@ export function listRecentChannels(db: Database.Database, limit = 24): ChannelRo
       `SELECT ${CHANNEL_COLUMNS}
        FROM recents r
        JOIN channels c ON c.id = r.channel_id
+       WHERE ${channelShown("c")}
        ORDER BY r.played_at DESC
        LIMIT ?`,
     )
     .all(limit) as ChannelRow[];
 }
 
-/** Favourited channels, newest favourite first. */
+/** Favourited channels in the viewer's order: newest favourite first until they move one (see moveFavourite). */
 export function listFavouriteChannels(db: Database.Database): ChannelRow[] {
   return db
     .prepare(
       `SELECT ${CHANNEL_COLUMNS}
        FROM favourites f
        JOIN channels c ON c.id = f.channel_id
-       ORDER BY f.added_at DESC`,
+       WHERE ${channelShown("c")}
+       ORDER BY f.position IS NOT NULL, f.position, f.added_at DESC`,
     )
     .all() as ChannelRow[];
 }
@@ -185,26 +189,28 @@ export function listCountries(db: Database.Database, sourceId: string): CountryN
     .all(sourceId) as CountryNode[];
 }
 
+/** Adds or removes a favourite channel. Synced (see sync/channelHistory.ts). */
 export function toggleFavourite(db: Database.Database, channelId: string): boolean {
   const existing = db.prepare(`SELECT 1 FROM favourites WHERE channel_id = ?`).get(channelId);
   if (existing) {
     db.prepare(`DELETE FROM favourites WHERE channel_id = ?`).run(channelId);
+    recordChannelTombstone(db, "channel_favourites", channelId);
     return false;
   }
-  db.prepare(`INSERT INTO favourites (channel_id, added_at) VALUES (?, ?)`).run(channelId, Date.now());
+  db.prepare(`INSERT INTO favourites (channel_id, added_at, updated_at) VALUES (?, ?, ?)`).run(channelId, Date.now(), Date.now());
   return true;
 }
 
 export function recordRecent(db: Database.Database, channelId: string): void {
   db.prepare(
-    `INSERT INTO recents (channel_id, played_at) VALUES (?, ?)
-     ON CONFLICT(channel_id) DO UPDATE SET played_at = excluded.played_at`,
-  ).run(channelId, Date.now());
+    `INSERT INTO recents (channel_id, played_at, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(channel_id) DO UPDATE SET played_at = excluded.played_at, updated_at = excluded.updated_at`,
+  ).run(channelId, Date.now(), Date.now());
 }
 
-/** Takes a channel out of Recently watched. Channel history is local only, so there is nothing to sync. */
+/** Takes a channel out of Recently watched. Synced. */
 export function removeChannelFromRecents(db: Database.Database, channelId: string): void {
-  db.prepare(`DELETE FROM recents WHERE channel_id = ?`).run(channelId);
+  if (db.prepare(`DELETE FROM recents WHERE channel_id = ?`).run(channelId).changes > 0) recordChannelTombstone(db, "channel_recents", channelId);
 }
 
 export interface ProgrammeRow {
@@ -362,4 +368,18 @@ export function getPlaybackTarget(
     },
     source,
   };
+}
+
+/** Moves a favourite channel one place earlier (-1) or later (1) in the viewer's order. Synced. False at either end. */
+export function moveFavourite(db: Database.Database, channelId: string, delta: -1 | 1): boolean {
+  const ids = listFavouriteChannels(db).map((row) => row.id);
+  const from = ids.indexOf(channelId);
+  const to = from + delta;
+  if (from < 0 || to < 0 || to >= ids.length) return false;
+  [ids[from], ids[to]] = [ids[to]!, ids[from]!];
+  // Every favourite takes its place (and is synced), so the order is the same on the viewer's other devices.
+  const write = db.prepare(`UPDATE favourites SET position = ?, updated_at = ? WHERE channel_id = ?`);
+  const now = Date.now();
+  db.transaction(() => ids.forEach((id, index) => write.run(index, now, id)))();
+  return true;
 }

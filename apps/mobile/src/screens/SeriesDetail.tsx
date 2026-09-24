@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { sized } from "../ui/imageSize";
 import { Check, Movie } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { getSeriesDetail, getSeriesSource, getUpNextEpisode, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
+import { getSeriesDetail, getSeriesSource, getUpNextEpisode, listSeriesVersions, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { setWatched } from "@testcard/core/src/db/progressQueries.js";
@@ -12,7 +12,7 @@ import { getCredentials } from "../platform/secrets";
 import { useApp } from "../state/app";
 import { colors, type, styleSheet, uiScale } from "../theme";
 import { BackArrow } from "../ui/BackArrow";
-import { Muted } from "../ui/controls";
+import { Button, Muted } from "../ui/controls";
 import { Backdrop, DetailActions, Facts, type DetailAction } from "../ui/DetailActions";
 import { Focusable, lastFocused } from "../ui/Focusable";
 import { OptionsSheet } from "../ui/OptionsSheet";
@@ -132,13 +132,21 @@ export function SeriesDetailScreen({
   title,
   onPlayEpisode,
   onBack,
+  onOpenVersion,
 }: {
   seriesId: string;
   title: string;
   onPlayEpisode: (episodeId: string, title: string, resume: boolean) => void;
   onBack: () => void;
+  /** Opens another copy of this series (another quality or source) in place of this one. */
+  onOpenVersion: (series: { id: string; title: string }) => void;
 }) {
-  const { db, sync, version, updateStatus } = useApp();
+  const { db, sync, version, updateStatus, sources } = useApp();
+  // The same series from another source (or in 4K): picked here, and the way round a source that is down.
+  const versions = useMemo(() => listSeriesVersions(db, seriesId), [db, seriesId]);
+  const [choosingVersion, setChoosingVersion] = useState(false);
+  const versionLabel = (row: { name: string; source_id: string }) =>
+    [splitTitle(row.name).is4k ? "4K" : "HD", sources.find((entry) => entry.id === row.source_id)?.name].filter((part) => part !== undefined && part !== "").join("  ·  ");
   const [tick, setTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
@@ -315,6 +323,7 @@ export function SeriesDetailScreen({
                     },
                   ]
                 : []),
+              ...(versions.length > 0 ? [{ key: "versions", label: `Other versions (${versions.length})`, glyph: "versions" as const, onPress: () => setChoosingVersion(true) }] : []),
               ...(upNext !== undefined
                 ? [
                     {
@@ -338,7 +347,10 @@ export function SeriesDetailScreen({
         </View>
       </View>
       {error !== undefined ? (
-        <Text style={styles.error}>{error}</Text>
+        <View style={styles.failed}>
+          <Text style={styles.error}>{error}</Text>
+          {versions.length > 0 ? <Button preferred label="Try another version" onPress={() => setChoosingVersion(true)} /> : null}
+        </View>
       ) : loading ? (
         <EpisodesSkeleton columns={columns} cardWidth={cardWidth} thumbHeight={thumbHeight} onWidth={setGridWidth} />
       ) : seasons.length === 0 ? (
@@ -428,6 +440,17 @@ export function SeriesDetailScreen({
           </TVFocusGuideView>
         </TVFocusGuideView>
       )}
+      {choosingVersion ? (
+        <OptionsSheet
+          title={`Other versions of ${seriesTitle(title)}`}
+          options={versions.map((row) => ({ id: row.id, label: versionLabel(row) }))}
+          onChoose={(id) => {
+            const row = versions.find((entry) => entry.id === id);
+            if (row !== undefined) onOpenVersion({ id: row.id, title: row.name });
+          }}
+          onClose={() => setChoosingVersion(false)}
+        />
+      ) : null}
       {optionsFor !== null ? (
         <OptionsSheet
           title={`E${optionsFor.episode.episode_number} · ${episodeTitle(optionsFor.episode.name)}`}
@@ -459,6 +482,7 @@ function factsOf(detail: { series: { name: string; rating: string | number | nul
 }
 
 const styles = styleSheet({
+  failed: { gap: 24, alignItems: "flex-start" },
   screen: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 120, paddingTop: 44, gap: 34 },
   head: { flexDirection: "row", alignItems: "center", gap: 56, paddingTop: 10 },
   // In the page's left margin, clear of the poster (which starts at the 120 padding), level with its top edge.

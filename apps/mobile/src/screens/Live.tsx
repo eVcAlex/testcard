@@ -11,6 +11,7 @@ import { BrowseScreen, type BrowseItem, type BrowseSource, type Guide } from "./
 import { Loading, useBackTo, useRefreshOnShow, useVersionWhileShown } from "./Catalogue";
 import { GuideScreen } from "./Guide";
 import { makePinning } from "./pinning";
+import { channelExtras } from "./channelActions";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
 const toItem = (channel: ChannelRow): BrowseItem => ({ id: channel.id, title: channel.normalised_name, imageUrl: channel.logo_url, number: channel.channel_number });
@@ -65,7 +66,7 @@ export function LiveScreen({
   onBrowseDone: () => void;
   onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
-  const { db, version: latestVersion, catalogue, sync } = useApp();
+  const { db, version: latestVersion, catalogue, sync, updateStatus } = useApp();
   const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
@@ -117,7 +118,7 @@ export function LiveScreen({
   );
 
   const heroActions = useCallback(
-    (item: HomeItem): HeroActions => ({
+    (item: HomeItem, rowKey: string): HeroActions => ({
       primary: { label: "Watch live", onPress: () => play(item) },
       actions: [
         {
@@ -143,9 +144,13 @@ export function LiveScreen({
               },
             ]
           : []),
+        ...channelExtras(db, sync, item, rowKey === "favourites", () => {
+          setTick((value) => value + 1);
+          updateStatus();
+        }),
       ],
     }),
-    [db, sync, play],
+    [db, sync, play, updateStatus],
   );
 
   if (guide) return <GuideScreen sourceId={sourceId} active={active} onPlay={onPlay} />;
@@ -156,7 +161,7 @@ export function LiveScreen({
 
 /** Every category as a row of pills, channels beneath. */
 function Browsing({ sourceId, own, onPlay }: { sourceId: string | null; own: (channel: ChannelRow) => boolean; onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void }) {
-  const { db, version, catalogue, sync } = useApp();
+  const { db, version, catalogue, sync, updateStatus } = useApp();
   const source = useMemo<BrowseSource>(() => {
     const scope = sourceId !== null ? { sourceId } : {};
     const categories = channelCategories(db, catalogue, sourceId ?? undefined);
@@ -164,7 +169,7 @@ function Browsing({ sourceId, own, onPlay }: { sourceId: string | null; own: (ch
     const recents = listRecentChannels(db, 60).filter(own).slice(0, 30);
     return {
       layout: "channel",
-      pinning: makePinning(db, sync, "live"),
+      pinning: makePinning(db, sync, "live", updateStatus),
       noun: "channels",
       single: "channel",
       genres: false,
@@ -186,7 +191,7 @@ function Browsing({ sourceId, own, onPlay }: { sourceId: string | null; own: (ch
         return browseChannels(db, { limit, ...scope }).map(toItem);
       },
     };
-  }, [db, version, catalogue, sourceId, own, sync]);
+  }, [db, version, catalogue, sourceId, own, sync, updateStatus]);
 
   return (
     <View style={styles.padded}>

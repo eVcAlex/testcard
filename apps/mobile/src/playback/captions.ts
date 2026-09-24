@@ -104,8 +104,15 @@ export function writeCaptionPrefs(db: Database.Database, prefs: CaptionPrefs): v
   }
 }
 
+/** What a subtitle or audio track says about itself. */
+interface LabelledTrack {
+  readonly language?: string | null | undefined;
+  readonly label?: string | null | undefined;
+  readonly name?: string | null | undefined;
+}
+
 /** Whether a track is in the given language, by its code or, failing that, the name in its label. */
-function speaks(track: SubtitleTrack, code: string): boolean {
+export function speaks(track: LabelledTrack, code: string): boolean {
   const language = LANGUAGES.find((entry) => entry.code === code);
   const said = (track.language ?? "").toLowerCase();
   const primary = said.split(/[-_]/)[0] ?? "";
@@ -126,6 +133,11 @@ export function autoCaptionTrack(prefs: CaptionPrefs, tracks: readonly SubtitleT
   if (!prefs.always || tracks.length === 0) return null;
   const matching = prefs.language === "any" ? tracks : tracks.filter((track) => speaks(track, prefs.language));
   return matching.find((track) => !forcedOnly(track)) ?? matching[0] ?? null;
+}
+
+/** The two-letter code a track is in, when it is one of the languages offered, or null. */
+export function trackLanguage(track: LabelledTrack): string | null {
+  return LANGUAGES.find((entry) => speaks(track, entry.code))?.code ?? null;
 }
 
 /** How captions look, in the terms both the native player and the settings preview use. Colours are #RRGGBB or #RRGGBBAA. */

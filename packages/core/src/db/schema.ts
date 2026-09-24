@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 14;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -93,12 +93,24 @@ CREATE INDEX IF NOT EXISTS idx_programmes_channel_time ON programmes(channel_id,
 
 CREATE TABLE IF NOT EXISTS favourites (
   channel_id    TEXT PRIMARY KEY,
-  added_at      INTEGER NOT NULL
+  added_at      INTEGER NOT NULL,
+  position      INTEGER,           -- the viewer's order, once they have moved one; NULL keeps newest first
+  updated_at    INTEGER            -- sync clock (see sync/channelHistory.ts)
 );
 
 CREATE TABLE IF NOT EXISTS recents (
   channel_id    TEXT PRIMARY KEY,
-  played_at     INTEGER NOT NULL
+  played_at     INTEGER NOT NULL,
+  updated_at    INTEGER            -- sync clock
+);
+
+-- Synced favourite and recent channels for a channel this device has not imported (yet), applied once it arrives.
+CREATE TABLE IF NOT EXISTS pending_channel_sync (
+  kind          TEXT NOT NULL CHECK (kind IN ('favourite', 'recent')),
+  remote_key    TEXT NOT NULL,
+  row           TEXT NOT NULL,     -- the synced row, as JSON
+  received_at   INTEGER NOT NULL,
+  PRIMARY KEY (kind, remote_key)
 );
 CREATE INDEX IF NOT EXISTS idx_recents_played_at ON recents(played_at DESC);
 
@@ -332,4 +344,42 @@ CREATE TABLE IF NOT EXISTS home_pins (
   pinned_at     INTEGER NOT NULL,
   PRIMARY KEY (source_id, kind, category_key)
 );
+
+-- The people who watch, synced (encrypted) with the account. Each profile's own rows are kept apart by profileSwap.ts.
+-- Categories and channels the viewer hid (see sync/hidden.ts). Keyed as the provider knows them, so the set rides in
+-- the source's synced record like its pins and means the same thing on every device.
+CREATE TABLE IF NOT EXISTS hidden_categories (
+  source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  kind          TEXT NOT NULL CHECK (kind IN ('live', 'movies', 'series')),
+  category_key  TEXT NOT NULL,   -- the category's provider_id
+  label         TEXT NOT NULL,
+  hidden_at     INTEGER NOT NULL,
+  PRIMARY KEY (source_id, kind, category_key)
+);
+CREATE TABLE IF NOT EXISTS hidden_channels (
+  source_id     TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  channel_key   TEXT NOT NULL,   -- the channel's id less its source's ("<source id>:<key>")
+  label         TEXT NOT NULL,
+  hidden_at     INTEGER NOT NULL,
+  PRIMARY KEY (source_id, channel_key)
+);
+
+CREATE TABLE IF NOT EXISTS profiles (
+  id          TEXT PRIMARY KEY,   -- 'main' is the account's own; others are random
+  name        TEXT NOT NULL,
+  colour      INTEGER NOT NULL DEFAULT 0,
+  avatar      TEXT,               -- one of the app's avatars, or NULL for the name's first letter
+  pin         TEXT,               -- a hash of the PIN, or NULL
+  position    INTEGER NOT NULL DEFAULT 0,
+  updated_at  INTEGER NOT NULL,   -- sync clock (last write wins); 0 for Main until it is first changed
+  deleted_at  INTEGER             -- sync tombstone
+);
+
+-- Profiles not watching now: their own rows, as JSON, until they are picked (profileSwap.ts).
+CREATE TABLE IF NOT EXISTS profile_stash (
+  profile_id  TEXT NOT NULL,
+  table_name  TEXT NOT NULL,
+  row         TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_profile_stash_profile ON profile_stash(profile_id);
 `;

@@ -160,4 +160,86 @@ describe("POST /sync/push then GET /sync/pull", () => {
     const row = pulled.progress.find((p: { remoteKey: string }) => p.remoteKey === "movie-xyz");
     expect(row.positionSecs).toBe(500); // the older (stale) push must not have won
   });
+
+  it("keeps each profile's rows apart, and gives a device that names no profile only the account's own", async () => {
+    const app = testApp();
+    const ctx = createExecutionContext();
+    const row = (remoteKey: string, updatedAt: number) => ({ remoteKey, addedAt: updatedAt, updatedAt, deletedAt: null });
+    const push = await app.request(
+      "/sync/push",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sources: [],
+          movieFavourites: [row("aa11", 2000), row("p.kid1.bb22", 2001), row("p.kid2.cc33", 2002)],
+          movieRecents: [],
+          seriesFavourites: [],
+          seriesRecents: [],
+          progress: [],
+          profiles: [{ remoteKey: "kid1", blob: "sealed", iv: "iv", updatedAt: 2003, deletedAt: null }],
+        }),
+      },
+      env,
+      ctx,
+    );
+    expect(push.status).toBe(200);
+    expect((await push.json()).newCursor).toBe(2003);
+
+    const keys = async (query: string) => {
+      const pulled = await (await app.request(`/sync/pull?since=1999${query}`, {}, env, ctx)).json();
+      return { favourites: pulled.movieFavourites.map((r: { remoteKey: string }) => r.remoteKey), profiles: pulled.profiles.map((r: { remoteKey: string }) => r.remoteKey) };
+    };
+    expect(await keys("")).toEqual({ favourites: ["aa11"], profiles: ["kid1"] });
+    expect(await keys("&profile=main")).toEqual({ favourites: ["aa11"], profiles: ["kid1"] });
+    expect(await keys("&profile=kid1")).toEqual({ favourites: ["p.kid1.bb22"], profiles: ["kid1"] });
+    expect((await app.request("/sync/pull?since=0&profile=a'b", {}, env, ctx)).status).toBe(400);
+  });
+
+  it("accepts a push from a device that predates profiles", async () => {
+    const app = testApp();
+    const ctx = createExecutionContext();
+    const res = await app.request(
+      "/sync/push",
+      { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sources: [], movieFavourites: [], movieRecents: [], seriesFavourites: [], seriesRecents: [], progress: [] }) },
+      env,
+      ctx,
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("syncs favourite and recent channels, with the favourites' order, per profile", async () => {
+    const app = testApp();
+    const ctx = createExecutionContext();
+    const push = await app.request(
+      "/sync/push",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sources: [],
+          movieFavourites: [],
+          movieRecents: [],
+          seriesFavourites: [],
+          seriesRecents: [],
+          progress: [],
+          channelFavourites: [
+            { remoteKey: "ch.one", addedAt: 3000, position: 1, updatedAt: 3000, deletedAt: null },
+            { remoteKey: "p.kid1.ch.two", addedAt: 3001, updatedAt: 3001, deletedAt: null },
+          ],
+          channelRecents: [{ remoteKey: "ch.one", playedAt: 3002, updatedAt: 3002, deletedAt: null }],
+        }),
+      },
+      env,
+      ctx,
+    );
+    expect(push.status).toBe(200);
+    expect((await push.json()).newCursor).toBe(3002);
+
+    const main = await (await app.request("/sync/pull?since=2999", {}, env, ctx)).json();
+    expect(main.channelFavourites).toEqual([{ remoteKey: "ch.one", addedAt: 3000, position: 1, updatedAt: 3000, deletedAt: null }]);
+    expect(main.channelRecents.map((row: { remoteKey: string }) => row.remoteKey)).toEqual(["ch.one"]);
+    const kid = await (await app.request("/sync/pull?since=2999&profile=kid1", {}, env, ctx)).json();
+    expect(kid.channelFavourites).toEqual([{ remoteKey: "p.kid1.ch.two", addedAt: 3001, position: null, updatedAt: 3001, deletedAt: null }]);
+  });
 });

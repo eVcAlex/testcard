@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { categoryShown, titleShown } from "../sync/hidden.js";
 import type { Source } from "../source/types.js";
 import { clearPlaybackProgress } from "./progressQueries.js";
 import { isDatedTitle, titleKey } from "../normalise/titleKey.js";
@@ -50,7 +51,7 @@ export function browseMovies(
 ): MovieRow[] {
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
-  const clauses: string[] = [];
+  const clauses: string[] = [titleShown("m", "movies")];
   const filters: unknown[] = [];
   if (opts.categoryId !== undefined) {
     clauses.push("m.category_id = ?");
@@ -89,7 +90,7 @@ export function listMovieCategories(db: Database.Database, sourceId?: string): M
       `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(m.id) AS movie_count
        FROM movie_categories cat
        JOIN movies m ON m.category_id = cat.id
-       ${sourceId !== undefined ? "WHERE cat.source_id = ?" : ""}
+       WHERE ${categoryShown("cat", "movies")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )
@@ -250,4 +251,28 @@ export function listMovieVersions(db: Database.Database, movieId: string): Movie
       .prepare(`SELECT ${MOVIE_COLUMNS} FROM movies m WHERE m.id != ? AND m.name LIKE ? ESCAPE '\\' AND m.name LIKE ? ORDER BY m.rowid LIMIT 40`)
       .all(movieId, `%${words}%`, `%(${year})%`) as MovieRow[]
   ).filter((row) => titleKey(row.name) === key);
+}
+
+/** Where a copy of a title stands when choosing which to play: a 4K copy first, then the sources in the viewer's order. */
+function copyRank(db: Database.Database): (row: { name: string; source_id: string }) => [number, number] {
+  const order = new Map(
+    (db.prepare(`SELECT id FROM sources ORDER BY sort_order IS NULL, sort_order, created_at`).all() as { id: string }[]).map((row, index) => [row.id, index]),
+  );
+  return (row) => [splitTitle(row.name).is4k ? 0 : 1, order.get(row.source_id) ?? Number.MAX_SAFE_INTEGER];
+}
+
+/**
+ * The copies of a film to try, in turn, when it is played: the best first (4K, then the viewer's first source), each
+ * next one tried when the one before will not play. Resuming starts with the copy that holds the position.
+ */
+export function listMoviePlayOrder(db: Database.Database, movieId: string, resuming: boolean): string[] {
+  const movie = db.prepare(`SELECT id, name, source_id FROM movies WHERE id = ?`).get(movieId) as { id: string; name: string; source_id: string } | undefined;
+  if (movie === undefined) return [];
+  const rank = copyRank(db);
+  const copies = [movie, ...listMovieVersions(db, movieId)];
+  const sorted = copies
+    .map((row, index) => ({ id: row.id, rank: rank(row), index }))
+    .sort((a, b) => a.rank[0] - b.rank[0] || a.rank[1] - b.rank[1] || a.index - b.index)
+    .map((entry) => entry.id);
+  return resuming ? [movieId, ...sorted.filter((id) => id !== movieId)] : sorted;
 }

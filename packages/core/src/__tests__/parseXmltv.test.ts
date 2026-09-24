@@ -57,4 +57,21 @@ describe("parseXmltv", () => {
     const programmes = await collect(gz, true);
     expect(programmes.map((p) => p.title)).toEqual(["The Match", "Post-Match"]);
   });
+
+  it("gunzips by the body's first bytes, whatever the caller said", async () => {
+    const gz = streamOf(XML).pipeThrough(new CompressionStream("gzip")) as ReadableStream<Uint8Array>;
+    expect((await collect(gz)).map((p) => p.title)).toEqual(["The Match", "Post-Match"]);
+    expect((await collect(streamOf(XML), true)).map((p) => p.title)).toEqual(["The Match", "Post-Match"]);
+  });
+
+  it("reads on past XML a provider got slightly wrong", async () => {
+    const sloppy = XML.replace("<title>Post-Match</title>", "<title>Post-Match & Analysis</title>");
+    const titles = (await collect(streamOf(sloppy))).map((p) => p.title);
+    expect(titles).toHaveLength(2);
+    expect(titles[1]).toMatch(/^Post-Match.*Analysis$/);
+  });
+
+  it("fails a body that is not a guide at all", async () => {
+    await expect(collect(streamOf("<html><body>Forbidden</body"))).rejects.toThrow();
+  });
 });

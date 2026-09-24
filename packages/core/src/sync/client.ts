@@ -72,8 +72,9 @@ export class SyncClient {
     await this.request("/auth/sign-out", { body: {}, authed: true });
   }
 
-  async pull(since: number): Promise<SyncPullResponse> {
-    const json = await (await this.request(`/sync/pull?since=${since}`, { authed: true })).json();
+  /** `profile`: whose favourites, recents and progress to fetch; Main's (unprefixed) when left out. */
+  async pull(since: number, profile?: string): Promise<SyncPullResponse> {
+    const json = await (await this.request(`/sync/pull?since=${since}${profile !== undefined ? `&profile=${encodeURIComponent(profile)}` : ""}`, { authed: true })).json();
     return SyncPullResponseSchema.parse(json);
   }
 
