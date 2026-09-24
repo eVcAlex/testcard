@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { browseChannels, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite } from "@testcard/core/src/db/queries.js";
 import { listHomePins, unpinCategory } from "@testcard/core/src/sync/sourcePins.js";
-import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
+import { displayName } from "@testcard/core/src/normalise/displayName.js";
 import { listWatchedLately } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { browseMovies, listFavouriteMovies, listRecentMovies, getMovieById, getMoviePlaybackTarget, removeMovieFromHistory, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
@@ -96,7 +96,7 @@ export function StartScreen({
       // Titled from the category as it is now, through the same tidying as everywhere else, not from the label saved
       // when it was pinned (which kept a provider's tag, "Football GANJA").
       const rawName = db.prepare(`SELECT raw_name AS name FROM ${PIN_TABLE[pin.kind]} WHERE id = ?`).get(pin.categoryId) as { name: string } | undefined;
-      const label = rawName !== undefined ? categoryLabel(rawName.name) : pin.label;
+      const label = rawName !== undefined ? displayName(rawName.name) : pin.label;
       if (pin.kind === "live") add(key, label, browseChannels(db, { categoryId: pin.categoryId, limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true, true);
       else if (pin.kind === "movies") add(key, label, browseMovies(db, { categoryId: pin.categoryId, limit: 30 }).map(asMovie), false, true);
       else add(key, label, browseSeries(db, { categoryId: pin.categoryId, limit: 30 }).map(asSeries), false, true);

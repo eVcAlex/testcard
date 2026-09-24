@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { dedupeTitles } from "@testcard/core/src/normalise/titleKey.js";
 import { BackHandler, View } from "react-native";
-import { categoryLabel } from "@testcard/core/src/normalise/categoryLabel.js";
+import { displayName } from "@testcard/core/src/normalise/displayName.js";
 import { movieHome, seriesHome } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { getCredentials } from "../platform/secrets";
@@ -17,9 +17,9 @@ import { BrowseScreen, type BrowseItem, type BrowseSource } from "./Browse";
 import { HomeSkeleton } from "../ui/HomeSkeleton";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
+/** Provider category names as row titles, whatever the provider's house style; see displayName. */
+const tidy = (name: string) => displayName(name);
 /** Category tags that are dividers or decoration rather than something to browse (adult ones stay out of the way too). */
-/** Keeps providers' superscript quality tags ("⁴ᴷ") as ordinary text and drops their branding tags; see categoryLabel. */
-const tidy = (name: string) => categoryLabel(name);
 const hidden = (tags: string) => tags.split(" ").some((tag) => tag === "junk" || tag === "separator" || tag === "adult");
 
 const toMovieItem = (movie: MovieRow): BrowseItem => ({

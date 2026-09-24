@@ -41,6 +41,11 @@ const QUALITY_SUFFIX =
 const EMOJI_AND_SYMBOLS =
   /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu;
 
+/** The name less its "(1080p50)"-style quality suffix and "(OFFLINE)" mark: what tells one Variant of a channel from another. */
+export function dropVariantMarks(raw: string): string {
+  return raw.replace(OFFLINE_SUFFIX, " ").replace(QUALITY_SUFFIX, " ").replace(/\s{2,}/g, " ").trim();
+}
+
 export function parseName(raw: string): ParsedName {
   let working = raw.trim();
 

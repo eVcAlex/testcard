@@ -16,7 +16,7 @@ import { genreOptions } from "../lib/genres.js";
 import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
 import { PosterShelf } from "./PosterShelf.js";
-import { categoryLabel } from "../lib/categoryLabel.js";
+import { displayName } from "../lib/displayName.js";
 
 type SeriesListRow = Awaited<ReturnType<typeof window.testcard.series.browse>>[number];
 
@@ -266,7 +266,7 @@ export function SeriesView({
             {(shelves.data ?? []).map((shelf) => (
               <PosterShelf
                 key={shelf.category.id}
-                title={categoryLabel(shelf.category.name)}
+                title={displayName(shelf.category.name)}
                 items={shelf.items.map(toPoster)}
                 onSelect={setSelectedSeriesId}
                 onSeeAll={() => pickCategory(shelf.category.id)}
