@@ -24,12 +24,12 @@ type Pad =
  * The Profiles pane in Settings: who watches. Profiles are the account's, so they are on every TV signed in to it.
  * OK on a profile offers what can be done to it; a locked one asks for its PIN first.
  */
-export function ProfileSettings() {
+export function ProfileSettings({ startAdding = false }: { startAdding?: boolean } = {}) {
   const { profiles, profile: current, saveProfile, deleteProfile } = useApp();
   const [sheet, setSheet] = useState<Profile>();
   const [pad, setPad] = useState<Pad>();
   // A name being typed: for a new profile (no `profile`) or a rename.
-  const [naming, setNaming] = useState<{ profile?: Profile; text: string }>();
+  const [naming, setNaming] = useState<{ profile?: Profile; text: string } | undefined>(startAdding ? { text: "" } : undefined);
   const [deleting, setDeleting] = useState<Profile>();
   // The profile whose avatar is being chosen, by id: it is read from the list, so the picker shows each change.
   const [dressing, setDressing] = useState<string>();

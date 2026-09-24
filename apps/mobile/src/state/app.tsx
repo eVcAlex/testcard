@@ -82,6 +82,8 @@ const noFailures: readonly SourceFailure[] = [];
 const LAUNCH_SYNC_WAIT_MS = 10_000;
 /** And the getting-ready screen stays at least this long once it is up, so a quick sync does not flash it. */
 const LAUNCH_SYNC_SHOW_MS = 700;
+/** How long after launch the TV guides are looked at. */
+const GUIDES_AFTER_LAUNCH_MS = 60_000;
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
@@ -111,6 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // A second import of a source that is already importing would interleave with the first; a removal waits for it.
   const inFlight = useRef(new Map<string, Promise<void>>());
+  const importing = useCallback(() => inFlight.current.size > 0, []);
 
   const importSource = useCallback(
     async (sourceId: string) => {
@@ -165,7 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         stage(sourceId, "history");
         await syncRef.current?.triggerNow().catch(() => undefined);
         // The TV guide comes after, in the background: the app does not wait on it.
-        refreshGuides(db, adapters(), bump, [sourceId]);
+        refreshGuides(db, adapters(), bump, [sourceId], importing);
       } catch (error) {
         const message = error instanceof Error ? error.message : "The import failed.";
         console.warn(`Import of ${row.name} failed: ${message}`);
@@ -233,7 +236,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       bump();
       if (saved.reload) void refreshSource(saved.id);
       // A new guide address is read straight away (see guideImport's staleness).
-      else refreshGuides(db, adapters(), bump);
+      else refreshGuides(db, adapters(), bump, [], importing);
     },
     [db, sync, bump, refreshSource],
   );
@@ -258,7 +261,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         lastChangedAt.current = next.lastChangedAt;
         bump();
         // A guide address set on another device is read as soon as it arrives.
-        refreshGuides(db, adapters(), bump);
+        refreshGuides(db, adapters(), bump, [], importing);
       }
     }, 4000);
     return () => clearInterval(timer);
@@ -296,13 +299,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   useEffect(() => {
     catchUp(true);
-    refreshGuides(db, adapters(), bump);
+    // The guides wait a minute after launch: the first minute is the viewer's (and the launch sync's).
+    const guides = setTimeout(() => refreshGuides(db, adapters(), bump, [], importing), GUIDES_AFTER_LAUNCH_MS);
     const subscription = AppLifecycle.addEventListener("change", (state) => {
       if (state !== "active") return;
       catchUp(false);
-      refreshGuides(db, adapters(), bump);
+      refreshGuides(db, adapters(), bump, [], importing);
     });
-    return () => subscription.remove();
+    return () => {
+      clearTimeout(guides);
+      subscription.remove();
+    };
   }, [catchUp, db, bump]);
 
   const sources = useMemo<SourceSummary[]>(() => {

@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { parseXmltv } from "./parseXmltv.js";
+import { yieldToEventLoop } from "../db/applyInSlices.js";
 
 export interface EpgImportResult {
   /** Distinct channels that received at least one programme. */
@@ -11,7 +12,7 @@ export interface EpgImportResult {
 /** Programmes older than this before "now" are dropped after every import. */
 const KEEP_PAST_MS = 6 * 60 * 60 * 1000;
 /** Rows per synchronous transaction — the event loop is yielded between flushes. */
-const FLUSH_EVERY = 2000;
+const FLUSH_EVERY = 500;
 
 /**
  * Streams an XMLTV document into the `programmes` table for one source.
@@ -86,9 +87,4 @@ export async function importEpg(
   db.prepare(`DELETE FROM programmes WHERE end_at < ?`).run(Date.now() - KEEP_PAST_MS);
 
   return { channels: touchedChannels.size, programmes, durationMs: Date.now() - startedAt };
-}
-
-/** `setImmediate` where there is one (Node, React Native); a zero timer anywhere else. */
-function yieldToEventLoop(): Promise<void> {
-  return new Promise<void>((resolve) => (typeof setImmediate === "function" ? setImmediate(resolve) : setTimeout(resolve, 0)));
 }
