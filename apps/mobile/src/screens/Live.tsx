@@ -30,18 +30,12 @@ export const toHomeItem = (channel: ChannelRow): HomeItem => ({
 const channelCategories = memoByVersion((db: Parameters<typeof listCategories>[0], sourceId?: string) =>
   listCategories(db, sourceId)
     .filter((category) => !category.tags.split(" ").some((tag) => tag === "junk" || tag === "separator" || tag === "adult"))
-    .map((category) => ({ id: category.id, label: categoryLabel(category.name.normalize("NFKC")), count: category.channel_count, genre: category.genre })),
+    .map((category) => ({ id: category.id, label: categoryLabel(category.name), count: category.channel_count, genre: category.genre })),
 );
 
 /** How many categories get a row on the landing page; the rest are one press away under Browse all. */
 const CATEGORY_ROWS = 10;
 const ROW_SIZE = 24;
-
-/** "13:00" from epoch ms. `toLocaleTimeString` is not dependable on every Hermes build. */
-const clock = (ms: number): string => {
-  const date = new Date(ms);
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-};
 
 /**
  * Live TV, laid out like Movies and Series: a hero for the channel the remote rests on (what is airing and
@@ -98,13 +92,9 @@ export function LiveScreen({
 
   const fetchDetail = useCallback(
     async (id: string) => {
+      // Shown as a now/next block under the title; null (no guide) is kept too, so the hero can say so.
       const guide = await fetchGuide(db, id);
-      if (guide === null) return null;
-      const lines = [
-        guide.now !== null ? `Now: ${guide.now.title}, ${clock(guide.now.start)} to ${clock(guide.now.end)}` : null,
-        guide.next !== null ? `Next: ${guide.next.title}, ${clock(guide.next.start)}` : null,
-      ].filter((line): line is string => line !== null);
-      return lines.length > 0 ? { plot: lines.join("\n"), durationSecs: null } : null;
+      return { plot: null, durationSecs: null, guide };
     },
     [db],
   );

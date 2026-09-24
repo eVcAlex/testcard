@@ -42,10 +42,19 @@ export interface HeroActions {
   readonly actions: readonly DetailAction[];
 }
 
+/** One programme in a channel's guide, in epoch ms. */
+export interface GuideSlot {
+  readonly title: string;
+  readonly start: number;
+  readonly end: number;
+}
+
 /** What the provider only tells us when asked about one title. */
 export interface HomeDetail {
   readonly plot: string | null;
   readonly durationSecs: number | null;
+  /** A channel's guide: what is on now and next (either can be missing). Null when the channel has no guide at all. */
+  readonly guide?: { readonly now: GuideSlot | null; readonly next: GuideSlot | null } | null;
 }
 
 /** "1h 36m" / "42m". */
@@ -116,8 +125,13 @@ export function HomeScreen({
   // A highlighted title with no plot or length gets them fetched once the remote has rested on it for a moment.
   const shownId = shown?.item.id;
   const missing = shown !== undefined && (shown.item.plot === null || shown.item.plot === "" || shown.item.durationSecs === null);
+  // A channel's guide goes out of date when the programme on now ends: asked again then.
+  const onNowEnd = shownId !== undefined ? details.get(shownId)?.guide?.now?.end : undefined;
+  const stale = onNowEnd !== undefined && onNowEnd <= Date.now();
   useEffect(() => {
-    if (fetchDetail === undefined || shownId === undefined || !missing || asked.current.has(shownId)) return;
+    if (fetchDetail === undefined || shownId === undefined || !missing) return;
+    if (stale) asked.current.delete(shownId);
+    if (asked.current.has(shownId)) return;
     const timer = setTimeout(() => {
       asked.current.add(shownId);
       fetchDetail(shownId)
@@ -129,7 +143,7 @@ export function HomeScreen({
         .catch(() => asked.current.delete(shownId));
     }, DETAIL_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [fetchDetail, shownId, missing]);
+  }, [fetchDetail, shownId, missing, stale]);
 
   // The row the remote is on is lined up just below the top band (styles.rowsFade), so it is never left half cut off
   // at the edge. Android does it, in the one scroll it makes to bring the focused poster into view: each row declares
@@ -252,6 +266,7 @@ export function HomeScreen({
         shown={shown}
         plot={shown !== undefined ? (shown.item.plot !== null && shown.item.plot !== "" ? shown.item.plot : (details.get(shown.item.id)?.plot ?? null)) : null}
         durationSecs={shown !== undefined ? (shown.item.durationSecs ?? details.get(shown.item.id)?.durationSecs ?? null) : null}
+        guide={shown !== undefined ? details.get(shown.item.id)?.guide : undefined}
       />
       <TVFocusGuideView key={listKey} autoFocus style={styles.rows}>
         {/* Solid, with only its lower edge fading: the strip above the focused row holds the bottom of the row
@@ -327,7 +342,7 @@ const BrowseAllButton = memo(function BrowseAllButton({ onPress }: { onPress: ()
   );
 });
 
-function Hero({ shown, plot, durationSecs }: { shown: { item: HomeItem; row: string } | undefined; plot: string | null; durationSecs: number | null }) {
+function Hero({ shown, plot, durationSecs, guide }: { shown: { item: HomeItem; row: string } | undefined; plot: string | null; durationSecs: number | null; guide: HomeDetail["guide"] }) {
   // A title that wraps to a second line takes the plot's second line, so the buttons always stay inside the hero
   // instead of running off its foot under the rows.
   const [titleLines, setTitleLines] = useState(1);
@@ -372,9 +387,13 @@ function Hero({ shown, plot, durationSecs }: { shown: { item: HomeItem; row: str
         <View style={styles.factsSlot}>
           <Facts facts={facts} />
         </View>
+        {channel && guide !== undefined ? (
+          <NowNext guide={guide} />
+        ) : (
         <Text style={[styles.plot, wrapped && styles.plotShort]} numberOfLines={wrapped ? 1 : 2}>
-          {plot ?? ""}
-        </Text>
+            {plot ?? ""}
+          </Text>
+        )}
         {shown !== undefined ? (
           <View style={styles.holdHint}>
             <View style={styles.keyCap}>
@@ -384,6 +403,47 @@ function Hero({ shown, plot, durationSecs }: { shown: { item: HomeItem; row: str
           </View>
         ) : null}
       </View>
+    </View>
+  );
+}
+
+/** "13:00" from epoch ms. */
+const hhmm = (ms: number) => `${String(new Date(ms).getHours()).padStart(2, "0")}:${String(new Date(ms).getMinutes()).padStart(2, "0")}`;
+
+/**
+ * A channel's hero line: the programme on now with how far through it is and how long is left, then what follows.
+ * Said plainly when the channel has no guide, so an empty hero is never a question of whether it is still loading.
+ */
+function NowNext({ guide }: { guide: NonNullable<HomeDetail["guide"]> | null }) {
+  if (guide === null || (guide.now === null && guide.next === null)) return <Text style={styles.noGuide}>No programme guide for this channel</Text>;
+  const now = Date.now();
+  const on = guide.now;
+  const through = on !== null && on.end > on.start ? Math.min(1, Math.max(0, (now - on.start) / (on.end - on.start))) : null;
+  const left = on !== null ? Math.max(0, Math.round((on.end - now) / 60_000)) : null;
+  return (
+    <View style={styles.guide}>
+      {on !== null ? (
+        <View style={styles.guideLine}>
+          <Text style={styles.guideWhen}>NOW</Text>
+          <Text style={styles.guideTitle} numberOfLines={1}>
+            {on.title}
+          </Text>
+          {through !== null ? (
+            <View style={styles.guideBar}>
+              <View style={[styles.guideFill, { width: `${through * 100}%` }]} />
+            </View>
+          ) : null}
+          <Text style={styles.guideTime}>{left !== null ? (left >= 60 ? `${Math.floor(left / 60)}h ${left % 60}m left` : `${left}m left`) : ""}</Text>
+        </View>
+      ) : null}
+      {guide.next !== null ? (
+        <View style={styles.guideLine}>
+          <Text style={styles.guideWhen}>{hhmm(guide.next.start)}</Text>
+          <Text style={[styles.guideTitle, styles.guideNext]} numberOfLines={1}>
+            {guide.next.title}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -438,6 +498,16 @@ const styles = styleSheet({
   title: { color: colors.foreground, fontSize: 68, lineHeight: 78, fontWeight: "600", letterSpacing: -1.5 },
   plot: { height: 72, color: "#c3c9ce", fontSize: 25, lineHeight: 36, marginTop: 2 },
   plotShort: { height: 36 },
+  // Same height as the plot it stands in for, so the hero does not jump between a film and a channel.
+  guide: { height: 72, gap: 4, marginTop: 2, justifyContent: "center" },
+  guideLine: { flexDirection: "row", alignItems: "center", gap: 16 },
+  guideWhen: { width: 80, color: colors.accent, fontSize: 20, fontWeight: "600", letterSpacing: 1 },
+  guideTitle: { flexShrink: 1, color: colors.foreground, fontSize: 25, fontWeight: "500" },
+  guideNext: { color: "#c3c9ce", fontWeight: "400" },
+  guideBar: { width: 160, height: 5, borderRadius: 3, backgroundColor: "#ffffff30", overflow: "hidden" },
+  guideFill: { height: 5, backgroundColor: colors.foreground },
+  guideTime: { color: colors.muted, fontSize: 21 },
+  noGuide: { height: 72, color: colors.faint, fontSize: 23, lineHeight: 36, marginTop: 2 },
   holdHint: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 },
   keyCap: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 8, borderWidth: 2, borderColor: "#ffffff40" },
   keyCapText: { color: colors.muted, fontSize: 18, fontWeight: "600" },

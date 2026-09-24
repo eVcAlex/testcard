@@ -18,8 +18,8 @@ import { HomeSkeleton } from "../ui/HomeSkeleton";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
 /** Category tags that are dividers or decoration rather than something to browse (adult ones stay out of the way too). */
-/** Providers write quality tags in superscript letters ("⁴ᴷ ³⁸⁴⁰ᴾ"); NFKC turns them into ordinary text. */
-const tidy = (name: string) => categoryLabel(name.normalize("NFKC"));
+/** Keeps providers' superscript quality tags ("⁴ᴷ") as ordinary text and drops their branding tags; see categoryLabel. */
+const tidy = (name: string) => categoryLabel(name);
 const hidden = (tags: string) => tags.split(" ").some((tag) => tag === "junk" || tag === "separator" || tag === "adult");
 
 const toMovieItem = (movie: MovieRow): BrowseItem => ({
