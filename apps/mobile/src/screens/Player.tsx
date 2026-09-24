@@ -125,6 +125,14 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
     };
   }, [db, playing, resume, catchup, feedAt, feed, copyAt, copies.length, nextCopy, attempt]);
 
+  // Try again starts over: the best copy or first feed, and the source's other addresses may be tried again.
+  const retry = useCallback(() => {
+    serverTried.current = false;
+    setCopyAt(0);
+    setFeedAt(0);
+    setAttempt((value) => value + 1);
+  }, []);
+
   // Once Playing is on screen it owns Back itself (hide the controls, then leave); this is only for the
   // loading and failure states before that, which would otherwise have no way to leave on Back at all.
   useEffect(() => {
@@ -137,7 +145,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   }, [onExit, stream, error]);
 
   if (error !== undefined)
-    return <Failure title={item.title} message={serverGone(error) ? plainReason(error) : error} raw={error} editSourceId={sourceOfPlay(db, item.kind, item.id)?.id ?? null} onRetry={() => setAttempt((value) => value + 1)} onExit={onExit} sourceId={xtreamSourceOf(db, item.kind, item.id)} />;
+    return <Failure title={item.title} message={serverGone(error) ? plainReason(error) : error} raw={error} editSourceId={sourceOfPlay(db, item.kind, item.id)?.id ?? null} onRetry={retry} onExit={onExit} sourceId={xtreamSourceOf(db, item.kind, item.id)} />;
   if (stream === undefined) {
     // The same black screen and spinner the player itself shows while buffering, so starting an
     // episode reads as one continuous action instead of a separate loading page first.

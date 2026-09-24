@@ -10,9 +10,9 @@ import type { Category, Series, Source } from "../source/types.js";
 
 /**
  * Imports (or re-imports) an Xtream source's full series catalog: `get_series_categories` +
- * `get_series` per category. Same diff-and-merge shape as `importVod.ts`. Every touched row has
- * `episodes_fetched_at` reset to NULL — a previously-fetched season/episode list is now presumed
- * stale and re-fetched lazily next time the series is opened (see `importVodDetails.ts`).
+ * `get_series` per category. Same diff-and-merge shape as `importVod.ts`. Only a series that changed is
+ * written; it has `episodes_fetched_at` reset to NULL, so its season/episode list is fetched again next time it
+ * is opened. Unchanged ones keep theirs until it is a day old (see `importVodDetails.ts`).
  */
 export async function importSeries(
   db: Database.Database,

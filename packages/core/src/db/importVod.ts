@@ -12,9 +12,8 @@ import type { Category, Movie, Source } from "../source/types.js";
  * Imports (or re-imports) an Xtream source's full movie catalog: `get_vod_categories` +
  * `get_vod_streams` per category — same cost profile as live channel import. Diff-and-merge by
  * stable id (mirrors `importSource.ts`), never destructive — favourites/recents/progress
- * survive a refresh since ids stay stable. Every touched row has `details_fetched_at` reset to
- * NULL: title/poster/category data is refreshed in place, but any previously lazily-fetched
- * plot/duration is now presumed stale and re-fetched next time the title is opened.
+ * survive a refresh since ids stay stable. Only a film that changed is written; it has `details_fetched_at` reset
+ * to NULL, so its lazily-fetched plot/duration is fetched again next time it is opened.
  */
 export async function importVod(
   db: Database.Database,

@@ -193,6 +193,8 @@ export function SeriesDetailScreen({
             return;
           }
         }
+        // A daily re-read that fails leaves the episodes already here on screen, rather than an error over them.
+        if ((getSeriesDetail(db, seriesId)?.seasons.length ?? 0) > 0) return;
         if (!cancelled) setError({ text: `The episodes didn't load. ${plainReason(message)}`.trim(), gone: serverGone(message) });
       })
       .finally(() => !cancelled && setLoading(false));
