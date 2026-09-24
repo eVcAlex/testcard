@@ -53,7 +53,7 @@ export async function importEpg(
     for (const row of rows) insert.run(...row);
   });
 
-  db.prepare(`DELETE FROM programmes WHERE channel_id IN (SELECT id FROM channels WHERE source_id = ?)`).run(sourceId);
+  await deleteInSlices(db, `SELECT p.rowid FROM programmes p JOIN channels c ON c.id = p.channel_id WHERE c.source_id = ?`, [sourceId]);
 
   const touchedChannels = new Set<string>();
   let programmes = 0;
@@ -84,7 +84,25 @@ export async function importEpg(
   if (buffer.length > 0) flush(buffer);
   options.onProgress?.(programmes);
 
-  db.prepare(`DELETE FROM programmes WHERE end_at < ?`).run(Date.now() - KEEP_PAST_MS);
+  await deleteInSlices(db, `SELECT rowid FROM programmes WHERE end_at < ?`, [Date.now() - KEEP_PAST_MS]);
 
   return { channels: touchedChannels.size, programmes, durationMs: Date.now() - startedAt };
+}
+
+/** Rows deleted per statement: a guide can hold hundreds of thousands, and one DELETE of them all blocks for seconds. */
+const DELETE_EVERY = 3000;
+
+/**
+ * Deletes the programmes `select` finds (a query of their rowids), a slice at a time with the event loop let run between
+ * slices, so a device whose UI shares the thread stays responsive. Returns how many went.
+ */
+export async function deleteInSlices(db: Database.Database, select: string, params: readonly unknown[] = []): Promise<number> {
+  const remove = db.prepare(`DELETE FROM programmes WHERE rowid IN (${select} LIMIT ${DELETE_EVERY})`);
+  let total = 0;
+  for (;;) {
+    const { changes } = remove.run(...params);
+    total += changes;
+    if (changes < DELETE_EVERY) return total;
+    await yieldToEventLoop();
+  }
 }

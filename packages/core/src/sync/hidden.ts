@@ -10,20 +10,33 @@ export type HiddenCategoryKind = "live" | "movies" | "series";
 
 const CATEGORY_TABLE = { live: "categories", movies: "movie_categories", series: "series_categories" } as const satisfies Record<HiddenCategoryKind, string>;
 
-/** SQL: true when the category row `alias` (of `kind`) is not hidden. */
-export const categoryShown = (alias: string, kind: HiddenCategoryKind) =>
-  `NOT EXISTS (SELECT 1 FROM hidden_categories hc WHERE hc.source_id = ${alias}.source_id AND hc.kind = '${kind}' AND hc.category_key = ${alias}.provider_id)`;
+const quoted = (ids: readonly string[]) => ids.map((id) => `'${id.replaceAll("'", "''")}'`).join(", ");
+const notIn = (column: string, ids: readonly string[]) => (ids.length === 0 ? "1" : `${column} NOT IN (${quoted(ids)})`);
+
+/** This device's ids for the hidden categories of one kind: nearly always none, so the filters below cost nothing. */
+function hiddenCategoryIds(db: Database.Database, kind: HiddenCategoryKind): string[] {
+  return (
+    db
+      .prepare(`SELECT cat.id FROM hidden_categories hc JOIN ${CATEGORY_TABLE[kind]} cat ON cat.source_id = hc.source_id AND cat.provider_id = hc.category_key WHERE hc.kind = ?`)
+      .all(kind) as { id: string }[]
+  ).map((row) => row.id);
+}
+
+/**
+ * SQL: true when the category row `alias` (of `kind`) is not hidden. Built from the (short) list of hidden ids, not a
+ * lookup per row: these filters sit in queries that walk the whole catalogue (the Home shelves).
+ */
+export const categoryShown = (db: Database.Database, alias: string, kind: HiddenCategoryKind) => notIn(`${alias}.id`, hiddenCategoryIds(db, kind));
 
 /** SQL: true when the channel row `alias` is not hidden, itself or through its category. */
-export const channelShown = (alias: string) =>
-  `NOT EXISTS (SELECT 1 FROM hidden_channels hch WHERE hch.source_id = ${alias}.source_id AND ${alias}.id = hch.source_id || ':' || hch.channel_key)
-   AND NOT EXISTS (SELECT 1 FROM hidden_categories hc JOIN categories hcat ON hcat.source_id = hc.source_id AND hcat.provider_id = hc.category_key
-                   WHERE hc.kind = 'live' AND hcat.id = ${alias}.category_id)`;
+export function channelShown(db: Database.Database, alias: string): string {
+  const channels = (db.prepare(`SELECT source_id || ':' || channel_key AS id FROM hidden_channels`).all() as { id: string }[]).map((row) => row.id);
+  const categories = hiddenCategoryIds(db, "live");
+  return `${notIn(`${alias}.id`, channels)} AND ${notIn(`${alias}.category_id`, categories)}`;
+}
 
 /** SQL: true when the film or series row `alias` is not in a hidden category. */
-export const titleShown = (alias: string, kind: "movies" | "series") =>
-  `NOT EXISTS (SELECT 1 FROM hidden_categories hc JOIN ${CATEGORY_TABLE[kind]} hcat ON hcat.source_id = hc.source_id AND hcat.provider_id = hc.category_key
-               WHERE hc.kind = '${kind}' AND hcat.id = ${alias}.category_id)`;
+export const titleShown = (db: Database.Database, alias: string, kind: "movies" | "series") => notIn(`${alias}.category_id`, hiddenCategoryIds(db, kind));
 
 /** Marks the source as edited so the change is pushed, later than anything it last synced under. */
 function stamp(db: Database.Database, sourceId: string): void {

@@ -51,7 +51,7 @@ export function browseMovies(
 ): MovieRow[] {
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
-  const clauses: string[] = [titleShown("m", "movies")];
+  const clauses: string[] = [titleShown(db, "m", "movies")];
   const filters: unknown[] = [];
   if (opts.categoryId !== undefined) {
     clauses.push("m.category_id = ?");
@@ -90,7 +90,7 @@ export function listMovieCategories(db: Database.Database, sourceId?: string): M
       `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(m.id) AS movie_count
        FROM movie_categories cat
        JOIN movies m ON m.category_id = cat.id
-       WHERE ${categoryShown("cat", "movies")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
+       WHERE ${categoryShown(db, "cat", "movies")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )

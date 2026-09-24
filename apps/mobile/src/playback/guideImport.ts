@@ -1,14 +1,14 @@
 import type Database from "better-sqlite3";
-import { importEpg } from "@testcard/core/src/epg/importEpg.js";
-import type { Source, SourceAdapter } from "@testcard/core/src/source/types.js";
+import { deleteInSlices, importEpg } from "@testcard/core/src/epg/importEpg.js";
+import type { SourceAdapter } from "@testcard/core/src/source/types.js";
 import { forgetGuides } from "./airing";
 
 /**
  * The TV guide (XMLTV) for a source, loaded into the `programmes` table as the desktop app does, so Live TV, the
  * player and the guide grid have listings for playlists and for providers whose per-channel guide is empty. The
- * address is the one set for the source (on any device: it syncs), else a playlist's own `url-tvg`. An Xtream source
- * with no address set is left to its per-channel guide (`airing.ts`): its full `xmltv.php` can run to hundreds of
- * megabytes, far too much to parse on the thread the UI runs on. Read in the background, one source at a time, never
+ * address is the one set for the source (on any device: it syncs); a source with none is left to its per-channel guide
+ * (`airing.ts`). A provider's own full guide (Xtream's `xmltv.php`, a playlist's `url-tvg`) can run to hundreds of
+ * megabytes, far too much to take on by default on the thread the UI runs on. Read in the background, one source at a time, never
  * while a source is importing; nothing waits on it.
  */
 
@@ -47,7 +47,7 @@ function guideSources(db: Database.Database): GuideSource[] {
   return db
     .prepare(
       `SELECT id, kind, name, base_url AS baseUrl, playlist_url AS playlistUrl, epg_url AS epgUrl FROM sources
-       WHERE include_live = 1 AND (kind = 'm3u' OR TRIM(COALESCE(epg_url, '')) <> '')
+       WHERE include_live = 1 AND TRIM(COALESCE(epg_url, '')) <> ''
          AND EXISTS (SELECT 1 FROM channels WHERE source_id = sources.id)`,
     )
     .all() as GuideSource[];
@@ -61,13 +61,11 @@ function isStale(db: Database.Database, source: GuideSource): boolean {
   return record === undefined || Date.now() - record.at > STALE_MS || record.url !== setAddress(source);
 }
 
-async function importOne(db: Database.Database, source: GuideSource, adapter: SourceAdapter): Promise<void> {
-  const set = setAddress(source);
-  const asSource = (source.kind === "xtream" ? { id: source.id, kind: "xtream", name: source.name, baseUrl: source.baseUrl ?? "" } : { id: source.id, kind: "m3u", name: source.name, playlistUrl: source.playlistUrl ?? "" }) as Source;
-  const url = set !== "" ? set : await adapter.probeEpgUrl?.(asSource);
+async function importOne(db: Database.Database, source: GuideSource): Promise<void> {
+  const url = setAddress(source);
   // Tried, whatever happens: a source with no guide, or a broken one, is not asked again until it is stale.
-  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(metaKey(source.id), JSON.stringify({ at: Date.now(), url: set } satisfies GuideRecord));
-  if (url === undefined || url === "") return;
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(metaKey(source.id), JSON.stringify({ at: Date.now(), url } satisfies GuideRecord));
+  if (url === "") return;
   const response = await fetch(url);
   if (!response.ok || response.body === null) throw new Error(`The guide address responded with HTTP ${response.status}.`);
   const result = await importEpg(db, source.id, response.body as ReadableStream<Uint8Array>, { horizonMs: HORIZON_MS });
@@ -98,7 +96,7 @@ export function refreshGuides(
         // Read again when its turn comes: the source may have changed or gone while it waited.
         const current = guideSources(db).find((entry) => entry.id === source.id);
         if (current === undefined) return;
-        await importOne(db, current, current.kind === "xtream" ? adapters.xtreamAdapter : adapters.m3uAdapter);
+        await importOne(db, current);
         forgetGuides();
         onImported();
       } catch (error) {
@@ -108,4 +106,18 @@ export function refreshGuides(
       }
     });
   }
+}
+
+/**
+ * Clears guides this device keeps no longer: sources with no guide address (0.1.60 and 0.1.61 read every source's), in
+ * slices. Once; the guides it reads from now on replace themselves.
+ */
+export async function dropUnusedGuides(db: Database.Database): Promise<void> {
+  if (db.prepare(`SELECT 1 FROM schema_meta WHERE key = 'guides_trimmed'`).get() !== undefined) return;
+  const removed = await deleteInSlices(
+    db,
+    `SELECT p.rowid FROM programmes p JOIN channels c ON c.id = p.channel_id JOIN sources s ON s.id = c.source_id WHERE TRIM(COALESCE(s.epg_url, '')) = ''`,
+  );
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('guides_trimmed', '1')`).run();
+  if (removed > 0) forgetGuides();
 }

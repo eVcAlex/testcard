@@ -37,7 +37,7 @@ export function searchChannels(db: Database.Database, query: string, limit = 200
       `SELECT ${CHANNEL_COLUMNS}
        FROM channels_fts
        JOIN channels c ON c.rowid = channels_fts.rowid
-       WHERE channels_fts MATCH ? AND ${channelShown("c")}${sourceId !== undefined ? " AND c.source_id = ?" : ""}
+       WHERE channels_fts MATCH ? AND ${channelShown(db, "c")}${sourceId !== undefined ? " AND c.source_id = ?" : ""}
        ORDER BY rank
        LIMIT ?`,
     )
@@ -62,7 +62,7 @@ export function browseChannels(
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
 
-  const where: string[] = [channelShown("c")];
+  const where: string[] = [channelShown(db, "c")];
   const filters: unknown[] = [];
   if (opts.categoryId !== undefined) {
     where.push("c.category_id = ?");
@@ -119,7 +119,7 @@ export function listCategories(db: Database.Database, sourceId?: string): Catego
       `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(ch.id) AS channel_count
        FROM categories cat
        JOIN channels ch ON ch.category_id = cat.id
-       WHERE ${categoryShown("cat", "live")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
+       WHERE ${categoryShown(db, "cat", "live")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )
@@ -133,7 +133,7 @@ export function listRecentChannels(db: Database.Database, limit = 24): ChannelRo
       `SELECT ${CHANNEL_COLUMNS}
        FROM recents r
        JOIN channels c ON c.id = r.channel_id
-       WHERE ${channelShown("c")}
+       WHERE ${channelShown(db, "c")}
        ORDER BY r.played_at DESC
        LIMIT ?`,
     )
@@ -147,7 +147,7 @@ export function listFavouriteChannels(db: Database.Database): ChannelRow[] {
       `SELECT ${CHANNEL_COLUMNS}
        FROM favourites f
        JOIN channels c ON c.id = f.channel_id
-       WHERE ${channelShown("c")}
+       WHERE ${channelShown(db, "c")}
        ORDER BY f.position IS NOT NULL, f.position, f.added_at DESC`,
     )
     .all() as ChannelRow[];

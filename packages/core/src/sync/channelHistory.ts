@@ -128,7 +128,15 @@ export function applyChannelHistory(db: Database.Database, favourites: readonly 
       : (db.prepare(`SELECT kind, row FROM pending_channel_sync`).all() as { kind: "favourite" | "recent"; row: string }[]).map((entry) => ({ kind: entry.kind, row: JSON.parse(entry.row) }) as Pending);
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('pending_channel_stamp', ?)`).run(stamp);
   if (incoming.length === 0 && waiting.length === 0) return false;
-  const byKey = channelKeys(db, stamp);
+  // Most rows are this device's own favourites and recents coming back: those are matched from them alone, and the
+  // key of every channel (thousands, hashed one by one) is worked out only when something is left over.
+  const own = new Map<string, string>();
+  for (const row of db.prepare(`SELECT channel_id AS id FROM favourites UNION SELECT channel_id FROM recents`).all() as { id: string }[]) {
+    const key = channelRemoteKey(db, row.id);
+    if (key !== null) own.set(key, row.id);
+  }
+  const everyKey = [...incoming, ...waiting].some((entry) => !own.has(entry.row.remoteKey)) ? channelKeys(db, stamp) : undefined;
+  const byKey = { get: (key: string) => own.get(key) ?? everyKey?.get(key) };
 
   let changed = false;
   const apply = db.transaction((entries: readonly Pending[], fromWaiting: boolean) => {
