@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
+import { Plus } from "iconoir-react-native";
 import { useApp } from "../state/app";
 import { pinMatches, type Profile } from "../state/profiles";
-import { colors, styleSheet } from "../theme";
+import { colors, styleSheet, uiScale } from "../theme";
 import { Avatar } from "../ui/Avatar";
 import { Focusable } from "../ui/Focusable";
 import { PinPad } from "../ui/PinPad";
+import { ProfileSettings } from "../ui/ProfileSettings";
+import { Button } from "../ui/controls";
+
+/** As many as Settings allows. */
+const MAX_PROFILES = 6;
 
 /**
  * "Who's watching?": the profiles side by side, opened on launch when there is more than one, and from the profile
@@ -16,8 +22,17 @@ export function WhoIsWatching({ onDone, onCancel }: { onDone: () => void; onCanc
   const { profiles, profile: current, switchProfile } = useApp();
   const [asking, setAsking] = useState<Profile>();
   const [switching, setSwitching] = useState(false);
+  // Adding or changing profiles from here, before anyone is chosen: "add" opens straight on a new one's name.
+  const [managing, setManaging] = useState<"add" | "edit">();
 
   useEffect(() => {
+    if (managing !== undefined) {
+      const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+        setManaging(undefined);
+        return true;
+      });
+      return () => subscription.remove();
+    }
     if (asking !== undefined) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (onCancel !== undefined) onCancel();
@@ -25,7 +40,7 @@ export function WhoIsWatching({ onDone, onCancel }: { onDone: () => void; onCanc
       return true;
     });
     return () => subscription.remove();
-  }, [asking, onCancel]);
+  }, [asking, onCancel, managing]);
 
   const open = (profile: Profile) => {
     if (switching) return;
@@ -56,8 +71,32 @@ export function WhoIsWatching({ onDone, onCancel }: { onDone: () => void; onCanc
             )}
           </Focusable>
         ))}
+        {profiles.length < MAX_PROFILES ? (
+          <Focusable onPress={() => setManaging("add")} style={styles.tile} focusedStyle={styles.tileFocused}>
+            {({ focused }) => (
+              <>
+                <View style={[styles.ring, focused && styles.ringFocused]}>
+                  <View style={styles.addDisc}>
+                    <Plus color={focused ? colors.foreground : colors.muted} width={Math.round(72 * uiScale)} height={Math.round(72 * uiScale)} strokeWidth={1.5} />
+                  </View>
+                </View>
+                <Text style={[styles.name, focused && styles.nameFocused]}>Add profile</Text>
+              </>
+            )}
+          </Focusable>
+        ) : null}
       </TVFocusGuideView>
-      <Text style={styles.hint}>Add and change profiles in Settings.</Text>
+      <Button label="Manage profiles" onPress={() => setManaging("edit")} />
+      {managing !== undefined ? (
+        <View style={styles.manage}>
+          <View style={styles.manageBody}>
+            <ProfileSettings startAdding={managing === "add"} />
+          </View>
+          <View style={styles.manageFoot}>
+            <Button primary label="Done" onPress={() => setManaging(undefined)} />
+          </View>
+        </View>
+      ) : null}
       {asking !== undefined ? (
         <PinPad
           title={`Enter ${asking.name}'s PIN`}
@@ -83,5 +122,8 @@ const styles = styleSheet({
   ringFocused: { borderColor: colors.foreground },
   name: { color: colors.muted, fontSize: 28, fontWeight: "500", maxWidth: 240 },
   nameFocused: { color: colors.foreground },
-  hint: { color: colors.faint, fontSize: 22 },
+  addDisc: { width: 176, height: 176, borderRadius: 88, borderWidth: 3, borderColor: colors.border, borderStyle: "dashed", alignItems: "center", justifyContent: "center" },
+  manage: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, zIndex: 36, backgroundColor: colors.background, paddingHorizontal: 120, paddingTop: 60 },
+  manageBody: { flex: 1 },
+  manageFoot: { flexDirection: "row", justifyContent: "flex-end", paddingVertical: 32 },
 });

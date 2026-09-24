@@ -82,6 +82,30 @@ export function collectChannelHistory(db: Database.Database, sinceMs: number): {
   return { channelFavourites, channelRecents };
 }
 
+/** Changes whenever the channels do: a source added, removed or imported again. */
+function catalogueStamp(db: Database.Database): string {
+  const row = db
+    .prepare(`SELECT COUNT(*) AS n, COALESCE(MAX(last_refreshed_at), 0) AS at, COALESCE(SUM(LENGTH(id)), 0) AS ids, (SELECT COUNT(*) FROM channels) AS channels FROM sources`)
+    .get() as { n: number; at: number; ids: number; channels: number };
+  return `${row.n}:${row.at}:${row.ids}:${row.channels}`;
+}
+
+/** Every channel's key, worked out once per catalogue: there is no column for it, and a source holds thousands. */
+const keysCache = new WeakMap<Database.Database, { stamp: string; byKey: Map<string, string> }>();
+function channelKeys(db: Database.Database, stamp: string): Map<string, string> {
+  const kept = keysCache.get(db);
+  if (kept?.stamp === stamp) return kept.byKey;
+  const byKey = new Map<string, string>();
+  for (const source of db.prepare(`SELECT id, remote_key AS remoteKey FROM sources WHERE remote_key IS NOT NULL`).all() as { id: string; remoteKey: string }[]) {
+    for (const channel of db.prepare(`SELECT id FROM channels WHERE source_id = ?`).all(source.id) as { id: string }[]) {
+      const key = channelKeyFor(source.remoteKey, source.id, channel.id);
+      if (key !== null) byKey.set(key, channel.id);
+    }
+  }
+  keysCache.set(db, { stamp, byKey });
+  return byKey;
+}
+
 /** How long a row for a channel this device does not have waits before it is let go. */
 const PENDING_FOR_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -94,20 +118,17 @@ type Pending = { kind: "favourite"; row: SyncChannelFavourite } | { kind: "recen
 export function applyChannelHistory(db: Database.Database, favourites: readonly SyncChannelFavourite[], recents: readonly SyncRecent[]): boolean {
   const now = Date.now();
   db.prepare(`DELETE FROM pending_channel_sync WHERE received_at < ?`).run(now - PENDING_FOR_MS);
-  const waiting = (db.prepare(`SELECT kind, row FROM pending_channel_sync`).all() as { kind: "favourite" | "recent"; row: string }[]).map(
-    (entry) => ({ kind: entry.kind, row: JSON.parse(entry.row) }) as Pending,
-  );
   const incoming: Pending[] = [...favourites.map((row) => ({ kind: "favourite" as const, row })), ...recents.map((row) => ({ kind: "recent" as const, row }))];
+  // Waiting rows can only match once the channels change (a source imported), so they are looked at again only then.
+  const stamp = catalogueStamp(db);
+  const recheck = db.prepare(`SELECT value FROM schema_meta WHERE key = 'pending_channel_stamp'`).get() as { value: string } | undefined;
+  const waiting =
+    recheck?.value === stamp
+      ? []
+      : (db.prepare(`SELECT kind, row FROM pending_channel_sync`).all() as { kind: "favourite" | "recent"; row: string }[]).map((entry) => ({ kind: entry.kind, row: JSON.parse(entry.row) }) as Pending);
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('pending_channel_stamp', ?)`).run(stamp);
   if (incoming.length === 0 && waiting.length === 0) return false;
-
-  // Every channel's key, worked out once: there is no column for it, and a source holds thousands.
-  const byKey = new Map<string, string>();
-  for (const source of db.prepare(`SELECT id, remote_key AS remoteKey FROM sources WHERE remote_key IS NOT NULL`).all() as { id: string; remoteKey: string }[]) {
-    for (const channel of db.prepare(`SELECT id FROM channels WHERE source_id = ?`).all(source.id) as { id: string }[]) {
-      const key = channelKeyFor(source.remoteKey, source.id, channel.id);
-      if (key !== null) byKey.set(key, channel.id);
-    }
-  }
+  const byKey = channelKeys(db, stamp);
 
   let changed = false;
   const apply = db.transaction((entries: readonly Pending[], fromWaiting: boolean) => {

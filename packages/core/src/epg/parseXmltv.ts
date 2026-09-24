@@ -1,6 +1,10 @@
 import sax from "sax";
 import { Gunzip } from "fflate";
 import type { Programme } from "../source/types.js";
+import { yieldToEventLoop } from "../db/applyInSlices.js";
+
+/** The most the parser holds the thread for before it lets the event loop run (the TV app's UI shares it). */
+const SLICE_MS = 30;
 
 /**
  * Streaming XMLTV parser: gunzip + SAX, so a multi-tens-of-MB EPG file is never buffered
@@ -85,6 +89,7 @@ export async function* parseXmltv(
   let gunzip: Gunzip | null | undefined;
 
   const reader = body.getReader();
+  let sliceStarted = Date.now();
   try {
     for (;;) {
       const { value, done } = await reader.read();
@@ -93,6 +98,12 @@ export async function* parseXmltv(
       gunzip ??= value[0] === 0x1f && value[1] === 0x8b ? new Gunzip((chunk) => feed(chunk)) : null;
       if (gunzip !== null) gunzip.push(value);
       else feed(value);
+      // Chunks already downloaded resolve at once, so without this a large guide would parse start to finish
+      // without the UI getting a frame in.
+      if (Date.now() - sliceStarted > SLICE_MS) {
+        await yieldToEventLoop();
+        sliceStarted = Date.now();
+      }
       while (ready.length > 0) {
         yielded += 1;
         yield ready.shift()!;

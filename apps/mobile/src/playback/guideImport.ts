@@ -6,8 +6,10 @@ import { forgetGuides } from "./airing";
 /**
  * The TV guide (XMLTV) for a source, loaded into the `programmes` table as the desktop app does, so Live TV, the
  * player and the guide grid have listings for playlists and for providers whose per-channel guide is empty. The
- * address is the one set for the source (on any device: it syncs), else the source's own: an Xtream account's
- * `xmltv.php`, a playlist's `url-tvg`. Read in the background, one source at a time; nothing waits on it.
+ * address is the one set for the source (on any device: it syncs), else a playlist's own `url-tvg`. An Xtream source
+ * with no address set is left to its per-channel guide (`airing.ts`): its full `xmltv.php` can run to hundreds of
+ * megabytes, far too much to parse on the thread the UI runs on. Read in the background, one source at a time, never
+ * while a source is importing; nothing waits on it.
  */
 
 /** A guide older than this is read again, on launch or on coming back to the app. */
@@ -45,7 +47,8 @@ function guideSources(db: Database.Database): GuideSource[] {
   return db
     .prepare(
       `SELECT id, kind, name, base_url AS baseUrl, playlist_url AS playlistUrl, epg_url AS epgUrl FROM sources
-       WHERE include_live = 1 AND EXISTS (SELECT 1 FROM channels WHERE source_id = sources.id)`,
+       WHERE include_live = 1 AND (kind = 'm3u' OR TRIM(COALESCE(epg_url, '')) <> '')
+         AND EXISTS (SELECT 1 FROM channels WHERE source_id = sources.id)`,
     )
     .all() as GuideSource[];
 }
@@ -83,12 +86,15 @@ export function refreshGuides(
   adapters: { readonly xtreamAdapter: SourceAdapter; readonly m3uAdapter: SourceAdapter },
   onImported: () => void,
   force: readonly string[] = [],
+  /** True while a source is importing: the guide waits, rather than slowing it down. */
+  busy: () => boolean = () => false,
 ): void {
   for (const source of guideSources(db)) {
     if (queued.has(source.id) || !(force.includes(source.id) || isStale(db, source))) continue;
     queued.add(source.id);
     queue = queue.then(async () => {
       try {
+        while (busy()) await new Promise((resolve) => setTimeout(resolve, 5000));
         // Read again when its turn comes: the source may have changed or gone while it waited.
         const current = guideSources(db).find((entry) => entry.id === source.id);
         if (current === undefined) return;
