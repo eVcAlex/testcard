@@ -8,7 +8,7 @@ import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { getPlaybackProgress, setPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
 import { recordRecent } from "@testcard/core/src/db/queries.js";
 import { listMoviePlayOrder, recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
-import { findNextEpisode, getSkipWindow, recordSeriesRecent, saveSkipWindow } from "@testcard/core/src/db/seriesQueries.js";
+import { findNextEpisode, recordSeriesRecent } from "@testcard/core/src/db/seriesQueries.js";
 import type { CatchupProgramme } from "@testcard/core/src/source/xtream/catchup.js";
 import { playerTitle } from "../ui/titles";
 import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
@@ -24,7 +24,6 @@ import { streamFacts } from "../playback/streamInfo";
 import { channelCatchup, loadCatchupGuide, type CatchupGuide } from "../playback/catchup";
 import { fetchGuide, type Airing } from "../playback/airing";
 import { autoCaptionTrack, CAPTION_SETTINGS, nativeCaptionStyle, settingLabel, stepSetting, type CaptionPrefs, type CaptionSetting } from "../playback/captions";
-import { guessedCreditsSecs, learnedCreditsSecs, noteCreditsSkipped } from "../playback/credits";
 import { audioLanguage as languageOfAudio, audioName, autoAudioTrack, nextFit, nextSpeed, pictureLabel, readPictureFit, speedLabel, writePictureFit } from "../playback/viewing";
 
 /** 15 s, what the skip buttons' icons say (Iconoir only draws 15 s ones). */
@@ -38,8 +37,6 @@ const STUCK_AFTER_MS = 12_000;
 const MAX_RELOADS = 4;
 /** How long a live feed may take to show a picture before the next one is tried. */
 const START_WITHIN_MS = 15_000;
-/** Once the credits are known to have started (see playback/credits), the next episode starts by itself this long after. */
-const CREDITS_COUNTDOWN_SECS = 10;
 /** After an episode ends, the next one starts by itself this many seconds later unless a key is pressed. */
 const AUTO_NEXT_SECS = 8;
 /** Stepping to another channel remounts the player, so the highlighted control is carried across, and spamming next or previous keeps working. */
@@ -528,45 +525,25 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     return () => clearTimeout(timer);
   }, [pickedUp]);
 
-  // An episode offers the next one once its credits start, as the streaming apps do: "Watch credits" or "Next
-  // episode". Where the credits start is learned from the viewer (see playback/credits); once it is, the next
-  // episode also starts by itself after a short countdown. Before that the offer comes at an estimate, with no
-  // countdown (it may still be the last scene), and the next episode starts by itself only once this one ends.
+  // When an episode ends, the next one is offered and starts by itself after a short countdown. (Offers before the
+  // end, "Skip intro" and "Watch credits", were guessed from the viewer's own skips and came up in the wrong places.)
   const next = useMemo(() => (item.kind === "episode" ? findNextEpisode(db, item.id) : undefined), [db, item]);
-  const learnedCredits = useMemo(() => (item.kind === "episode" && seriesId !== undefined ? learnedCreditsSecs(db, seriesId) : undefined), [db, item.kind, seriesId]);
-  const creditsSecs = learnedCredits ?? guessedCreditsSecs(duration);
-  const nearEnd = next !== undefined && onNextEpisode !== undefined && duration > 300 && position >= duration - creditsSecs;
-  const finished = nearEnd && position >= duration - 0.5;
-  // "Watch credits" puts the offer away until the episode ends; it comes back then, counting down.
-  const [creditsChosen, setCreditsChosen] = useState(false);
-  const cardUp = nearEnd && (!creditsChosen || finished);
-  const [cardAt, setCardAt] = useState<"credits" | "next">("next");
-  // Skip intro: what the viewer last skipped at the start of this series is offered again where it starts in each episode.
-  const skip = useMemo(() => (item.kind === "episode" && seriesId !== undefined ? getSkipWindow(db, seriesId) : undefined), [db, item, seriesId]);
-  const inIntro = skip !== undefined && position >= skip.fromSecs - 3 && position < skip.toSecs - 2 && duration > skip.toSecs + 60;
+  const finished = next !== undefined && onNextEpisode !== undefined && duration > 300 && position >= duration - 0.5;
+  const cardUp = finished;
   const [autoCancelled, setAutoCancelled] = useState(false);
-  // Moving back out of the credits (a seek) starts the offer afresh next time they are reached.
+  // Moving back from the end (a seek) starts the offer afresh next time it is reached.
   useEffect(() => {
-    if (nearEnd) return;
-    setCreditsChosen(false);
-    setAutoCancelled(false);
-    setCardAt("next");
-  }, [nearEnd]);
-  /** `byViewer`: pressed, not the countdown; how much was left is then learned as the series' credits. */
+    if (!finished) setAutoCancelled(false);
+  }, [finished]);
   const goNext = useCallback(
-    (byViewer: boolean) => {
+    (_byViewer: boolean) => {
       if (next === undefined) return;
-      if (byViewer && seriesId !== undefined) noteCreditsSkipped(db, seriesId, latest.current.duration - latest.current.position, latest.current.duration);
       onNextEpisode?.({ kind: "episode", id: next.id, title: next.name });
     },
-    [db, next, onNextEpisode, seriesId],
+    [next, onNextEpisode],
   );
-  const watchCredits = useCallback(() => {
-    setCreditsChosen(true);
-    setCardAt("next");
-  }, []);
-  const counting = cardUp && !autoCancelled && (learnedCredits !== undefined || finished);
-  const countFor = finished ? AUTO_NEXT_SECS : CREDITS_COUNTDOWN_SECS;
+  const counting = cardUp && !autoCancelled;
+  const countFor = AUTO_NEXT_SECS;
   // The countdown is drawn as a fill across the Next episode button, driven natively; when it completes, the next episode starts.
   const countdown = useRef(new Animated.Value(0)).current;
   const goNextRef = useRef(goNext);
@@ -611,29 +588,6 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   }, []);
   useEffect(() => () => clearTimeout(flashTimer.current), []);
 
-  // A run of forward jumps near the start of an episode (the skip or fast-forward keys pressed in a row) is taken as skipping the
-  // opening, and remembered for the series. Small nudges, or jumps later on, are not.
-  const burst = useRef<{ from: number; to: number; timer?: ReturnType<typeof setTimeout> } | undefined>(undefined);
-  const noteJump = useCallback(
-    (from: number, to: number) => {
-      if (item.kind !== "episode" || seriesId === undefined) return;
-      if (to <= from) {
-        clearTimeout(burst.current?.timer);
-        burst.current = undefined;
-        return;
-      }
-      const run = burst.current ?? { from, to };
-      run.to = to;
-      burst.current = run;
-      clearTimeout(run.timer);
-      run.timer = setTimeout(() => {
-        burst.current = undefined;
-        if (run.from < 360 && run.to - run.from >= 40 && run.to < 720) saveSkipWindow(db, seriesId, run.from, run.to);
-      }, 1800);
-    },
-    [db, item.kind, seriesId],
-  );
-  useEffect(() => () => clearTimeout(burst.current?.timer), []);
   const lastSeek = useRef({ at: 0, direction: 0, count: 0 });
   const seek = useCallback(
     (direction: 1 | -1) => {
@@ -643,21 +597,13 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       lastSeek.current = { at: now, direction, count: streak };
       const from = player.currentTime;
       const target = Math.min(duration > 0 ? duration - 1 : Infinity, Math.max(0, from + direction * stepForStreak(streak)));
-      noteJump(from, target);
       player.currentTime = target;
       setSeekedTo(target);
       pulse(direction === 1 ? "forward" : "back");
       wake();
     },
-    [duration, noteJump, player, pulse, vod, wake],
+    [duration, player, pulse, vod, wake],
   );
-  const skipIntro = useCallback(() => {
-    if (skip === undefined) return;
-    player.currentTime = skip.toSecs;
-    setSeekedTo(skip.toSecs);
-    pulse("forward");
-    wake();
-  }, [player, pulse, skip, wake]);
   // A tap or click on the progress bar jumps to that point.
   const [barWidth, setBarWidth] = useState(0);
   const seekToRatio = useCallback(
@@ -709,8 +655,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // only covers loading/failure, before this) and it subscribes exactly once for the component's whole
   // lifetime: `chrome` flips on every auto-hide tick, and re-subscribing on each flip (as this used to)
   // reintroduces the same kind of race that made Back sometimes skip straight past hiding to exit.
-  const backStateRef = useRef({ guideOpen, captionsOpen, audioOpen, chrome, onExit, creditsOffer: cardUp && !finished, watchCredits });
-  backStateRef.current = { guideOpen, captionsOpen, audioOpen, chrome, onExit, creditsOffer: cardUp && !finished, watchCredits };
+  const backStateRef = useRef({ guideOpen, captionsOpen, audioOpen, chrome, onExit });
+  backStateRef.current = { guideOpen, captionsOpen, audioOpen, chrome, onExit };
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       const state = backStateRef.current;
@@ -721,8 +667,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         clearTimeout(hideTimer.current);
         setAwake(false);
         setMuted(true);
-      } else if (state.creditsOffer) state.watchCredits();
-      else state.onExit();
+      } else state.onExit();
       return true;
     });
     return () => subscription.remove();
@@ -829,12 +774,10 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     (event: { eventType: string; eventKeyAction?: number | undefined }) => {
       if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
       const key = event.eventType;
-      if (inIntro && key === "select" && (!chrome || selected === "seek" || selected === "play")) return skipIntro();
-      // While the next episode is on offer and the controls are hidden, left and right move between its two
-      // buttons and OK presses one. Any other key means the viewer is doing something else: the countdown stops.
+      // While the next episode is on offer and the controls are hidden, OK starts it. Any other key means the viewer
+      // is doing something else: the countdown stops.
       if (cardUp && !captionsOpen && !audioOpen && !guideOpen) {
-        if (!chrome && (key === "left" || key === "right")) return setCardAt(key === "left" && !finished ? "credits" : "next");
-        if (!chrome && key === "select") return cardAt === "credits" && !finished ? watchCredits() : goNext(true);
+        if (!chrome && key === "select") return goNext(true);
         if (REMOTE_KEYS.has(key)) setAutoCancelled(true);
       }
       if (audioOpen) {
@@ -894,7 +837,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [audioAt, audioOpen, audioTracks.length, chooseAudio, captionAt, captionOptions.length, captionRows, captions, captionsOpen, cardAt, cardUp, changeCaptions, chooseCaption, chrome, finished, goNext, guide, guideAt, guideOpen, inIntro, playEntry, skipIntro, press, remotePlayPause, selected, seek, step, togglePause, vod, watchCredits, wake, zap, zapping],
+    [audioAt, audioOpen, audioTracks.length, chooseAudio, captionAt, captionOptions.length, captionRows, captions, captionsOpen, cardUp, changeCaptions, chooseCaption, chrome, finished, goNext, guide, guideAt, guideOpen, playEntry, press, remotePlayPause, selected, seek, step, togglePause, vod, wake, zap, zapping],
   );
   // The listener below re-subscribes to the native remote-event emitter whenever its callback identity
   // changes; going through a ref keeps that identity fixed so a run of key presses doesn't churn the
@@ -1130,27 +1073,14 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
           </View>
       </Animated.View>
 
-      {/* The streaming apps' corner buttons: lit (OK presses them) while the controls are hidden. */}
-      {inIntro && !cardUp ? (
-        <View style={[styles.offer, chrome && styles.offerRaised]} pointerEvents="box-none">
-          <Pressable focusable={false} onPress={skipIntro} style={[styles.offerKey, (!tv || !chrome) && styles.offerKeyLit]}>
-            <Text style={[styles.offerLabel, (!tv || !chrome) && styles.offerLabelLit]}>Skip intro</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
+      {/* The streaming apps' corner button: lit (OK presses it) while the controls are hidden. */}
       {cardUp && next !== undefined ? (
         <View style={[styles.offer, chrome && styles.offerRaised]} pointerEvents="box-none">
           <Text style={styles.offerNext} numberOfLines={1}>
             {`Next: S${next.seasonNumber} E${next.episodeNumber}  ${next.name}`}
           </Text>
           <View style={styles.offerKeys} pointerEvents="box-none">
-            {finished ? null : (
-              <Pressable focusable={false} onPress={watchCredits} style={[styles.offerKey, tv && !chrome && cardAt === "credits" && styles.offerKeyLit]}>
-                <Text style={[styles.offerLabel, tv && !chrome && cardAt === "credits" && styles.offerLabelLit]}>Watch credits</Text>
-              </Pressable>
-            )}
-            <Pressable focusable={false} onPress={() => goNext(true)} style={[styles.offerKey, styles.nextKey, (!tv || (!chrome && cardAt === "next")) && styles.nextKeyLit]}>
+            <Pressable focusable={false} onPress={() => goNext(true)} style={[styles.offerKey, styles.nextKey, (!tv || !chrome) && styles.nextKeyLit]}>
               <Animated.View
                 pointerEvents="none"
                 style={[styles.nextFill, { transform: [{ translateX: -u(NEXT_KEY_WIDTH) / 2 }, { scaleX: countdown }, { translateX: u(NEXT_KEY_WIDTH) / 2 }] }]}
