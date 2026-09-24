@@ -9,7 +9,8 @@ import { recordMovieRecent } from "@testcard/core/src/db/vodQueries.js";
 import { findNextEpisode, getSkipWindow, recordSeriesRecent, saveSkipWindow } from "@testcard/core/src/db/seriesQueries.js";
 import type { CatchupProgramme } from "@testcard/core/src/source/xtream/catchup.js";
 import { playerTitle } from "../ui/titles";
-import { channelVariantIds, resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
+import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
+import { listChannelFeeds, type ChannelFeed } from "@testcard/core/src/db/channelFeeds.js";
 import { useApp } from "../state/app";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button } from "../ui/controls";
@@ -28,6 +29,8 @@ const CHROME_HIDES_AFTER_MS = 4000;
 /** A live picture stuck refilling this long is reloaded, at most this many times. */
 const STUCK_AFTER_MS = 12_000;
 const MAX_RELOADS = 4;
+/** How long a live feed may take to show a picture before the next one is tried. */
+const START_WITHIN_MS = 15_000;
 /** Once the credits are known to have started (see playback/credits), the next episode starts by itself this long after. */
 const CREDITS_COUNTDOWN_SECS = 10;
 /** After an episode ends, the next one starts by itself this many seconds later unless a key is pressed. */
@@ -58,22 +61,26 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   // A past programme the viewer picked from Catch up, for this channel only: changing channel goes back to live.
   const [picked, setPicked] = useState<{ channelId: string; programme: CatchupProgramme }>();
   const catchup = picked?.channelId === item.id ? picked.programme : undefined;
-  // A live channel that will not play is tried again on its other feeds (another quality, a backup) before the viewer sees an error.
-  const [variantAt, setVariantAt] = useState(0);
-  const variantCount = useMemo(() => (item.kind === "channel" ? channelVariantIds(db, item.id).length : 1), [db, item]);
-  const failOver = useCallback(() => setVariantAt((at) => at + 1), []);
+  // A live channel that will not play is tried again on its other feeds (another quality, a backup, the same channel
+  // listed elsewhere) before the viewer sees an error.
+  const [feedAt, setFeedAt] = useState(0);
+  const feeds = useMemo(() => (item.kind === "channel" ? listChannelFeeds(db, item.id) : []), [db, item]);
+  const feed: ChannelFeed | undefined = feeds[feedAt];
+  const failOver = useCallback(() => setFeedAt((at) => at + 1), []);
 
   useEffect(() => {
     let cancelled = false;
     setError(undefined);
-    resolveStream(db, item, resume, catchup, variantAt).then(
+    // Cleared first, or the dead feed is mounted again under the new key while the next one resolves.
+    setStream(undefined);
+    resolveStream(db, item, resume, catchup, feedAt > 0 ? feed : undefined).then(
       (resolved) => !cancelled && setStream(resolved),
       (failure: unknown) => !cancelled && setError(failure instanceof Error ? failure.message : "This couldn't be played."),
     );
     return () => {
       cancelled = true;
     };
-  }, [db, item, resume, catchup, variantAt]);
+  }, [db, item, resume, catchup, feedAt, feed]);
 
   // Once Playing is on screen it owns Back itself (hide the controls, then leave); this is only for the
   // loading and failure states before that, which would otherwise have no way to leave on Back at all.
@@ -100,7 +107,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   }
   return (
     <Playing
-      key={catchup === undefined ? "live" : catchup.serverStart}
+      key={`${catchup === undefined ? "live" : catchup.serverStart}:${feedAt}`}
       item={item}
       stream={stream}
       catchup={catchup}
@@ -108,8 +115,9 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
       channels={channels}
       onZap={onZap}
       onNextEpisode={onNextEpisode}
-      moreFeeds={variantAt + 1 < variantCount}
+      moreFeeds={feedAt + 1 < feeds.length}
       onFailOver={failOver}
+      fellBack={feedAt > 0 && feed !== undefined ? fellBackLabel(item.title, feed) : undefined}
       onExit={() => {
         sync.notifyLocalChange();
         updateStatus();
@@ -118,6 +126,12 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
       {...(seriesId !== undefined ? { seriesId } : {})}
     />
   );
+}
+
+/** What the viewer is told once a channel is playing on a feed other than the first. */
+function fellBackLabel(title: string, feed: ChannelFeed): string {
+  if (feed.name !== title) return `Playing ${feed.name} instead`;
+  return feed.quality !== null ? `Playing the ${feed.quality} feed instead` : "Playing a backup feed instead";
 }
 
 function Failure({ title, message, detail, onRetry, onExit }: { title: string; message: string; detail?: string; onRetry?: () => void; onExit: () => void }) {
@@ -185,7 +199,7 @@ function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
   return guide.current === undefined ? past : [{ programme: guide.current, when: "Start over", time: hourMinute(guide.current.start) }, ...past];
 }
 
-function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, onExit }: { onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
+function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, fellBack, onExit }: { onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; fellBack: string | undefined; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db, sync, captions, setCaptions } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
@@ -230,6 +244,29 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   useEffect(() => {
     if (failing) onFailOver();
   }, [failing, onFailOver]);
+  // Some dead streams never error, they just never start: after a while, the next feed is tried instead.
+  const neverStarted = !vod && !timeshift && moreFeeds && status !== "readyToPlay" && status !== "error";
+  useEffect(() => {
+    if (!neverStarted || everPlayed.current) return;
+    const timer = setTimeout(() => {
+      if (!everPlayed.current) onFailOver();
+    }, START_WITHIN_MS);
+    return () => clearTimeout(timer);
+  }, [neverStarted, onFailOver]);
+  // Once the picture is up on a feed that was not the first, say which, for a moment.
+  const [fellBackShown, setFellBackShown] = useState(false);
+  const pictureUp = status === "readyToPlay";
+  const fellBackSaid = useRef(false);
+  useEffect(() => {
+    if (fellBack === undefined || !pictureUp || fellBackSaid.current) return;
+    fellBackSaid.current = true;
+    setFellBackShown(true);
+  }, [fellBack, pictureUp]);
+  useEffect(() => {
+    if (!fellBackShown) return;
+    const timer = setTimeout(() => setFellBackShown(false), 5000);
+    return () => clearTimeout(timer);
+  }, [fellBackShown]);
 
   // Live TV: pausing lets the picture fall behind the broadcast. Once it has, there is a way back to live.
   const [behindLive, setBehindLive] = useState(false);
@@ -763,6 +800,11 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
           <ActivityIndicator size={u(64)} color={colors.foreground} />
         </View>
       ) : null}
+      {fellBackShown && fellBack !== undefined ? (
+        <View style={styles.fellBack} pointerEvents="none">
+          <Text style={styles.fellBackText}>{`That feed wouldn't play. ${fellBack}.`}</Text>
+        </View>
+      ) : null}
 
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]} pointerEvents={chrome ? "box-none" : "none"}>
         <View style={styles.top} pointerEvents="box-none">
@@ -1062,6 +1104,8 @@ const styles = styleSheet({
   row: { flexDirection: "row", gap: space.m },
   player: { flex: 1, backgroundColor: "#000" },
   centreLayer: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center" },
+  fellBack: { position: "absolute", left: 0, right: 0, top: 48, alignItems: "center" },
+  fellBackText: { color: colors.foreground, fontSize: 26, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 999, backgroundColor: "#000000d9", overflow: "hidden" },
 
   top: { position: "absolute", left: 0, right: 0, top: 0, paddingHorizontal: 96, paddingTop: 48, paddingBottom: 90, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   backLit: { backgroundColor: colors.foreground },

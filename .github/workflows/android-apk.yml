@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: Which APK to build. firetv is the release; debug loads its JavaScript from a dev server (pnpm android:run)
+        description: Which APK to build. firetv is the release; debug loads its JavaScript from a dev server (pnpm android run)
         type: choice
         options: [firetv, debug]
         default: firetv

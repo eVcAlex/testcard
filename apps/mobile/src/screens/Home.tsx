@@ -1,6 +1,8 @@
 import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Pressable, Text, TVFocusGuideView, useTVEventHandler, View, type CellRendererProps, type ViewProps } from "react-native";
 import { Image } from "expo-image";
+import { sized } from "../ui/imageSize";
+import { ChannelLogo } from "../ui/ChannelLogo";
 import { NavArrowRight } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, styleSheet, uiScale } from "../theme";
@@ -85,10 +87,13 @@ export function HomeScreen({
   heroActions,
   fetchDetail,
   browseAll,
+  openGuide,
 }: {
   rows: readonly HomeRow[];
   /** Movies, Series and Live TV: an "All categories" button above the rows opens the full category list. */
   browseAll?: (() => void) | undefined;
+  /** Live TV: a "TV guide" button beside it opens the guide grid. */
+  openGuide?: (() => void) | undefined;
   onSelect: (item: PosterItem) => void;
   /** `rowKey` is the row the remote is on, since the same title can sit in more than one. */
   heroActions: (item: HomeItem, rowKey: string) => HeroActions;
@@ -282,7 +287,14 @@ export function HomeScreen({
         <FlatList
           ref={listRef}
           data={rows}
-          ListHeaderComponent={browseAll !== undefined ? <BrowseAllButton onPress={browseAll} /> : null}
+          ListHeaderComponent={
+            browseAll !== undefined || openGuide !== undefined ? (
+              <View style={styles.browseAllRow}>
+                {browseAll !== undefined ? <HeaderButton label="All categories" onPress={browseAll} /> : null}
+                {openGuide !== undefined ? <HeaderButton label="TV guide" onPress={openGuide} /> : null}
+              </View>
+            ) : null
+          }
           keyExtractor={(row) => row.key}
           renderItem={renderRow}
           CellRendererComponent={Cell}
@@ -314,13 +326,12 @@ export function HomeScreen({
   );
 }
 
-/** The way into every category, above the rows: a quiet pill until the remote is on it. */
-const BrowseAllButton = memo(function BrowseAllButton({ onPress }: { onPress: () => void }) {
+/** A way into every category (or the guide), above the rows: a quiet pill until the remote is on it. */
+const HeaderButton = memo(function HeaderButton({ label, onPress }: { label: string; onPress: () => void }) {
   const [focused, setFocused] = useState(false);
   const tracking = useFocusTracking();
   const ink = focused ? colors.background : colors.muted;
   return (
-    <View style={styles.browseAllRow}>
       <Pressable
         ref={tracking.ref}
         focusable
@@ -335,10 +346,9 @@ const BrowseAllButton = memo(function BrowseAllButton({ onPress }: { onPress: ()
         }}
         style={[styles.browseAll, focused && styles.browseAllFocused]}
       >
-        <Text style={[styles.browseAllLabel, { color: ink }]}>All categories</Text>
+        <Text style={[styles.browseAllLabel, { color: ink }]}>{label}</Text>
         <NavArrowRight color={ink} width={Math.round(26 * uiScale)} height={Math.round(26 * uiScale)} strokeWidth={2} />
       </Pressable>
-    </View>
   );
 });
 
@@ -358,11 +368,11 @@ function Hero({ shown, plot, durationSecs, guide }: { shown: { item: HomeItem; r
     <View style={styles.hero}>
       {channel ? (
         <View style={styles.logoPanel} pointerEvents="none">
-          {art !== null && art !== "" ? <Image source={{ uri: art }} style={styles.logoImage} contentFit="contain" cachePolicy="memory-disk" /> : null}
+          <ChannelLogo url={art} name={shown?.item.name ?? ""} size={96} />
         </View>
       ) : art !== null && art !== "" ? (
         <View style={styles.art} pointerEvents="none">
-          <Image source={{ uri: art }} style={styles.artImage} contentFit="cover" cachePolicy="memory-disk" transition={300} />
+          <Image source={{ uri: sized(art, "large") }} style={styles.artImage} contentFit="cover" cachePolicy="memory-disk" transition={300} />
           <Fade from="left" />
           {/* The picture dissolves into the page at its own foot: cut off square above the hero's fade, it left a
               hard line and a dark strip before the rows. */}
@@ -518,7 +528,7 @@ const styles = styleSheet({
   rowsFadeEdge: { height: 16 },
   rowsBottomFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 72, zIndex: 1 },
   list: { paddingTop: 20, paddingBottom: 100 },
-  browseAllRow: { flexDirection: "row", paddingBottom: 12 },
+  browseAllRow: { flexDirection: "row", gap: 16, paddingBottom: 12 },
   browseAll: { height: 52, flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 24, paddingRight: 16, borderRadius: 26, borderWidth: 2, borderColor: colors.border },
   browseAllFocused: { backgroundColor: colors.foreground, borderColor: colors.foreground },
   browseAllLabel: { fontSize: 22, fontWeight: "500" },

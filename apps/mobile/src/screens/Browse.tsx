@@ -1,6 +1,6 @@
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Text, TVFocusGuideView, View } from "react-native";
-import { Image } from "expo-image";
+import { ChannelLogo } from "../ui/ChannelLogo";
 import { genreOptions } from "@testcard/core/src/normalise/genres.js";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Muted } from "../ui/controls";
@@ -416,7 +416,7 @@ const OnNow = memo(function OnNow({ item, guide, loaded, hero = false }: { item:
   return (
     <View style={[styles.onNow, hero && styles.onNowHero]}>
       <View style={[styles.onNowLogo, hero && styles.onNowLogoHero]}>
-        {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} contentFit="contain" cachePolicy="memory-disk" /> : null}
+        <ChannelLogo url={item.imageUrl} name={item.title} size={hero ? 44 : 30} recyclingKey={item.id} />
       </View>
       <View style={styles.onNowText}>
         <Text style={styles.onNowChannel} numberOfLines={1}>
@@ -457,7 +457,7 @@ const ChannelTile = memo(function ChannelTile({ item, onSelect, onFocusItem, car
   return (
     <Focusable onPress={() => onSelect(item)} onFocus={() => onFocusItem(item)} style={card ? styles.channelCard : styles.channel} focusedStyle={styles.channelFocused}>
       <View style={card ? styles.logoCard : styles.logo}>
-        {item.imageUrl !== null && item.imageUrl !== "" ? <Image source={{ uri: item.imageUrl }} style={styles.logoImage} contentFit="contain" cachePolicy="memory-disk" recyclingKey={item.id} /> : null}
+        <ChannelLogo url={item.imageUrl} name={item.title} size={card ? 40 : 24} recyclingKey={item.id} />
       </View>
       {card ? (
         <View style={styles.cardLine}>
@@ -518,7 +518,6 @@ const styles = styleSheet({
   logoCard: { height: 110, borderRadius: 10, backgroundColor: colors.sunken, overflow: "hidden" },
   cardLine: { flexDirection: "row", alignItems: "center", gap: 10 },
   logo: { width: 84, height: 56, borderRadius: 10, backgroundColor: colors.sunken, overflow: "hidden" },
-  logoImage: { width: "100%", height: "100%" },
   channelName: { flex: 1, color: colors.foreground, fontSize: 24, fontWeight: "500" },
   channelNumber: { color: colors.faint, fontSize: 22 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: space.m, padding: space.xl },

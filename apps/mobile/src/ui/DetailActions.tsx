@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useFocusTracking } from "./Focusable";
 import { Image } from "expo-image";
+import { sized } from "./imageSize";
 import { Check, Eye, EyeClosed, InfoCircle, MultiplePages, Play, Plus, Restart, Xmark } from "iconoir-react-native";
 import { colors, styleSheet, uiScale } from "../theme";
 
@@ -129,7 +130,7 @@ export function Backdrop({ uri }: { uri: string | null }) {
   if (uri === null || uri === "") return null;
   return (
     <View style={styles.backdrop} pointerEvents="none">
-      <Image source={{ uri }} style={styles.backdropImage} blurRadius={30} contentFit="cover" cachePolicy="memory-disk" />
+      <Image source={{ uri: sized(uri, "card") }} style={styles.backdropImage} blurRadius={30} contentFit="cover" cachePolicy="memory-disk" />
       <View style={styles.backdropShade} />
     </View>
   );

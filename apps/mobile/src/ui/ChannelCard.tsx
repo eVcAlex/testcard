@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { FlatList, Text, View } from "react-native";
-import { Image } from "expo-image";
+import { ChannelLogo } from "./ChannelLogo";
 import { colors, space, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
 import { PinBadge } from "./PinBadge";
@@ -28,13 +28,7 @@ export const ChannelCard = memo(function ChannelCard({
       {({ focused }) => (
         <>
           <View style={[styles.art, focused && styles.artFocused]}>
-            {item.posterUrl !== null && item.posterUrl !== "" ? (
-              <Image source={{ uri: item.posterUrl }} style={styles.logo} contentFit="contain" cachePolicy="memory-disk" recyclingKey={item.id} />
-            ) : (
-              <Text style={styles.fallback} numberOfLines={2}>
-                {item.name}
-              </Text>
-            )}
+            <ChannelLogo url={item.posterUrl} name={item.name} size={52} recyclingKey={item.id} />
             {item.channelNumber !== undefined && item.channelNumber !== null ? (
               <View style={styles.number}>
                 <Text style={styles.numberText}>{item.channelNumber}</Text>
@@ -94,8 +88,6 @@ const styles = styleSheet({
   cardFocused: { borderColor: "transparent" },
   art: { width: "100%", aspectRatio: 16 / 9, borderWidth: 3, borderColor: "transparent", borderRadius: 12, backgroundColor: colors.raised, overflow: "hidden", alignItems: "center", justifyContent: "center", padding: 12 },
   artFocused: { borderColor: colors.accent },
-  logo: { width: "100%", height: "100%" },
-  fallback: { color: colors.muted, fontSize: 22, textAlign: "center" },
   number: { position: "absolute", right: 8, top: 8, paddingHorizontal: 10, paddingVertical: 2, borderRadius: 6, backgroundColor: "#000000b3" },
   numberText: { color: colors.foreground, fontSize: 17, fontWeight: "600" },
   title: { color: colors.muted, fontSize: 21 },

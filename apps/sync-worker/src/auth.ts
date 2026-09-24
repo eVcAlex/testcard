@@ -1,7 +1,5 @@
 import { betterAuth } from "better-auth";
 import { bearer } from "better-auth/plugins";
-import { Kysely } from "kysely";
-import { D1Dialect } from "kysely-d1";
 
 /**
  * One `better-auth` instance per request (Workers have no persistent module-level state across
@@ -16,7 +14,7 @@ import { D1Dialect } from "kysely-d1";
  */
 export function createAuth(db: D1Database, secret: string, baseUrl: string) {
   return betterAuth({
-    database: { db: new Kysely({ dialect: new D1Dialect({ database: db }) }), type: "sqlite" },
+    database: db,
     /**
      * Must match the path `index.ts` mounts the handler at. better-auth defaults to `/api/auth`,
      * which would make every route it advertises 404 behind our `/auth/*` mount.

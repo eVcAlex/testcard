@@ -1,10 +1,10 @@
 // Local Android TV development: an emulator, plus a debug build whose JavaScript loads from this PC.
-//   pnpm android:stick <ip>   point every command at a Fire Stick over the network (or "emulator" to go back)
-//   pnpm android:emulator   start the "tv1080" Android TV emulator (1080p, the same 960 dp as a Fire Stick)
-//   pnpm android:install    fetch the newest debug APK built by CI ("debug" target) and install it
-//   pnpm android:run        start the dev server, point the device at it and launch the app
-//   pnpm android:type "text"   type into the focused field (a PC keyboard may not reach the emulator)
-//   pnpm android:log        show the app's log (JS errors, native crashes) from the device
+//   pnpm android stick <ip>   point every command at a Fire Stick over the network (or "emulator" to go back)
+//   pnpm android emulator   start the "tv1080" Android TV emulator (1080p, the same 960 dp as a Fire Stick)
+//   pnpm android install    fetch the newest debug APK built by CI ("debug" target) and install it
+//   pnpm android run        start the dev server, point the device at it and launch the app
+//   pnpm android type "text"   type into the focused field (a PC keyboard may not reach the emulator)
+//   pnpm android log        show the app's log (JS errors, native crashes) from the device
 // Native code is built by CI, not here: pnpm's deep node_modules paths break CMake on Windows (250 chars).
 // The device can be the emulator or a Fire Stick over the network (adb connect <ip>).
 // The SDK lives in C:/Android on Windows, and where Android Studio puts it on a Mac; override with ANDROID_HOME / JAVA_HOME.
@@ -18,7 +18,7 @@ const root = join(fileURLToPath(import.meta.url), "..", "..");
 const mac = process.platform === "darwin";
 const sdk = process.env.ANDROID_HOME ?? (mac ? join(homedir(), "Library/Android/sdk") : "C:/Android/sdk");
 const jdk = process.env.JAVA_HOME ?? (mac ? "/Applications/Android Studio.app/Contents/jbr/Contents/Home" : "C:/Android/jdk17");
-// `pnpm android:stick <ip>` remembers a Fire Stick here so every command below targets it, not the emulator.
+// `pnpm android stick <ip>` remembers a Fire Stick here so every command below targets it, not the emulator.
 const deviceFile = join(root, ".android-device");
 const device = existsSync(deviceFile) ? readFileSync(deviceFile, "utf8").trim() : "";
 const env = {
@@ -43,7 +43,7 @@ if (command === "emulator") {
 } else if (command === "stick") {
   const target = process.argv[3];
   if (target === undefined) {
-    console.log("usage: pnpm android:stick <fire-stick-ip>   |   pnpm android:stick emulator");
+    console.log("usage: pnpm android stick <fire-stick-ip>   |   pnpm android stick emulator");
     process.exit(1);
   }
   if (target === "emulator") {
@@ -67,7 +67,7 @@ if (command === "emulator") {
   await run("pnpm", ["exec", "expo", "start", "--port", "8081"], { cwd: join(root, "apps", "mobile"), env: { ...env, EXPO_TV: "1" } });
 } else if (command === "type") {
   if (process.argv.length < 4) {
-    console.log('usage: pnpm android:type "text to type"   (click the field and press select first)');
+    console.log('usage: pnpm android type "text to type"   (click the field and press select first)');
     process.exit(1);
   }
   await run("adb", ["shell", "input", "text", `'${process.argv.slice(3).join(" ").replace(/ /g, "%s")}'`]);
@@ -76,7 +76,7 @@ if (command === "emulator") {
   const keys = { up: "DPAD_UP", down: "DPAD_DOWN", left: "DPAD_LEFT", right: "DPAD_RIGHT", select: "DPAD_CENTER", enter: "ENTER", back: "BACK", home: "HOME", play: "MEDIA_PLAY_PAUSE" };
   const wanted = process.argv.slice(3);
   if (wanted.length === 0 || wanted.some((name) => keys[name] === undefined)) {
-    console.log("usage: pnpm android:key " + Object.keys(keys).join("|") + " [more keys...]");
+    console.log("usage: pnpm android key " + Object.keys(keys).join("|") + " [more keys...]");
     process.exit(1);
   }
   for (const name of wanted) await run("adb", ["shell", "input", "keyevent", "KEYCODE_" + keys[name]]);

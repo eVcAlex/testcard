@@ -73,3 +73,23 @@ describe("skip intro memory", () => {
     expect(getSkipWindow(db, "sr")).toBeUndefined();
   });
 });
+
+import { getUpNextEpisodes } from "../db/seriesQueries.js";
+
+describe("the up-next episode for many series at once", () => {
+  it("agrees with the one-at-a-time answer", () => {
+    const cases: [string, (db: ReturnType<typeof seed>) => void][] = [
+      ["nothing watched", () => undefined],
+      ["left partway", (db) => setPlaybackProgress(db, "episode", "e12", 200, 1200)],
+      ["one finished", (db) => setPlaybackProgress(db, "episode", "e11", 1150, 1200)],
+    ];
+    for (const [, prepare] of cases) {
+      const db = seed();
+      prepare(db);
+      const one = getUpNextEpisode(db, "sr")!;
+      expect(getUpNextEpisodes(db, ["sr", "unknown"])).toEqual(
+        new Map([["sr", { seasonNumber: one.season.season_number, episodeNumber: one.episode.episode_number, positionSecs: one.episode.position_secs, durationSecs: one.episode.duration_secs, resume: one.resume }]]),
+      );
+    }
+  });
+});

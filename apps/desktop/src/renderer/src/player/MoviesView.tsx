@@ -11,15 +11,15 @@ import { Drawer } from "../components/Drawer.js";
 import { EmptyState } from "../components/EmptyState.js";
 import { formatDuration } from "../lib/time.js";
 import { logoSrc } from "../lib/logo.js";
-import { splitTitle } from "../lib/title.js";
+import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { CategoryBar } from "./CategoryBar.js";
 import { GenreBar } from "./GenreBar.js";
-import { genreOptions } from "../lib/genres.js";
+import { genreOptions } from "@testcard/core/src/normalise/genres.js";
 import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
 import { PosterShelf } from "./PosterShelf.js";
 import { Removable } from "./Removable.js";
-import { displayName } from "../lib/displayName.js";
+import { displayName } from "@testcard/core/src/normalise/displayName.js";
 
 type MovieListRow = Awaited<ReturnType<typeof window.testcard.movies.browse>>[number];
 

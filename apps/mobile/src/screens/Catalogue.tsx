@@ -6,8 +6,9 @@ import { movieHome, seriesHome } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { getCredentials } from "../platform/secrets";
 import { browseMovies, getMovieById, getMoviePlaybackTarget, listFavouriteMovies, listMovieCategories, listRecentMovies, toggleMovieFavourite, type MovieRow } from "@testcard/core/src/db/vodQueries.js";
-import { browseSeries, getUpNextEpisode, listFavouriteSeries, listRecentSeries, listSeriesCategories, removeSeriesFromRecents, toggleSeriesFavourite, type SeriesRow } from "@testcard/core/src/db/seriesQueries.js";
+import { browseSeries, getUpNextEpisode, getUpNextEpisodes, listFavouriteSeries, listRecentSeries, listSeriesCategories, removeSeriesFromRecents, toggleSeriesFavourite, type SeriesRow, type UpNextSummary } from "@testcard/core/src/db/seriesQueries.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
+import { timed } from "../platform/perf";
 import { useApp } from "../state/app";
 import { episodeTitle, seriesTitle } from "../ui/titles";
 import { colors, type, styleSheet } from "../theme";
@@ -262,6 +263,30 @@ export const homeMovie = (movie: MovieRow): HomeItem => ({
   favourite: movie.is_favourite === 1,
   resume: movie.position_secs !== null && shouldPromptResume(movie.position_secs, movie.duration_secs),
 });
+/** A film on a Continue watching row: how long it has left under the title. */
+export const continuingMovie = (movie: MovieRow): HomeItem => {
+  const item = homeMovie(movie);
+  const left = movie.position_secs !== null && movie.duration_secs !== null ? movie.duration_secs - movie.position_secs : 0;
+  return left >= 60 ? { ...item, note: `${runtimeLeft(left)} left` } : item;
+};
+
+/**
+ * A show on a Continue watching or Recently watched row: the episode it carries on from, and how far into it.
+ * `upNext` comes from `getUpNextEpisodes`, read once for the whole row.
+ */
+export function continuingSeries(series: SeriesRow, upNext: UpNextSummary | undefined): HomeItem {
+  const item = homeSeries(series);
+  if (upNext === undefined) return item;
+  const where = `S${upNext.seasonNumber} E${upNext.episodeNumber}`;
+  const into = upNext.resume && upNext.positionSecs !== null && upNext.durationSecs !== null && upNext.durationSecs > 0 ? upNext.positionSecs / upNext.durationSecs : null;
+  return { ...item, progress: into, note: upNext.resume ? where : `Next · ${where}` };
+}
+
+function runtimeLeft(secs: number): string {
+  const minutes = Math.round(secs / 60);
+  return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`;
+}
+
 export const homeSeries = (series: SeriesRow): HomeItem => ({ id: series.id, name: series.name, posterUrl: series.poster_url, progress: null, rating: series.rating, plot: series.plot, durationSecs: null, favourite: series.is_favourite === 1, resume: false });
 
 /**
@@ -320,17 +345,17 @@ export function MoviesScreen({
     },
     [db],
   );
-  const rows = useMemo<HomeRow[] | null>(() => {
+  const rows = useMemo<HomeRow[] | null>(() => timed("movies rows", () => {
     if (shelves === null) return null;
     const own = (movie: { source_id: string }) => sourceId === null || movie.source_id === sourceId;
     const continuing = listRecentMovies(db, 60).filter((movie) => own(movie) && movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs));
     const myList = listFavouriteMovies(db).filter(own);
     return [
-      ...(continuing.length > 0 ? [{ key: "continue", label: "Continue watching", items: continuing.map(homeMovie) }] : []),
+      ...(continuing.length > 0 ? [{ key: "continue", label: "Continue watching", items: continuing.map(continuingMovie) }] : []),
       ...(myList.length > 0 ? [{ key: "my-list", label: "My list", items: myList.slice(0, 30).map(homeMovie) }] : []),
       ...shelves.map((shelf) => shelfRow(shelf, homeMovie)),
     ];
-  }, [db, version, sourceId, shelves, tick]);
+  }), [db, version, sourceId, shelves, tick]);
   const heroActions = useCallback(
     (item: HomeItem): HeroActions => ({
       primary: {
@@ -386,18 +411,19 @@ export function SeriesScreen({
   useBackTo(browsing, onBrowseDone);
   const shelves = useBuilt(seriesRows, db, catalogue, sourceId, "series");
   const recentIds = useRef(new Set<string>());
-  const rows = useMemo<HomeRow[] | null>(() => {
+  const rows = useMemo<HomeRow[] | null>(() => timed("series rows", () => {
     if (shelves === null) return null;
     const own = (show: { source_id: string }) => sourceId === null || show.source_id === sourceId;
     const recent = listRecentSeries(db, 60).filter(own).slice(0, 20);
     const myList = listFavouriteSeries(db).filter(own);
     recentIds.current = new Set(recent.map((show) => show.id));
+    const upNext = getUpNextEpisodes(db, recent.map((show) => show.id));
     return [
-      ...(recent.length > 0 ? [{ key: "recent-watched", label: "Recently watched", items: recent.map(homeSeries) }] : []),
+      ...(recent.length > 0 ? [{ key: "recent-watched", label: "Recently watched", items: recent.map((show) => continuingSeries(show, upNext.get(show.id))) }] : []),
       ...(myList.length > 0 ? [{ key: "my-list", label: "My list", items: myList.slice(0, 30).map(homeSeries) }] : []),
       ...shelves.map((shelf) => shelfRow(shelf, homeSeries)),
     ];
-  }, [db, version, sourceId, shelves, tick]);
+  }), [db, version, sourceId, shelves, tick]);
   const heroActions = useCallback(
     (item: HomeItem): HeroActions => ({
       primary: seriesPrimaryAction(db, item, onOpen, onPlayEpisode),

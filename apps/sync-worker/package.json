@@ -15,8 +15,6 @@
     "@testcard/sync-schema": "workspace:*",
     "better-auth": "^1.2.7",
     "hono": "^4.6.14",
-    "kysely": "^0.28.17",
-    "kysely-d1": "^0.3.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

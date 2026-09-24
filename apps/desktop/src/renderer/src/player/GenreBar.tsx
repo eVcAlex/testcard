@@ -1,4 +1,4 @@
-import type { GenreOption } from "../lib/genres.js";
+import type { GenreOption } from "@testcard/core/src/normalise/genres.js";
 
 /** A row of genre chips derived from the stored category classification. Advisory: absent when there's nothing useful to filter by. */
 export function GenreBar({

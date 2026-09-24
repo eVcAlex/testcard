@@ -1,5 +1,5 @@
 import { categoryClassificationParams } from "./categoryClassification.js";
-import { applyInSlices } from "./applyInSlices.js";
+import { applyInSlices, yieldToEventLoop } from "./applyInSlices.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
 import { remoteKeyFor } from "../sync/remoteKey.js";
@@ -65,7 +65,7 @@ export async function importSeries(
   for (const page of pages) {
     const keys = await Promise.all(page.series.map((item) => remoteKeyFor(providerHost, item.providerSeriesId)));
     page.series.forEach((item, index) => remoteKeys.set(item.id, keys[index]!));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await yieldToEventLoop();
   }
 
   let seriesCount = 0;

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BackHandler, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { sized } from "../ui/imageSize";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { getMovieById, getMoviePlaybackTarget, listMovieVersions, removeMovieFromHistory, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
@@ -109,7 +110,7 @@ export function MovieDetailScreen({
         <BackArrow onPress={onBack} />
       </View>
       <View style={styles.poster}>
-        {movie.poster_url !== null && movie.poster_url !== "" ? <Image source={{ uri: movie.poster_url }} style={styles.posterImage} contentFit="cover" cachePolicy="memory-disk" /> : null}
+        {movie.poster_url !== null && movie.poster_url !== "" ? <Image source={{ uri: sized(movie.poster_url, "large") }} style={styles.posterImage} contentFit="cover" cachePolicy="memory-disk" /> : null}
       </View>
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={3}>

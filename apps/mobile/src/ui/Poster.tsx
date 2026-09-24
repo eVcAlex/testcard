@@ -1,6 +1,7 @@
 import { createContext, memo, useContext } from "react";
 import { FlatList, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { sized } from "./imageSize";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, space, type, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
@@ -14,6 +15,8 @@ export interface PosterItem {
   readonly progress?: number | null;
   /** Already seen: shows a quiet checkmark instead of the progress bar. */
   readonly watched?: boolean;
+  /** A short line under the title: which episode is next, or how long is left. */
+  readonly note?: string | null;
 }
 
 const POSTER_WIDTH = 200;
@@ -49,7 +52,7 @@ export const PosterCard = memo(function PosterCard({
         <>
       <View style={[styles.art, focused && styles.artFocused]}>
         {item.posterUrl !== null && item.posterUrl !== "" ? (
-          <Image source={{ uri: item.posterUrl }} style={styles.image} contentFit="cover" cachePolicy="memory-disk" recyclingKey={item.id} />
+          <Image source={{ uri: sized(item.posterUrl, "card") }} style={styles.image} contentFit="cover" cachePolicy="memory-disk" recyclingKey={item.id} />
         ) : (
           <Text style={styles.fallback} numberOfLines={4}>
             {title}
@@ -78,9 +81,15 @@ export const PosterCard = memo(function PosterCard({
           </View>
         )}
       </View>
-      <Text style={[styles.title, focused && styles.titleFocused]} numberOfLines={2}>
+      {/* With a note the title keeps to one line, so the card is no taller than its neighbours. */}
+      <Text style={[styles.title, focused && styles.titleFocused]} numberOfLines={item.note ? 1 : 2}>
         {title}
       </Text>
+      {item.note ? (
+        <Text style={[styles.note, focused && styles.noteFocused]} numberOfLines={1}>
+          {item.note}
+        </Text>
+      ) : null}
         </>
       )}
     </Focusable>
@@ -136,6 +145,8 @@ const styles = styleSheet({
   fallback: { color: colors.muted, fontSize: type.small, padding: space.m, textAlign: "center" },
   title: { color: colors.muted, fontSize: 21 },
   titleFocused: { color: colors.foreground },
+  note: { color: colors.faint, fontSize: 18, marginTop: -4 },
+  noteFocused: { color: colors.accent },
   badge: { position: "absolute", left: 10, top: 10, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3" },
   badgeText: { color: colors.foreground, fontSize: 17, fontWeight: "600", letterSpacing: 0.5 },
   source: { position: "absolute", left: 10, bottom: 14, maxWidth: "85%", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, backgroundColor: "#000000b3" },

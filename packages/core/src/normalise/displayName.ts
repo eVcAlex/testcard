@@ -123,3 +123,29 @@ function calmShouting(text: string): string {
     return word[0] + word.slice(1).toLowerCase();
   });
 }
+
+// ---------------------------------------------------------------------------------------------
+// the same channel in another quality
+
+const TRAILING_QUALITY = new RegExp(`(?:[\\s\\-|/+]*[([]?${QUALITY_WORD}[)\\]]?)+$`, "i");
+
+/**
+ * What a channel's display name has in common with its other qualities: "BBC One HD", "BBC One 4K" and "BBC One"
+ * all give "bbc one". Used to find another way to watch a channel whose stream won't play.
+ */
+export function sameChannelKey(displayed: string): string {
+  const base = displayed.replace(TRAILING_QUALITY, "").replace(/\s+/g, " ").trim().toLowerCase();
+  return base === "" ? displayed.trim().toLowerCase() : base;
+}
+
+/**
+ * Which of a channel's qualities to try first when another has failed: HD first (the most likely to play and
+ * still look good), then an unmarked one, then SD, and 4K last, since it is the one most likely to be what failed.
+ */
+export function fallbackRank(displayed: string): number {
+  const tail = TRAILING_QUALITY.exec(displayed)?.[0].toUpperCase() ?? "";
+  if (/\b(?:\d*K|UHD|2160P?\d*)\b/.test(tail)) return 3;
+  if (/\bSD\b|\b(?:480|576)P/.test(tail)) return 2;
+  if (/\b(?:FHD|HD|1080P?\d*|720P?\d*)\b/.test(tail)) return 0;
+  return 1;
+}

@@ -47,6 +47,7 @@ import {
   moveSource,
   stampSourceOrder,
   toggleSeriesFavourite,
+  SyncController,
   type Channel,
   type ProgrammeRow,
   type Source,
@@ -68,7 +69,7 @@ import {
 import { deleteCredentials, getCredentials, saveCredentials } from "./credentials.js";
 import { purgeCachedLogos } from "./logoCache.js";
 import { PlaybackController } from "./playbackController.js";
-import { SyncController } from "./syncController.js";
+import { syncPlatform } from "./syncController.js";
 import { checkForUpdate, downloadUpdate, installUpdate, updateState } from "./updater.js";
 import { isVlcAvailable } from "./externalPlayer.js";
 import { startRefreshScheduler } from "./refreshScheduler.js";
@@ -249,7 +250,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
     db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('source_order_stamped', '1')`).run();
   }
 
-  const sync = new SyncController(db, (sourceIds) => {
+  const sync = new SyncController(db, syncPlatform, (sourceIds) => {
     // Sources that arrived from another device have no channels/movies yet - import them now.
     for (const id of sourceIds) refreshInBackground(id);
   });

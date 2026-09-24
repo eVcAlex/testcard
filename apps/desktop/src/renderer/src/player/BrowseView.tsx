@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChannelRow } from "@testcard/core";
 import { Icon } from "../components/Icon.js";
-import { genreOptions } from "../lib/genres.js";
+import { genreOptions } from "@testcard/core/src/normalise/genres.js";
 import { GenreBar } from "./GenreBar.js";
 import { Removable } from "./Removable.js";
 import { ChannelGrid } from "./ChannelGrid.js";

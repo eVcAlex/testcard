@@ -23,6 +23,19 @@ describe("SyncClient", () => {
     expect(init.headers).toMatchObject({ "Content-Type": "application/json" });
   });
 
+  it("fails with the server's own reply and the status, for the controller to word", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ message: "Invalid email or password" }, 401)));
+    const client = new SyncClient({ baseUrl: "https://sync.example.com", getSessionToken: () => undefined });
+    await expect(client.signIn("a@b.com", "pw")).rejects.toMatchObject({ status: 401, message: '{"message":"Invalid email or password"}' });
+  });
+
+  it("treats a 404 as no salt yet, but as a failure anywhere else", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response("Not Found", { status: 404 })));
+    const client = new SyncClient({ baseUrl: "https://sync.example.com", getSessionToken: () => "tok" });
+    await expect(client.getSalt()).resolves.toBeUndefined();
+    await expect(client.signIn("a@b.com", "pw")).rejects.toMatchObject({ status: 404 });
+  });
+
   it("attaches a bearer token on pull when one is available", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({ sources: [], movieFavourites: [], movieRecents: [], seriesFavourites: [], seriesRecents: [], progress: [], serverCursor: 1 }),

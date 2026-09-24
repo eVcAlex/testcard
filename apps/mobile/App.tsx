@@ -7,6 +7,7 @@ import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
 import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "./src/state/app";
+import { useImportPacing } from "./src/platform/pacing";
 import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
 import { colors, styleSheet, uiScale } from "./src/theme";
 import { focusedNow, lastFocused } from "./src/ui/Focusable";
@@ -71,6 +72,7 @@ export default function App() {
 }
 
 function Root() {
+  useImportPacing();
   const { status, sources, db, setup, syncing } = useApp();
   const { available } = useUpdate();
   const [section, setSection] = useState<Section>("home");
@@ -109,7 +111,7 @@ function Root() {
 
   const goHome = useCallback(() => setRoute({ name: "home" }), []);
   // Movies and Series open on a landing page of rows; "Browse all" in the nav bar swaps it for the full category list.
-  const [browsing, setBrowsing] = useState(false);
+  const [browsing, setBrowsing] = useState<false | "categories" | "guide">(false);
   const [visited, setVisited] = useState<ReadonlySet<Section>>(() => new Set(["home"]));
   // Choosing Search opens the keyboard at once: a search page is only ever opened to type into.
   const [searchOpens, setSearchOpens] = useState(0);
@@ -119,7 +121,8 @@ function Root() {
     setVisited((current) => (current.has(key as Section) ? current : new Set(current).add(key as Section)));
     setBrowsing(false);
   }, []);
-  const onBrowse = useCallback(() => setBrowsing(true), []);
+  const onBrowse = useCallback(() => setBrowsing("categories"), []);
+  const onGuide = useCallback(() => setBrowsing("guide"), []);
   const onBrowseDone = useCallback(() => setBrowsing(false), []);
 
   // Each tab's view, so Back can send focus to it; and whether the nav bar has focus at all.
@@ -295,7 +298,7 @@ function Root() {
             <MoviesScreen
               sourceId={sourceId}
               active={section === "movies" && !covered}
-              browsing={browsing && section === "movies"}
+              browsing={browsing === "categories" && section === "movies"}
               onBrowse={onBrowse}
               onBrowseDone={onBrowseDone}
               onOpen={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
@@ -307,14 +310,14 @@ function Root() {
             <SeriesScreen
               sourceId={sourceId}
               active={section === "series" && !covered}
-              browsing={browsing && section === "series"}
+              browsing={browsing === "categories" && section === "series"}
               onBrowse={onBrowse}
               onBrowseDone={onBrowseDone}
               onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
               onPlayEpisode={(episodeId, title, resume, seriesId) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title }, seriesId, resume, returnTo: { name: "home" } })}
             />,
           )}
-          {pane("live", <LiveScreen sourceId={sourceId} active={section === "live" && !covered} browsing={browsing && section === "live"} onBrowse={onBrowse} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
+          {pane("live", <LiveScreen sourceId={sourceId} active={section === "live" && !covered} browsing={browsing === "categories" && section === "live"} guide={browsing === "guide" && section === "live"} onBrowse={onBrowse} onGuide={onGuide} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
           {pane(
             "search",
             <View style={styles.padded}>
