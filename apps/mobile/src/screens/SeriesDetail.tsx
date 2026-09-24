@@ -18,7 +18,8 @@ import { Focusable, lastFocused } from "../ui/Focusable";
 import { OptionsSheet } from "../ui/OptionsSheet";
 import { Pill } from "../ui/Pill";
 import { episodeTitle, seriesTitle } from "../ui/titles";
-import { plainReason } from "../ui/plainReason";
+import { plainReason, serverGone } from "../ui/plainReason";
+import { SourceForm } from "../ui/SourceForm";
 
 /** The focus ring every card carries (Focusable's border, rounded to whole dp as styleSheet does), outside its thumbnail: the grid has to leave room for it. */
 const CARD_RING = 3;
@@ -145,12 +146,20 @@ export function SeriesDetailScreen({
   const { db, sync, version, updateStatus, sources } = useApp();
   // The same series from another source (or in 4K): picked here, and the way round a source that is down.
   const versions = useMemo(() => listSeriesVersions(db, seriesId), [db, seriesId]);
+  const sourceId = useMemo(() => getSeriesSource(db, seriesId)?.id, [db, seriesId]);
   const [choosingVersion, setChoosingVersion] = useState(false);
   const versionLabel = (row: { name: string; source_id: string }) =>
     [splitTitle(row.name).is4k ? "4K" : "HD", sources.find((entry) => entry.id === row.source_id)?.name].filter((part) => part !== undefined && part !== "").join("  ·  ");
   const [tick, setTick] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<{ text: string; gone: boolean }>();
+  const [retry, setRetry] = useState(0);
+  // The source's form, opened from a failed load to put a moved server address right.
+  const [editing, setEditing] = useState(false);
+  const closeEditing = useCallback(() => {
+    setEditing(false);
+    setRetry((value) => value + 1);
+  }, []);
   const [seasonId, setSeasonId] = useState<string>();
   const pickSeason = useCallback((id: string) => setSeasonId(id), []);
 
@@ -164,16 +173,22 @@ export function SeriesDetailScreen({
 
   useEffect(() => {
     let cancelled = false;
+    setError(undefined);
+    setLoading(true);
     (async () => {
       const source = getSeriesSource(db, seriesId);
       if (source?.kind === "xtream") await ensureSeriesEpisodes(db, source, seriesId, getCredentials);
     })()
-      .catch((failure: unknown) => !cancelled && setError(`The episodes didn't load. ${plainReason(failure instanceof Error ? failure.message : "")}`.trim()))
+      .catch((failure: unknown) => {
+        if (cancelled) return;
+        const message = failure instanceof Error ? failure.message : "";
+        setError({ text: `The episodes didn't load. ${plainReason(message)}`.trim(), gone: serverGone(message) });
+      })
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [db, seriesId]);
+  }, [db, seriesId, retry]);
 
   // Read straight away, not after the episode fetch: the poster, plot and rating are already stored, so the page
   // shows them while the episodes load (and re-reads once they have).
@@ -349,8 +364,12 @@ export function SeriesDetailScreen({
       </View>
       {error !== undefined ? (
         <View style={styles.failed}>
-          <Text style={styles.error}>{error}</Text>
-          {versions.length > 0 ? <Button preferred label="Try another version" onPress={() => setChoosingVersion(true)} /> : null}
+          <Text style={styles.error}>{error.text}</Text>
+          <View style={styles.failedActions}>
+            {error.gone && sourceId !== undefined ? <Button preferred label="Edit source" onPress={() => setEditing(true)} /> : null}
+            <Button preferred={!error.gone} label="Try again" onPress={() => setRetry((value) => value + 1)} />
+            {versions.length > 0 ? <Button label="Try another version" onPress={() => setChoosingVersion(true)} /> : null}
+          </View>
         </View>
       ) : loading ? (
         <EpisodesSkeleton columns={columns} cardWidth={cardWidth} thumbHeight={thumbHeight} onWidth={setGridWidth} />
@@ -441,6 +460,7 @@ export function SeriesDetailScreen({
           </TVFocusGuideView>
         </TVFocusGuideView>
       )}
+      {editing && sourceId !== undefined ? <SourceForm sourceId={sourceId} onClose={closeEditing} /> : null}
       {choosingVersion ? (
         <OptionsSheet
           title={`Other versions of ${seriesTitle(title)}`}
@@ -483,7 +503,8 @@ function factsOf(detail: { series: { name: string; rating: string | number | nul
 }
 
 const styles = styleSheet({
-  failed: { gap: 24, alignItems: "flex-start" },
+  failed: { gap: 24, alignItems: "flex-start", maxWidth: 1400 },
+  failedActions: { flexDirection: "row", gap: 16 },
   screen: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 120, paddingTop: 44, gap: 34 },
   head: { flexDirection: "row", alignItems: "center", gap: 56, paddingTop: 10 },
   // In the page's left margin, clear of the poster (which starts at the 120 padding), level with its top edge.
