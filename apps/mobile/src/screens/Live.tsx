@@ -8,6 +8,7 @@ import { memoByVersion } from "../state/memoByVersion";
 import { styleSheet } from "../theme";
 import { BrowseScreen, type BrowseItem, type BrowseSource, type Guide } from "./Browse";
 import { Loading, useBackTo, useRefreshOnShow, useVersionWhileShown } from "./Catalogue";
+import { GuideScreen } from "./Guide";
 import { makePinning } from "./pinning";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
@@ -27,7 +28,7 @@ export const toHomeItem = (channel: ChannelRow): HomeItem => ({
 });
 
 // Counting every category walks all the channels, so it is done once per sync rather than on every visit.
-const channelCategories = memoByVersion((db: Parameters<typeof listCategories>[0], sourceId?: string) =>
+export const channelCategories = memoByVersion((db: Parameters<typeof listCategories>[0], sourceId?: string) =>
   listCategories(db, sourceId)
     .filter((category) => !category.tags.split(" ").some((tag) => tag === "junk" || tag === "separator" || tag === "adult"))
     .map((category) => ({ id: category.id, label: displayName(category.name), count: category.channel_count, genre: category.genre })),
@@ -46,15 +47,20 @@ export function LiveScreen({
   sourceId,
   active = true,
   browsing,
+  guide,
   onBrowse,
+  onGuide,
   onBrowseDone,
   onPlay,
 }: {
   sourceId: string | null;
   active?: boolean;
   browsing: boolean;
+  /** The TV guide grid is open in place of the landing rows. */
+  guide: boolean;
   /** Opens every category in place of the landing rows. */
   onBrowse: () => void;
+  onGuide: () => void;
   onBrowseDone: () => void;
   onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
@@ -62,7 +68,7 @@ export function LiveScreen({
   const version = useVersionWhileShown(active, latestVersion);
   const [tick, setTick] = useState(0);
   useRefreshOnShow(active, useCallback(() => setTick((value) => value + 1), []));
-  useBackTo(browsing, onBrowseDone);
+  useBackTo(browsing || guide, onBrowseDone);
   const own = useCallback((channel: ChannelRow) => sourceId === null || channel.source_id === sourceId, [sourceId]);
 
   const recentIds = useRef(new Set<string>());
@@ -141,9 +147,10 @@ export function LiveScreen({
     [db, sync, play],
   );
 
+  if (guide) return <GuideScreen sourceId={sourceId} active={active} onPlay={onPlay} />;
   if (!ready && !browsing) return <Loading noun="channels" />;
   if (browsing || rows.length === 0) return <Browsing sourceId={sourceId} own={own} onPlay={onPlay} />;
-  return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={play} browseAll={onBrowse} />;
+  return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={play} browseAll={onBrowse} openGuide={onGuide} />;
 }
 
 /** Every category as a row of pills, channels beneath. */

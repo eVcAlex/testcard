@@ -111,11 +111,12 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
   };
 }
 
-/** Fetches now/next EPG for a single stream. Kept separate from SourceAdapter — it's read on demand per row, not during import. */
+/** Fetches the next `limit` programmes for a single stream (now and next by default). Kept separate from SourceAdapter — it's read on demand per row, not during import. */
 export async function fetchShortEpg(
   source: Source,
   streamId: string,
   getCredentials: CredentialsLookup,
+  limit = 2,
 ): Promise<{ readonly title: string; readonly start: Date; readonly end: Date }[]> {
   if (source.kind !== "xtream") throw new Error("fetchShortEpg used with a non-xtream source");
   const credentials = await getCredentials(source.id);
@@ -124,7 +125,7 @@ export async function fetchShortEpg(
   url.searchParams.set("password", credentials.password);
   url.searchParams.set("action", "get_short_epg");
   url.searchParams.set("stream_id", streamId);
-  url.searchParams.set("limit", "2");
+  url.searchParams.set("limit", String(limit));
 
   const response = await fetchResponding(url.toString());
   if (!response.ok) return [];

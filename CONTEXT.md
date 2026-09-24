@@ -34,6 +34,10 @@ plays back through an embedded `mpv`, stores everything locally.
   A Channel has one or more Variants. Providers routinely ship the same channel as five or
   more separate playlist entries differing only by variant; grouping them is a normalisation
   step, not a provider feature.
+- **Channel feed** — one way to play a Channel when its first Variant won't: its other Variants,
+  then the same channel listed elsewhere in the same Country ("BBC One 4K" → "BBC One HD"),
+  matched on the Display name less its quality words (`listChannelFeeds`). Worked out when
+  playback needs it; never stored, and never merges Channels in lists.
 - **Category** — a provider's `group-title` (Xtream: `get_live_categories`), e.g.
   `UK| TNT Sports`. Raw categories are flat strings; the sidebar tree in the UI is a
   presentation-layer grouping by parsed **Country** prefix, not a separate domain concept.
