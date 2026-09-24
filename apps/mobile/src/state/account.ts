@@ -84,8 +84,8 @@ export async function accountProblem(sourceId: string): Promise<string | null> {
   return null;
 }
 
-/** The source a film, episode or channel is played from, for asking about its account. Null for a playlist. */
-export function xtreamSourceOf(db: Database.Database, kind: "channel" | "movie" | "episode", id: string): string | null {
+/** The source a film, episode or channel is played from. */
+export function sourceOfPlay(db: Database.Database, kind: "channel" | "movie" | "episode", id: string): { id: string; kind: string } | null {
   const sql =
     kind === "channel"
       ? `SELECT s.id, s.kind FROM channels c JOIN sources s ON s.id = c.source_id WHERE c.id = ?`
@@ -93,9 +93,14 @@ export function xtreamSourceOf(db: Database.Database, kind: "channel" | "movie" 
         ? `SELECT s.id, s.kind FROM movies m JOIN sources s ON s.id = m.source_id WHERE m.id = ?`
         : `SELECT s.id, s.kind FROM episodes e JOIN series sr ON sr.id = e.series_id JOIN sources s ON s.id = sr.source_id WHERE e.id = ?`;
   try {
-    const row = db.prepare(sql).get(id) as { id: string; kind: string } | undefined;
-    return row?.kind === "xtream" ? row.id : null;
+    return (db.prepare(sql).get(id) as { id: string; kind: string } | undefined) ?? null;
   } catch {
     return null;
   }
+}
+
+/** The Xtream source a film, episode or channel is played from, for asking about its account. Null for a playlist. */
+export function xtreamSourceOf(db: Database.Database, kind: "channel" | "movie" | "episode", id: string): string | null {
+  const source = sourceOfPlay(db, kind, id);
+  return source?.kind === "xtream" ? source.id : null;
 }

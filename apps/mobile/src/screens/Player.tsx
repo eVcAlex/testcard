@@ -14,7 +14,9 @@ import { playerTitle } from "../ui/titles";
 import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
 import { listChannelFeeds, type ChannelFeed } from "@testcard/core/src/db/channelFeeds.js";
 import { useApp } from "../state/app";
-import { accountProblem, xtreamSourceOf } from "../state/account";
+import { accountProblem, sourceOfPlay, xtreamSourceOf } from "../state/account";
+import { plainReason, serverGone } from "../ui/plainReason";
+import { SourceForm } from "../ui/SourceForm";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button } from "../ui/controls";
 import { streamFacts } from "../playback/streamInfo";
@@ -70,6 +72,8 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   // A live channel that will not play is tried again on its other feeds (another quality, a backup, the same channel
   // listed elsewhere) before the viewer sees an error.
   const [feedAt, setFeedAt] = useState(0);
+  // Bumped by Try again (or a source just edited) to ask for the stream afresh.
+  const [attempt, setAttempt] = useState(0);
   const feeds = useMemo(() => (item.kind === "channel" ? listChannelFeeds(db, item.id) : []), [db, item]);
   const feed: ChannelFeed | undefined = feeds[feedAt];
   const failOver = useCallback(() => setFeedAt((at) => at + 1), []);
@@ -88,6 +92,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
     setError(undefined);
     // Cleared first, or the dead feed is mounted again under the new key while the next one resolves.
     setStream(undefined);
+    void attempt;
     resolveStream(db, playing, resume, catchup, feedAt > 0 ? feed : undefined).then(
       (resolved) => {
         if (cancelled) return;
@@ -103,7 +108,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
     return () => {
       cancelled = true;
     };
-  }, [db, playing, resume, catchup, feedAt, feed, copyAt, copies.length, nextCopy]);
+  }, [db, playing, resume, catchup, feedAt, feed, copyAt, copies.length, nextCopy, attempt]);
 
   // Once Playing is on screen it owns Back itself (hide the controls, then leave); this is only for the
   // loading and failure states before that, which would otherwise have no way to leave on Back at all.
@@ -116,7 +121,8 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
     return () => subscription.remove();
   }, [onExit, stream, error]);
 
-  if (error !== undefined) return <Failure title={item.title} message={error} onExit={onExit} sourceId={xtreamSourceOf(db, item.kind, item.id)} />;
+  if (error !== undefined)
+    return <Failure title={item.title} message={serverGone(error) ? plainReason(error) : error} raw={error} editSourceId={sourceOfPlay(db, item.kind, item.id)?.id ?? null} onRetry={() => setAttempt((value) => value + 1)} onExit={onExit} sourceId={xtreamSourceOf(db, item.kind, item.id)} />;
   if (stream === undefined) {
     // The same black screen and spinner the player itself shows while buffering, so starting an
     // episode reads as one continuous action instead of a separate loading page first.
@@ -140,6 +146,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
       onNextEpisode={onNextEpisode}
       moreFeeds={item.kind === "movie" ? copyAt + 1 < copies.length : feedAt + 1 < feeds.length}
       onFailOver={item.kind === "movie" ? nextCopy : failOver}
+      onResolveAgain={() => setAttempt((value) => value + 1)}
       fellBack={item.kind === "movie" ? (copyAt > 0 ? copyLabel(db, playing.id) : undefined) : feedAt > 0 && feed !== undefined ? fellBackLabel(item.title, feed) : undefined}
       onExit={() => {
         sync.notifyLocalChange();
@@ -164,7 +171,10 @@ function fellBackLabel(title: string, feed: ChannelFeed): string {
   return feed.quality !== null ? `Playing the ${feed.quality} feed instead` : "Playing a backup feed instead";
 }
 
-function Failure({ title, message: given, detail, onRetry, onExit, sourceId }: { title: string; message: string; detail?: string; onRetry?: () => void; onExit: () => void; sourceId?: string | null }) {
+function Failure({ title, message: given, detail, onRetry, onExit, sourceId, raw = "", editSourceId }: { title: string; message: string; detail?: string; onRetry?: () => void; onExit: () => void; sourceId?: string | null; raw?: string; editSourceId?: string | null }) {
+  // A server name that no longer exists is nearly always a provider that moved: say so, and offer to put it right.
+  const gone = serverGone(raw) && editSourceId != null;
+  const [editing, setEditing] = useState(false);
   // A refused stream is often the account (every stream it allows in use, or it has ended): the provider says which.
   const [problem, setProblem] = useState<string | null>(null);
   useEffect(() => {
@@ -175,21 +185,31 @@ function Failure({ title, message: given, detail, onRetry, onExit, sourceId }: {
       live = false;
     };
   }, [sourceId]);
-  const message = problem ?? given;
+  const message = gone ? plainReason(raw) : (problem ?? given);
   return (
     <View style={styles.centre}>
+      {editing && editSourceId != null ? (
+        <SourceForm
+          sourceId={editSourceId}
+          onClose={() => {
+            setEditing(false);
+            onRetry?.();
+          }}
+        />
+      ) : null}
       <Text style={styles.title} numberOfLines={2}>
         {title}
       </Text>
       <Text style={styles.error}>{message}</Text>
-      {detail !== undefined && detail !== "" ? (
+      {!gone && detail !== undefined && detail !== "" ? (
         <Text style={styles.detail} numberOfLines={2}>
           {detail}
         </Text>
       ) : null}
       <View style={styles.row}>
+        {gone ? <Button preferred label="Edit source" onPress={() => setEditing(true)} /> : null}
         {onRetry !== undefined ? <Button label="Try again" onPress={onRetry} /> : null}
-        <Button preferred label="Back" onPress={onExit} />
+        <Button preferred={!gone} label="Back" onPress={onExit} />
       </View>
     </View>
   );
@@ -200,7 +220,8 @@ function explain(raw: string): string {
   if (/EXCEEDS_CAPABILITIES|MediaCodec|Decoder|decoder/i.test(raw)) return "This device can't decode this video (its format or resolution is beyond the hardware).";
   if (/40[13]/.test(raw)) return "The provider refused this stream.";
   if (/404|410/.test(raw)) return "The provider has no stream at that address (it may have been removed).";
-  if (/Unable to connect|timeout|timed out|Network|UnknownHost|ConnectException/i.test(raw)) return "Couldn't reach the stream. Check the connection and try again.";
+  if (serverGone(raw)) return plainReason(raw);
+  if (/Unable to connect|timeout|timed out|Network|ConnectException/i.test(raw)) return "Couldn't reach the stream. Check the connection and try again.";
   return "This couldn't be played.";
 }
 
@@ -240,7 +261,7 @@ function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
   return guide.current === undefined ? past : [{ programme: guide.current, when: "Start over", time: hourMinute(guide.current.start) }, ...past];
 }
 
-function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, fellBack, onExit }: { onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; fellBack: string | undefined; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
+function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, fellBack, onExit, onResolveAgain }: { onResolveAgain: () => void; onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; fellBack: string | undefined; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db, sync, captions, setCaptions, audioLanguage, setAudioLanguage } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
@@ -878,14 +899,19 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         title={vod ? playerTitle(stream.title) : stream.title}
         message={message}
         sourceId={undecodable ? null : xtreamSourceOf(db, item.kind, item.id)}
+        raw={raw}
+        editSourceId={sourceOfPlay(db, item.kind, item.id)?.id ?? null}
         {...(known ? {} : { detail: raw })}
         {...(undecodable
           ? {}
           : {
-              onRetry: () => {
-                player.replace(stream.url);
-                player.play();
-              },
+              // A moved server is asked for afresh (its address may just have been edited); anything else plays again.
+              onRetry: serverGone(raw)
+                ? onResolveAgain
+                : () => {
+                    player.replace(stream.url);
+                    player.play();
+                  },
             })}
         onExit={timeshift ? () => onCatchup(undefined) : onExit}
       />
