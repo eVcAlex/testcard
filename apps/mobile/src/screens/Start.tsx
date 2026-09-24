@@ -12,7 +12,7 @@ import { fetchGuide } from "../playback/airing";
 import { getCredentials } from "../platform/secrets";
 import { useApp } from "../state/app";
 import { colors, type, styleSheet } from "../theme";
-import { Loading, homeMovie, homeSeries, movieRows, seriesPrimaryAction, seriesRows, shelfRow, useBuilt, useRefreshOnShow, useVersionWhileShown } from "./Catalogue";
+import { Loading, continuingMovie, continuingSeries, homeMovie, homeSeries, movieRows, seriesPrimaryAction, seriesRows, shelfRow, useBuilt, useRefreshOnShow, useVersionWhileShown } from "./Catalogue";
 import type { DetailAction } from "../ui/DetailActions";
 import { HomeScreen, type HeroActions, type HomeDetail, type HomeItem, type HomeRow } from "./Home";
 import { toHomeItem } from "./Live";
@@ -62,6 +62,9 @@ export function StartScreen({
     if (movieShelves === null || seriesShelves === null) return null;
     const asMovie = (movie: Parameters<typeof homeMovie>[0]) => tag("movie", homeMovie(movie));
     const asSeries = (series: Parameters<typeof homeSeries>[0]) => tag("series", homeSeries(series));
+    // On Continue watching, a film says how long is left and a show which episode it carries on from.
+    const asContinuingMovie = (movie: Parameters<typeof homeMovie>[0]) => tag("movie", continuingMovie(movie));
+    const asContinuingSeries = (series: Parameters<typeof homeSeries>[0]) => tag("series", continuingSeries(db, series));
     // The source pick holds for your own rows too, or picking one source still left the others' history on Home.
     const own = <T extends { source_id: string }>(row: T) => sourceId === null || row.source_id === sourceId;
     // One row for what you were last watching, films and shows together, the most recent first: films only while unfinished.
@@ -71,10 +74,10 @@ export function StartScreen({
     for (const entry of listWatchedLately(db, 60)) {
       if (entry.kind === "movie") {
         const movie = recentMovies.get(entry.id);
-        if (movie !== undefined && movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs)) continuing.push(asMovie(movie));
+        if (movie !== undefined && movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs)) continuing.push(asContinuingMovie(movie));
       } else {
         const show = recentSeries.get(entry.id);
-        if (show !== undefined) continuing.push(asSeries(show));
+        if (show !== undefined && continuing.length < 30) continuing.push(asContinuingSeries(show));
       }
     }
     const recentChannels = listRecentChannels(db, 60).filter(own).slice(0, 30);

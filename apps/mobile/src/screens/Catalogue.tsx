@@ -262,6 +262,29 @@ export const homeMovie = (movie: MovieRow): HomeItem => ({
   favourite: movie.is_favourite === 1,
   resume: movie.position_secs !== null && shouldPromptResume(movie.position_secs, movie.duration_secs),
 });
+/** A film on a Continue watching row: how long it has left under the title. */
+export const continuingMovie = (movie: MovieRow): HomeItem => {
+  const item = homeMovie(movie);
+  const left = movie.position_secs !== null && movie.duration_secs !== null ? movie.duration_secs - movie.position_secs : 0;
+  return left >= 60 ? { ...item, note: `${runtimeLeft(left)} left` } : item;
+};
+
+/** A show on a Continue watching or Recently watched row: the episode it carries on from, and how far into it. */
+export function continuingSeries(db: Parameters<typeof getUpNextEpisode>[0], series: SeriesRow): HomeItem {
+  const item = homeSeries(series);
+  const upNext = getUpNextEpisode(db, series.id);
+  if (upNext === undefined) return item;
+  const { episode, season, resume } = upNext;
+  const where = `S${season.season_number} E${episode.episode_number}`;
+  const into = resume && episode.position_secs !== null && episode.duration_secs !== null && episode.duration_secs > 0 ? episode.position_secs / episode.duration_secs : null;
+  return { ...item, progress: into, note: resume ? where : `Next · ${where}` };
+}
+
+function runtimeLeft(secs: number): string {
+  const minutes = Math.round(secs / 60);
+  return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`;
+}
+
 export const homeSeries = (series: SeriesRow): HomeItem => ({ id: series.id, name: series.name, posterUrl: series.poster_url, progress: null, rating: series.rating, plot: series.plot, durationSecs: null, favourite: series.is_favourite === 1, resume: false });
 
 /**
@@ -326,7 +349,7 @@ export function MoviesScreen({
     const continuing = listRecentMovies(db, 60).filter((movie) => own(movie) && movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs));
     const myList = listFavouriteMovies(db).filter(own);
     return [
-      ...(continuing.length > 0 ? [{ key: "continue", label: "Continue watching", items: continuing.map(homeMovie) }] : []),
+      ...(continuing.length > 0 ? [{ key: "continue", label: "Continue watching", items: continuing.map(continuingMovie) }] : []),
       ...(myList.length > 0 ? [{ key: "my-list", label: "My list", items: myList.slice(0, 30).map(homeMovie) }] : []),
       ...shelves.map((shelf) => shelfRow(shelf, homeMovie)),
     ];
@@ -393,7 +416,7 @@ export function SeriesScreen({
     const myList = listFavouriteSeries(db).filter(own);
     recentIds.current = new Set(recent.map((show) => show.id));
     return [
-      ...(recent.length > 0 ? [{ key: "recent-watched", label: "Recently watched", items: recent.map(homeSeries) }] : []),
+      ...(recent.length > 0 ? [{ key: "recent-watched", label: "Recently watched", items: recent.map((show) => continuingSeries(db, show)) }] : []),
       ...(myList.length > 0 ? [{ key: "my-list", label: "My list", items: myList.slice(0, 30).map(homeSeries) }] : []),
       ...shelves.map((shelf) => shelfRow(shelf, homeSeries)),
     ];
