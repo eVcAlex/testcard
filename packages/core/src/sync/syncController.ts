@@ -5,7 +5,9 @@ import { SyncClient } from "./client.js";
 import { removeSourceRows } from "./sourceRemoval.js";
 import { applySourceContent } from "./sourceContent.js";
 import { applySourcePosition } from "./sourceOrder.js";
-import { applySourcePins, applySourceSkips } from "./sourcePins.js";
+import { applySourcePins, applySourceSkips, holdPinsForMain } from "./sourcePins.js";
+import { MAIN_PROFILE } from "../db/profiles.js";
+import type { SourcePin } from "@testcard/sync-schema";
 import { applyRemoteChanges, clearTombstones, collectLocalChanges, getSyncState, setSyncState } from "./localChanges.js";
 
 export type SyncAccountStatus = "signed-out" | "signed-in" | "needs-password";
@@ -100,15 +102,18 @@ export class SyncController {
   private changeTimer: ReturnType<typeof setTimeout> | undefined;
   private lastRunStartedAt = 0;
   private paused: boolean;
+  /** Whose rows are in the tables now (see `db/profileSwap.ts`): theirs are the rows pushed and pulled. */
+  private profile: string;
 
   constructor(
     private readonly db: Database.Database,
     private readonly platform: SyncPlatform,
     /** Called with the ids of sources that arrived from another device, so they can be refreshed (imported) right away. */
     private readonly onSourcesAdded: (sourceIds: readonly string[]) => void = () => undefined,
-    options: { readonly paused?: boolean } = {},
+    options: { readonly paused?: boolean; readonly profile?: string } = {},
   ) {
     this.paused = options.paused ?? false;
+    this.profile = options.profile ?? MAIN_PROFILE;
     this.client = new SyncClient({ baseUrl: platform.baseUrl, getSessionToken: () => this.sessionToken() });
     const row = this.db.prepare(`SELECT sync_salt, account_email FROM sync_state WHERE id = 1`).get() as
       | { sync_salt: string | null; account_email: string | null }
@@ -146,6 +151,17 @@ export class SyncController {
       this.rerunRequested = false;
       await this.running?.catch(() => undefined);
     } else void this.runOnce();
+  }
+
+  /** Call, paused, after swapping another profile's rows in; the next sync pushes and pulls theirs. */
+  setProfile(profile: string): void {
+    this.profile = profile;
+  }
+
+  /** Home pins are Main's (they ride in the source's record): with another profile in, they wait for Main. */
+  private applyPins(sourceId: string, pins: readonly SourcePin[]): void {
+    if (this.profile === MAIN_PROFILE) applySourcePins(this.db, sourceId, pins);
+    else holdPinsForMain(this.db, sourceId, pins);
   }
 
   private sessionToken(): string | undefined {
@@ -301,7 +317,8 @@ export class SyncController {
     const salt = this.salt;
     try {
       const state = getSyncState(this.db);
-      const push = await collectLocalChanges(this.db, state.lastPushedAt, password, salt, (sourceId) => this.platform.getCredentials(sourceId));
+      const profile = this.profile;
+      const push = await collectLocalChanges(this.db, state.lastPushedAt, password, salt, (sourceId) => this.platform.getCredentials(sourceId), profile);
       const tombstoneCutoff = Math.max(
         0,
         ...[...push.sources, ...push.movieFavourites, ...push.movieRecents, ...push.seriesFavourites, ...push.seriesRecents, ...push.progress]
@@ -315,7 +332,7 @@ export class SyncController {
       // Devices before this change ignored a source edited elsewhere (a rename, new login, content switches). Read the
       // account's sources once from the start so edits already made are picked up; applying them again is harmless.
       const reread = this.db.prepare(`SELECT 1 FROM schema_meta WHERE key = 'sync_source_edits_reread'`).get() === undefined;
-      const pull = await this.client.pull(reread ? 0 : state.lastPulledAt);
+      const pull = await this.client.pull(reread ? 0 : state.lastPulledAt, profile === MAIN_PROFILE ? undefined : profile);
       const addedSourceIds: string[] = [];
       const applyResult = await applyRemoteChanges(this.db, pull, password, salt, async (remoteKey, label, payload, updatedAt) => {
         const existing = this.db.prepare(`SELECT id, sync_updated_at AS updatedAt FROM sources WHERE remote_key = ?`).get(remoteKey) as { id: string; updatedAt: number | null } | undefined;
@@ -330,7 +347,7 @@ export class SyncController {
           }
           if (payload.content !== undefined && applySourceContent(this.db, existing.id, payload.content)) addedSourceIds.push(existing.id);
           if (payload.position !== undefined) applySourcePosition(this.db, existing.id, payload.position);
-          if (payload.pins !== undefined) applySourcePins(this.db, existing.id, payload.pins);
+          if (payload.pins !== undefined) this.applyPins(existing.id, payload.pins);
           if (payload.skips !== undefined) applySourceSkips(this.db, existing.id, payload.skips);
           return;
         }
@@ -348,7 +365,7 @@ export class SyncController {
         // Taken with the source's own clock, so this device does not push it back as if it had just edited it.
         if (payload.content !== undefined) applySourceContent(this.db, id, payload.content);
         if (payload.position !== undefined) applySourcePosition(this.db, id, payload.position);
-        if (payload.pins !== undefined) applySourcePins(this.db, id, payload.pins);
+        if (payload.pins !== undefined) this.applyPins(id, payload.pins);
         if (payload.skips !== undefined) applySourceSkips(this.db, id, payload.skips);
         addedSourceIds.push(id);
       }, async (remoteKey, deletedAt) => {
@@ -358,14 +375,14 @@ export class SyncController {
         if (existing.updatedAt !== null && existing.updatedAt > deletedAt) return;
         removeSourceRows(this.db, existing.id, { recordTombstone: false });
         await this.platform.deleteCredentials?.(existing.id);
-      });
+      }, profile);
       const nextPulledAt =
         applyResult.deferredBeforeMs !== undefined ? Math.min(pull.serverCursor, applyResult.deferredBeforeMs - 1) : pull.serverCursor;
       setSyncState(this.db, { lastPulledAt: nextPulledAt });
       if (reread) this.db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('sync_source_edits_reread', '1')`).run();
       this.lastSyncedAt = Date.now();
       this.lastError = undefined;
-      if (pull.sources.length + pull.movieFavourites.length + pull.movieRecents.length + pull.seriesFavourites.length + pull.seriesRecents.length + pull.progress.length > 0) this.lastChangedAt = Date.now();
+      if (pull.sources.length + pull.movieFavourites.length + pull.movieRecents.length + pull.seriesFavourites.length + pull.seriesRecents.length + pull.progress.length + pull.profiles.length > 0) this.lastChangedAt = Date.now();
       if (addedSourceIds.length > 0) this.onSourcesAdded(addedSourceIds);
     } catch (error) {
       if (allowReauth && (error as { status?: number }).status === 401) {

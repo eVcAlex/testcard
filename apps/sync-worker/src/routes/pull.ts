@@ -1,4 +1,4 @@
-import { SyncPullResponseSchema } from "@testcard/sync-schema";
+import { PROFILE_ID_PATTERN, profileKeyPrefix, SyncPullResponseSchema } from "@testcard/sync-schema";
 import type { AppContext } from "../validation.js";
 
 interface Row {
@@ -13,9 +13,17 @@ export async function handlePull(c: AppContext): Promise<Response> {
   if (!Number.isFinite(since) || since < 0) {
     return c.json({ error: "invalid request", issues: [{ message: "`since` must be a finite, non-negative number" }] }, 400);
   }
+  // Whose favourites, recents and progress: a profile's own (keys under its prefix), or with no `profile` the
+  // account's own profile, whose keys have no prefix. A device that predates profiles sends none, so it never sees
+  // another profile's rows (which it could not match, and would hold its cursor back on).
+  const profile = c.req.query("profile");
+  if (profile !== undefined && !PROFILE_ID_PATTERN.test(profile)) {
+    return c.json({ error: "invalid request", issues: [{ message: "`profile` must be a profile id" }] }, 400);
+  }
+  const mine = profile === undefined || profile === "main" ? `remote_key NOT LIKE 'p.%'` : `remote_key LIKE '${profileKeyPrefix(profile)}%'`;
   const db = c.env.DB;
 
-  const [sources, movieFavourites, movieRecents, seriesFavourites, seriesRecents, progress] = await Promise.all([
+  const [sources, movieFavourites, movieRecents, seriesFavourites, seriesRecents, progress, profiles] = await Promise.all([
     db
       .prepare(
         `SELECT remote_key AS remoteKey, label, credentials_blob AS credentialsBlob, credentials_iv AS credentialsIv,
@@ -26,30 +34,35 @@ export async function handlePull(c: AppContext): Promise<Response> {
       .all<Row>(),
     db
       .prepare(`SELECT remote_key AS remoteKey, added_at AS addedAt, updated_at AS updatedAt, deleted_at AS deletedAt
-                FROM movie_favourites WHERE user_id = ? AND updated_at > ?`)
+                FROM movie_favourites WHERE user_id = ? AND updated_at > ? AND ${mine}`)
       .bind(userId, since)
       .all<Row>(),
     db
       .prepare(`SELECT remote_key AS remoteKey, played_at AS playedAt, updated_at AS updatedAt, deleted_at AS deletedAt
-                FROM movie_recents WHERE user_id = ? AND updated_at > ?`)
+                FROM movie_recents WHERE user_id = ? AND updated_at > ? AND ${mine}`)
       .bind(userId, since)
       .all<Row>(),
     db
       .prepare(`SELECT remote_key AS remoteKey, added_at AS addedAt, updated_at AS updatedAt, deleted_at AS deletedAt
-                FROM series_favourites WHERE user_id = ? AND updated_at > ?`)
+                FROM series_favourites WHERE user_id = ? AND updated_at > ? AND ${mine}`)
       .bind(userId, since)
       .all<Row>(),
     db
       .prepare(`SELECT remote_key AS remoteKey, played_at AS playedAt, updated_at AS updatedAt, deleted_at AS deletedAt
-                FROM series_recents WHERE user_id = ? AND updated_at > ?`)
+                FROM series_recents WHERE user_id = ? AND updated_at > ? AND ${mine}`)
       .bind(userId, since)
       .all<Row>(),
     db
       .prepare(
         `SELECT remote_key AS remoteKey, item_type AS itemType, position_secs AS positionSecs, duration_secs AS durationSecs,
                 watched, updated_at AS updatedAt, deleted_at AS deletedAt
-         FROM playback_progress WHERE user_id = ? AND updated_at > ?`,
+         FROM playback_progress WHERE user_id = ? AND updated_at > ? AND ${mine}`,
       )
+      .bind(userId, since)
+      .all<Row>(),
+    db
+      .prepare(`SELECT remote_key AS remoteKey, blob, iv, updated_at AS updatedAt, deleted_at AS deletedAt
+                FROM profiles WHERE user_id = ? AND updated_at > ?`)
       .bind(userId, since)
       .all<Row>(),
   ]);
@@ -70,6 +83,7 @@ export async function handlePull(c: AppContext): Promise<Response> {
     seriesFavourites.results,
     seriesRecents.results,
     progress.results,
+    profiles.results,
   ]
     .flat()
     .reduce((max, row) => Math.max(max, Number(row.updatedAt)), since);
@@ -81,6 +95,7 @@ export async function handlePull(c: AppContext): Promise<Response> {
     seriesFavourites: seriesFavourites.results,
     seriesRecents: seriesRecents.results,
     progress: progress.results.map((row) => ({ ...row, watched: Boolean(row.watched) })),
+    profiles: profiles.results,
     serverCursor,
   });
 

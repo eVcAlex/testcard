@@ -10,8 +10,9 @@ import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
 import { readAudioLanguage, writeAudioLanguage } from "../playback/viewing";
-import { swapProfile, forgetProfile } from "@testcard/core/src/db/profileSwap.js";
-import { MAIN_PROFILE, PROFILE_META_KEYS, readActiveProfile, readProfiles, writeActiveProfile, writeProfiles, type Profile } from "./profiles";
+import { forgetProfile, swapProfile } from "@testcard/core/src/db/profileSwap.js";
+import { deleteProfile as deleteStoredProfile, saveProfile as saveStoredProfile } from "@testcard/core/src/db/profiles.js";
+import { MAIN_PROFILE, PROFILE_META_KEYS, readActiveProfile, readProfiles, writeActiveProfile, type Profile } from "./profiles";
 import { describeSetup, type ContentKind, type ImportProgress, type ImportStage, type SetupProgress } from "./setup";
 
 /** Something a source's last import could not load: its movies, its series, or (a thrown import) all of it. */
@@ -55,14 +56,14 @@ interface AppState {
   /** The two-letter language of the soundtrack last picked in the player, chosen again when a film offers it. This device only. */
   readonly audioLanguage: string | null;
   setAudioLanguage(language: string | null): void;
-  /** Who watches on this TV, the account's own profile first. */
+  /** Who watches (the account's, synced), its own profile first. */
   readonly profiles: readonly Profile[];
   /** The one watching now: whose history, favourites and settings the app is showing. */
   readonly profile: Profile;
-  /** Swaps in another profile's rows. Syncing runs only while the account's own profile is in. */
+  /** Swaps in another profile's rows; from then on sync pushes and pulls theirs. */
   switchProfile(id: string): Promise<void>;
-  /** Adds, renames or re-locks profiles: the whole list, as it should be now. */
-  saveProfiles(profiles: readonly Profile[]): void;
+  /** Adds a profile or changes one (its name, avatar, PIN). Synced. */
+  saveProfile(profile: Profile): void;
   /** Deletes a profile other than the one watching now, and everything it had. */
   deleteProfile(id: string): void;
   refreshSource(sourceId: string): Promise<void>;
@@ -194,7 +195,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const syncRef = useRef<SyncController | undefined>(undefined);
   const refreshRef = useRef(refreshSource);
   refreshRef.current = refreshSource;
-  // Only the account's own profile syncs; with another one in the tables the loop starts held off.
+  // Sync pushes and pulls the rows of whoever is watching (see switchProfile).
   syncRef.current ??= new SyncController(
     db,
     syncPlatform,
@@ -202,7 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Sources that arrived from another device have no channels yet: import them now.
       for (const id of ids) void refreshRef.current(id);
     },
-    { paused: readActiveProfile(db) !== MAIN_PROFILE },
+    { profile: readActiveProfile(db) },
   );
   const sync = syncRef.current;
 
@@ -324,45 +325,63 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [db],
   );
 
-  const [profiles, setProfiles] = useState<readonly Profile[]>(() => readProfiles(db));
+  // The list comes from the database: a sync can bring a profile made on another TV, or a change to one.
+  const [profilesChanged, setProfilesChanged] = useState(0);
+  const profiles = useMemo(() => {
+    void version;
+    void profilesChanged;
+    return readProfiles(db);
+  }, [db, version, profilesChanged]);
   const [profileId, setProfileId] = useState(() => readActiveProfile(db));
   const profile = profiles.find((entry) => entry.id === profileId) ?? profiles[0]!;
-  const saveProfiles = useCallback(
-    (next: readonly Profile[]) => {
-      setProfiles(next);
-      writeProfiles(db, next);
+  const saveProfile = useCallback(
+    (next: Profile) => {
+      saveStoredProfile(db, next);
+      setProfilesChanged((count) => count + 1);
+      sync.notifyLocalChange();
     },
-    [db],
+    [db, sync],
   );
   const switchProfile = useCallback(
     async (id: string) => {
       const from = readActiveProfile(db);
       if (from === id) return;
-      // Nothing may sync mid-swap, and the other profiles never do.
+      // What the one leaving did is pushed first (briefly: a slow network only delays it to their next turn).
+      await Promise.race([sync.triggerNow().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 6000))]);
+      // Nothing may sync mid-swap.
       await sync.setPaused(true);
       swapProfile(db, from, id, PROFILE_META_KEYS);
       writeActiveProfile(db, id);
+      sync.setProfile(id);
       setProfileId(id);
       setCaptionsState(readCaptionPrefs(db));
       setAudioLanguageState(readAudioLanguage(db));
-      if (id === MAIN_PROFILE) void sync.setPaused(false);
-      setStatus(sync.status());
+      // Resuming syncs at once, fetching the new profile's history from the account.
+      void sync.setPaused(false).then(updateStatus);
       bump();
     },
-    [db, sync, bump],
+    [db, sync, bump, updateStatus],
   );
+  // The profile watching here was deleted on another TV: back to the account's own.
+  const watchingGone = !profiles.some((entry) => entry.id === profileId);
+  useEffect(() => {
+    if (!watchingGone) return;
+    const gone = profileId;
+    void switchProfile(MAIN_PROFILE).then(() => forgetProfile(db, gone));
+  }, [db, profileId, watchingGone, switchProfile]);
   const deleteProfile = useCallback(
     (id: string) => {
       if (id === MAIN_PROFILE || id === readActiveProfile(db)) return;
-      forgetProfile(db, id);
-      saveProfiles(readProfiles(db).filter((entry) => entry.id !== id));
+      deleteStoredProfile(db, id);
+      setProfilesChanged((count) => count + 1);
+      sync.notifyLocalChange();
     },
-    [db, saveProfiles],
+    [db, sync],
   );
 
   const value = useMemo<AppState>(
-    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfiles, deleteProfile, refreshSource, removeSource, updateStatus }),
-    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfiles, deleteProfile, refreshSource, removeSource, updateStatus],
+    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfile, deleteProfile, refreshSource, removeSource, updateStatus }),
+    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, profiles, profile, switchProfile, saveProfile, deleteProfile, refreshSource, removeSource, updateStatus],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

@@ -13,7 +13,7 @@
  *    disappearing from a provider should not silently delete a user's favourite; a dangling
  *    favourite instead surfaces in the UI as "no longer available".
  */
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -332,4 +332,24 @@ CREATE TABLE IF NOT EXISTS home_pins (
   pinned_at     INTEGER NOT NULL,
   PRIMARY KEY (source_id, kind, category_key)
 );
+
+-- The people who watch, synced (encrypted) with the account. Each profile's own rows are kept apart by profileSwap.ts.
+CREATE TABLE IF NOT EXISTS profiles (
+  id          TEXT PRIMARY KEY,   -- 'main' is the account's own; others are random
+  name        TEXT NOT NULL,
+  colour      INTEGER NOT NULL DEFAULT 0,
+  avatar      TEXT,               -- one of the app's avatars, or NULL for the name's first letter
+  pin         TEXT,               -- a hash of the PIN, or NULL
+  position    INTEGER NOT NULL DEFAULT 0,
+  updated_at  INTEGER NOT NULL,   -- sync clock (last write wins); 0 for Main until it is first changed
+  deleted_at  INTEGER             -- sync tombstone
+);
+
+-- Profiles not watching now: their own rows, as JSON, until they are picked (profileSwap.ts).
+CREATE TABLE IF NOT EXISTS profile_stash (
+  profile_id  TEXT NOT NULL,
+  table_name  TEXT NOT NULL,
+  row         TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_profile_stash_profile ON profile_stash(profile_id);
 `;

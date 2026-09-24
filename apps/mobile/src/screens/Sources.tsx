@@ -108,7 +108,7 @@ function SourcesPane() {
 
 /** Who this TV is signed in as, syncing, and the app's version and updates. */
 function AccountPane() {
-  const { status, sync, updateStatus, profiles } = useApp();
+  const { status, sync, updateStatus } = useApp();
   // Signing out drops the account from this TV, and the button sits right beside Sync now, so it asks first.
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const update = useUpdate();
@@ -122,11 +122,7 @@ function AccountPane() {
             <Text style={styles.accountEmail} numberOfLines={1}>
               {status.email ?? "Signed out"}
             </Text>
-            {status.paused === true ? (
-              <Text style={styles.accountSynced}>{`Syncing is off while another profile is watching. Switch to ${profiles[0]?.name ?? "Main"} to sync.`}</Text>
-            ) : (
-              status.lastSyncedAt !== undefined && <Text style={styles.accountSynced}>{`✓ Synced ${ago(status.lastSyncedAt)}`}</Text>
-            )}
+            {status.lastSyncedAt !== undefined && <Text style={styles.accountSynced}>{`✓ Synced ${ago(status.lastSyncedAt)}`}</Text>}
           </View>
           <View style={styles.accountActions}>
             <SmallButton

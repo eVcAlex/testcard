@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { applyHeldPins } from "../sync/sourcePins.js";
 
 /**
  * Profiles on one device (the TV app's "Who's watching?"). Everything a person has of their own lives in the usual
@@ -6,9 +7,9 @@ import type Database from "better-sqlite3";
  * profile is picked. Switching swaps the two in one transaction, so every query in the app reads the right person's
  * rows without knowing profiles exist.
  *
- * Only the account's own profile may sync: the caller holds syncing off while any other one is in the tables, or
- * that person's history would be pushed as the account's. Pending sync deletes (`sync_tombstones`) move with their
- * profile for the same reason.
+ * Each profile syncs its own rows (under its key prefix; see `sync/localChanges.ts`), so each keeps its own place in
+ * the account's history: the pull cursor is put away and brought back with the rows. The caller holds syncing off
+ * across the swap. Pending sync deletes (`sync_tombstones`) move with their profile, as they are its deletes.
  */
 
 /** A person's own rows: what they have starred, watched and pinned. The catalogue, sources and sync state are shared. */
@@ -80,6 +81,16 @@ export function swapProfile(db: Database.Database, from: string, to: string, met
       }
     }
     db.prepare(`DELETE FROM profile_stash WHERE profile_id = ?`).run(to);
+
+    // Where each profile has pulled up to. One never seen on this device starts from the beginning.
+    const cursor = db.prepare(`SELECT last_pulled_at AS at FROM sync_state WHERE id = 1`).get() as { at: number } | undefined;
+    if (cursor !== undefined) {
+      db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(`sync_pulled:${from}`, String(cursor.at));
+      const saved = db.prepare(`SELECT value FROM schema_meta WHERE key = ?`).get(`sync_pulled:${to}`) as { value: string } | undefined;
+      db.prepare(`UPDATE sync_state SET last_pulled_at = ? WHERE id = 1`).run(saved !== undefined ? Number(saved.value) : 0);
+    }
+    // Pins for Main that arrived while someone else watched.
+    if (to === "main") applyHeldPins(db);
   })();
 }
 

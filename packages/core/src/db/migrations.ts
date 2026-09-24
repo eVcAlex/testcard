@@ -310,6 +310,29 @@ export const MIGRATIONS: readonly Migration[] = [
       `);
     },
   },
+  {
+    version: 13,
+    up: (db) => {
+      // Profiles, synced with the account (see docs/adr/0011-tv-profiles.md).
+      db.exec(`CREATE TABLE IF NOT EXISTS profiles (
+  id          TEXT PRIMARY KEY,   -- 'main' is the account's own; others are random
+  name        TEXT NOT NULL,
+  colour      INTEGER NOT NULL DEFAULT 0,
+  avatar      TEXT,               -- one of the app's avatars, or NULL for the name's first letter
+  pin         TEXT,               -- a hash of the PIN, or NULL
+  position    INTEGER NOT NULL DEFAULT 0,
+  updated_at  INTEGER NOT NULL,   -- sync clock (last write wins); 0 for Main until it is first changed
+  deleted_at  INTEGER             -- sync tombstone
+);
+CREATE TABLE IF NOT EXISTS profile_stash (
+  profile_id  TEXT NOT NULL,
+  table_name  TEXT NOT NULL,
+  row         TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_profile_stash_profile ON profile_stash(profile_id);
+`);
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

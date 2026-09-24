@@ -101,6 +101,36 @@ export const SyncProgressSchema = SyncedRowSchema.extend({
 });
 export type SyncProgress = z.infer<typeof SyncProgressSchema>;
 
+/**
+ * A profile (one person who watches) as it exists client-side, before encryption. `pin` is already a hash; `avatar`
+ * names one of the app's avatars, or is null for the name's first letter.
+ */
+export const ProfilePayloadSchema = z.object({
+  name: z.string().min(1),
+  colour: z.number().int().nonnegative(),
+  avatar: z.string().min(1).nullable(),
+  pin: z.string().min(1).nullable(),
+  position: z.number().int().nonnegative(),
+});
+export type ProfilePayload = z.infer<typeof ProfilePayloadSchema>;
+
+/**
+ * A profile, keyed by its id (random, not a name). Encrypted like a source so the server never learns who watches.
+ * The account's own profile is `main`; a profile's favourites, recents and progress sync under remote keys that
+ * start `p.<id>.` (see `PROFILE_KEY_PREFIX`), and Main's are unprefixed, as they always were. Blob and IV are null
+ * only on a tombstone.
+ */
+export const SyncProfileSchema = SyncedRowSchema.extend({
+  blob: z.string().min(1).nullable(),
+  iv: z.string().min(1).nullable(),
+});
+export type SyncProfile = z.infer<typeof SyncProfileSchema>;
+
+/** The remote-key prefix of a profile's own rows; Main's rows have none. */
+export const profileKeyPrefix = (profileId: string) => `p.${profileId}.`;
+/** What a profile id may look like on the wire (it is part of a pull's query string and a key prefix). */
+export const PROFILE_ID_PATTERN = /^[A-Za-z0-9]{1,40}$/;
+
 export const SyncPullResponseSchema = z.object({
   sources: z.array(SyncSourceSchema),
   movieFavourites: z.array(SyncFavouriteSchema),
@@ -108,6 +138,8 @@ export const SyncPullResponseSchema = z.object({
   seriesFavourites: z.array(SyncFavouriteSchema),
   seriesRecents: z.array(SyncRecentSchema),
   progress: z.array(SyncProgressSchema),
+  /** Absent from a server that predates profiles. */
+  profiles: z.array(SyncProfileSchema).default([]),
   serverCursor: z.number().int().nonnegative(),
 });
 export type SyncPullResponse = z.infer<typeof SyncPullResponseSchema>;
@@ -119,6 +151,8 @@ export const SyncPushRequestSchema = z.object({
   seriesFavourites: z.array(SyncFavouriteSchema),
   seriesRecents: z.array(SyncRecentSchema),
   progress: z.array(SyncProgressSchema),
+  /** Absent from a device that predates profiles. */
+  profiles: z.array(SyncProfileSchema).default([]),
 });
 export type SyncPushRequest = z.infer<typeof SyncPushRequestSchema>;
 

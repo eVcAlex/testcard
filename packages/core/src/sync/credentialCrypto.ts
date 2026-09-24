@@ -49,16 +49,32 @@ async function deriveKey(password: string, saltBase64: string) {
   );
 }
 
+/** Seals any JSON value under the account's key (a source's login, a profile). */
+export async function encryptJson(value: unknown, password: string, saltBase64: string): Promise<EncryptedPayload> {
+  const key = await deriveKey(password, saltBase64);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plaintext = new TextEncoder().encode(JSON.stringify(value));
+  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+  return { blob: toBase64(new Uint8Array(ciphertext)), iv: toBase64(iv) };
+}
+
+/** Opens what `encryptJson` sealed. The caller validates the shape. */
+export async function decryptJson(encrypted: EncryptedPayload, password: string, saltBase64: string): Promise<unknown> {
+  const key = await deriveKey(password, saltBase64);
+  const plaintext = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: fromBase64(encrypted.iv) },
+    key,
+    fromBase64(encrypted.blob),
+  );
+  return JSON.parse(new TextDecoder().decode(plaintext));
+}
+
 export async function encryptCredentials(
   payload: SourceCredentialsPayload,
   password: string,
   saltBase64: string,
 ): Promise<EncryptedPayload> {
-  const key = await deriveKey(password, saltBase64);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const plaintext = new TextEncoder().encode(JSON.stringify(SourceCredentialsPayloadSchema.parse(payload)));
-  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
-  return { blob: toBase64(new Uint8Array(ciphertext)), iv: toBase64(iv) };
+  return encryptJson(SourceCredentialsPayloadSchema.parse(payload), password, saltBase64);
 }
 
 export async function decryptCredentials(
@@ -66,11 +82,5 @@ export async function decryptCredentials(
   password: string,
   saltBase64: string,
 ): Promise<SourceCredentialsPayload> {
-  const key = await deriveKey(password, saltBase64);
-  const plaintext = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: fromBase64(encrypted.iv) },
-    key,
-    fromBase64(encrypted.blob),
-  );
-  return SourceCredentialsPayloadSchema.parse(JSON.parse(new TextDecoder().decode(plaintext)));
+  return SourceCredentialsPayloadSchema.parse(await decryptJson(encrypted, password, saltBase64));
 }

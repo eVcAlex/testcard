@@ -1,73 +1,88 @@
 import type Database from "better-sqlite3";
+import { listProfiles, MAIN_PROFILE, saveProfile, type Profile } from "@testcard/core/src/db/profiles.js";
 
 /**
- * The people who watch on this TV. Each has their own Continue watching, favourites, Home pins, and caption and
- * audio settings (see core's `db/profileSwap.ts` for how their rows are kept apart). The account's own profile is
- * `MAIN_PROFILE`: it is the only one that syncs, and it cannot be deleted. The list itself is this TV's, not synced.
+ * The people who watch. The list is the account's (core's `db/profiles.ts`, synced and encrypted), so a profile made
+ * on one TV is on the others. Each has their own Continue watching, favourites, recents and progress (synced too),
+ * and on each TV their own Home pins and caption and audio settings (see core's `db/profileSwap.ts`). Which profile
+ * is watching is this TV's own.
  */
-export interface Profile {
-  readonly id: string;
-  readonly name: string;
-  /** Index into PROFILE_COLOURS. */
-  readonly colour: number;
-  /** A hash of the profile's 4-digit PIN (see `pinHash`), or null for none. A lock against the children, not a secret. */
-  readonly pin: string | null;
-}
-
-export const MAIN_PROFILE = "main";
+export { MAIN_PROFILE, type Profile };
 
 /** The avatar colours, in the order new profiles take them. */
-export const PROFILE_COLOURS: readonly string[] = ["#e7d2ad", "#7fb8a4", "#e28a6d", "#8fa7e0", "#d7a3d8", "#e3c85c"];
+export const PROFILE_COLOURS: readonly string[] = ["#e7d2ad", "#7fb8a4", "#e28a6d", "#8fa7e0", "#d7a3d8", "#e3c85c", "#9ccf6e", "#f0a3b5"];
 
-export const profileColour = (profile: Profile) => PROFILE_COLOURS[profile.colour % PROFILE_COLOURS.length] ?? "#e7d2ad";
+export const profileColour = (profile: Pick<Profile, "colour">) => PROFILE_COLOURS[profile.colour % PROFILE_COLOURS.length] ?? "#e7d2ad";
+
+/** The avatars to choose from, drawn on the profile's colour. Ids are stored and synced, so they never change. */
+export const AVATARS: readonly { readonly id: string; readonly glyph: string }[] = [
+  { id: "fox", glyph: "🦊" },
+  { id: "panda", glyph: "🐼" },
+  { id: "tiger", glyph: "🐯" },
+  { id: "lion", glyph: "🦁" },
+  { id: "dog", glyph: "🐶" },
+  { id: "cat", glyph: "🐱" },
+  { id: "frog", glyph: "🐸" },
+  { id: "monkey", glyph: "🐵" },
+  { id: "koala", glyph: "🐨" },
+  { id: "penguin", glyph: "🐧" },
+  { id: "owl", glyph: "🦉" },
+  { id: "unicorn", glyph: "🦄" },
+  { id: "octopus", glyph: "🐙" },
+  { id: "whale", glyph: "🐳" },
+  { id: "dino", glyph: "🦖" },
+  { id: "alien", glyph: "👽" },
+  { id: "robot", glyph: "🤖" },
+  { id: "rocket", glyph: "🚀" },
+  { id: "football", glyph: "⚽" },
+  { id: "game", glyph: "🎮" },
+  { id: "guitar", glyph: "🎸" },
+  { id: "popcorn", glyph: "🍿" },
+  { id: "star", glyph: "⭐" },
+  { id: "rainbow", glyph: "🌈" },
+];
+
+export const avatarGlyph = (profile: Pick<Profile, "avatar">) => AVATARS.find((entry) => entry.id === profile.avatar)?.glyph ?? null;
 
 /** The `schema_meta` keys that are a profile's own and move with it. */
 export const PROFILE_META_KEYS: readonly string[] = ["ui:captions", "ui:audio"];
 
-const LIST_KEY = "ui:profiles";
 const ACTIVE_KEY = "ui:profile";
+/** Where builds before profiles synced kept their list, on the TV alone. */
+const OLD_LIST_KEY = "ui:profiles";
 
-const DEFAULT_PROFILES: readonly Profile[] = [{ id: MAIN_PROFILE, name: "Main", colour: 0, pin: null }];
-
-function readMeta(db: Database.Database, key: string): string | undefined {
-  try {
-    return (db.prepare(`SELECT value FROM schema_meta WHERE key = ?`).get(key) as { value: string } | undefined)?.value;
-  } catch {
-    return undefined;
-  }
-}
-
-function writeMeta(db: Database.Database, key: string, value: string): void {
-  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(key, value);
-}
-
+/** The account's profiles, taking in (once) any made on this TV before profiles synced. */
 export function readProfiles(db: Database.Database): readonly Profile[] {
-  const raw = readMeta(db, LIST_KEY);
-  if (raw === undefined) return DEFAULT_PROFILES;
   try {
-    const list = (JSON.parse(raw) as Profile[]).filter((entry) => typeof entry.id === "string" && typeof entry.name === "string");
-    // The account's own profile is always there, first.
-    const main = list.find((entry) => entry.id === MAIN_PROFILE) ?? DEFAULT_PROFILES[0]!;
-    return [main, ...list.filter((entry) => entry.id !== MAIN_PROFILE)];
+    const old = db.prepare(`SELECT value FROM schema_meta WHERE key = ?`).get(OLD_LIST_KEY) as { value: string } | undefined;
+    if (old !== undefined) {
+      const known = new Set(listProfiles(db).map((profile) => profile.id));
+      (JSON.parse(old.value) as { id: string; name: string; colour: number; pin: string | null }[]).forEach((entry, index) => {
+        if (entry.id !== MAIN_PROFILE && !known.has(entry.id)) saveProfile(db, { id: entry.id, name: entry.name, colour: entry.colour, avatar: null, pin: entry.pin, position: index });
+        else if (entry.id === MAIN_PROFILE && (entry.name !== "Main" || entry.pin !== null)) saveProfile(db, { id: MAIN_PROFILE, name: entry.name, colour: entry.colour, avatar: null, pin: entry.pin, position: 0 });
+      });
+      db.prepare(`DELETE FROM schema_meta WHERE key = ?`).run(OLD_LIST_KEY);
+    }
   } catch {
-    return DEFAULT_PROFILES;
+    // An unreadable old list is dropped; Main is always there.
   }
-}
-
-export function writeProfiles(db: Database.Database, profiles: readonly Profile[]): void {
-  writeMeta(db, LIST_KEY, JSON.stringify(profiles));
+  return listProfiles(db);
 }
 
 /** The profile whose rows are in the tables now. */
 export function readActiveProfile(db: Database.Database): string {
-  return readMeta(db, ACTIVE_KEY) ?? MAIN_PROFILE;
+  try {
+    return (db.prepare(`SELECT value FROM schema_meta WHERE key = ?`).get(ACTIVE_KEY) as { value: string } | undefined)?.value ?? MAIN_PROFILE;
+  } catch {
+    return MAIN_PROFILE;
+  }
 }
 
 export function writeActiveProfile(db: Database.Database, id: string): void {
-  writeMeta(db, ACTIVE_KEY, id);
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(ACTIVE_KEY, id);
 }
 
-/** A new profile's id: not a name, which can change. */
+/** A new profile's id: not a name, which can change. Letters and digits only (it is part of the sync keys). */
 export const newProfileId = () => `p${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 
 /** The colour a new profile takes: the first one nobody has, else round again. */

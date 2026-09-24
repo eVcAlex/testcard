@@ -38,6 +38,7 @@ function maxUpdatedAt(body: SyncPushRequest): number {
     ...body.seriesFavourites,
     ...body.seriesRecents,
     ...body.progress,
+    ...body.profiles,
   ];
   // An empty push moves nothing, so it must not move the cursor either: 0 leaves the client's own
   // stored cursor as the greater value, which is what it keeps using.
@@ -81,6 +82,17 @@ export async function handlePush(c: AppContext): Promise<Response> {
            WHERE excluded.updated_at > playback_progress.updated_at`,
         )
         .bind(userId, p.remoteKey, p.itemType, p.positionSecs, p.durationSecs, p.watched ? 1 : 0, p.updatedAt, p.deletedAt),
+    ),
+    ...body.profiles.map((p) =>
+      db
+        .prepare(
+          `INSERT INTO profiles (user_id, remote_key, blob, iv, updated_at, deleted_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(user_id, remote_key) DO UPDATE SET
+             blob = excluded.blob, iv = excluded.iv, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at
+           WHERE excluded.updated_at > profiles.updated_at`,
+        )
+        .bind(userId, p.remoteKey, p.blob, p.iv, p.updatedAt, p.deletedAt),
     ),
   ];
 

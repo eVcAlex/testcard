@@ -24,9 +24,11 @@ plays back through an embedded `mpv`, stores everything locally.
   The look reaches the native player through a `captionStyle` prop added by `patches/expo-video@57.0.4.patch`.
   expo-video ships a precompiled Android library that would ignore the patch, so `apps/mobile/package.json` has
   autolinking build it from source (`buildFromSource`).
-- **Profile** — on the TV app, one person who watches: their own Continue watching, favourites, Home pins and
-  caption and audio settings. Only "Main", the account's own profile, syncs; the others stay on the TV. Their rows
-  are swapped in and out of the usual tables rather than keyed by profile. See `docs/adr/0011-tv-profiles.md`.
+- **Profile** — one person who watches, on the account (synced, encrypted), so it is on every TV. Each has their
+  own Continue watching, favourites, recents and progress (synced under `p.<id>.` keys; Main, the account's own
+  profile, keeps the plain keys the desktop app uses), and on each TV their own Home pins and caption and audio
+  settings. Rows are swapped in and out of the usual tables rather than keyed by profile. See
+  `docs/adr/0011-tv-profiles.md`.
 - **Player options row** — below the TV player's transport keys, reached with Down: Audio (the soundtrack, whose
   language is picked again on the next film), Picture (Fit, Fill or Stretch, kept per channel) and Speed (never kept).
 - **Credits offer** — the "Watch credits / Next episode" buttons at the end of an episode. Where credits start is
