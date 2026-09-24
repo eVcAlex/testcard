@@ -128,23 +128,35 @@ export function autoCaptionTrack(prefs: CaptionPrefs, tracks: readonly SubtitleT
   return matching.find((track) => !forcedOnly(track)) ?? matching[0] ?? null;
 }
 
-/** 0xAARRGGBB as the signed 32-bit integer the native side takes. */
-const argb = (alpha: number, red: number, green: number, blue: number) => (alpha << 24) | (red << 16) | (green << 8) | blue;
+/** How captions look, in the terms both the native player and the settings preview use. Colours are #RRGGBB or #RRGGBBAA. */
+export function captionLook(prefs: CaptionPrefs) {
+  return { textScale: TEXT_SCALE[prefs.size], color: TEXT_COLOR[prefs.color], background: BACKGROUND[prefs.background], edge: prefs.edge };
+}
+
+/** Media3 draws captions this share of the picture's height tall at scale 1 (SubtitleView.DEFAULT_TEXT_SIZE_FRACTION). */
+export const CAPTION_TEXT_FRACTION = 0.0533;
 
 const TEXT_SCALE: Record<CaptionPrefs["size"], number> = { small: 0.8, medium: 1, large: 1.3, huge: 1.65 };
-const TEXT_COLOR: Record<CaptionPrefs["color"], number> = { white: argb(255, 255, 255, 255), yellow: argb(255, 255, 225, 60), cream: argb(255, 231, 210, 173) };
-const BACKGROUND: Record<CaptionPrefs["background"], number> = { none: 0, shaded: argb(150, 0, 0, 0), solid: argb(255, 0, 0, 0) };
+const TEXT_COLOR: Record<CaptionPrefs["color"], string> = { white: "#ffffff", yellow: "#ffe13c", cream: "#e7d2ad" };
+const BACKGROUND: Record<CaptionPrefs["background"], string | null> = { none: null, shaded: "#00000096", solid: "#000000" };
 /** Media3's CaptionStyleCompat edge types. */
 const EDGE: Record<CaptionPrefs["edge"], number> = { none: 0, outline: 1, shadow: 2 };
 
+/** #RRGGBB or #RRGGBBAA as the signed 32-bit ARGB integer the native side takes. */
+function argb(hex: string): number {
+  const alpha = hex.length === 9 ? parseInt(hex.slice(7, 9), 16) : 255;
+  return (alpha << 24) | parseInt(hex.slice(1, 7), 16);
+}
+
 /** What the video view's `captionStyle` takes (Android; see patches/expo-video). */
 export function nativeCaptionStyle(prefs: CaptionPrefs) {
+  const look = captionLook(prefs);
   return {
-    textScale: TEXT_SCALE[prefs.size],
-    foregroundColor: TEXT_COLOR[prefs.color],
-    backgroundColor: BACKGROUND[prefs.background],
+    textScale: look.textScale,
+    foregroundColor: argb(look.color),
+    backgroundColor: look.background === null ? 0 : argb(look.background),
     windowColor: 0,
     edgeType: EDGE[prefs.edge],
-    edgeColor: argb(255, 0, 0, 0),
+    edgeColor: argb("#000000"),
   };
 }
