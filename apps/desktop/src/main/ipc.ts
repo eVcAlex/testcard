@@ -391,6 +391,13 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           refreshIntervalHours: number | null;
         }[];
 
+        // The server shown is the one connected to (the login's), which a provider move changes; `base_url` stays the
+        // address the source's history is matched by.
+        const servers = new Map(
+          await Promise.all(
+            rows.filter((row) => row.kind === "xtream").map(async (row) => [row.id, (await getCredentials(row.id).catch(() => undefined))?.baseUrl ?? row.baseUrl] as const),
+          ),
+        );
         return rows.map(
           (row): SourceListItem =>
             ({
@@ -401,7 +408,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
               content: { live: row.includeLive !== 0, movies: row.includeMovies !== 0, series: row.includeSeries !== 0 },
               ...(refreshingSourceIds.has(row.id) ? { refreshing: true } : {}),
               ...(refreshErrors.has(row.id) ? { refreshError: refreshErrors.get(row.id)! } : {}),
-              ...(row.kind === "xtream" ? { baseUrl: row.baseUrl! } : { playlistUrl: row.playlistUrl! }),
+              ...(row.kind === "xtream" ? { baseUrl: servers.get(row.id) ?? row.baseUrl! } : { playlistUrl: row.playlistUrl! }),
               ...(row.epgUrl !== null ? { epgUrl: row.epgUrl } : {}),
               ...(row.lastRefreshedAt !== null ? { lastRefreshedAt: row.lastRefreshedAt } : {}),
               ...(row.refreshIntervalHours !== null ? { refreshIntervalHours: row.refreshIntervalHours } : {}),
@@ -526,9 +533,15 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
             playlistUrl = verified.url;
           }
 
-          db.prepare(
-            `UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, refresh_interval_hours = ?, remote_key = ?, sync_updated_at = ? WHERE id = ?`,
-          ).run(name, playlistUrl, epg, interval, await remoteKeyForPlaylist(playlistUrl), Date.now(), sourceId);
+          // The source keeps its key on the account, so the other devices update it rather than add another.
+          db.prepare(`UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, refresh_interval_hours = ?, sync_updated_at = ? WHERE id = ?`).run(
+            name,
+            playlistUrl,
+            epg,
+            interval,
+            Date.now(),
+            sourceId,
+          );
 
           if (patch.content !== undefined) applyContentChange(sourceId, patch.content);
 
@@ -560,13 +573,12 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           await saveCredentials(sourceId, credentials);
         }
 
-        const remoteKey = await remoteKeyFor(credentials.baseUrl, "source");
-        db.prepare(`UPDATE sources SET name = ?, base_url = ?, epg_url = ?, refresh_interval_hours = ?, remote_key = ?, sync_updated_at = ? WHERE id = ?`).run(
+        // Only the login changes: the source keeps its identity (its key on the account and `base_url`, the address its
+        // history is matched by), so a provider that moved keeps its favourites and progress.
+        db.prepare(`UPDATE sources SET name = ?, epg_url = ?, refresh_interval_hours = ?, sync_updated_at = ? WHERE id = ?`).run(
           name,
-          credentials.baseUrl,
           epg,
           interval,
-          remoteKey,
           Date.now(),
           sourceId,
         );

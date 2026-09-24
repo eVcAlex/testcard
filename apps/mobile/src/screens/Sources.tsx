@@ -14,6 +14,7 @@ import { SourceForm } from "../ui/SourceForm";
 import { plainReason } from "../ui/plainReason";
 import { listHidden, unhide } from "@testcard/core/src/sync/hidden.js";
 import { describeAccount, useSourceAccount } from "../state/account";
+import { backupInUse } from "../state/hosts";
 
 /** "just now", "5 min ago", "3 hours ago", "2 days ago". */
 function ago(at: number): string {
@@ -89,6 +90,11 @@ function SourcesPane() {
                 </Text>
                 <Text style={styles.rowMeta}>{source.refreshing ? "Loading..." : counts(source.channels, source.movies, source.series)}</Text>
                 <AccountLine sourceId={source.id} kind={source.kind} />
+                {backupInUse(source.id) !== undefined ? (
+                  <Text style={[styles.rowMeta, styles.accountWarn]} numberOfLines={1}>
+                    {`Main server not answering. Using ${backupInUse(source.id)?.replace(/^https?:\/\//, "")}`}
+                  </Text>
+                ) : null}
               </View>
               <View style={styles.rowStatus}>
                 {source.refreshing ? (

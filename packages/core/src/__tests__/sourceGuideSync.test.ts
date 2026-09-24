@@ -49,6 +49,26 @@ describe("a source's guide address", () => {
   });
 });
 
+describe("a source's backup server addresses", () => {
+  it("ride in its sealed record with the login", async () => {
+    const db = seed();
+    db.prepare(`UPDATE sources SET backup_urls = ? WHERE id = 's1'`).run(JSON.stringify(["http://b1", "http://b2"]));
+    const push = await collectLocalChanges(db, 0, "pw", "salt", credentials);
+    const row = push.sources.find((source) => source.remoteKey === "key-s1")!;
+    expect(await decryptCredentials({ blob: row.credentialsBlob!, iv: row.credentialsIv! }, "pw", "salt")).toMatchObject({ host: "http://x", backupHosts: ["http://b1", "http://b2"] });
+  });
+});
+
+describe("a source whose provider moved", () => {
+  it("sends the server it connects to, and the address its history is matched by", async () => {
+    const db = seed();
+    const moved = async () => ({ baseUrl: "http://new-host", username: "u", password: "p" });
+    const push = await collectLocalChanges(db, 0, "pw", "salt", moved);
+    const row = push.sources.find((source) => source.remoteKey === "key-s1")!;
+    expect(await decryptCredentials({ blob: row.credentialsBlob!, iv: row.credentialsIv! }, "pw", "salt")).toMatchObject({ host: "http://new-host", keyHost: "http://x" });
+  });
+});
+
 describe("importEpg's horizon", () => {
   it("keeps only listings starting within it", async () => {
     const db = seed();

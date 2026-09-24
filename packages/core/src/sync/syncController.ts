@@ -343,8 +343,11 @@ export class SyncController {
           if ("playlistUrl" in payload) {
             this.db.prepare(`UPDATE sources SET name = ?, playlist_url = ?, sync_updated_at = ? WHERE id = ?`).run(label, payload.playlistUrl, updatedAt, existing.id);
           } else {
+            // The login (and so the server connected to) is taken; the address history is matched by stays, as a
+            // source keeps its history when its provider moves.
             await this.platform.saveCredentials(existing.id, { baseUrl: payload.host, username: payload.username, password: payload.password });
-            this.db.prepare(`UPDATE sources SET name = ?, base_url = ?, sync_updated_at = ? WHERE id = ?`).run(label, payload.host, updatedAt, existing.id);
+            this.db.prepare(`UPDATE sources SET name = ?, base_url = COALESCE(base_url, ?), sync_updated_at = ? WHERE id = ?`).run(label, payload.keyHost ?? payload.host, updatedAt, existing.id);
+            if (payload.backupHosts !== undefined) this.db.prepare(`UPDATE sources SET backup_urls = ? WHERE id = ?`).run(JSON.stringify(payload.backupHosts), existing.id);
           }
           if (payload.content !== undefined && applySourceContent(this.db, existing.id, payload.content)) addedSourceIds.push(existing.id);
           if (payload.position !== undefined) applySourcePosition(this.db, existing.id, payload.position);
@@ -363,7 +366,8 @@ export class SyncController {
           await this.platform.saveCredentials(id, { baseUrl: payload.host, username: payload.username, password: payload.password });
           this.db
             .prepare(`INSERT INTO sources (id, kind, name, base_url, created_at, remote_key, sync_updated_at) VALUES (?, 'xtream', ?, ?, ?, ?, ?)`)
-            .run(id, label, payload.host, Date.now(), remoteKey, updatedAt);
+            .run(id, label, payload.keyHost ?? payload.host, Date.now(), remoteKey, updatedAt);
+          if (payload.backupHosts !== undefined) this.db.prepare(`UPDATE sources SET backup_urls = ? WHERE id = ?`).run(JSON.stringify(payload.backupHosts), id);
         }
         // Taken with the source's own clock, so this device does not push it back as if it had just edited it.
         if (payload.content !== undefined) applySourceContent(this.db, id, payload.content);

@@ -15,6 +15,7 @@ import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/r
 import { listChannelFeeds, type ChannelFeed } from "@testcard/core/src/db/channelFeeds.js";
 import { useApp } from "../state/app";
 import { accountProblem, sourceOfPlay, xtreamSourceOf } from "../state/account";
+import { hasBackups, pickServer, unreachable } from "../state/hosts";
 import { plainReason, serverGone } from "../ui/plainReason";
 import { SourceForm } from "../ui/SourceForm";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
@@ -86,6 +87,23 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   const nextCopy = useCallback(() => setCopyAt((at) => at + 1), []);
   // Where the first copy was to start, so the next one picks up at the same place.
   const startedFrom = useRef<number | null>(null);
+  // A source's server that cannot be reached: once per play, its other addresses are tried (state/hosts.ts), and on
+  // one that answers the stream is asked for again. Null when there is nothing to try.
+  const serverTried = useRef(false);
+  const onServerDown = useCallback(
+    (raw: string): Promise<boolean> | null => {
+      const source = sourceOfPlay(db, playing.kind, playing.id);
+      if (serverTried.current || source === null || !unreachable(raw) || !hasBackups(db, source.id)) return null;
+      serverTried.current = true;
+      return pickServer(db, source.id)
+        .catch(() => false)
+        .then((changed) => {
+          if (changed) setAttempt((value) => value + 1);
+          return changed;
+        });
+    },
+    [db, playing],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -136,7 +154,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
   }
   return (
     <Playing
-      key={`${catchup === undefined ? "live" : catchup.serverStart}:${feedAt}:${copyAt}`}
+      key={`${catchup === undefined ? "live" : catchup.serverStart}:${feedAt}:${copyAt}:${attempt}`}
       item={playing}
       stream={stream}
       catchup={catchup}
@@ -147,6 +165,7 @@ export function PlayerScreen({ item, seriesId, resume, channels, onZap, onNextEp
       moreFeeds={item.kind === "movie" ? copyAt + 1 < copies.length : feedAt + 1 < feeds.length}
       onFailOver={item.kind === "movie" ? nextCopy : failOver}
       onResolveAgain={() => setAttempt((value) => value + 1)}
+      onServerDown={onServerDown}
       fellBack={item.kind === "movie" ? (copyAt > 0 ? copyLabel(db, playing.id) : undefined) : feedAt > 0 && feed !== undefined ? fellBackLabel(item.title, feed) : undefined}
       onExit={() => {
         sync.notifyLocalChange();
@@ -261,7 +280,7 @@ function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
   return guide.current === undefined ? past : [{ programme: guide.current, when: "Start over", time: hourMinute(guide.current.start) }, ...past];
 }
 
-function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, fellBack, onExit, onResolveAgain }: { onResolveAgain: () => void; onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; fellBack: string | undefined; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
+function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, fellBack, onExit, onResolveAgain, onServerDown }: { onResolveAgain: () => void; onServerDown: (raw: string) => Promise<boolean> | null; onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; fellBack: string | undefined; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db, sync, captions, setCaptions, audioLanguage, setAudioLanguage } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
@@ -309,6 +328,19 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     if (isPlaying) playingSince.current ??= Date.now();
   }, [isPlaying]);
   const failing = status === "error" && !timeshift && moreFeeds;
+  // With no other feed or copy left, a server that cannot be reached is tried on the source's other addresses.
+  const [otherServer, setOtherServer] = useState<"checking" | "none">();
+  const serverDownRef = useRef(onServerDown);
+  serverDownRef.current = onServerDown;
+  useEffect(() => {
+    if (status !== "error" || failing || otherServer !== undefined) return;
+    const trying = serverDownRef.current(error?.message ?? "");
+    if (trying === null) return;
+    setOtherServer("checking");
+    void trying.then((changed) => {
+      if (!changed) setOtherServer("none");
+    });
+  }, [status, failing, otherServer, error]);
   useEffect(() => {
     if (failing && (!vod || playingSince.current === undefined || Date.now() - playingSince.current < 8000)) onFailOver();
   }, [failing, onFailOver, vod]);
@@ -886,6 +918,14 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       <View style={styles.centre}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.muted}>Trying another feed...</Text>
+      </View>
+    );
+  }
+  if (otherServer === "checking") {
+    return (
+      <View style={styles.centre}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.muted}>{"The provider's server isn't answering. Trying its other addresses..."}</Text>
       </View>
     );
   }

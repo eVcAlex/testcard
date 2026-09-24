@@ -11,6 +11,7 @@ import { deleteCredentials, getCredentials, syncPlatform } from "../platform/sec
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
 import { readAudioLanguage, writeAudioLanguage } from "../playback/viewing";
 import { dropUnusedGuides, refreshGuides } from "../playback/guideImport";
+import { hasBackups, loadServersInUse, pickServer } from "./hosts";
 import { saveSource as saveStoredSource, type SourceDraft } from "./sourceEdit";
 import { forgetProfile, swapProfile } from "@testcard/core/src/db/profileSwap.js";
 import { deleteProfile as deleteStoredProfile, saveProfile as saveStoredProfile } from "@testcard/core/src/db/profiles.js";
@@ -84,6 +85,8 @@ const LAUNCH_SYNC_WAIT_MS = 10_000;
 const LAUNCH_SYNC_SHOW_MS = 700;
 /** How long after launch the TV guides are looked at. */
 const GUIDES_AFTER_LAUNCH_MS = 60_000;
+/** How long after launch sources with backup addresses are checked. */
+const SERVERS_AFTER_LAUNCH_MS = 10_000;
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
@@ -96,7 +99,10 @@ const adapters = () => ({
 /** Owns the database and the sync loop for the life of the app. */
 export function AppProvider({ children }: { children: ReactNode }) {
   const dbRef = useRef<Database.Database | undefined>(undefined);
-  dbRef.current ??= openAppDatabase();
+  if (dbRef.current === undefined) {
+    dbRef.current = openAppDatabase();
+    loadServersInUse(dbRef.current);
+  }
   const db = dbRef.current;
 
   const [version, setVersion] = useState(0);
@@ -149,6 +155,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setErrors((current) => ({ ...current, [sourceId]: [...(current[sourceId] ?? []), { part, message }] }));
       };
       try {
+        // A provider with more than one address: the one that answers is used for the import.
+        if (hasBackups(db, sourceId)) await pickServer(db, sourceId).catch(() => false);
         await importCatalogue(db, row, adapters(), {
           live: ({ phase }) => {
             if (phase === "done") stage(sourceId, wants.movies ? "movies" : wants.series ? "series" : "saving");
@@ -300,6 +308,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     catchUp(true);
     // The guides wait a minute after launch: the first minute is the viewer's (and the launch sync's).
+    // Sources with backup addresses: on the one that answers, and back on the main one once it does again.
+    const servers = setTimeout(() => {
+      const ids = (db.prepare(`SELECT id FROM sources WHERE backup_urls IS NOT NULL AND backup_urls <> '[]'`).all() as { id: string }[]).map((row) => row.id);
+      void ids.reduce((chain, id) => chain.then(() => pickServer(db, id).then(() => undefined, () => undefined)), Promise.resolve()).then(bump);
+    }, SERVERS_AFTER_LAUNCH_MS);
     const guides = setTimeout(() => {
       if (!importing()) void dropUnusedGuides(db).catch(() => undefined);
       refreshGuides(db, adapters(), bump, [], importing);
@@ -310,6 +323,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       refreshGuides(db, adapters(), bump, [], importing);
     });
     return () => {
+      clearTimeout(servers);
       clearTimeout(guides);
       subscription.remove();
     };
