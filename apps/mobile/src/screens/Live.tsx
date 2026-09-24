@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { displayName } from "@testcard/core/src/normalise/displayName.js";
 import { browseChannels, listCategories, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite, type ChannelRow } from "@testcard/core/src/db/queries.js";
 import { fetchGuide } from "../playback/airing";
+import { timed } from "../platform/perf";
 import { useApp } from "../state/app";
 import { memoByVersion } from "../state/memoByVersion";
 import { styleSheet } from "../theme";
@@ -78,7 +79,7 @@ export function LiveScreen({
     const timer = setTimeout(() => setReady(true), 30);
     return () => clearTimeout(timer);
   }, []);
-  const rows = useMemo<HomeRow[]>(() => {
+  const rows = useMemo<HomeRow[]>(() => timed("live rows", () => {
     void tick;
     if (!ready) return [];
     const categories = channelCategories(db, catalogue, sourceId ?? undefined);
@@ -94,7 +95,7 @@ export function LiveScreen({
       if (channels.length > 0) list.push({ key: category.id, label: category.label, items: channels.map(toHomeItem), channels: true });
     }
     return list;
-  }, [db, version, catalogue, sourceId, tick, own, ready]);
+  }), [db, version, catalogue, sourceId, tick, own, ready]);
 
   const fetchDetail = useCallback(
     async (id: string) => {

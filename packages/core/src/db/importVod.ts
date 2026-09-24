@@ -1,4 +1,4 @@
-import { applyInSlices } from "./applyInSlices.js";
+import { applyInSlices, yieldToEventLoop } from "./applyInSlices.js";
 import { categoryClassificationParams } from "./categoryClassification.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
@@ -69,7 +69,7 @@ export async function importVod(
   for (const page of pages) {
     const keys = await Promise.all(page.movies.map((item) => remoteKeyFor(providerHost, item.providerStreamId)));
     page.movies.forEach((item, index) => remoteKeys.set(item.id, keys[index]!));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await yieldToEventLoop();
   }
 
   let movieCount = 0;

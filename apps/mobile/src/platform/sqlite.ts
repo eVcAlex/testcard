@@ -128,6 +128,13 @@ class Adapter {
 export function openAppDatabase(name = "testcard.db"): Database.Database {
   const native = openDatabaseSync(name);
   native.execSync("PRAGMA journal_mode = WAL");
+  // With WAL, NORMAL only risks the last commits on a power cut (never corruption), and saves a flush to storage on
+  // every commit: imports, sync and the saved playback position all commit often.
+  native.execSync("PRAGMA synchronous = NORMAL");
+  // Sorts and temporary indexes in memory, and about 16 MB of pages cached instead of 2, so the landing rows and
+  // category counts read from memory after the first time.
+  native.execSync("PRAGMA temp_store = MEMORY");
+  native.execSync("PRAGMA cache_size = -16000");
   native.execSync("PRAGMA foreign_keys = ON");
   return migrateDatabase(new Adapter(native) as unknown as Database.Database);
 }

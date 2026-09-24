@@ -226,6 +226,60 @@ export function getUpNextEpisode(db: Database.Database, seriesId: string): UpNex
   return { episode: upNext.episode, season: upNext.season, resume };
 }
 
+/** Where a series carries on from, in brief: enough to label a poster, not to play it. */
+export interface UpNextSummary {
+  readonly seasonNumber: number;
+  readonly episodeNumber: number;
+  readonly positionSecs: number | null;
+  readonly durationSecs: number | null;
+  readonly resume: boolean;
+}
+
+/**
+ * `getUpNextEpisode` for many series in one read, for the rows that label every poster with its next episode:
+ * one query in place of a query per season of every show on the row.
+ */
+export function getUpNextEpisodes(db: Database.Database, seriesIds: readonly string[]): Map<string, UpNextSummary> {
+  const out = new Map<string, UpNextSummary>();
+  type Row = { seriesId: string; seasonNumber: number; episodeNumber: number; positionSecs: number | null; durationSecs: number | null; watched: 0 | 1 };
+  for (let at = 0; at < seriesIds.length; at += 500) {
+    const ids = seriesIds.slice(at, at + 500);
+    const rows = db
+      .prepare(
+        `SELECT e.series_id AS seriesId, s.season_number AS seasonNumber, e.episode_number AS episodeNumber,
+                pp.position_secs AS positionSecs, COALESCE(e.duration_secs, pp.duration_secs) AS durationSecs, COALESCE(pp.watched, 0) AS watched
+         FROM episodes e
+         JOIN seasons s ON s.id = e.season_id
+         LEFT JOIN playback_progress pp ON pp.item_type = 'episode' AND pp.item_id = e.id
+         WHERE e.series_id IN (${ids.map(() => "?").join(",")})
+         ORDER BY e.series_id, s.season_number, e.episode_number`,
+      )
+      .all(...ids) as Row[];
+    const bySeries = new Map<string, Row[]>();
+    for (const row of rows) {
+      const list = bySeries.get(row.seriesId);
+      if (list === undefined) bySeries.set(row.seriesId, [row]);
+      else list.push(row);
+    }
+    for (const [seriesId, all] of bySeries) {
+      // The same choice as getUpNextEpisode.
+      const pick =
+        all.find((row) => row.positionSecs !== null && row.watched !== 1 && shouldPromptResume(row.positionSecs, row.durationSecs)) ??
+        all.find((row) => row.watched !== 1) ??
+        all[0];
+      if (pick === undefined) continue;
+      out.set(seriesId, {
+        seasonNumber: pick.seasonNumber,
+        episodeNumber: pick.episodeNumber,
+        positionSecs: pick.positionSecs,
+        durationSecs: pick.durationSecs,
+        resume: pick.positionSecs !== null && shouldPromptResume(pick.positionSecs, pick.durationSecs),
+      });
+    }
+  }
+  return out;
+}
+
 /** Resolves a series id to its source, for the `series.episodes` IPC handler's lazy-fetch gate. */
 export function getSeriesSource(db: Database.Database, seriesId: string): Source | undefined {
   const row = db

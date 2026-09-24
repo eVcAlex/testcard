@@ -7,6 +7,7 @@ import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
 import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "./src/state/app";
+import { useImportPacing } from "./src/platform/pacing";
 import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
 import { colors, styleSheet, uiScale } from "./src/theme";
 import { focusedNow, lastFocused } from "./src/ui/Focusable";
@@ -71,6 +72,7 @@ export default function App() {
 }
 
 function Root() {
+  useImportPacing();
   const { status, sources, db, setup, syncing } = useApp();
   const { available } = useUpdate();
   const [section, setSection] = useState<Section>("home");

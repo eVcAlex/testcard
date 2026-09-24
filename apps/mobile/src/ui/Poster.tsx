@@ -1,6 +1,7 @@
 import { createContext, memo, useContext } from "react";
 import { FlatList, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { sized } from "./imageSize";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, space, type, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
@@ -51,7 +52,7 @@ export const PosterCard = memo(function PosterCard({
         <>
       <View style={[styles.art, focused && styles.artFocused]}>
         {item.posterUrl !== null && item.posterUrl !== "" ? (
-          <Image source={{ uri: item.posterUrl }} style={styles.image} contentFit="cover" cachePolicy="memory-disk" recyclingKey={item.id} />
+          <Image source={{ uri: sized(item.posterUrl, "card") }} style={styles.image} contentFit="cover" cachePolicy="memory-disk" recyclingKey={item.id} />
         ) : (
           <Text style={styles.fallback} numberOfLines={4}>
             {title}

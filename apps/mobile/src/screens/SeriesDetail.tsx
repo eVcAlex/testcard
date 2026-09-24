@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, BackHandler, Easing, FlatList, Text, TVFocusGuideView, useTVEventHandler, View } from "react-native";
 import { Image } from "expo-image";
+import { sized } from "../ui/imageSize";
 import { Check, Movie } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { getSeriesDetail, getSeriesSource, getUpNextEpisode, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
@@ -60,7 +61,7 @@ function EpisodeArt({ episodeId, still, fallbacks }: { episodeId: string; still:
   return (
     <>
       <Image
-        source={{ uri }}
+        source={{ uri: sized(uri, "card") }}
         style={styles.thumbImage}
         contentFit="cover"
         cachePolicy="memory-disk"
@@ -263,7 +264,7 @@ export function SeriesDetailScreen({
       </View>
       <View style={styles.head}>
         <View style={styles.poster}>
-          {series?.poster_url !== null && series?.poster_url !== undefined && series?.poster_url !== "" ? <Image source={{ uri: series.poster_url }} style={styles.posterImage} contentFit="cover" cachePolicy="memory-disk" /> : null}
+          {series?.poster_url !== null && series?.poster_url !== undefined && series?.poster_url !== "" ? <Image source={{ uri: sized(series.poster_url, "large") }} style={styles.posterImage} contentFit="cover" cachePolicy="memory-disk" /> : null}
         </View>
         <View style={styles.info}>
           <Text style={styles.title} numberOfLines={2}>

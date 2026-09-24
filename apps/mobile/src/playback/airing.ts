@@ -62,7 +62,8 @@ export function fetchGuide(db: Database.Database, channelId: string): Promise<Ch
 
 /**
  * The short guide is tried first; some providers only list what is coming up there, so the full table (the one
- * catch-up reads) fills in the rest.
+ * catch-up reads) fills in the rest. That table can run to days of listings, parsed on the UI's thread, so it is
+ * only read for a channel that keeps past programmes (the providers that fill it); for others it is empty anyway.
  */
 async function readGuide(db: Database.Database, channelId: string): Promise<ChannelGuide | null> {
   const target = getPlaybackTarget(db, channelId);
@@ -79,7 +80,7 @@ async function readGuide(db: Database.Database, channelId: string): Promise<Chan
   if (current !== undefined) now = { title: current.title, start: current.start.getTime(), end: current.end.getTime() };
   if (upcoming !== undefined) next = { title: upcoming.title, start: upcoming.start.getTime(), end: upcoming.end.getTime() };
 
-  if (now === null) {
+  if (now === null && keepsPast(db, channelId)) {
     const table = await fetchCatchupProgrammes(target.source, streamId, getCredentials).catch(() => []);
     const running = table.find((entry) => cover(entry.start, entry.end));
     if (running !== undefined) now = { title: running.title, start: running.start.getTime(), end: running.end.getTime() };
@@ -89,6 +90,11 @@ async function readGuide(db: Database.Database, channelId: string): Promise<Chan
     }
   }
   return now === null && next === null ? null : { now, next };
+}
+
+function keepsPast(db: Database.Database, channelId: string): boolean {
+  const row = db.prepare(`SELECT catchup_days AS days FROM channels WHERE id = ?`).get(channelId) as { days: number | null } | undefined;
+  return (row?.days ?? 0) > 0;
 }
 
 /** How many programmes the guide grid asks the provider for per channel: enough for most of a day. */

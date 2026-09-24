@@ -1,6 +1,7 @@
 import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Pressable, Text, TVFocusGuideView, useTVEventHandler, View, type CellRendererProps, type ViewProps } from "react-native";
 import { Image } from "expo-image";
+import { sized } from "../ui/imageSize";
 import { ChannelLogo } from "../ui/ChannelLogo";
 import { NavArrowRight } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
@@ -371,7 +372,7 @@ function Hero({ shown, plot, durationSecs, guide }: { shown: { item: HomeItem; r
         </View>
       ) : art !== null && art !== "" ? (
         <View style={styles.art} pointerEvents="none">
-          <Image source={{ uri: art }} style={styles.artImage} contentFit="cover" cachePolicy="memory-disk" transition={300} />
+          <Image source={{ uri: sized(art, "large") }} style={styles.artImage} contentFit="cover" cachePolicy="memory-disk" transition={300} />
           <Fade from="left" />
           {/* The picture dissolves into the page at its own foot: cut off square above the hero's fade, it left a
               hard line and a dark strip before the rows. */}

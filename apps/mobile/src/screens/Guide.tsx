@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Text, TVFocusGuideView, useTVEventHandler, View, type LayoutChangeEvent } from "react-native";
 import { browseChannels, listFavouriteChannels, listRecentChannels, type ChannelRow } from "@testcard/core/src/db/queries.js";
 import { fetchListings, knownListings, type Airing } from "../playback/airing";
+import { timed } from "../platform/perf";
 import { useApp } from "../state/app";
 import { colors, styleSheet, uiScale } from "../theme";
 import { ChannelLogo } from "../ui/ChannelLogo";
@@ -100,13 +101,13 @@ export function GuideScreen({
   }, [db, version, catalogue, sourceId, own]);
   const [listId, setListId] = useState<string | null>(null);
   const shownList = listId !== null && lists.some((list) => list.id === listId) ? listId : (lists[0]?.id ?? "all");
-  const channels = useMemo(() => {
+  const channels = useMemo(() => timed("guide channels", () => {
     const scope = sourceId !== null ? { sourceId } : {};
     if (shownList === "favourites") return listFavouriteChannels(db).filter(own);
     if (shownList === "recent") return listRecentChannels(db, 60).filter(own);
     if (shownList === "all") return browseChannels(db, { limit: ALL_CHANNELS_MOST, ...scope });
     return browseChannels(db, { categoryId: shownList, limit: ALL_CHANNELS_MOST, ...scope });
-  }, [db, version, shownList, sourceId, own]);
+  }), [db, version, shownList, sourceId, own]);
 
   // The clock moves the now line and, once the window's first slot is over, the window itself.
   const [now, setNow] = useState(() => Date.now());
