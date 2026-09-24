@@ -14,9 +14,11 @@ release assets without a token, and a token must never ship inside the app.
 1. **A public, read-only release bucket.** Cloudflare R2 bucket `testcard-releases`, served by the
    existing sync worker at `/app/<file>` (`routes/release.ts`, allow-listed file types, no session).
    It holds build output only: `latest.json` and the APKs.
-2. **Publishing is one command**, `pnpm release:android`, which takes the newest successful "Android
-   APK" run and uploads it with the developer's own wrangler login. No Cloudflare token lives in
-   GitHub. Automating it means adding a scoped token as a repo secret; nothing else changes.
+2. **Publishing is automatic from main.** A Fire TV build of main uploads itself at the end of the
+   "Android APK" workflow, using the repo secrets `CLOUDFLARE_API_TOKEN` (Workers, D1 and R2 edit)
+   and `CLOUDFLARE_ACCOUNT_ID`. `pnpm release:android [run-id]` still publishes any run by hand,
+   with the developer's own wrangler login. The "Sync worker" workflow likewise applies D1
+   migrations and deploys the worker when main changes it.
 3. **The manifest** is `{versionCode, versionName, apks: {firetv, phone}}`. CI stamps every build
    with `versionCode = github.run_number`, because Android only installs a strictly higher one.
 4. **On the device**, `apps/mobile/src/update`: check at launch, show "Sources (update)" in the
