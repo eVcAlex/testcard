@@ -18,6 +18,7 @@ import { Focusable, lastFocused } from "../ui/Focusable";
 import { OptionsSheet } from "../ui/OptionsSheet";
 import { Pill } from "../ui/Pill";
 import { episodeTitle, seriesTitle } from "../ui/titles";
+import { plainReason } from "../ui/plainReason";
 
 /** The focus ring every card carries (Focusable's border, rounded to whole dp as styleSheet does), outside its thumbnail: the grid has to leave room for it. */
 const CARD_RING = 3;
@@ -167,7 +168,7 @@ export function SeriesDetailScreen({
       const source = getSeriesSource(db, seriesId);
       if (source?.kind === "xtream") await ensureSeriesEpisodes(db, source, seriesId, getCredentials);
     })()
-      .catch((failure: unknown) => !cancelled && setError(failure instanceof Error ? failure.message : "The episodes could not be loaded."))
+      .catch((failure: unknown) => !cancelled && setError(`The episodes didn't load. ${plainReason(failure instanceof Error ? failure.message : "")}`.trim()))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;

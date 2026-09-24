@@ -43,7 +43,7 @@ export function browseSeries(
 ): SeriesRow[] {
   const limit = opts.limit ?? 300;
   const offset = opts.offset ?? 0;
-  const clauses: string[] = [titleShown("sr", "series")];
+  const clauses: string[] = [titleShown(db, "sr", "series")];
   const filters: unknown[] = [];
   if (opts.categoryId !== undefined) {
     clauses.push("sr.category_id = ?");
@@ -81,7 +81,7 @@ export function listSeriesCategories(db: Database.Database, sourceId?: string): 
       `SELECT cat.id, cat.raw_name AS name, cat.country, cat.genre, cat.language, cat.service, cat.tags, COUNT(sr.id) AS series_count
        FROM series_categories cat
        JOIN series sr ON sr.category_id = cat.id
-       WHERE ${categoryShown("cat", "series")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
+       WHERE ${categoryShown(db, "cat", "series")}${sourceId !== undefined ? " AND cat.source_id = ?" : ""}
        GROUP BY cat.id
        ORDER BY cat.rowid`,
     )

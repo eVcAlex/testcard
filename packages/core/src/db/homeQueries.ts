@@ -56,7 +56,7 @@ function build<T extends { readonly id: string; readonly name: string }>(db: Dat
     `${a}.poster_url IS NOT NULL AND ${a}.poster_url != ''`,
     `(' ' || c.tags || ' ') NOT LIKE '% adult %' AND (' ' || c.tags || ' ') NOT LIKE '% junk %' AND (' ' || c.tags || ' ') NOT LIKE '% separator %'`,
     ...AVOID_NAMES.map((word) => `lower(c.raw_name) NOT LIKE '%${word}%'`),
-    categoryShown("c", kind.table === "movies" ? "movies" : "series"),
+    categoryShown(db, "c", kind.table === "movies" ? "movies" : "series"),
     ...(opts.language !== undefined ? [`(c.language IS NULL OR c.language = 'multi' OR c.language = @language)`] : []),
     ...(opts.sourceId !== undefined ? [`${a}.source_id = @source`] : []),
   ];

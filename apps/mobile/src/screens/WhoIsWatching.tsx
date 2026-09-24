@@ -21,7 +21,7 @@ const MAX_PROFILES = 6;
 export function WhoIsWatching({ onDone, onCancel }: { onDone: () => void; onCancel?: (() => void) | undefined }) {
   const { profiles, profile: current, switchProfile } = useApp();
   const [asking, setAsking] = useState<Profile>();
-  const [switching, setSwitching] = useState(false);
+  const [switching, setSwitching] = useState<Profile>();
   // Adding or changing profiles from here, before anyone is chosen: "add" opens straight on a new one's name.
   const [managing, setManaging] = useState<"add" | "edit">();
 
@@ -43,8 +43,8 @@ export function WhoIsWatching({ onDone, onCancel }: { onDone: () => void; onCanc
   }, [asking, onCancel, managing]);
 
   const open = (profile: Profile) => {
-    if (switching) return;
-    setSwitching(true);
+    if (switching !== undefined) return;
+    setSwitching(profile);
     void switchProfile(profile.id).finally(onDone);
   };
   const pick = (profile: Profile) => {
@@ -86,7 +86,11 @@ export function WhoIsWatching({ onDone, onCancel }: { onDone: () => void; onCanc
           </Focusable>
         ) : null}
       </TVFocusGuideView>
-      <Button label="Manage profiles" onPress={() => setManaging("edit")} />
+      {switching !== undefined ? (
+        <Text style={styles.switching}>{`Switching to ${switching.name}...`}</Text>
+      ) : (
+        <Button label="Manage profiles" onPress={() => setManaging("edit")} />
+      )}
       {managing !== undefined ? (
         <View style={styles.manage}>
           <View style={styles.manageBody}>
@@ -125,5 +129,6 @@ const styles = styleSheet({
   addDisc: { width: 176, height: 176, borderRadius: 88, borderWidth: 3, borderColor: colors.border, borderStyle: "dashed", alignItems: "center", justifyContent: "center" },
   manage: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, zIndex: 36, backgroundColor: colors.background, paddingHorizontal: 120, paddingTop: 60 },
   manageBody: { flex: 1 },
+  switching: { color: colors.muted, fontSize: 26, height: 72, textAlignVertical: "center" },
   manageFoot: { flexDirection: "row", justifyContent: "flex-end", paddingVertical: 32 },
 });

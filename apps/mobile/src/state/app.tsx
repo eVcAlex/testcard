@@ -10,7 +10,7 @@ import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
 import { readAudioLanguage, writeAudioLanguage } from "../playback/viewing";
-import { refreshGuides } from "../playback/guideImport";
+import { dropUnusedGuides, refreshGuides } from "../playback/guideImport";
 import { saveSource as saveStoredSource, type SourceDraft } from "./sourceEdit";
 import { forgetProfile, swapProfile } from "@testcard/core/src/db/profileSwap.js";
 import { deleteProfile as deleteStoredProfile, saveProfile as saveStoredProfile } from "@testcard/core/src/db/profiles.js";
@@ -300,7 +300,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     catchUp(true);
     // The guides wait a minute after launch: the first minute is the viewer's (and the launch sync's).
-    const guides = setTimeout(() => refreshGuides(db, adapters(), bump, [], importing), GUIDES_AFTER_LAUNCH_MS);
+    const guides = setTimeout(() => {
+      if (!importing()) void dropUnusedGuides(db).catch(() => undefined);
+      refreshGuides(db, adapters(), bump, [], importing);
+    }, GUIDES_AFTER_LAUNCH_MS);
     const subscription = AppLifecycle.addEventListener("change", (state) => {
       if (state !== "active") return;
       catchUp(false);
@@ -386,7 +389,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const from = readActiveProfile(db);
       if (from === id) return;
       // What the one leaving did is pushed first (briefly: a slow network only delays it to their next turn).
-      await Promise.race([sync.triggerNow().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 6000))]);
+      await Promise.race([sync.triggerNow().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 3000))]);
       // Nothing may sync mid-swap.
       await sync.setPaused(true);
       swapProfile(db, from, id, PROFILE_META_KEYS);

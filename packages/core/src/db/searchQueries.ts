@@ -49,7 +49,7 @@ export function searchAll(db: Database.Database, query: string, opts: SearchOpti
     .prepare(
       `SELECT ${MOVIE_COLUMNS}
        FROM movies_fts JOIN movies m ON m.rowid = movies_fts.rowid JOIN movie_categories c ON c.id = m.category_id
-       WHERE movies_fts MATCH @match AND ${visible("c")} AND ${categoryShown("c", "movies")}${scope("m")}
+       WHERE movies_fts MATCH @match AND ${visible("c")} AND ${categoryShown(db, "c", "movies")}${scope("m")}
        ORDER BY (m.poster_url IS NULL OR m.poster_url = ''), rank LIMIT ${spare}`,
     )
     .all(params) as MovieRow[];
@@ -57,7 +57,7 @@ export function searchAll(db: Database.Database, query: string, opts: SearchOpti
     .prepare(
       `SELECT ${SERIES_COLUMNS}
        FROM series_fts JOIN series sr ON sr.rowid = series_fts.rowid JOIN series_categories c ON c.id = sr.category_id
-       WHERE series_fts MATCH @match AND ${visible("c")} AND ${categoryShown("c", "series")}${scope("sr")}
+       WHERE series_fts MATCH @match AND ${visible("c")} AND ${categoryShown(db, "c", "series")}${scope("sr")}
        ORDER BY (sr.poster_url IS NULL OR sr.poster_url = ''), rank LIMIT ${spare}`,
     )
     .all(params) as SeriesRow[];
@@ -65,7 +65,7 @@ export function searchAll(db: Database.Database, query: string, opts: SearchOpti
     .prepare(
       `SELECT ${CHANNEL_COLUMNS}
        FROM channels_fts JOIN channels c ON c.rowid = channels_fts.rowid JOIN categories cat ON cat.id = c.category_id
-       WHERE channels_fts MATCH @match AND ${visible("cat")} AND ${channelShown("c")}${scope("c")}
+       WHERE channels_fts MATCH @match AND ${visible("cat")} AND ${channelShown(db, "c")}${scope("c")}
        ORDER BY rank LIMIT ${spare}`,
     )
     .all(params) as ChannelRow[];
