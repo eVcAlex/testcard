@@ -1,10 +1,13 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Text, TVFocusGuideView, View, type CellRendererProps, type ViewProps } from "react-native";
+import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { FlatList, Pressable, Text, TVFocusGuideView, View, type CellRendererProps, type ViewProps } from "react-native";
 import { Image } from "expo-image";
+import { NavArrowRight } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, styleSheet, uiScale } from "../theme";
 import { DetailActions, Facts, type DetailAction } from "../ui/DetailActions";
+import { BackToTop } from "../ui/backToTop";
 import { Fade } from "../ui/Fade";
+import { useFocusTracking } from "../ui/Focusable";
 import { ChannelShelf } from "../ui/ChannelCard";
 import { PosterCard, PosterRow, type PosterItem } from "../ui/Poster";
 
@@ -71,8 +74,11 @@ export function HomeScreen({
   onSelect,
   heroActions,
   fetchDetail,
+  browseAll,
 }: {
   rows: readonly HomeRow[];
+  /** Movies, Series and Live TV: an "All categories" button above the rows opens the full category list. */
+  browseAll?: (() => void) | undefined;
   onSelect: (item: PosterItem) => void;
   /** `rowKey` is the row the remote is on, since the same title can sit in more than one. */
   heroActions: (item: HomeItem, rowKey: string) => HeroActions;
@@ -158,6 +164,22 @@ export function HomeScreen({
   rowIndexRef.current = rowIndex;
   const [scrolled, setScrolled] = useState(false);
 
+  // Back to the nav bar (see BackToTop): the rows go back to the top and the hero to the first title. The rows are
+  // redrawn (a new key) as well as scrolled, or the focus guide would still send Down to the poster the viewer left.
+  const backToTop = useContext(BackToTop);
+  const listRef = useRef<FlatList<HomeRow>>(null);
+  const [listKey, setListKey] = useState(0);
+  const moved = useRef(false);
+  useEffect(() => {
+    if (backToTop === 0 || !moved.current) return;
+    moved.current = false;
+    clearTimeout(timer.current);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    setScrolled(false);
+    setFocusedId(undefined);
+    setListKey((key) => key + 1);
+  }, [backToTop]);
+
   // One focus handler per row, made once and reused: a fresh one on every render would defeat the rows' memo, so a
   // hero change (or anything else that re-renders this screen) would redraw every card on screen.
   const focusHandlers = useRef(new Map<string, (item: PosterItem) => void>());
@@ -166,6 +188,7 @@ export function HomeScreen({
       let handler = focusHandlers.current.get(rowKey);
       if (handler === undefined) {
         handler = (item: PosterItem) => {
+          moved.current = true;
           setScrolled((rowIndexRef.current.get(rowKey) ?? 0) > 0);
           onFocusItem(item, rowKey);
         };
@@ -198,7 +221,7 @@ export function HomeScreen({
         durationSecs={shown !== undefined ? (shown.item.durationSecs ?? details.get(shown.item.id)?.durationSecs ?? null) : null}
         actions={actions}
       />
-      <TVFocusGuideView autoFocus style={styles.rows}>
+      <TVFocusGuideView key={listKey} autoFocus style={styles.rows}>
         {/* Solid, with only its lower edge fading: the strip above the focused row holds the bottom of the row
             before it, and a see-through scrim left that row's titles floating there with no posters. */}
         {scrolled ? (
@@ -210,7 +233,9 @@ export function HomeScreen({
           </View>
         ) : null}
         <FlatList
+          ref={listRef}
           data={rows}
+          ListHeaderComponent={browseAll !== undefined ? <BrowseAllButton onPress={browseAll} /> : null}
           keyExtractor={(row) => row.key}
           renderItem={renderRow}
           CellRendererComponent={Cell}
@@ -231,6 +256,34 @@ export function HomeScreen({
     </View>
   );
 }
+
+/** The way into every category, above the rows: a quiet pill until the remote is on it. */
+const BrowseAllButton = memo(function BrowseAllButton({ onPress }: { onPress: () => void }) {
+  const [focused, setFocused] = useState(false);
+  const tracking = useFocusTracking();
+  const ink = focused ? colors.background : colors.muted;
+  return (
+    <View style={styles.browseAllRow}>
+      <Pressable
+        ref={tracking.ref}
+        focusable
+        onPress={onPress}
+        onFocus={() => {
+          tracking.focused();
+          setFocused(true);
+        }}
+        onBlur={() => {
+          setFocused(false);
+          tracking.blurred();
+        }}
+        style={[styles.browseAll, focused && styles.browseAllFocused]}
+      >
+        <Text style={[styles.browseAllLabel, { color: ink }]}>All categories</Text>
+        <NavArrowRight color={ink} width={Math.round(26 * uiScale)} height={Math.round(26 * uiScale)} strokeWidth={2} />
+      </Pressable>
+    </View>
+  );
+});
 
 function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem; row: string } | undefined; plot: string | null; durationSecs: number | null; actions: HeroActions | undefined }) {
   // A title that wraps to a second line takes the plot's second line, so the buttons always stay inside the hero
@@ -347,6 +400,10 @@ const styles = styleSheet({
   rowsFadeEdge: { height: 16 },
   rowsBottomFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 72, zIndex: 1 },
   list: { paddingTop: 20, paddingBottom: 100 },
+  browseAllRow: { flexDirection: "row", paddingBottom: 12 },
+  browseAll: { height: 52, flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 24, paddingRight: 16, borderRadius: 26, borderWidth: 2, borderColor: colors.border },
+  browseAllFocused: { backgroundColor: colors.foreground, borderColor: colors.foreground },
+  browseAllLabel: { fontSize: 22, fontWeight: "500" },
   ranked: { gap: 16, marginBottom: 24 },
   rankedTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600", letterSpacing: -0.3, paddingLeft: 8 },
   rankedList: { gap: 4, paddingVertical: 8, paddingHorizontal: 8 },

@@ -285,11 +285,12 @@ export function seriesPrimaryAction(
   };
 }
 
-/** Movies: a landing page of rows (continue watching, my list, top rated, recently added, genres). `browsing` (the nav bar's Browse all) shows every category instead. */
+/** Movies: a landing page of rows (continue watching, my list, top rated, recently added, genres). `browsing` (its All categories button) shows every category instead. */
 export function MoviesScreen({
   sourceId,
   active = true,
   browsing,
+  onBrowse,
   onBrowseDone,
   onOpen,
   onPlay,
@@ -297,6 +298,8 @@ export function MoviesScreen({
   sourceId: string | null;
   active?: boolean;
   browsing: boolean;
+  /** Opens every category in place of the landing rows. */
+  onBrowse: () => void;
   onBrowseDone: () => void;
   onOpen: (movie: { id: string; title: string }) => void;
   onPlay: (movie: { id: string; title: string }, resume: boolean) => void;
@@ -354,7 +357,7 @@ export function MoviesScreen({
 
   if (browsing || (rows !== null && rows.length === 0)) return <Padded><MoviesBrowse sourceId={sourceId} onOpen={onOpen} /></Padded>;
   if (rows === null) return <Loading noun="movies" />;
-  return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={(item) => onOpen({ id: item.id, title: item.name })} />;
+  return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={(item) => onOpen({ id: item.id, title: item.name })} browseAll={onBrowse} />;
 }
 
 /** Series: the same landing page, with recently watched in place of continue watching. */
@@ -362,6 +365,7 @@ export function SeriesScreen({
   sourceId,
   active = true,
   browsing,
+  onBrowse,
   onBrowseDone,
   onOpen,
   onPlayEpisode,
@@ -369,6 +373,8 @@ export function SeriesScreen({
   sourceId: string | null;
   active?: boolean;
   browsing: boolean;
+  /** Opens every category in place of the landing rows. */
+  onBrowse: () => void;
   onBrowseDone: () => void;
   onOpen: (series: { id: string; title: string }) => void;
   onPlayEpisode: (episodeId: string, title: string, resume: boolean, seriesId: string) => void;
@@ -428,7 +434,7 @@ export function SeriesScreen({
 
   if (browsing || (rows !== null && rows.length === 0)) return <Padded><SeriesBrowse sourceId={sourceId} onOpen={onOpen} /></Padded>;
   if (rows === null) return <Loading noun="series" />;
-  return <HomeScreen rows={rows} heroActions={heroActions} onSelect={(item) => onOpen({ id: item.id, title: item.name })} />;
+  return <HomeScreen rows={rows} heroActions={heroActions} onSelect={(item) => onOpen({ id: item.id, title: item.name })} browseAll={onBrowse} />;
 }
 
 /** The category browser and empty states sit under the nav bar, which floats over the landing page's art. */

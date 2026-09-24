@@ -52,12 +52,15 @@ export function LiveScreen({
   sourceId,
   active = true,
   browsing,
+  onBrowse,
   onBrowseDone,
   onPlay,
 }: {
   sourceId: string | null;
   active?: boolean;
   browsing: boolean;
+  /** Opens every category in place of the landing rows. */
+  onBrowse: () => void;
   onBrowseDone: () => void;
   onPlay: (channel: { id: string; title: string }, channels: readonly { id: string; title: string }[]) => void;
 }) {
@@ -150,7 +153,7 @@ export function LiveScreen({
 
   if (!ready && !browsing) return <Loading noun="channels" />;
   if (browsing || rows.length === 0) return <Browsing sourceId={sourceId} own={own} onPlay={onPlay} />;
-  return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={play} />;
+  return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={play} browseAll={onBrowse} />;
 }
 
 /** Every category as a row of pills, channels beneath. */
