@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { browseChannels, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite } from "@testcard/core/src/db/queries.js";
 import { listHomePins, unpinCategory } from "@testcard/core/src/sync/sourcePins.js";
+import { displayName } from "@testcard/core/src/normalise/displayName.js";
 import { listWatchedLately } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { browseMovies, listFavouriteMovies, listRecentMovies, getMovieById, getMoviePlaybackTarget, removeMovieFromHistory, toggleMovieFavourite } from "@testcard/core/src/db/vodQueries.js";
@@ -18,17 +19,14 @@ import { toHomeItem } from "./Live";
 
 type Kind = "movie" | "series" | "channel";
 
+/** Where a pinned category's own name is kept, by the kind of pin. */
+const PIN_TABLE = { live: "categories", movies: "movie_categories", series: "series_categories" } as const;
+
 /** Movies, series and channels share one page, and their ids are only unique within their own kind, so each is tagged with its kind here. */
 const tag = (kind: Kind, item: HomeItem): HomeItem => ({ ...item, id: `${kind}|${item.id}` });
 const untag = (tagged: string): { kind: Kind; id: string } => {
   const at = tagged.indexOf("|");
   return { kind: tagged.slice(0, at) as Kind, id: tagged.slice(at + 1) };
-};
-
-/** "13:00" from epoch ms. `toLocaleTimeString` is not dependable on every Hermes build. */
-const clock = (ms: number): string => {
-  const date = new Date(ms);
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 };
 
 /**
@@ -95,9 +93,13 @@ export function StartScreen({
     for (const pin of listHomePins(db)) {
       if (pin.categoryId === null || (sourceId !== null && pin.sourceId !== sourceId)) continue;
       const key = `pin:${pin.sourceId}:${pin.kind}:${pin.key}`;
-      if (pin.kind === "live") add(key, pin.label, browseChannels(db, { categoryId: pin.categoryId, limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true, true);
-      else if (pin.kind === "movies") add(key, pin.label, browseMovies(db, { categoryId: pin.categoryId, limit: 30 }).map(asMovie), false, true);
-      else add(key, pin.label, browseSeries(db, { categoryId: pin.categoryId, limit: 30 }).map(asSeries), false, true);
+      // Titled from the category as it is now, through the same tidying as everywhere else, not from the label saved
+      // when it was pinned (which kept a provider's tag, "Football GANJA").
+      const rawName = db.prepare(`SELECT raw_name AS name FROM ${PIN_TABLE[pin.kind]} WHERE id = ?`).get(pin.categoryId) as { name: string } | undefined;
+      const label = rawName !== undefined ? displayName(rawName.name) : pin.label;
+      if (pin.kind === "live") add(key, label, browseChannels(db, { categoryId: pin.categoryId, limit: 24 }).map((channel) => tag("channel", toHomeItem(channel))), true, true);
+      else if (pin.kind === "movies") add(key, label, browseMovies(db, { categoryId: pin.categoryId, limit: 30 }).map(asMovie), false, true);
+      else add(key, label, browseSeries(db, { categoryId: pin.categoryId, limit: 30 }).map(asSeries), false, true);
     }
     const newMovies = movieShelves.find((shelf) => shelf.key === "new");
     if (newMovies !== undefined) list.push({ ...shelfRow(newMovies, asMovie), key: "new-movies", label: "New movies" });
@@ -257,13 +259,9 @@ export function StartScreen({
         return movie === undefined ? null : { plot: movie.plot, durationSecs: movie.duration_secs };
       }
       if (kind === "channel") {
+        // Shown as a now/next block under the title; null (no guide) is kept too, so the hero can say so.
         const guide = await fetchGuide(db, id);
-        if (guide === null) return null;
-        const lines = [
-          guide.now !== null ? `Now: ${guide.now.title}, ${clock(guide.now.start)} to ${clock(guide.now.end)}` : null,
-          guide.next !== null ? `Next: ${guide.next.title}, ${clock(guide.next.start)}` : null,
-        ].filter((line): line is string => line !== null);
-        return lines.length > 0 ? { plot: lines.join("\n"), durationSecs: null } : null;
+        return { plot: null, durationSecs: null, guide };
       }
       return null;
     },

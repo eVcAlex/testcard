@@ -2,16 +2,18 @@ import type Database from "better-sqlite3";
 import { MIGRATIONS, pendingMigrations } from "./migrations.js";
 import { SCHEMA_SQL, SCHEMA_VERSION } from "./schema.js";
 import { reclassifyCategories } from "./categoryClassification.js";
+import { renameChannels } from "./channelNames.js";
 
 /**
  * Brings an already-open SQLite database to the current schema: builds a fresh one, or runs the
- * pending forward-only migrations, then recomputes category classification if its rules changed.
+ * pending forward-only migrations, then recomputes category classification and channel names if their rules changed.
  * Takes any object with better-sqlite3's synchronous `prepare` / `exec` / `transaction` shape, so
  * the Android apps can pass an expo-sqlite adapter. No native import lives here on purpose.
  */
 export function migrateDatabase(db: Database.Database): Database.Database {
   migrateSchema(db);
   reclassifyCategories(db); // no-op unless the category classifier's rules changed since last open
+  renameChannels(db); // likewise for the rules that tidy channel names
   return db;
 }
 

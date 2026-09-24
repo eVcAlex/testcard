@@ -18,6 +18,14 @@ plays back through an embedded `mpv`, stores everything locally.
   setting for Home, Live TV, Movies, Series and Search, your own rows (Continue watching, favourites, pins)
   included; kept on the device across launches, not synced. Chosen from a list under the nav bar's Source button,
   which only appears with two or more Sources.
+- **Caption preferences** — on the TV app, how captions look (size, colour, background, edge) and whether films
+  and episodes start with them on, in a chosen language (never another: wrong-language captions are worse than none).
+  Kept on the device, not synced, beside the Source pick; set from the Settings tab or the player's captions panel.
+  The look reaches the native player through a `captionStyle` prop added by `patches/expo-video@57.0.4.patch`.
+- **Credits offer** — the "Watch credits / Next episode" buttons at the end of an episode. Where credits start is
+  learned per series from when the viewer moves on to the next episode (`playback/credits.ts`, device-local); once
+  learned, the next episode also starts after a countdown. Until then an estimate is used, with no countdown before
+  the episode actually ends.
 - **Channel** — one logical live-TV channel as a human thinks of it — "TNT Sports 1". Has a
   **stable internal id** that survives playlist refreshes, independent of whatever id the
   provider assigns.
@@ -44,10 +52,15 @@ plays back through an embedded `mpv`, stores everything locally.
   unrecognised stays a live channel. See `docs/adr/0008-m3u-films-and-episodes.md`.
 - **Country** — parsed from a leading `XX|` prefix on a category name (`UK|`, `CA|`), when
   present. Absent for categories with no such prefix — those sit outside the country tree.
-- **Normalised name** — a Channel's display name with unicode styling stripped (`ᵁᴴᴰ`,
+- **Normalised name** — a Channel's name with unicode styling stripped (`ᵁᴴᴰ`,
   `ᴳᴬᴺᴶᴬ`, `ᴴᴰᴿ`, etc.), the quality suffix that identifies a Variant removed, and the
-  country prefix separated out. This is what search (FTS5) indexes and what variant
-  grouping keys on — one parser feeds both features.
+  country prefix separated out (`parseName`). Variant grouping and Channel ids key on it, so
+  its rules are frozen: changing them would move ids and orphan Favourites.
+- **Display name** — how a Channel or Category name is shown and searched (`displayName`),
+  written to cope with any provider's house style: country/language prefixes in any
+  bracket or separator, borders and emoji, fancy lettering, branding tags and SHOUTING
+  tidied away; quality tags kept. Stored in `channels.normalised_name` (the column predates
+  the split) and redone on open when `DISPLAY_NAME_VERSION` changes; never part of an id.
 - **Now/Next** — the current and following Programme for a Channel, resolved from EPG data
   at read time (`nowNextForChannels` / `resolveNowNext`). Not stored as its own concept;
   derived from `Programme` rows by time. Drives the channel-card second line + progress bar.

@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Modal, ScrollView, Text, View } from "react-native";
+import { Modal, ScrollView, Text, TVFocusGuideView, View } from "react-native";
 import { WarningCircle } from "iconoir-react-native";
 import { useApp, type SourceSummary } from "../state/app";
 import { useUpdate } from "../update/UpdateProvider";
 import { installedVersion } from "../update/update";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
+import { CaptionSettings } from "../ui/CaptionSettings";
 import { Focusable } from "../ui/Focusable";
-import { withCommas } from "../ui/MenuRow";
+import { MenuRow, withCommas } from "../ui/MenuRow";
 
 /** "just now", "5 min ago", "3 hours ago", "2 days ago". */
 function ago(at: number): string {
@@ -20,40 +21,40 @@ function ago(at: number): string {
   return `${days} ${days === 1 ? "day" : "days"} ago`;
 }
 
+type Pane = "sources" | "captions" | "account";
+const PANES: { id: Pane; label: string }[] = [
+  { id: "sources", label: "Sources" },
+  { id: "captions", label: "Captions" },
+  { id: "account", label: "Account and updates" },
+];
+
 /**
- * Sources, with the account and app update as a slim strip and footer either side — this page is about the
- * sources, not the account, so those two stay out of the way instead of competing with the sources for weight.
+ * The Settings tab: a short menu down the left (Sources, Captions, Account and updates) and the chosen one beside
+ * it. The pane follows the remote as it moves down the menu, as the category lists do; Right goes into it.
  */
 export function SourcesScreen() {
-  const { sources, refreshSource, removeSource, status, sync, updateStatus } = useApp();
+  const [pane, setPane] = useState<Pane>("sources");
+  const choose = (id: string) => setPane(id as Pane);
+  return (
+    <View style={styles.settings}>
+      <TVFocusGuideView autoFocus style={styles.menu}>
+        {PANES.map((entry) => (
+          <MenuRow key={entry.id} id={entry.id} label={entry.label} active={pane === entry.id} onPressId={choose} onFocusId={choose} />
+        ))}
+      </TVFocusGuideView>
+      <View style={styles.pane}>{pane === "sources" ? <SourcesPane /> : pane === "captions" ? <CaptionSettings /> : <AccountPane />}</View>
+    </View>
+  );
+}
+
+function SourcesPane() {
+  const { sources, refreshSource, removeSource, status } = useApp();
   // Removing is permanent (and reaches the other devices), so it takes a second press.
   const [confirming, setConfirming] = useState<string>();
-  // Signing out drops the account from this TV, and the button sits right beside Sync now, so it asks first.
-  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
-  const update = useUpdate();
-  const version = installedVersion();
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <View style={styles.main}>
-        <View style={styles.accountStrip}>
-          <View style={styles.accountText}>
-            <Text style={styles.accountEmail} numberOfLines={1}>
-              {status.email ?? "Signed out"}
-            </Text>
-            {status.lastSyncedAt !== undefined && <Text style={styles.accountSynced}>{`✓ Synced ${ago(status.lastSyncedAt)}`}</Text>}
-          </View>
-          <View style={styles.accountActions}>
-            <SmallButton
-              label="Sync now"
-              onPress={() => {
-                void sync.triggerNow().then(updateStatus);
-              }}
-            />
-            <SmallButton label="Sign out" onPress={() => setConfirmingSignOut(true)} />
-          </View>
-        </View>
-
         <Heading>Sources</Heading>
         <Muted>
           {status.account === "signed-in"
@@ -61,7 +62,7 @@ export function SourcesScreen() {
             : "Sign in to load your sources."}
         </Muted>
         {status.lastError !== undefined && <Text style={styles.error}>{status.lastError}</Text>}
-        {sources.length === 0 && <Muted>No sources have arrived yet. Sync runs every minute, or press Sync now above.</Muted>}
+        {sources.length === 0 && <Muted>No sources have arrived yet. Sync runs every minute, or press Sync now in Account and updates.</Muted>}
 
         <View style={styles.list}>
           {sources.map((source) => (
@@ -97,6 +98,39 @@ export function SourcesScreen() {
               </View>
             </View>
           ))}
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
+
+/** Who this TV is signed in as, syncing, and the app's version and updates. */
+function AccountPane() {
+  const { status, sync, updateStatus } = useApp();
+  // Signing out drops the account from this TV, and the button sits right beside Sync now, so it asks first.
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const update = useUpdate();
+  const version = installedVersion();
+  return (
+    <ScrollView contentContainerStyle={styles.page}>
+      <View style={styles.main}>
+        <Heading>Account and updates</Heading>
+        <View style={styles.accountStrip}>
+          <View style={styles.accountText}>
+            <Text style={styles.accountEmail} numberOfLines={1}>
+              {status.email ?? "Signed out"}
+            </Text>
+            {status.lastSyncedAt !== undefined && <Text style={styles.accountSynced}>{`✓ Synced ${ago(status.lastSyncedAt)}`}</Text>}
+          </View>
+          <View style={styles.accountActions}>
+            <SmallButton
+              label="Sync now"
+              onPress={() => {
+                void sync.triggerNow().then(updateStatus);
+              }}
+            />
+            <SmallButton label="Sign out" onPress={() => setConfirmingSignOut(true)} />
+          </View>
         </View>
 
         <View style={styles.footer}>
@@ -241,6 +275,9 @@ const smallStyles = styleSheet({
 });
 
 const styles = styleSheet({
+  settings: { flex: 1, flexDirection: "row", gap: space.xl },
+  menu: { width: 380, paddingTop: space.xl, gap: 4 },
+  pane: { flex: 1 },
   page: { padding: space.xl },
   main: { gap: space.m },
   // Slim, low-key: this page is about sources, not the account.

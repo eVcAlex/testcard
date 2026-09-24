@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
 import { useFonts } from "expo-font";
-import { Search } from "iconoir-react-native";
+import { NavArrowDown, Search, Settings } from "iconoir-react-native";
 import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
 import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
 import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
@@ -11,6 +11,7 @@ import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
 import { colors, styleSheet, uiScale } from "./src/theme";
 import { focusedNow, lastFocused } from "./src/ui/Focusable";
 import { SourcePicker } from "./src/ui/SourcePicker";
+import { BackToTop } from "./src/ui/backToTop";
 import { NavTab } from "./src/ui/NavTab";
 import { SetupOverlay } from "./src/ui/SetupOverlay";
 import { SourceNames } from "./src/ui/Poster";
@@ -35,18 +36,25 @@ type Route =
 /** A second back press within this long leaves the app. */
 const EXIT_WINDOW_MS = 2500;
 
+/** The places to go, after Search. Settings (sources, captions, the account, updates) is the gear at the far end, apart from them. */
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "home", label: "Home" },
   { key: "live", label: "Live TV" },
   { key: "movies", label: "Movies" },
   { key: "series", label: "Series" },
-  { key: "sources", label: "Sources" },
 ];
 
-/** A bare magnifying glass, sized to sit in the nav bar's icon-only tab. Icons take dp, not design units, so it is scaled like the styles. */
-const SEARCH_GLYPH = Math.round(30 * uiScale);
+/** Glyphs sized to sit in the nav bar's icon-only tabs. Icons take dp, not design units, so they are scaled like the styles. */
+const NAV_GLYPH = Math.round(30 * uiScale);
 function SearchGlyph(color: string) {
-  return <Search color={color} width={SEARCH_GLYPH} height={SEARCH_GLYPH} strokeWidth={1.75} />;
+  return <Search color={color} width={NAV_GLYPH} height={NAV_GLYPH} strokeWidth={1.75} />;
+}
+function SettingsGlyph(color: string) {
+  return <Settings color={color} width={NAV_GLYPH} height={NAV_GLYPH} strokeWidth={1.75} />;
+}
+const CHIP_ARROW = Math.round(22 * uiScale);
+function ChipArrow(color: string) {
+  return <NavArrowDown color={color} width={CHIP_ARROW} height={CHIP_ARROW} strokeWidth={2} />;
 }
 
 export default function App() {
@@ -111,17 +119,43 @@ function Root() {
     setVisited((current) => (current.has(key as Section) ? current : new Set(current).add(key as Section)));
     setBrowsing(false);
   }, []);
-  const toggleBrowse = useCallback(() => setBrowsing((value) => !value), []);
+  const onBrowse = useCallback(() => setBrowsing(true), []);
   const onBrowseDone = useCallback(() => setBrowsing(false), []);
 
-  // Back on the main screens asks twice before leaving, so a stray press does not close the app. Screens that use
-  // back themselves (the detail pages, the player, the browse-all list) are not the home shell, so they never get here.
+  // Each tab's view, so Back can send focus to it; and whether the nav bar has focus at all.
+  const tabHandles = useRef(new Map<string, typeof lastFocused>());
+  const handleFor = (id: string) => {
+    let handle = tabHandles.current.get(id);
+    if (handle === undefined) {
+      handle = { current: null };
+      tabHandles.current.set(id, handle);
+    }
+    return handle;
+  };
+  const navFocused = useRef(false);
+  const onNavFocus = useCallback((focused: boolean) => {
+    navFocused.current = focused;
+  }, []);
+  const [backToTop, setBackToTop] = useState(0);
+
+  // Back on a page goes up to the nav bar, onto the open section's tab, and the page starts again from its top, so
+  // the bar is one press away however deep in the rows the viewer is. Back on the nav bar asks twice before leaving,
+  // so a stray press does not close the app. Screens that use back themselves (the detail pages, the player, the
+  // category list) are not the home shell, so they never get here.
   const [exitHint, setExitHint] = useState(false);
   const lastBack = useRef(0);
   const atRoot = route.name === "home" && !browsing;
+  const sectionRef = useRef(section);
+  sectionRef.current = section;
   useEffect(() => {
     if (!atRoot) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      const tab = tabHandles.current.get(sectionRef.current)?.current;
+      if (!navFocused.current && tab !== null && tab !== undefined) {
+        tab.requestTVFocus?.();
+        setBackToTop((count) => count + 1);
+        return true;
+      }
       const now = Date.now();
       if (now - lastBack.current < EXIT_WINDOW_MS) {
         BackHandler.exitApp();
@@ -149,6 +183,8 @@ function Root() {
   useLayoutEffect(() => {
     if (covered) {
       shellFocus.current = lastFocused.current;
+      // The hidden bar reports no blur either.
+      navFocused.current = false;
       return;
     }
     // Whatever held focus a moment ago was on the page that just closed (or in the hidden shell, which reports no
@@ -219,6 +255,7 @@ function Root() {
 
   return (
     <SourceNames.Provider value={sourceNames}>
+    <BackToTop.Provider value={backToTop}>
     {/* First sync or a refresh: the shell stays mounted but hidden, so there is nothing to navigate to until it
         finishes, and afterwards every section is where it was rather than rebuilt from the top. */}
     {settingUp ? <SetupOverlay setup={setup} hint={exitHint ? "Press back again to exit" : null} /> : overlay}
@@ -227,14 +264,16 @@ function Root() {
           <Text style={styles.brand}>
             test<Text style={styles.brandAccent}>card</Text>
           </Text>
+          <NavTab id="search" preferred={section === "search"} active={section === "search"} icon={SearchGlyph} handle={handleFor("search")} onFocusChange={onNavFocus} onPressId={pickSection} />
           {SECTIONS.map((entry) => (
-            <NavTab key={entry.key} id={entry.key} preferred={section === entry.key} active={section === entry.key} label={entry.label} badge={entry.key === "sources" && available !== null} onPressId={pickSection} />
+            <NavTab key={entry.key} id={entry.key} preferred={section === entry.key} active={section === entry.key} label={entry.label} handle={handleFor(entry.key)} onFocusChange={onNavFocus} onPressId={pickSection} />
           ))}
           {syncing ? <Text style={styles.syncing}>Syncing…</Text> : null}
           <View style={styles.scope}>
-            {section === "movies" || section === "series" || section === "live" ? <NavTab id="browse" active={browsing} label={browsing ? "Home" : "Browse all"} onPressId={toggleBrowse} /> : null}
-            {sources.length > 1 && section !== "sources" ? <NavTab id="scope" active={picking} label={sources.find((entry) => entry.id === sourceId)?.name ?? "All sources"} onPressId={openPicker} /> : null}
-            <NavTab id="search" active={section === "search"} icon={SearchGlyph} onPressId={pickSection} />
+            {sources.length > 1 && section !== "sources" ? (
+              <NavTab id="scope" chip active={picking} label={sources.find((entry) => entry.id === sourceId)?.name ?? "All sources"} trailing={ChipArrow} onFocusChange={onNavFocus} onPressId={openPicker} />
+            ) : null}
+            <NavTab id="sources" preferred={section === "sources"} active={section === "sources"} icon={SettingsGlyph} badge={available !== null} handle={handleFor("sources")} onFocusChange={onNavFocus} onPressId={pickSection} />
           </View>
         </TVFocusGuideView>
         <View style={styles.content}>
@@ -257,6 +296,7 @@ function Root() {
               sourceId={sourceId}
               active={section === "movies" && !covered}
               browsing={browsing && section === "movies"}
+              onBrowse={onBrowse}
               onBrowseDone={onBrowseDone}
               onOpen={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
               onPlay={(movie, resume) => setRoute({ name: "play", item: { kind: "movie", id: movie.id, title: movie.title }, resume, returnTo: { name: "home" } })}
@@ -268,12 +308,13 @@ function Root() {
               sourceId={sourceId}
               active={section === "series" && !covered}
               browsing={browsing && section === "series"}
+              onBrowse={onBrowse}
               onBrowseDone={onBrowseDone}
               onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
               onPlayEpisode={(episodeId, title, resume, seriesId) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title }, seriesId, resume, returnTo: { name: "home" } })}
             />,
           )}
-          {pane("live", <LiveScreen sourceId={sourceId} active={section === "live" && !covered} browsing={browsing && section === "live"} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
+          {pane("live", <LiveScreen sourceId={sourceId} active={section === "live" && !covered} browsing={browsing && section === "live"} onBrowse={onBrowse} onBrowseDone={onBrowseDone} onPlay={playChannel} />)}
           {pane(
             "search",
             <View style={styles.padded}>
@@ -300,6 +341,7 @@ function Root() {
           </View>
         )}
     </View>
+    </BackToTop.Provider>
     </SourceNames.Provider>
   );
 }
@@ -331,7 +373,7 @@ const styles = styleSheet({
   brand: { color: colors.foreground, fontSize: 30, fontWeight: "600", letterSpacing: -0.5, marginRight: 40 },
   brandAccent: { color: colors.accent },
   syncing: { color: colors.faint, fontSize: 22, marginLeft: 16 },
-  scope: { flex: 1, flexDirection: "row", justifyContent: "flex-end", gap: 8 },
+  scope: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 },
   content: { flex: 1 },
   hidden: { display: "none" },
   toast: { position: "absolute", left: 0, right: 0, bottom: 60, alignItems: "center", zIndex: 20 },

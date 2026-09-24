@@ -8,6 +8,7 @@ import { createM3UAdapter } from "@testcard/core/src/source/m3u/adapter.js";
 import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js";
 import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
+import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
 import { describeSetup, type ContentKind, type ImportProgress, type ImportStage, type SetupProgress } from "./setup";
 
 /** Something a source's last import could not load: its movies, its series, or (a thrown import) all of it. */
@@ -45,6 +46,9 @@ interface AppState {
   readonly setup: SetupProgress | null;
   /** True while the app is catching up with the account on launch or on coming back to the front. */
   readonly syncing: boolean;
+  /** How captions look and whether films and episodes start with them on. This device only. */
+  readonly captions: CaptionPrefs;
+  setCaptions(prefs: CaptionPrefs): void;
   refreshSource(sourceId: string): Promise<void>;
   /** Takes a source off this device and, through sync, off the user's others. */
   removeSource(sourceId: string): Promise<void>;
@@ -52,6 +56,11 @@ interface AppState {
 }
 
 const noFailures: readonly SourceFailure[] = [];
+
+/** The launch catch-up holds the app at most this long; after that it carries on with "Syncing" in the nav bar. */
+const LAUNCH_SYNC_WAIT_MS = 10_000;
+/** And the getting-ready screen stays at least this long once it is up, so a quick sync does not flash it. */
+const LAUNCH_SYNC_SHOW_MS = 700;
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
@@ -216,18 +225,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // periodic sync can be well overdue.) The screens re-read as soon as it lands rather than on the next status
   // poll, and the nav bar says it is happening.
   const [syncing, setSyncing] = useState(false);
-  const catchUp = useCallback(() => {
-    if (sync.status().account !== "signed-in") return;
-    setSyncing(true);
-    sync
-      .triggerNow()
-      .then(updateStatus, () => undefined)
-      .finally(() => setSyncing(false));
-  }, [sync, updateStatus]);
+  // The catch-up on launch is waited on behind the getting-ready screen, as a refresh is, so the first thing on
+  // screen already has what was watched elsewhere. Held up at most LAUNCH_SYNC_WAIT_MS (a slow or absent network
+  // should not keep the app shut), and shown for at least LAUNCH_SYNC_SHOW_MS so a quick one does not flash.
+  const [launching, setLaunching] = useState(() => sync.status().account === "signed-in");
+  const catchUp = useCallback(
+    (onLaunch: boolean) => {
+      if (sync.status().account !== "signed-in") {
+        if (onLaunch) setLaunching(false);
+        return;
+      }
+      setSyncing(true);
+      const shownFrom = Date.now();
+      const cap = onLaunch ? setTimeout(() => setLaunching(false), LAUNCH_SYNC_WAIT_MS) : undefined;
+      sync
+        .triggerNow()
+        .then(updateStatus, () => undefined)
+        .finally(() => {
+          setSyncing(false);
+          if (!onLaunch) return;
+          clearTimeout(cap);
+          setTimeout(() => setLaunching(false), Math.max(0, LAUNCH_SYNC_SHOW_MS - (Date.now() - shownFrom)));
+        });
+    },
+    [sync, updateStatus],
+  );
   useEffect(() => {
-    catchUp();
+    catchUp(true);
     const subscription = AppLifecycle.addEventListener("change", (state) => {
-      if (state === "active") catchUp();
+      if (state === "active") catchUp(false);
     });
     return () => subscription.remove();
   }, [catchUp]);
@@ -257,11 +283,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const signedIn = status.account === "signed-in";
   const waitingForSources = sources.length === 0 && status.lastSyncedAt === undefined && status.lastError === undefined;
   const firstSync = signedIn && (waitingForSources || progress.size > 0);
-  const setup = useMemo(() => describeSetup({ firstSync, imports: [...progress.values()] }), [firstSync, progress]);
+  const setup = useMemo(() => describeSetup({ firstSync, launchSync: signedIn && launching, imports: [...progress.values()] }), [firstSync, signedIn, launching, progress]);
+
+  const [captions, setCaptionsState] = useState<CaptionPrefs>(() => readCaptionPrefs(db));
+  const setCaptions = useCallback(
+    (prefs: CaptionPrefs) => {
+      setCaptionsState(prefs);
+      writeCaptionPrefs(db, prefs);
+    },
+    [db],
+  );
 
   const value = useMemo<AppState>(
-    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, refreshSource, removeSource, updateStatus }),
-    [db, sync, status, version, catalogue, sources, setup, syncing, refreshSource, removeSource, updateStatus],
+    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, refreshSource, removeSource, updateStatus }),
+    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, refreshSource, removeSource, updateStatus],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

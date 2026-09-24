@@ -3,7 +3,7 @@ export * from "./normalise/parseName.js";
 export * from "./normalise/groupVariants.js";
 export * from "./normalise/classifyCategory.js";
 export * from "./normalise/splitTitle.js";
-export * from "./normalise/categoryLabel.js";
+export * from "./normalise/displayName.js";
 export * from "./source/m3u/parseM3U.js";
 export * from "./source/m3u/adapter.js";
 export * from "./source/xtream/detect.js";

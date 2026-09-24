@@ -1,10 +1,14 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Text, TVFocusGuideView, View, type CellRendererProps, type ViewProps } from "react-native";
+import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { FlatList, Modal, Pressable, Text, TVFocusGuideView, useTVEventHandler, View, type CellRendererProps, type ViewProps } from "react-native";
 import { Image } from "expo-image";
+import { NavArrowRight } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, styleSheet, uiScale } from "../theme";
-import { DetailActions, Facts, type DetailAction } from "../ui/DetailActions";
+import { Facts, type DetailAction } from "../ui/DetailActions";
+import { OptionsSheet } from "../ui/OptionsSheet";
+import { BackToTop } from "../ui/backToTop";
 import { Fade } from "../ui/Fade";
+import { focusedNow, lastFocused, useFocusTracking } from "../ui/Focusable";
 import { ChannelShelf } from "../ui/ChannelCard";
 import { PosterCard, PosterRow, type PosterItem } from "../ui/Poster";
 
@@ -32,16 +36,25 @@ export interface HomeRow {
   readonly pinned?: boolean;
 }
 
-/** What the hero's buttons do for the highlighted title. */
+/** What can be done with a title: OK on its card does `onSelect`; holding OK lists these. */
 export interface HeroActions {
   readonly primary: { label: string; onPress: () => void; progress?: number | undefined };
   readonly actions: readonly DetailAction[];
+}
+
+/** One programme in a channel's guide, in epoch ms. */
+export interface GuideSlot {
+  readonly title: string;
+  readonly start: number;
+  readonly end: number;
 }
 
 /** What the provider only tells us when asked about one title. */
 export interface HomeDetail {
   readonly plot: string | null;
   readonly durationSecs: number | null;
+  /** A channel's guide: what is on now and next (either can be missing). Null when the channel has no guide at all. */
+  readonly guide?: { readonly now: GuideSlot | null; readonly next: GuideSlot | null } | null;
 }
 
 /** "1h 36m" / "42m". */
@@ -71,8 +84,11 @@ export function HomeScreen({
   onSelect,
   heroActions,
   fetchDetail,
+  browseAll,
 }: {
   rows: readonly HomeRow[];
+  /** Movies, Series and Live TV: an "All categories" button above the rows opens the full category list. */
+  browseAll?: (() => void) | undefined;
   onSelect: (item: PosterItem) => void;
   /** `rowKey` is the row the remote is on, since the same title can sit in more than one. */
   heroActions: (item: HomeItem, rowKey: string) => HeroActions;
@@ -109,8 +125,13 @@ export function HomeScreen({
   // A highlighted title with no plot or length gets them fetched once the remote has rested on it for a moment.
   const shownId = shown?.item.id;
   const missing = shown !== undefined && (shown.item.plot === null || shown.item.plot === "" || shown.item.durationSecs === null);
+  // A channel's guide goes out of date when the programme on now ends: asked again then.
+  const onNowEnd = shownId !== undefined ? details.get(shownId)?.guide?.now?.end : undefined;
+  const stale = onNowEnd !== undefined && onNowEnd <= Date.now();
   useEffect(() => {
-    if (fetchDetail === undefined || shownId === undefined || !missing || asked.current.has(shownId)) return;
+    if (fetchDetail === undefined || shownId === undefined || !missing) return;
+    if (stale) asked.current.delete(shownId);
+    if (asked.current.has(shownId)) return;
     const timer = setTimeout(() => {
       asked.current.add(shownId);
       fetchDetail(shownId)
@@ -122,7 +143,7 @@ export function HomeScreen({
         .catch(() => asked.current.delete(shownId));
     }, DETAIL_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [fetchDetail, shownId, missing]);
+  }, [fetchDetail, shownId, missing, stale]);
 
   // The row the remote is on is lined up just below the top band (styles.rowsFade), so it is never left half cut off
   // at the edge. Android does it, in the one scroll it makes to bring the focused poster into view: each row declares
@@ -146,17 +167,63 @@ export function HomeScreen({
     [],
   );
 
-  // Worked out once per highlighted title: a series' button reads its next episode from the database, which an
-  // unrelated re-render (a plot arriving for another title) should not repeat.
-  const actions = useMemo(() => (shown !== undefined ? heroActions(shown.item, shown.rowKey) : undefined), [heroActions, shown]);
+  // The hero only describes the highlighted title; it has no buttons of its own, so Up from the first row goes
+  // straight to the nav bar and no row is ever a long way from what it offers. Holding OK on a card lists what can be
+  // done with that title (play or resume, more info, My list...), from any row. The TV fork reports select only on
+  // release, so Pressable's onLongPress never fires; the remote's own "longSelect" does, repeatedly while held, and
+  // the press on release that follows is ignored.
+  const held = useRef<{ item: HomeItem; rowKey: string; view: typeof focusedNow.current } | null>(null);
+  const [options, setOptions] = useState<{ title: string; actions: HeroActions } | null>(null);
+  const optionsOpen = useRef(false);
+  optionsOpen.current = options !== null;
+  const heldAt = useRef(0);
+  const opener = useRef<typeof lastFocused.current>(null);
+  useTVEventHandler((event) => {
+    if (event.eventType !== "longSelect") return;
+    heldAt.current = Date.now();
+    const card = held.current;
+    // Every landing page is mounted at once; only the one whose card has the remote's focus answers.
+    if (optionsOpen.current || card === null || card.view === null || focusedNow.current !== card.view) return;
+    opener.current = lastFocused.current;
+    setOptions({ title: splitTitle(card.item.name).title, actions: heroActions(card.item, card.rowKey) });
+  });
+  const closeOptions = useCallback(() => {
+    setOptions(null);
+    setTimeout(() => opener.current?.requestTVFocus?.(), 0);
+  }, []);
+  const select = useCallback(
+    (item: PosterItem) => {
+      if (Date.now() - heldAt.current < 800) return;
+      onSelect(item);
+    },
+    [onSelect],
+  );
 
   // The band over the top of the rows is only wanted below the first row: at rest it would sit over the first row's
   // title. Keyed to the row the remote is on, not the scroll offset: the scroll back to the top does not reliably
   // report its final position, which left the band drawn over the first row's title after coming back up to it.
   const rowIndex = useMemo(() => new Map(rows.map((row, index) => [row.key, index])), [rows]);
   const rowIndexRef = useRef(rowIndex);
+  const byIdRef = useRef(byId);
+  byIdRef.current = byId;
   rowIndexRef.current = rowIndex;
   const [scrolled, setScrolled] = useState(false);
+
+  // Back to the nav bar (see BackToTop): the rows go back to the top and the hero to the first title. The rows are
+  // redrawn (a new key) as well as scrolled, or the focus guide would still send Down to the poster the viewer left.
+  const backToTop = useContext(BackToTop);
+  const listRef = useRef<FlatList<HomeRow>>(null);
+  const [listKey, setListKey] = useState(0);
+  const moved = useRef(false);
+  useEffect(() => {
+    if (backToTop === 0 || !moved.current) return;
+    moved.current = false;
+    clearTimeout(timer.current);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    setScrolled(false);
+    setFocusedId(undefined);
+    setListKey((key) => key + 1);
+  }, [backToTop]);
 
   // One focus handler per row, made once and reused: a fresh one on every render would defeat the rows' memo, so a
   // hero change (or anything else that re-renders this screen) would redraw every card on screen.
@@ -166,6 +233,9 @@ export function HomeScreen({
       let handler = focusHandlers.current.get(rowKey);
       if (handler === undefined) {
         handler = (item: PosterItem) => {
+          const full = byIdRef.current.get(`${rowKey}|${item.id}`)?.item;
+          if (full !== undefined) held.current = { item: full, rowKey, view: focusedNow.current };
+          moved.current = true;
           setScrolled((rowIndexRef.current.get(rowKey) ?? 0) > 0);
           onFocusItem(item, rowKey);
         };
@@ -180,14 +250,14 @@ export function HomeScreen({
     ({ item: row }: { item: HomeRow }) => {
       const focus = focusFor(row.key);
       return row.channels === true ? (
-        <ChannelShelf title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} pinned={row.pinned === true} />
+        <ChannelShelf title={row.label} items={row.items} onPress={select} onFocusItem={focus} pinned={row.pinned === true} />
       ) : row.ranked === true ? (
-        <RankedRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} />
+        <RankedRow title={row.label} items={row.items} onPress={select} onFocusItem={focus} />
       ) : (
-        <PosterRow title={row.label} items={row.items} onPress={onSelect} onFocusItem={focus} pinned={row.pinned === true} />
+        <PosterRow title={row.label} items={row.items} onPress={select} onFocusItem={focus} pinned={row.pinned === true} />
       );
     },
-    [onSelect, focusFor],
+    [select, focusFor],
   );
 
   return (
@@ -196,9 +266,9 @@ export function HomeScreen({
         shown={shown}
         plot={shown !== undefined ? (shown.item.plot !== null && shown.item.plot !== "" ? shown.item.plot : (details.get(shown.item.id)?.plot ?? null)) : null}
         durationSecs={shown !== undefined ? (shown.item.durationSecs ?? details.get(shown.item.id)?.durationSecs ?? null) : null}
-        actions={actions}
+        guide={shown !== undefined ? details.get(shown.item.id)?.guide : undefined}
       />
-      <TVFocusGuideView autoFocus style={styles.rows}>
+      <TVFocusGuideView key={listKey} autoFocus style={styles.rows}>
         {/* Solid, with only its lower edge fading: the strip above the focused row holds the bottom of the row
             before it, and a see-through scrim left that row's titles floating there with no posters. */}
         {scrolled ? (
@@ -210,7 +280,9 @@ export function HomeScreen({
           </View>
         ) : null}
         <FlatList
+          ref={listRef}
           data={rows}
+          ListHeaderComponent={browseAll !== undefined ? <BrowseAllButton onPress={browseAll} /> : null}
           keyExtractor={(row) => row.key}
           renderItem={renderRow}
           CellRendererComponent={Cell}
@@ -228,11 +300,49 @@ export function HomeScreen({
           <Fade from="bottom" />
         </View>
       </TVFocusGuideView>
+      <Modal transparent animationType="fade" visible={options !== null} onRequestClose={closeOptions}>
+        {options !== null ? (
+          <OptionsSheet
+            title={options.title}
+            options={[{ id: "primary", label: options.actions.primary.label }, ...options.actions.actions.map((action) => ({ id: action.key, label: action.label }))]}
+            onChoose={(id) => (id === "primary" ? options.actions.primary.onPress() : options.actions.actions.find((action) => action.key === id)?.onPress())}
+            onClose={closeOptions}
+          />
+        ) : null}
+      </Modal>
     </View>
   );
 }
 
-function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem; row: string } | undefined; plot: string | null; durationSecs: number | null; actions: HeroActions | undefined }) {
+/** The way into every category, above the rows: a quiet pill until the remote is on it. */
+const BrowseAllButton = memo(function BrowseAllButton({ onPress }: { onPress: () => void }) {
+  const [focused, setFocused] = useState(false);
+  const tracking = useFocusTracking();
+  const ink = focused ? colors.background : colors.muted;
+  return (
+    <View style={styles.browseAllRow}>
+      <Pressable
+        ref={tracking.ref}
+        focusable
+        onPress={onPress}
+        onFocus={() => {
+          tracking.focused();
+          setFocused(true);
+        }}
+        onBlur={() => {
+          setFocused(false);
+          tracking.blurred();
+        }}
+        style={[styles.browseAll, focused && styles.browseAllFocused]}
+      >
+        <Text style={[styles.browseAllLabel, { color: ink }]}>All categories</Text>
+        <NavArrowRight color={ink} width={Math.round(26 * uiScale)} height={Math.round(26 * uiScale)} strokeWidth={2} />
+      </Pressable>
+    </View>
+  );
+});
+
+function Hero({ shown, plot, durationSecs, guide }: { shown: { item: HomeItem; row: string } | undefined; plot: string | null; durationSecs: number | null; guide: HomeDetail["guide"] }) {
   // A title that wraps to a second line takes the plot's second line, so the buttons always stay inside the hero
   // instead of running off its foot under the rows.
   const [titleLines, setTitleLines] = useState(1);
@@ -277,16 +387,63 @@ function Hero({ shown, plot, durationSecs, actions }: { shown: { item: HomeItem;
         <View style={styles.factsSlot}>
           <Facts facts={facts} />
         </View>
+        {channel && guide !== undefined ? (
+          <NowNext guide={guide} />
+        ) : (
         <Text style={[styles.plot, wrapped && styles.plotShort]} numberOfLines={wrapped ? 1 : 2}>
-          {plot ?? ""}
-        </Text>
-        {/* Coming down from the nav bar lands on the main button, not on whichever button is nearest sideways. */}
-        {actions !== undefined ? (
-          <TVFocusGuideView autoFocus>
-            <DetailActions preferred={false} hintBeside primary={actions.primary} actions={actions.actions} />
-          </TVFocusGuideView>
+            {plot ?? ""}
+          </Text>
+        )}
+        {shown !== undefined ? (
+          <View style={styles.holdHint}>
+            <View style={styles.keyCap}>
+              <Text style={styles.keyCapText}>OK</Text>
+            </View>
+            <Text style={styles.holdHintText}>Hold for more options</Text>
+          </View>
         ) : null}
       </View>
+    </View>
+  );
+}
+
+/** "13:00" from epoch ms. */
+const hhmm = (ms: number) => `${String(new Date(ms).getHours()).padStart(2, "0")}:${String(new Date(ms).getMinutes()).padStart(2, "0")}`;
+
+/**
+ * A channel's hero line: the programme on now with how far through it is and how long is left, then what follows.
+ * Said plainly when the channel has no guide, so an empty hero is never a question of whether it is still loading.
+ */
+function NowNext({ guide }: { guide: NonNullable<HomeDetail["guide"]> | null }) {
+  if (guide === null || (guide.now === null && guide.next === null)) return <Text style={styles.noGuide}>No programme guide for this channel</Text>;
+  const now = Date.now();
+  const on = guide.now;
+  const through = on !== null && on.end > on.start ? Math.min(1, Math.max(0, (now - on.start) / (on.end - on.start))) : null;
+  const left = on !== null ? Math.max(0, Math.round((on.end - now) / 60_000)) : null;
+  return (
+    <View style={styles.guide}>
+      {on !== null ? (
+        <View style={styles.guideLine}>
+          <Text style={styles.guideWhen}>NOW</Text>
+          <Text style={styles.guideTitle} numberOfLines={1}>
+            {on.title}
+          </Text>
+          {through !== null ? (
+            <View style={styles.guideBar}>
+              <View style={[styles.guideFill, { width: `${through * 100}%` }]} />
+            </View>
+          ) : null}
+          <Text style={styles.guideTime}>{left !== null ? (left >= 60 ? `${Math.floor(left / 60)}h ${left % 60}m left` : `${left}m left`) : ""}</Text>
+        </View>
+      ) : null}
+      {guide.next !== null ? (
+        <View style={styles.guideLine}>
+          <Text style={styles.guideWhen}>{hhmm(guide.next.start)}</Text>
+          <Text style={[styles.guideTitle, styles.guideNext]} numberOfLines={1}>
+            {guide.next.title}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -341,12 +498,30 @@ const styles = styleSheet({
   title: { color: colors.foreground, fontSize: 68, lineHeight: 78, fontWeight: "600", letterSpacing: -1.5 },
   plot: { height: 72, color: "#c3c9ce", fontSize: 25, lineHeight: 36, marginTop: 2 },
   plotShort: { height: 36 },
+  // Same height as the plot it stands in for, so the hero does not jump between a film and a channel.
+  guide: { height: 72, gap: 4, marginTop: 2, justifyContent: "center" },
+  guideLine: { flexDirection: "row", alignItems: "center", gap: 16 },
+  guideWhen: { width: 80, color: colors.accent, fontSize: 20, fontWeight: "600", letterSpacing: 1 },
+  guideTitle: { flexShrink: 1, color: colors.foreground, fontSize: 25, fontWeight: "500" },
+  guideNext: { color: "#c3c9ce", fontWeight: "400" },
+  guideBar: { width: 160, height: 5, borderRadius: 3, backgroundColor: "#ffffff30", overflow: "hidden" },
+  guideFill: { height: 5, backgroundColor: colors.foreground },
+  guideTime: { color: colors.muted, fontSize: 21 },
+  noGuide: { height: 72, color: colors.faint, fontSize: 23, lineHeight: 36, marginTop: 2 },
+  holdHint: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 },
+  keyCap: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 8, borderWidth: 2, borderColor: "#ffffff40" },
+  keyCapText: { color: colors.muted, fontSize: 18, fontWeight: "600" },
+  holdHintText: { color: colors.faint, fontSize: 22 },
   rows: { flex: 1, paddingHorizontal: 44 },
   rowsFade: { position: "absolute", left: 0, right: 0, top: 0, height: ROWS_BAND, zIndex: 1 },
   rowsFadeSolid: { height: ROWS_BAND - 16, backgroundColor: colors.background },
   rowsFadeEdge: { height: 16 },
   rowsBottomFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 72, zIndex: 1 },
   list: { paddingTop: 20, paddingBottom: 100 },
+  browseAllRow: { flexDirection: "row", paddingBottom: 12 },
+  browseAll: { height: 52, flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 24, paddingRight: 16, borderRadius: 26, borderWidth: 2, borderColor: colors.border },
+  browseAllFocused: { backgroundColor: colors.foreground, borderColor: colors.foreground },
+  browseAllLabel: { fontSize: 22, fontWeight: "500" },
   ranked: { gap: 16, marginBottom: 24 },
   rankedTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600", letterSpacing: -0.3, paddingLeft: 8 },
   rankedList: { gap: 4, paddingVertical: 8, paddingHorizontal: 8 },

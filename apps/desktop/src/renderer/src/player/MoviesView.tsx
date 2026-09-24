@@ -19,7 +19,7 @@ import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
 import { PosterShelf } from "./PosterShelf.js";
 import { Removable } from "./Removable.js";
-import { categoryLabel } from "../lib/categoryLabel.js";
+import { displayName } from "../lib/displayName.js";
 
 type MovieListRow = Awaited<ReturnType<typeof window.testcard.movies.browse>>[number];
 
@@ -239,7 +239,7 @@ export function MoviesView({
             {(shelves.data ?? []).map((shelf) => (
               <PosterShelf
                 key={shelf.category.id}
-                title={categoryLabel(shelf.category.name)}
+                title={displayName(shelf.category.name)}
                 items={shelf.items.map(toPoster)}
                 onSelect={setSelectedMovieId}
                 onSeeAll={() => pickCategory(shelf.category.id)}

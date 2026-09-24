@@ -55,13 +55,25 @@ function sourceFraction(entry: ImportProgress): number {
 /**
  * The "getting ready" screen: null unless `firstSync` is true, which it is while a signed-in device is
  * waiting for its first sync to bring its sources in, or while any source is importing (the first load
- * or a Refresh). The app waits on it rather than showing a half-loaded catalogue.
+ * or a Refresh). The app waits on it rather than showing a half-loaded catalogue. `launchSync` is the
+ * catch-up with the account on every launch: the same screen, with only the watch history to wait for.
  *
  * Each importing source gets its own step, described by what it holds, so a live-only playlist is not shown
  * fetching films. A source that has finished stays ticked until the others are done too.
  */
-export function describeSetup({ firstSync, imports }: { firstSync: boolean; imports: readonly ImportProgress[] }): SetupProgress | null {
-  if (!firstSync) return null;
+export function describeSetup({ firstSync, launchSync = false, imports }: { firstSync: boolean; launchSync?: boolean; imports: readonly ImportProgress[] }): SetupProgress | null {
+  if (!firstSync) {
+    if (!launchSync) return null;
+    return {
+      steps: [
+        { key: "account", label: "Account secured", state: "done" },
+        { key: "sources", label: "Your sources", state: "done" },
+        { key: "history", label: "Watch history", note: "From your other devices", state: "active" },
+      ],
+      fraction: 0.8,
+      detail: "Syncing watch history and favourites",
+    };
+  }
   const sourceSteps = imports.map(
     (entry, index): SetupStep => ({
       key: `source${index}`,

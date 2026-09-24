@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  expo-video@57.0.4:
+    hash: 889abc8f9911e8911d4f256a2c1dfd4b84ac0536aa1cf0f0809654fcfcc0ca22
+    path: patches/expo-video@57.0.4.patch
+
 importers:
 
   .:
@@ -134,7 +139,7 @@ importers:
         version: 57.0.1(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)
       expo-video:
         specifier: ~57.0.4
-        version: 57.0.4(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)
+        version: 57.0.4(patch_hash=889abc8f9911e8911d4f256a2c1dfd4b84ac0536aa1cf0f0809654fcfcc0ca22)(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3)
       iconoir-react-native:
         specifier: ^7.12.1
         version: 7.12.1(react-native-svg@15.15.5(react-native-tvos@0.86.3-0)(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)
@@ -8403,7 +8408,7 @@ snapshots:
       react: 19.2.3
       react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
-  expo-video@57.0.4(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3):
+  expo-video@57.0.4(patch_hash=889abc8f9911e8911d4f256a2c1dfd4b84ac0536aa1cf0f0809654fcfcc0ca22)(expo@57.0.24)(react-native-tvos@0.86.3-0)(react@19.2.3):
     dependencies:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.2.8(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@6.0.3)
       react: 19.2.3
