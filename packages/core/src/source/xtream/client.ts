@@ -1,3 +1,4 @@
+import { fetchAll } from "../inTurn.js";
 import type { Category, ChannelVariant, Source, SourceAdapter } from "../types.js";
 import type { XtreamCredentials } from "./detect.js";
 import { groupVariants, type RawChannelEntry } from "../../normalise/groupVariants.js";
@@ -101,12 +102,10 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
 
     async *importAll(source) {
       // Each call below is already a cheap, independent player_api.php request — unlike the
-      // M3U adapter there's no whole-playlist re-fetch to avoid, so this is a thin wrapper.
+      // M3U adapter there's no whole-playlist re-fetch to avoid, so this is a thin wrapper. A few at once.
       const categories = await this.fetchCategories(source);
-      for (const category of categories) {
-        const channels = await this.fetchChannels(source, category);
-        yield { category, channels };
-      }
+      const pages = await fetchAll(categories, async (category) => ({ category, channels: await this.fetchChannels(source, category) }));
+      yield* pages;
     },
   };
 }

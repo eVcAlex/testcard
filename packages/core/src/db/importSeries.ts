@@ -1,17 +1,18 @@
 import { categoryClassificationParams } from "./categoryClassification.js";
-import { applyInSlices, yieldToEventLoop } from "./applyInSlices.js";
+import { applyInSlices } from "./applyInSlices.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
-import { remoteKeyFor } from "../sync/remoteKey.js";
+import { fetchAll } from "../source/inTurn.js";
+import { keysFor } from "./storedKeys.js";
 import type { CredentialsLookup } from "../source/xtream/client.js";
 import { fetchSeriesCategories, fetchSeriesList } from "../source/xtream/vod.js";
 import type { Category, Series, Source } from "../source/types.js";
 
 /**
  * Imports (or re-imports) an Xtream source's full series catalog: `get_series_categories` +
- * `get_series` per category. Same diff-and-merge shape as `importVod.ts`. Every touched row has
- * `episodes_fetched_at` reset to NULL — a previously-fetched season/episode list is now presumed
- * stale and re-fetched lazily next time the series is opened (see `importVodDetails.ts`).
+ * `get_series` per category. Same diff-and-merge shape as `importVod.ts`. Only a series that changed is
+ * written; it has `episodes_fetched_at` reset to NULL, so its season/episode list is fetched again next time it
+ * is opened. Unchanged ones keep theirs until it is a day old (see `importVodDetails.ts`).
  */
 export async function importSeries(
   db: Database.Database,
@@ -28,6 +29,7 @@ export async function importSeries(
     VALUES (@id, @sourceId, @providerId, @rawName, @country, @genre, @language, @service, @tags)
     ON CONFLICT(id) DO UPDATE SET raw_name = excluded.raw_name, country = excluded.country,
       genre = excluded.genre, language = excluded.language, service = excluded.service, tags = excluded.tags
+    WHERE series_categories.raw_name IS NOT excluded.raw_name OR series_categories.tags IS NOT excluded.tags
   `);
   function categoryParams(category: Category) {
     return { ...category, country: parseName(category.rawName).country ?? null, ...categoryClassificationParams(category.rawName) };
@@ -51,22 +53,20 @@ export async function importSeries(
       episodes_fetched_at = NULL,
       last_seen_at        = excluded.last_seen_at,
       remote_key           = excluded.remote_key
+    -- Only a series that changed is written (see importVod.ts); an unchanged one keeps its episode list.
+    WHERE series.category_id IS NOT excluded.category_id OR series.provider_series_id IS NOT excluded.provider_series_id
+      OR series.name IS NOT excluded.name OR series.poster_url IS NOT excluded.poster_url
+      OR series.rating IS NOT excluded.rating OR series.plot IS NOT excluded.plot
+      OR series.remote_key IS NOT excluded.remote_key
   `);
 
-  const pages: { category: Category; series: readonly Series[] }[] = [];
-  for (const category of categories) {
-    pages.push({ category, series: await fetchSeriesList(source, category, getCredentials) });
-  }
+  const pages: { category: Category; series: readonly Series[] }[] = await fetchAll(categories, async (category) => ({
+    category,
+    series: await fetchSeriesList(source, category, getCredentials),
+  }));
 
   const providerHost = source.kind === "xtream" ? source.baseUrl : "";
-  const remoteKeys = new Map<string, string>();
-  // A page's digests at once rather than one await per title: tens of thousands in a row held the thread (the UI's,
-  // on a TV) for seconds. A macrotask between pages lets the screen draw.
-  for (const page of pages) {
-    const keys = await Promise.all(page.series.map((item) => remoteKeyFor(providerHost, item.providerSeriesId)));
-    page.series.forEach((item, index) => remoteKeys.set(item.id, keys[index]!));
-    await yieldToEventLoop();
-  }
+  const remoteKeys = await keysFor(db, "series", source.id, providerHost, pages.map((page) => page.series.map((item) => ({ id: item.id, providerId: item.providerSeriesId }))));
 
   let seriesCount = 0;
   await applyInSlices(

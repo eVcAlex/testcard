@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "./src/state/app";
 import { useImportPacing } from "./src/platform/pacing";
 import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
+import { UpdatePrompt } from "./src/update/UpdatePrompt";
 import { colors, styleSheet, uiScale } from "./src/theme";
 import { focusedNow, lastFocused } from "./src/ui/Focusable";
 import { SourcePicker } from "./src/ui/SourcePicker";
@@ -356,6 +357,8 @@ function Root() {
           )}
         </View>
         {picking ? <SourcePicker sources={sources} picked={sourceId} onPick={pickSource} onClose={closePicker} /> : null}
+        {/* A new version is offered over the pages, never over the player or while a source loads. */}
+        {!covered ? <UpdatePrompt /> : null}
         {exitHint && (
           <View style={styles.toast} pointerEvents="none">
             <Text style={styles.toastText}>Press back again to exit</Text>

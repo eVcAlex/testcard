@@ -6,7 +6,7 @@ import type { Movie, Series, Source } from "../source/types.js";
 
 /**
  * Lazily fetches (and caches) a movie's plot/duration via `get_vod_info` — a no-op if already
- * fetched (`details_fetched_at` non-null; a refresh resets it to NULL, see `importVod.ts`).
+ * fetched (`details_fetched_at` non-null; a refresh resets it to NULL for a film that changed, see `importVod.ts`).
  * Also backfills `container_extension` when the cheap bulk `get_vod_streams` import didn't
  * supply one (some Xtream panels omit it there) — see the design spec's "Import strategy".
  */
@@ -40,9 +40,12 @@ export async function ensureMovieDetails(
 /**
  * Lazily fetches (and caches) a series' seasons/episodes via `get_series_info` — a no-op if
  * already fetched. Replaces the series' seasons/episodes wholesale (delete-then-insert) rather
- * than diffing — same reasoning as EPG import: cheap to fully replace a leaf list. A refresh
- * resets `episodes_fetched_at` to NULL (see `importSeries.ts`), so this re-runs next open.
+ * than diffing — same reasoning as EPG import: cheap to fully replace a leaf list. A list older than a day is
+ * fetched again on the next open, so a running series' new episodes turn up (a refresh leaves an unchanged series'
+ * list alone, see `importSeries.ts`); a series the refresh saw change is reset to NULL and fetched at once.
  */
+const EPISODES_FRESH_MS = 24 * 60 * 60 * 1000;
+
 export async function ensureSeriesEpisodes(
   db: Database.Database,
   source: Source,
@@ -68,7 +71,7 @@ export async function ensureSeriesEpisodes(
         episodesFetchedAt: number | null;
       }
     | undefined;
-  if (!row || row.episodesFetchedAt !== null) return;
+  if (!row || (row.episodesFetchedAt !== null && Date.now() - row.episodesFetchedAt < EPISODES_FRESH_MS)) return;
 
   const series: Series = {
     id: row.id,

@@ -19,12 +19,18 @@ release assets without a token, and a token must never ship inside the app.
    and `CLOUDFLARE_ACCOUNT_ID`. `pnpm release:android [run-id]` still publishes any run by hand,
    with the developer's own wrangler login. The "Sync worker" workflow likewise applies D1
    migrations and deploys the worker when main changes it.
-3. **The manifest** is `{versionCode, versionName, apks: {firetv, phone}}`. CI stamps every build
-   with `versionCode = github.run_number`, because Android only installs a strictly higher one.
-4. **On the device**, `apps/mobile/src/update`: check at launch, show "Sources (update)" in the
-   rail, and on Update now download the APK and hand it to Android's package installer. The user
-   confirms once; the first time, Android asks to allow installs from Testcard
-   (`REQUEST_INSTALL_PACKAGES`).
+3. **The manifest** is `{versionCode, versionName, commit, apks: {firetv}, notes}`. CI stamps every
+   build with `versionCode = github.run_number`, because Android only installs a strictly higher one.
+   Each APK is uploaded under its own name (`testcard-firetv-<run>.apk`), so no cache can serve an
+   older one. `notes` lists, for the last 15 builds, the commit subjects since the build before
+   (`scripts/release-manifest.mjs`), so commit subjects are written for the viewer.
+4. **On the device**, `apps/mobile/src/update`: check shortly after launch and every six hours
+   (switchable off under Account and updates), and offer a new version in a dialog with what
+   changed; Later puts that version off. Update now downloads the APK in the app and installs it
+   through Android's `PackageInstaller` session (the local module `modules/testcard-installer`),
+   which reports a refusal instead of silently doing nothing, as handing the file to an
+   `ACTION_VIEW` intent did (0.1.66 and earlier sat at "Downloading 100%"). If Testcard may not
+   install apps yet, the dialog opens that setting and carries on once it is allowed.
 5. **Signing key.** Updates install only if signed with the same key as the installed app. Builds
    use Expo's debug keystore, which is the same on every run. A dedicated keystore in GitHub
    secrets should replace it before the app leaves the owner's devices.
@@ -34,5 +40,5 @@ release assets without a token, and a token must never ship inside the app.
 - The first build with the updater has to be installed by hand; later ones arrive in the app.
 - Builds made before this change have versionCode 1 and no updater.
 - The desktop app uses the same bucket through `electron-updater` (generic provider). `pnpm release:desktop` uploads the installer and `latest.yml` after `pnpm package`; the Account page has an Updates panel that checks, downloads on request and restarts to install. It never downloads on its own. Installers before 0.1.1 have no updater, so that one is installed by hand once. The installer is unsigned, so Windows SmartScreen can warn on that first install.
-- The update path has not been exercised on a Fire Stick: the package-installer hand-off is the
-  part most likely to need a fix.
+- Builds up to 0.1.66 install updates the old way, which did not work on the owner's Fire Stick:
+  the first build with the installer module is installed by hand once.

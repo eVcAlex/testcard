@@ -1,8 +1,9 @@
-import { applyInSlices, yieldToEventLoop } from "./applyInSlices.js";
+import { applyInSlices } from "./applyInSlices.js";
 import { categoryClassificationParams } from "./categoryClassification.js";
 import type Database from "better-sqlite3";
 import { parseName } from "../normalise/parseName.js";
-import { remoteKeyFor } from "../sync/remoteKey.js";
+import { fetchAll } from "../source/inTurn.js";
+import { keysFor } from "./storedKeys.js";
 import type { CredentialsLookup } from "../source/xtream/client.js";
 import { fetchMovies, fetchVodCategories } from "../source/xtream/vod.js";
 import type { Category, Movie, Source } from "../source/types.js";
@@ -11,9 +12,8 @@ import type { Category, Movie, Source } from "../source/types.js";
  * Imports (or re-imports) an Xtream source's full movie catalog: `get_vod_categories` +
  * `get_vod_streams` per category — same cost profile as live channel import. Diff-and-merge by
  * stable id (mirrors `importSource.ts`), never destructive — favourites/recents/progress
- * survive a refresh since ids stay stable. Every touched row has `details_fetched_at` reset to
- * NULL: title/poster/category data is refreshed in place, but any previously lazily-fetched
- * plot/duration is now presumed stale and re-fetched next time the title is opened.
+ * survive a refresh since ids stay stable. Only a film that changed is written; it has `details_fetched_at` reset
+ * to NULL, so its lazily-fetched plot/duration is fetched again next time it is opened.
  */
 export async function importVod(
   db: Database.Database,
@@ -30,6 +30,7 @@ export async function importVod(
     VALUES (@id, @sourceId, @providerId, @rawName, @country, @genre, @language, @service, @tags)
     ON CONFLICT(id) DO UPDATE SET raw_name = excluded.raw_name, country = excluded.country,
       genre = excluded.genre, language = excluded.language, service = excluded.service, tags = excluded.tags
+    WHERE movie_categories.raw_name IS NOT excluded.raw_name OR movie_categories.tags IS NOT excluded.tags
   `);
   function categoryParams(category: Category) {
     return { ...category, country: parseName(category.rawName).country ?? null, ...categoryClassificationParams(category.rawName) };
@@ -53,24 +54,23 @@ export async function importVod(
       details_fetched_at   = NULL,
       last_seen_at         = excluded.last_seen_at,
       remote_key            = excluded.remote_key
+    -- Only a title that changed is written: rewriting every row of a big catalogue on each refresh was most of
+    -- its cost on a Fire TV, and kept the details (plot, running time) of unchanged titles from being reused.
+    WHERE movies.category_id IS NOT excluded.category_id OR movies.provider_stream_id IS NOT excluded.provider_stream_id
+      OR movies.name IS NOT excluded.name OR movies.poster_url IS NOT excluded.poster_url
+      OR movies.container_extension IS NOT excluded.container_extension OR movies.rating IS NOT excluded.rating
+      OR movies.remote_key IS NOT excluded.remote_key
   `);
 
   // Pages are drained into memory first — better-sqlite3 has no async transaction support,
   // same reasoning as importSource.ts.
-  const pages: { category: Category; movies: readonly Movie[] }[] = [];
-  for (const category of categories) {
-    pages.push({ category, movies: await fetchMovies(source, category, getCredentials) });
-  }
+  const pages: { category: Category; movies: readonly Movie[] }[] = await fetchAll(categories, async (category) => ({
+    category,
+    movies: await fetchMovies(source, category, getCredentials),
+  }));
 
   const providerHost = source.kind === "xtream" ? source.baseUrl : "";
-  const remoteKeys = new Map<string, string>();
-  // A page's digests at once rather than one await per title: tens of thousands in a row held the thread (the UI's,
-  // on a TV) for seconds. A macrotask between pages lets the screen draw.
-  for (const page of pages) {
-    const keys = await Promise.all(page.movies.map((item) => remoteKeyFor(providerHost, item.providerStreamId)));
-    page.movies.forEach((item, index) => remoteKeys.set(item.id, keys[index]!));
-    await yieldToEventLoop();
-  }
+  const remoteKeys = await keysFor(db, "movies", source.id, providerHost, pages.map((page) => page.movies.map((movie) => ({ id: movie.id, providerId: movie.providerStreamId }))));
 
   let movieCount = 0;
   await applyInSlices(

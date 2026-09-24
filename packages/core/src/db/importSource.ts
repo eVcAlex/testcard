@@ -28,6 +28,7 @@ export async function importSource(
     VALUES (@id, @sourceId, @providerId, @rawName, @country, @genre, @language, @service, @tags)
     ON CONFLICT(id) DO UPDATE SET raw_name = excluded.raw_name, country = excluded.country,
       genre = excluded.genre, language = excluded.language, service = excluded.service, tags = excluded.tags
+    WHERE categories.raw_name IS NOT excluded.raw_name OR categories.tags IS NOT excluded.tags
   `);
 
   // `country` is not a field on the Category domain type (see CONTEXT.md — it's a
@@ -56,6 +57,11 @@ export async function importSource(
       catchup_type     = excluded.catchup_type,
       catchup_days     = excluded.catchup_days,
       last_seen_at     = excluded.last_seen_at
+    -- Only a channel that changed is written: rewriting thousands of unchanged rows was most of a refresh's cost.
+    WHERE channels.normalised_name IS NOT excluded.normalised_name OR channels.raw_name IS NOT excluded.raw_name
+      OR channels.country IS NOT excluded.country OR channels.logo_url IS NOT excluded.logo_url
+      OR channels.channel_number IS NOT excluded.channel_number OR channels.tvg_id IS NOT excluded.tvg_id
+      OR channels.catchup_type IS NOT excluded.catchup_type OR channels.catchup_days IS NOT excluded.catchup_days
   `);
 
   const deleteVariantsForChannel = db.prepare(`DELETE FROM channel_variants WHERE channel_id = ?`);
@@ -63,6 +69,23 @@ export async function importSource(
     INSERT INTO channel_variants (id, channel_id, provider_stream_id, quality, is_offline, sort_order)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
+
+  // Each channel's streams as stored, so a channel whose streams are unchanged is left alone rather than having them
+  // deleted and written again. (Android's SQLite adapter stores a NUL in an id as U+0001.)
+  const unNul = (text: string) => text.replaceAll("\u0001", "\0");
+  const variantKey = (id: string, stream: string, quality: string | null | undefined, offline: boolean | number) => `${id}|${stream}|${quality ?? ""}|${offline ? 1 : 0}`;
+  const storedVariants = new Map<string, string>();
+  for (const row of db
+    .prepare(
+      `SELECT v.channel_id AS channelId, v.id, v.provider_stream_id AS stream, v.quality, v.is_offline AS offline
+       FROM channel_variants v JOIN channels c ON c.id = v.channel_id WHERE c.source_id = ? ORDER BY v.channel_id, v.sort_order`,
+    )
+    .all(source.id) as { channelId: string; id: string; stream: string; quality: string | null; offline: number }[]) {
+    const channelId = unNul(row.channelId);
+    const entry = variantKey(unNul(row.id), row.stream, row.quality, row.offline);
+    const before = storedVariants.get(channelId);
+    storedVariants.set(channelId, before === undefined ? entry : `${before}\n${entry}`);
+  }
 
   let categoryCount = 0;
   let channelCount = 0;
@@ -100,10 +123,12 @@ export async function importSource(
         });
         channelCount += 1;
 
+        variantCount += channel.variants.length;
+        const wanted = channel.variants.map((variant) => variantKey(variant.id, variant.providerStreamId, variant.quality, variant.isOffline === true)).join("\n");
+        if (storedVariants.get(channel.id) === wanted) continue;
         deleteVariantsForChannel.run(channel.id);
         channel.variants.forEach((variant, index) => {
           insertVariant.run(variant.id, channel.id, variant.providerStreamId, variant.quality ?? null, variant.isOffline ? 1 : 0, index);
-          variantCount += 1;
         });
       }
     },
