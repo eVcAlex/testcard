@@ -378,6 +378,14 @@ CREATE TABLE IF NOT EXISTS hidden_channels (
       }
     },
   },
+  {
+    version: 15,
+    up: (db) => {
+      // Other server addresses a provider gives for the same account, tried when the main one is down.
+      const columns = db.prepare(`SELECT name FROM pragma_table_info('sources')`).all() as { name: string }[];
+      if (columns.length > 0 && !columns.some((entry) => entry.name === "backup_urls")) db.exec(`ALTER TABLE sources ADD COLUMN backup_urls TEXT`);
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

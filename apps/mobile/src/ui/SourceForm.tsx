@@ -80,6 +80,15 @@ export function SourceForm({ sourceId, onClose }: { sourceId: string | undefined
                       autoCapitalize="none"
                       autoCorrect={false}
                     />
+                    <Field
+                      label="Backup server addresses (optional)"
+                      value={draft.backupUrls}
+                      onChangeText={(backupUrls) => change({ backupUrls })}
+                      placeholder="Other addresses for the same login, separated by commas"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                    />
                   </>
                 ) : (
                   <Field

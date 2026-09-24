@@ -2,8 +2,9 @@ import type Database from "better-sqlite3";
 import { extractXtreamCredentials, probeXtream, type XtreamCredentials } from "@testcard/core/src/source/xtream/detect.js";
 import { remoteKeyFor, remoteKeyForPlaylist } from "@testcard/core/src/sync/remoteKey.js";
 import { applySourceContent } from "@testcard/core/src/sync/sourceContent.js";
+import { parseBackupUrls } from "@testcard/core/src/sync/localChanges.js";
 import type { SourceContent } from "@testcard/sync-schema";
-import { getCredentials, saveCredentials } from "../platform/secrets";
+import { getStoredCredentials as getCredentials, saveCredentials } from "../platform/secrets";
 
 /**
  * Adding and editing a source on the TV, as the desktop app's source form does: the login is checked with the
@@ -20,6 +21,8 @@ export interface SourceDraft {
   /** A playlist link; for a new source, a whole Xtream `get.php` link is taken as its login. */
   readonly playlistUrl: string;
   readonly epgUrl: string;
+  /** Xtream: other server addresses for the same account, comma or space separated as typed. */
+  readonly backupUrls: string;
   readonly content: SourceContent;
 }
 
@@ -31,16 +34,17 @@ export const emptyDraft = (kind: SourceDraft["kind"]): SourceDraft => ({
   password: "",
   playlistUrl: "",
   epgUrl: "",
+  backupUrls: "",
   content: { live: true, movies: true, series: true },
 });
 
 export async function readDraft(db: Database.Database, sourceId: string): Promise<SourceDraft | undefined> {
   const row = db
     .prepare(
-      `SELECT kind, name, playlist_url AS playlistUrl, epg_url AS epgUrl, include_live AS live, include_movies AS movies, include_series AS series
+      `SELECT kind, name, playlist_url AS playlistUrl, epg_url AS epgUrl, backup_urls AS backupUrls, include_live AS live, include_movies AS movies, include_series AS series
        FROM sources WHERE id = ?`,
     )
-    .get(sourceId) as { kind: "xtream" | "m3u"; name: string; playlistUrl: string | null; epgUrl: string | null; live: number; movies: number; series: number } | undefined;
+    .get(sourceId) as { kind: "xtream" | "m3u"; name: string; playlistUrl: string | null; epgUrl: string | null; backupUrls: string | null; live: number; movies: number; series: number } | undefined;
   if (row === undefined) return undefined;
   const login = row.kind === "xtream" ? await getCredentials(sourceId).catch(() => undefined) : undefined;
   return {
@@ -51,6 +55,7 @@ export async function readDraft(db: Database.Database, sourceId: string): Promis
     password: "",
     playlistUrl: row.playlistUrl ?? "",
     epgUrl: row.epgUrl ?? "",
+    backupUrls: parseBackupUrls(row.backupUrls).join(", "),
     content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 },
   };
 }
@@ -110,11 +115,6 @@ export interface SavedSource {
   readonly reload: boolean;
 }
 
-/** A source's key on the account changed (a new server or playlist): the old one is removed on the other devices. */
-function retireKey(db: Database.Database, previous: string | null, next: string): void {
-  if (previous === null || previous === next) return;
-  db.prepare(`INSERT INTO sync_tombstones (table_name, remote_key, deleted_at) VALUES ('sources', ?, ?)`).run(previous, Date.now());
-}
 
 /** Checks and keeps a new source (`sourceId` undefined) or a change to one. Throws a message fit to show. */
 export async function saveSource(db: Database.Database, sourceId: string | undefined, draft: SourceDraft, newId: () => string): Promise<SavedSource> {
@@ -122,6 +122,15 @@ export async function saveSource(db: Database.Database, sourceId: string | undef
   if (name === "") throw new Error("Give the source a name.");
   if (!draft.content.live && !draft.content.movies && !draft.content.series) throw new Error("Choose at least one of Live TV, Movies and Series.");
   const epg = checkGuide(draft.epgUrl);
+  const backups = JSON.stringify(
+    [...new Set(draft.backupUrls.split(/[\s,]+/).filter((entry) => entry !== "").map((entry) => {
+      try {
+        return serverAddress(entry);
+      } catch {
+        throw new Error(`"${entry}" is not a server address.`);
+      }
+    }))],
+  );
   const now = Date.now();
 
   // A whole Xtream link pasted as a new playlist is an Xtream login.
@@ -135,11 +144,12 @@ export async function saveSource(db: Database.Database, sourceId: string | undef
       if (credentials.username === "" || credentials.password === "") throw new Error("Enter the username and password.");
       await checkLogin(credentials);
       await saveCredentials(id, credentials);
-      db.prepare(`INSERT INTO sources (id, kind, name, base_url, epg_url, created_at, remote_key, sync_updated_at) VALUES (?, 'xtream', ?, ?, ?, ?, ?, ?)`).run(
+      db.prepare(`INSERT INTO sources (id, kind, name, base_url, epg_url, backup_urls, created_at, remote_key, sync_updated_at) VALUES (?, 'xtream', ?, ?, ?, ?, ?, ?, ?)`).run(
         id,
         name,
         credentials.baseUrl,
         epg,
+        backups,
         now,
         await remoteKeyFor(credentials.baseUrl, "source"),
         now,
@@ -180,11 +190,9 @@ export async function saveSource(db: Database.Database, sourceId: string | undef
       await saveCredentials(sourceId, credentials);
       reload = true;
     }
-    const remoteKey = await remoteKeyFor(credentials.baseUrl, "source");
-    db.transaction(() => {
-      retireKey(db, row.remoteKey, remoteKey);
-      db.prepare(`UPDATE sources SET name = ?, base_url = ?, epg_url = ?, remote_key = ?, sync_updated_at = ? WHERE id = ?`).run(name, credentials.baseUrl, epg, remoteKey, now, sourceId);
-    })();
+    // Only the login changes: the source keeps its identity (its key on the account and the address its history is
+    // matched by), so a provider that moved keeps its favourites, progress and Continue watching.
+    db.prepare(`UPDATE sources SET name = ?, epg_url = ?, backup_urls = ?, sync_updated_at = ? WHERE id = ?`).run(name, epg, backups, now, sourceId);
   } else {
     let url = row.playlistUrl ?? "";
     if (draft.playlistUrl.trim() !== url) {
@@ -192,11 +200,8 @@ export async function saveSource(db: Database.Database, sourceId: string | undef
       url = await checkPlaylist(draft.playlistUrl);
       reload = true;
     }
-    const remoteKey = await remoteKeyForPlaylist(url);
-    db.transaction(() => {
-      retireKey(db, row.remoteKey, remoteKey);
-      db.prepare(`UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, remote_key = ?, sync_updated_at = ? WHERE id = ?`).run(name, url, epg, remoteKey, now, sourceId);
-    })();
+    // The source keeps its key on the account, so the other devices update it rather than add another.
+    db.prepare(`UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, sync_updated_at = ? WHERE id = ?`).run(name, url, epg, now, sourceId);
   }
   if (applySourceContent(db, sourceId, draft.content)) reload = true;
   return { id: sourceId, reload };

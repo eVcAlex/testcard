@@ -70,15 +70,15 @@ export type SyncCredentialsLookup = (sourceId: string) => Promise<{ baseUrl: str
  */
 async function backfillSourceKeys(db: Database.Database, getCredentials: SyncCredentialsLookup): Promise<void> {
   const rows = db
-    .prepare(`SELECT id, kind, playlist_url AS playlistUrl FROM sources WHERE remote_key IS NULL OR sync_updated_at IS NULL`)
-    .all() as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null }[];
+    .prepare(`SELECT id, kind, playlist_url AS playlistUrl, base_url AS baseUrl FROM sources WHERE remote_key IS NULL OR sync_updated_at IS NULL`)
+    .all() as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; baseUrl: string | null }[];
   for (const row of rows) {
     let remoteKey: string;
     if (row.kind === "m3u") {
       if (row.playlistUrl === null || row.playlistUrl === "") continue;
       remoteKey = await remoteKeyForPlaylist(row.playlistUrl);
     } else {
-      remoteKey = await remoteKeyFor((await getCredentials(row.id)).baseUrl, "source");
+      remoteKey = await remoteKeyFor(row.baseUrl ?? (await getCredentials(row.id)).baseUrl, "source");
     }
     db.prepare(`UPDATE sources SET remote_key = COALESCE(remote_key, ?), sync_updated_at = COALESCE(sync_updated_at, ?) WHERE id = ?`).run(
       remoteKey,
@@ -99,6 +99,17 @@ async function backfillSourceKeys(db: Database.Database, getCredentials: SyncCre
 function skipsField(db: Database.Database, sourceId: string): { skips?: SourceSkip[] } {
   const skips = skipsForSource(db, sourceId);
   return skips.length > 0 ? { skips } : {};
+}
+
+/** A source's backup server addresses as stored (a JSON array), or none. */
+export function parseBackupUrls(value: string | null): string[] {
+  if (value === null || value === "") return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((entry): entry is string => typeof entry === "string" && entry !== "") : [];
+  } catch {
+    return [];
+  }
 }
 
 const blankToNull = (value: string | null) => (value === null || value.trim() === "" ? null : value.trim());
@@ -149,11 +160,11 @@ export async function collectLocalChanges(
   resendSourceGuides(db);
   const sourceRows = db
     .prepare(
-      `SELECT id, kind, playlist_url AS playlistUrl, epg_url AS epgUrl, remote_key, name, sync_updated_at,
+      `SELECT id, kind, playlist_url AS playlistUrl, base_url AS baseUrl, epg_url AS epgUrl, backup_urls AS backupUrls, remote_key, name, sync_updated_at,
               include_live AS live, include_movies AS movies, include_series AS series, sort_order AS position FROM sources
        WHERE kind IN ('xtream', 'm3u') AND remote_key IS NOT NULL AND sync_updated_at > ?`,
     )
-    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; epgUrl: string | null; remote_key: string; name: string; sync_updated_at: number; live: number; movies: number; series: number; position: number | null }[];
+    .all(sinceMs) as { id: string; kind: "xtream" | "m3u"; playlistUrl: string | null; baseUrl: string | null; epgUrl: string | null; backupUrls: string | null; remote_key: string; name: string; sync_updated_at: number; live: number; movies: number; series: number; position: number | null }[];
 
   const sources: SyncSource[] = [];
   for (const row of sourceRows) {
@@ -163,7 +174,7 @@ export async function collectLocalChanges(
       payload = { playlistUrl: row.playlistUrl, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), ...pinsFor(row.id), ...skipsField(db, row.id), epgUrl: blankToNull(row.epgUrl), hidden: hiddenForSource(db, row.id) };
     } else {
       const credentials = await getCredentials(row.id);
-      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), ...pinsFor(row.id), ...skipsField(db, row.id), epgUrl: blankToNull(row.epgUrl), hidden: hiddenForSource(db, row.id) };
+      payload = { host: credentials.baseUrl, username: credentials.username, password: credentials.password, backupHosts: parseBackupUrls(row.backupUrls), ...(row.baseUrl !== null ? { keyHost: row.baseUrl } : {}), content: { live: row.live !== 0, movies: row.movies !== 0, series: row.series !== 0 }, ...(row.position !== null ? { position: row.position } : {}), ...pinsFor(row.id), ...skipsField(db, row.id), epgUrl: blankToNull(row.epgUrl), hidden: hiddenForSource(db, row.id) };
     }
     const encrypted = await encryptCredentials(payload, accountPassword, salt);
     sources.push({ remoteKey: row.remote_key, label: row.name, credentialsBlob: encrypted.blob, credentialsIv: encrypted.iv, updatedAt: row.sync_updated_at, deletedAt: null });

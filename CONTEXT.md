@@ -138,6 +138,14 @@ plays back through an embedded `mpv`, stores everything locally.
   order (`favourites.position`). A channel's account key is `ch.` + a 64-bit hash of its
   source's key and the provider's channel key (`sync/channelHistory.ts`). A row for a channel
   not imported here waits in `pending_channel_sync` (30 days) instead of holding the cursor.
+- **Source identity** — an Xtream source's `base_url` is the address its history is matched by
+  (its key on the account and every title's key derive from it): the one it was added with,
+  synced as `keyHost`. Editing the server changes only the stored login (what is connected to),
+  so a provider that moves keeps its favourites and progress. A playlist keeps its key likewise.
+- **Backup server addresses** — `sources.backup_urls` (synced as `backupHosts`): other addresses
+  for the same login. When the connected one cannot be reached (before a refresh, a failed play
+  or episode load, and after launch), the first that answers is used (`state/hosts.ts`) until the
+  main one is back; the card says so.
 - **Account** (Xtream) — `user_info` from `player_api.php`: expiry, streams allowed and in use.
   Shown on each source's card; a refused stream says when every stream is in use or the
   subscription has expired (`apps/mobile/src/state/account.ts`).

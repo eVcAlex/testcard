@@ -20,6 +20,7 @@ import { Pill } from "../ui/Pill";
 import { episodeTitle, seriesTitle } from "../ui/titles";
 import { plainReason, serverGone } from "../ui/plainReason";
 import { SourceForm } from "../ui/SourceForm";
+import { hasBackups, pickServer, unreachable } from "../state/hosts";
 
 /** The focus ring every card carries (Focusable's border, rounded to whole dp as styleSheet does), outside its thumbnail: the grid has to leave room for it. */
 const CARD_RING = 3;
@@ -154,6 +155,7 @@ export function SeriesDetailScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ text: string; gone: boolean }>();
   const [retry, setRetry] = useState(0);
+  const serverTried = useRef(false);
   // The source's form, opened from a failed load to put a moved server address right.
   const [editing, setEditing] = useState(false);
   const closeEditing = useCallback(() => {
@@ -179,10 +181,19 @@ export function SeriesDetailScreen({
       const source = getSeriesSource(db, seriesId);
       if (source?.kind === "xtream") await ensureSeriesEpisodes(db, source, seriesId, getCredentials);
     })()
-      .catch((failure: unknown) => {
+      .catch(async (failure: unknown) => {
         if (cancelled) return;
         const message = failure instanceof Error ? failure.message : "";
-        setError({ text: `The episodes didn't load. ${plainReason(message)}`.trim(), gone: serverGone(message) });
+        // The provider's server not answering: its other addresses are tried once, and the episodes asked for again.
+        const source = getSeriesSource(db, seriesId);
+        if (!serverTried.current && source !== undefined && unreachable(message) && hasBackups(db, source.id)) {
+          serverTried.current = true;
+          if (await pickServer(db, source.id).catch(() => false)) {
+            if (!cancelled) setRetry((value) => value + 1);
+            return;
+          }
+        }
+        if (!cancelled) setError({ text: `The episodes didn't load. ${plainReason(message)}`.trim(), gone: serverGone(message) });
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {

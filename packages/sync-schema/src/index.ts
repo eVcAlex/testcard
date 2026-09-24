@@ -41,6 +41,16 @@ export const XtreamCredentialsPayloadSchema = z.object({
   host: z.string().min(1),
   username: z.string().min(1),
   password: z.string().min(1),
+  /**
+   * Other server addresses the provider gives for the same account, tried in order when `host` cannot be reached.
+   * Optional: an older device leaves it out, and a device that gets none keeps what it has.
+   */
+  backupHosts: z.array(z.string().min(1)).optional(),
+  /**
+   * The address the source's history is matched by: the one it was first added with, kept when `host` changes (a
+   * provider that moved), so its favourites and progress stay with it. Absent from an older device: `host` is used.
+   */
+  keyHost: z.string().min(1).optional(),
   content: SourceContentSchema.optional(),
   position: z.number().int().optional(),
   pins: z.array(SourcePinSchema).optional(),
