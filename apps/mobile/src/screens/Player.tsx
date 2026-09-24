@@ -19,6 +19,7 @@ import { channelCatchup, loadCatchupGuide, type CatchupGuide } from "../playback
 import { fetchGuide, type Airing } from "../playback/airing";
 import { autoCaptionTrack, CAPTION_SETTINGS, nativeCaptionStyle, settingLabel, stepSetting, type CaptionPrefs, type CaptionSetting } from "../playback/captions";
 import { guessedCreditsSecs, learnedCreditsSecs, noteCreditsSkipped } from "../playback/credits";
+import { audioLanguage as languageOfAudio, audioName, autoAudioTrack, nextFit, nextSpeed, pictureLabel, readPictureFit, speedLabel, writePictureFit } from "../playback/viewing";
 
 /** 15 s, what the skip buttons' icons say (Iconoir only draws 15 s ones). */
 const SEEK_STEP_SECS = 15;
@@ -44,7 +45,7 @@ const PROGRESS_EVERY_MS = 5000;
 /** Presses of the remote, as opposed to the focus and blur events the same handler also receives. */
 const REMOTE_KEYS = new Set(["up", "down", "left", "right", "select", "playPause", "rewind", "fastForward"]);
 
-type Control = "exit" | "seek" | "back" | "play" | "forward" | "captions" | "next" | "last" | "live" | "catchup";
+type Control = "exit" | "seek" | "back" | "play" | "forward" | "captions" | "next" | "last" | "live" | "catchup" | "audio" | "picture" | "speed";
 
 /** A length written in 1920 px design units, for the shapes below that are sized in code. */
 const u = (n: number) => Math.round(n * uiScale);
@@ -200,7 +201,7 @@ function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
 }
 
 function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, fellBack, onExit }: { onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; fellBack: string | undefined; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
-  const { db, sync, captions, setCaptions } = useApp();
+  const { db, sync, captions, setCaptions, audioLanguage, setAudioLanguage } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
   const started = useRef(false);
@@ -354,6 +355,50 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     [player, setCaptions, tracks],
   );
   const captionStyle = useMemo(() => (Platform.OS === "android" ? nativeCaptionStyle(captions) : undefined), [captions]);
+  // The options row, below the transport keys: soundtrack, picture size, speed.
+  const audioTracks = useEvent(player, "availableAudioTracksChange", { availableAudioTracks: player.availableAudioTracks }).availableAudioTracks;
+  const audioTrack = useEvent(player, "audioTrackChange", { audioTrack: player.audioTrack }).audioTrack;
+  const currentAudio = audioTracks.findIndex((track) => audioTrack !== null && track.id === audioTrack.id && track.label === audioTrack.label && track.language === audioTrack.language);
+  const [audioOpen, setAudioOpen] = useState(false);
+  const [audioAt, setAudioAt] = useState(0);
+  const audioScroll = useRef<ScrollView>(null);
+  useEffect(() => audioScroll.current?.scrollTo({ y: Math.max(0, audioAt - 3) * u(GUIDE_ROW), animated: false }), [audioAt]);
+  const openAudio = useCallback(() => {
+    setAudioAt(Math.max(0, currentAudio));
+    setAudioOpen(true);
+  }, [currentAudio]);
+  const chooseAudio = useCallback(
+    (index: number) => {
+      const track = audioTracks[index];
+      setAudioOpen(false);
+      if (track === undefined) return;
+      player.audioTrack = track;
+      setAudioLanguage(languageOfAudio(track));
+    },
+    [audioTracks, player, setAudioLanguage],
+  );
+  // Once per stream, when its soundtracks turn up: the one in the language last picked, if it has one.
+  const autoAudioed = useRef(false);
+  useEffect(() => {
+    if (autoAudioed.current || audioTracks.length < 2) return;
+    autoAudioed.current = true;
+    const track = autoAudioTrack(audioLanguage, audioTracks, player.audioTrack);
+    if (track !== null) player.audioTrack = track;
+  }, [audioLanguage, audioTracks, player]);
+  // Picture size is kept per channel; a film or episode starts at Fit.
+  const [fit, setFit] = useState(() => (item.kind === "channel" ? readPictureFit(db, item.id) : "contain"));
+  const cycleFit = useCallback(() => {
+    const next = nextFit(fit);
+    setFit(next);
+    if (item.kind === "channel") writePictureFit(db, item.id, next);
+  }, [db, fit, item]);
+  // Speed is never kept: each film starts at normal speed.
+  const [speed, setSpeed] = useState(1);
+  const cycleSpeed = useCallback(() => {
+    const next = nextSpeed(speed);
+    player.playbackRate = next;
+    setSpeed(next);
+  }, [player, speed]);
   const time = useEvent(player, "timeUpdate", { currentTime: player.currentTime, currentLiveTimestamp: null, currentOffsetFromLive: null, bufferedPosition: player.bufferedPosition });
   // Seeking moves the shown position straight away instead of waiting for the next time update.
   const [seekedTo, setSeekedTo] = useState<number>();
@@ -546,13 +591,14 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // only covers loading/failure, before this) and it subscribes exactly once for the component's whole
   // lifetime: `chrome` flips on every auto-hide tick, and re-subscribing on each flip (as this used to)
   // reintroduces the same kind of race that made Back sometimes skip straight past hiding to exit.
-  const backStateRef = useRef({ guideOpen, captionsOpen, chrome, onExit, creditsOffer: cardUp && !finished, watchCredits });
-  backStateRef.current = { guideOpen, captionsOpen, chrome, onExit, creditsOffer: cardUp && !finished, watchCredits };
+  const backStateRef = useRef({ guideOpen, captionsOpen, audioOpen, chrome, onExit, creditsOffer: cardUp && !finished, watchCredits });
+  backStateRef.current = { guideOpen, captionsOpen, audioOpen, chrome, onExit, creditsOffer: cardUp && !finished, watchCredits };
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       const state = backStateRef.current;
       if (state.guideOpen) setGuide(undefined);
       else if (state.captionsOpen) setCaptionsOpen(false);
+      else if (state.audioOpen) setAudioOpen(false);
       else if (state.chrome) {
         clearTimeout(hideTimer.current);
         setAwake(false);
@@ -601,11 +647,16 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // The side-right keys (captions, next) join the transport row's navigation order when they exist.
   const captionsKey: Control[] = tracks.length > 0 ? ["captions"] : [];
   const nextKey: Control[] = next !== undefined && onNextEpisode !== undefined ? ["next"] : [];
-  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, ...nextKey]] : zapping ? [["exit", "live", "back", "play", "forward", ...more]] : [["exit", "live", "play", ...more]];
+  // The options row, reached with Down from the transport keys. Speed only where there is a timeline to speed through.
+  const options: Control[] = [...(audioTracks.length > 1 ? (["audio"] as const) : []), "picture", ...(vod || timeshift ? (["speed"] as const) : [])];
+  const rows: Control[][] = vod ? [["exit"], ["seek"], ["back", "play", "forward", ...captionsKey, ...nextKey], options] : zapping ? [["exit", "live", "back", "play", "forward", ...more], options] : [["exit", "live", "play", ...more], options];
   // Read through a ref by the key handler: the captions and next keys can appear after it was last rebuilt
   // (subtitle tracks turn up a moment after the stream starts), and it must navigate to them straight away.
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
+  // Live: while the viewer is going through channels (the controls only up because a channel changed), Up and Down
+  // keep changing channel. Any other key means they have stopped to use the controls, and Down then reaches the options row.
+  const surfing = useRef(true);
   const [selected, setSelected] = useState<Control>(() => {
     const carried = carriedSelection;
     carriedSelection = undefined;
@@ -628,6 +679,9 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
         }
       }
       else if (control === "catchup") openGuide();
+      else if (control === "audio") openAudio();
+      else if (control === "picture") cycleFit();
+      else if (control === "speed") cycleSpeed();
       else if (control === "live") {
         if (timeshift) onCatchup(undefined);
         else if (behindLive) goLive();
@@ -635,7 +689,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       }
       else togglePause();
     },
-    [behindLive, openCaptions, goLive, goNext, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
+    [behindLive, cycleFit, cycleSpeed, openAudio, openCaptions, goLive, goNext, onCatchup, onExit, onZap, openGuide, step, timeshift, togglePause, wake, zapping],
   );
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
   const handleKey = useCallback(
@@ -645,10 +699,16 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       if (inIntro && key === "select" && (!chrome || selected === "seek" || selected === "play")) return skipIntro();
       // While the next episode is on offer and the controls are hidden, left and right move between its two
       // buttons and OK presses one. Any other key means the viewer is doing something else: the countdown stops.
-      if (cardUp && !captionsOpen && !guideOpen) {
+      if (cardUp && !captionsOpen && !audioOpen && !guideOpen) {
         if (!chrome && (key === "left" || key === "right")) return setCardAt(key === "left" && !finished ? "credits" : "next");
         if (!chrome && key === "select") return cardAt === "credits" && !finished ? watchCredits() : goNext(true);
         if (REMOTE_KEYS.has(key)) setAutoCancelled(true);
+      }
+      if (audioOpen) {
+        if (key === "up" || key === "down") setAudioAt((at) => Math.min(Math.max(0, audioTracks.length - 1), Math.max(0, at + (key === "down" ? 1 : -1))));
+        else if (key === "select") chooseAudio(audioAt);
+        else if (key === "left") setAudioOpen(false);
+        return;
       }
       if (captionsOpen) {
         const setting = settingAt(captionAt);
@@ -670,12 +730,14 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       if (key === "playPause") return togglePause();
       if (key === "rewind") return step(-1);
       if (key === "fastForward") return step(1);
-      // Live: up and down change channel, as on any TV.
-      if (zapping && (key === "up" || key === "down")) {
+      // Live: up and down change channel, as on any TV, unless the viewer has stopped to use the controls.
+      if (zapping && (key === "up" || key === "down") && (!chrome || surfing.current)) {
+        surfing.current = true;
         wake();
         carriedSelection = selected;
         return zap(key === "down" ? 1 : -1);
       }
+      if (REMOTE_KEYS.has(key)) surfing.current = false;
       if (!chrome) {
         // Any key brings the controls up, highlighted on Play/Pause; pausing is the play key's job. Left and right
         // skip straight away on a film or episode, as on every TV player: one press, not "over to the button, OK".
@@ -699,7 +761,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [captionAt, captionOptions.length, captionRows, captions, captionsOpen, cardAt, cardUp, changeCaptions, chooseCaption, chrome, finished, goNext, guide, guideAt, guideOpen, inIntro, playEntry, skipIntro, press, selected, seek, step, togglePause, vod, watchCredits, wake, zap, zapping],
+    [audioAt, audioOpen, audioTracks.length, chooseAudio, captionAt, captionOptions.length, captionRows, captions, captionsOpen, cardAt, cardUp, changeCaptions, chooseCaption, chrome, finished, goNext, guide, guideAt, guideOpen, inIntro, playEntry, skipIntro, press, selected, seek, step, togglePause, vod, watchCredits, wake, zap, zapping],
   );
   // The listener below re-subscribes to the native remote-event emitter whenever its callback identity
   // changes; going through a ref keeps that identity fixed so a run of key presses doesn't churn the
@@ -791,7 +853,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
 
   return (
     <View style={styles.player}>
-      <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false} captionStyle={captionStyle} />
+      <VideoView player={player} style={StyleSheet.absoluteFill} contentFit={fit} nativeControls={false} captionStyle={captionStyle} />
       {/* Something must hold focus or Android drops the remote's keys before they reach the app; the handler above does the acting. */}
       <Pressable focusable={tv} hasTVPreferredFocus={tv} style={StyleSheet.absoluteFill} onPress={tv ? undefined : () => (awake ? setAwake(false) : wake())} />
 
@@ -903,6 +965,13 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
             </View>
           </View>
           {/* Hidden until the remote is pressed Down onto this row (a phone has no Down, so it always shows). */}
+          {!tv || options.includes(selected) ? (
+            <View style={styles.secondary} pointerEvents="box-none">
+              {options.includes("audio") ? <TextKey label={`Audio: ${audioTrack !== null ? audioName(audioTrack) : "Default"}`} selected={lit("audio")} onPress={() => press("audio")} /> : null}
+              <TextKey label={`Picture: ${pictureLabel(fit)}`} selected={lit("picture")} onPress={() => press("picture")} />
+              {options.includes("speed") ? <TextKey label={`Speed: ${speedLabel(speed)}`} selected={lit("speed")} onPress={() => press("speed")} /> : null}
+            </View>
+          ) : null}
           </View>
       </Animated.View>
 
@@ -935,6 +1004,26 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
               <Text style={[styles.offerLabel, styles.offerLabelLit]}>Next episode</Text>
             </Pressable>
           </View>
+        </View>
+      ) : null}
+
+      {audioOpen ? (
+        <View style={styles.guide}>
+          <Text style={styles.statsTitle}>Audio</Text>
+          <ScrollView ref={audioScroll} style={styles.guideList} scrollEnabled={!tv} showsVerticalScrollIndicator={false}>
+            {audioTracks.map((track, index) => {
+              const lit = tv && index === audioAt;
+              return (
+                <Pressable key={index} focusable={false} onPress={() => chooseAudio(index)} style={[styles.guideRow, lit && styles.guideRowLit]}>
+                  <Text style={[styles.guideTitle, lit && styles.guideInk]} numberOfLines={1}>
+                    {audioName(track)}
+                  </Text>
+                  <Text style={[styles.guideTime, lit && styles.guideInk]}>{index === currentAudio ? "On now" : ""}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          {tv ? <Text style={styles.guideNote}>Up and down to choose, OK to play it, Back to close</Text> : null}
         </View>
       ) : null}
 
@@ -1149,6 +1238,7 @@ const styles = styleSheet({
 
   controls: { flexDirection: "row", alignItems: "center" },
   side: { flex: 1, alignItems: "flex-start" },
+  secondary: { flexDirection: "row", justifyContent: "center", gap: 20 },
   sideRight: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 20 },
   chips: { flexDirection: "row", gap: 10, marginTop: -12 },
   chip: { borderRadius: 7, borderWidth: 2, borderColor: "#ffffff66", paddingHorizontal: 12, paddingVertical: 3 },

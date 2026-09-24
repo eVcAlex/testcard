@@ -9,6 +9,7 @@ import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js"
 import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
+import { readAudioLanguage, writeAudioLanguage } from "../playback/viewing";
 import { describeSetup, type ContentKind, type ImportProgress, type ImportStage, type SetupProgress } from "./setup";
 
 /** Something a source's last import could not load: its movies, its series, or (a thrown import) all of it. */
@@ -49,6 +50,9 @@ interface AppState {
   /** How captions look and whether films and episodes start with them on. This device only. */
   readonly captions: CaptionPrefs;
   setCaptions(prefs: CaptionPrefs): void;
+  /** The two-letter language of the soundtrack last picked in the player, chosen again when a film offers it. This device only. */
+  readonly audioLanguage: string | null;
+  setAudioLanguage(language: string | null): void;
   refreshSource(sourceId: string): Promise<void>;
   /** Takes a source off this device and, through sync, off the user's others. */
   removeSource(sourceId: string): Promise<void>;
@@ -293,10 +297,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     [db],
   );
+  const [audioLanguage, setAudioLanguageState] = useState<string | null>(() => readAudioLanguage(db));
+  const setAudioLanguage = useCallback(
+    (language: string | null) => {
+      setAudioLanguageState(language);
+      writeAudioLanguage(db, language);
+    },
+    [db],
+  );
 
   const value = useMemo<AppState>(
-    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, refreshSource, removeSource, updateStatus }),
-    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, refreshSource, removeSource, updateStatus],
+    () => ({ db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, refreshSource, removeSource, updateStatus }),
+    [db, sync, status, version, catalogue, sources, setup, syncing, captions, setCaptions, audioLanguage, setAudioLanguage, refreshSource, removeSource, updateStatus],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
