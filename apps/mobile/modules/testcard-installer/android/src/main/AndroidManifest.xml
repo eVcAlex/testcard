@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+  <application>
+    <!-- Hears from Android's package installer how an update went (InstallerModule). -->
+    <receiver android:name="com.evcalex.testcard.installer.InstallResultReceiver" android:exported="false" />
+  </application>
+</manifest>

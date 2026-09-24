@@ -5,8 +5,8 @@ name: Android APK
 # Run it from the Actions tab ("Run workflow"), then download the APKs from the run's artifacts.
 # The APKs are signed with Expo's debug key, which is fine for sideloading but not for a store.
 # The Fire TV build is 32-bit ARM only (every Fire stick runs it, and it halves the native compile time).
-# A Fire TV build of main is then published to the update server (the R2 bucket the app updates from, ADR 0010), so
-# devices see it under Account and updates. `pnpm release:android <run-id>` still publishes any run by hand.
+# A Fire TV build of main is then published to the update server (the R2 bucket the app updates from, ADR 0010), with
+# what changed since the last one, so devices offer it. `pnpm release:android <run-id>` still publishes any run by hand.
 on:
   workflow_dispatch:
     inputs:
@@ -25,6 +25,9 @@ jobs:
         include: ${{ fromJSON(inputs.target == 'debug' && '[{"target":"debug","tv":"1","task":"assembleDebug -PreactNativeArchitectures=x86_64,arm64-v8a","apk":"debug/app-debug.apk"}]' || '[{"target":"firetv","tv":"1","task":"assembleRelease -PreactNativeArchitectures=armeabi-v7a","apk":"release/app-release.apk"}]') }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whole history, so the update manifest can list what changed since the last published build.
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
 
@@ -81,7 +84,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "No CLOUDFLARE_API_TOKEN secret: not publishing."; exit 0; fi
-          node -e "const fs=require('fs');const b=JSON.parse(fs.readFileSync('build.json','utf8'));fs.writeFileSync('latest.json',JSON.stringify({...b,apks:{firetv:'testcard-firetv.apk'}}))"
-          npx --yes wrangler@3 r2 object put testcard-releases/testcard-firetv.apk --file testcard-firetv.apk --content-type application/vnd.android.package-archive
+          # Each build's APK has a name of its own, so no cache between the bucket and a device can hand out an older one.
+          APK="testcard-firetv-${{ github.run_number }}.apk"
+          node scripts/release-manifest.mjs build.json "$APK" "$GITHUB_SHA" latest.json
+          npx --yes wrangler@3 r2 object put "testcard-releases/$APK" --file testcard-firetv.apk --content-type application/vnd.android.package-archive
           npx --yes wrangler@3 r2 object put testcard-releases/latest.json --file latest.json --content-type application/json
           echo "Published $(node -p "require('./build.json').versionName")"

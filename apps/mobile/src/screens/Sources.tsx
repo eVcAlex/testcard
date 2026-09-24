@@ -207,8 +207,8 @@ function AccountPane() {
             <Text style={styles.footerDot}>{"  ·  "}</Text>
             {!update.configured
               ? "Updates are not set up for this build."
-              : update.error !== undefined && update.phase !== "downloading" && update.phase !== "checking"
-                ? <Text style={styles.footerError}>{`Couldn't ${update.available !== null ? "download the update" : "check for updates"}. ${plainReason(update.error, "the update server")}`}</Text>
+              : update.phase === "error" && update.error !== undefined
+                ? <Text style={styles.footerError}>{`Couldn't ${update.available !== null ? "update" : "check for updates"}. ${plainReason(update.error, "the update server")}`}</Text>
               : update.phase === "downloading"
                 ? `Downloading ${Math.round(update.progress * 100)}%`
                 : update.phase === "checking"
@@ -220,12 +220,18 @@ function AccountPane() {
                       : "Not checked yet."}
           </Text>
           {update.configured && (
-            <SmallButton
-              primary={update.available !== null}
-              label={update.available !== null ? "Update now" : "Check for updates"}
-              disabled={update.phase === "downloading" || update.phase === "checking"}
-              onPress={update.available !== null ? update.install : update.check}
-            />
+            <View style={styles.accountActions}>
+              <SmallButton
+                label={`Check automatically: ${update.auto ? "On" : "Off"}`}
+                onPress={() => update.setAuto(!update.auto)}
+              />
+              <SmallButton
+                primary={update.available !== null}
+                label={update.available !== null ? "Update now" : "Check for updates"}
+                disabled={update.phase === "downloading" || update.phase === "checking" || update.phase === "installing"}
+                onPress={update.available !== null ? update.showPrompt : update.check}
+              />
+            </View>
           )}
         </View>
       </View>
