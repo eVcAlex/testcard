@@ -40,7 +40,8 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "live", label: "Live TV" },
   { key: "movies", label: "Movies" },
   { key: "series", label: "Series" },
-  { key: "sources", label: "Sources" },
+  // Sources, captions, the account and updates: labelled for all of it.
+  { key: "sources", label: "Settings" },
 ];
 
 /** A bare magnifying glass, sized to sit in the nav bar's icon-only tab. Icons take dp, not design units, so it is scaled like the styles. */

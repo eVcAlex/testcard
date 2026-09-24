@@ -43,6 +43,9 @@
       "electron",
       "electron-winstaller",
       "esbuild"
-    ]
+    ],
+    "patchedDependencies": {
+      "expo-video@57.0.4": "patches/expo-video@57.0.4.patch"
+    }
   }
 }

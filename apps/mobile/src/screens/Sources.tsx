@@ -6,6 +6,7 @@ import { useUpdate } from "../update/UpdateProvider";
 import { installedVersion } from "../update/update";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
+import { CaptionSettings } from "../ui/CaptionSettings";
 import { Focusable } from "../ui/Focusable";
 import { withCommas } from "../ui/MenuRow";
 
@@ -21,7 +22,7 @@ function ago(at: number): string {
 }
 
 /**
- * Sources, with the account and app update as a slim strip and footer either side — this page is about the
+ * The Settings tab: sources first, then captions, with the account and app update as a slim strip and footer either side — this page is about the
  * sources, not the account, so those two stay out of the way instead of competing with the sources for weight.
  */
 export function SourcesScreen() {
@@ -98,6 +99,8 @@ export function SourcesScreen() {
             </View>
           ))}
         </View>
+
+        <CaptionSettings />
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>

@@ -18,6 +18,14 @@ plays back through an embedded `mpv`, stores everything locally.
   setting for Home, Live TV, Movies, Series and Search, your own rows (Continue watching, favourites, pins)
   included; kept on the device across launches, not synced. Chosen from a list under the nav bar's Source button,
   which only appears with two or more Sources.
+- **Caption preferences** — on the TV app, how captions look (size, colour, background, edge) and whether films
+  and episodes start with them on, in a chosen language (never another: wrong-language captions are worse than none).
+  Kept on the device, not synced, beside the Source pick; set from the Settings tab or the player's captions panel.
+  The look reaches the native player through a `captionStyle` prop added by `patches/expo-video@57.0.4.patch`.
+- **Credits offer** — the "Watch credits / Next episode" buttons at the end of an episode. Where credits start is
+  learned per series from when the viewer moves on to the next episode (`playback/credits.ts`, device-local); once
+  learned, the next episode also starts after a countdown. Until then an estimate is used, with no countdown before
+  the episode actually ends.
 - **Channel** — one logical live-TV channel as a human thinks of it — "TNT Sports 1". Has a
   **stable internal id** that survives playlist refreshes, independent of whatever id the
   provider assigns.

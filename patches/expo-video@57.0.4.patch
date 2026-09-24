@@ -1,0 +1,154 @@
+diff --git a/android/src/main/java/expo/modules/video/VideoModule.kt b/android/src/main/java/expo/modules/video/VideoModule.kt
+index 71b85013e3a69f4421a689e7dd76677e333d7581..7669c10ab37ee0b1bd3f5a1189f365d7fc535a01 100644
+--- a/android/src/main/java/expo/modules/video/VideoModule.kt
++++ b/android/src/main/java/expo/modules/video/VideoModule.kt
+@@ -19,6 +19,7 @@ import expo.modules.video.player.VideoPlayer
+ import expo.modules.video.records.BufferOptions
+ import expo.modules.video.records.PlayerBuilderOptions
+ import expo.modules.video.records.ButtonOptions
++import expo.modules.video.records.CaptionStyleOptions
+ import expo.modules.video.records.FullscreenOptions
+ import expo.modules.video.records.SubtitleTrack
+ import expo.modules.video.records.AudioTrack
+@@ -416,6 +417,9 @@ private inline fun <reified T : VideoView> ViewDefinitionBuilder<T>.VideoViewCom
+   Prop("buttonOptions") { view: T, buttonOptions: ButtonOptions? ->
+     view.buttonOptions = buttonOptions ?: ButtonOptions()
+   }
++  Prop("captionStyle") { view: T, captionStyle: CaptionStyleOptions? ->
++    view.captionStyle = captionStyle
++  }
+   Prop("useExoShutter") { view: T, useExoShutter: Boolean? ->
+     view.useExoShutter = useExoShutter
+   }
+diff --git a/android/src/main/java/expo/modules/video/VideoView.kt b/android/src/main/java/expo/modules/video/VideoView.kt
+index 58c8b10da87883f0f25b311957c51a0310f788cd..4133cffcf8b6019b8337f567d6813634d66404f7 100644
+--- a/android/src/main/java/expo/modules/video/VideoView.kt
++++ b/android/src/main/java/expo/modules/video/VideoView.kt
+@@ -27,6 +27,7 @@ import expo.modules.video.listeners.VideoPlayerListener
+ import expo.modules.video.listeners.VideoViewListener
+ import expo.modules.video.records.AudioTrack
+ import expo.modules.video.records.ButtonOptions
++import expo.modules.video.records.CaptionStyleOptions
+ import expo.modules.video.records.SubtitleTrack
+ import expo.modules.video.records.VideoSource
+ import expo.modules.video.records.VideoTrack
+@@ -101,6 +102,13 @@ open class VideoView(context: Context, appContext: AppContext, useTextureView: B
+   // We need to keep track of the target surface view visibility, but only apply it when `useExoShutter` is false.
+   var shouldHideSurfaceView: Boolean = true
+ 
++  var captionStyle: CaptionStyleOptions? = null
++    set(value) {
++      field = value
++      SubtitleUtils.appStyle = value
++      SubtitleUtils.configureSubtitleView(playerView, context)
++    }
++
+   var useExoShutter: Boolean? = null
+     set(value) {
+       if (value == true) {
+diff --git a/android/src/main/java/expo/modules/video/records/CaptionStyleOptions.kt b/android/src/main/java/expo/modules/video/records/CaptionStyleOptions.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..3eea0f435e8abe83ee44e9ab21a10734f9ccc870
+--- /dev/null
++++ b/android/src/main/java/expo/modules/video/records/CaptionStyleOptions.kt
+@@ -0,0 +1,19 @@
++package expo.modules.video.records
++
++import android.graphics.Color
++import androidx.media3.ui.CaptionStyleCompat
++import expo.modules.kotlin.records.Field
++import expo.modules.kotlin.records.Record
++
++/**
++ * How the app wants captions drawn, in place of the device's accessibility caption settings.
++ * Colours are ARGB ints; `edgeType` is one of CaptionStyleCompat's EDGE_TYPE_* values.
++ */
++data class CaptionStyleOptions(
++  @Field val textScale: Float = 1f,
++  @Field val foregroundColor: Int = Color.WHITE,
++  @Field val backgroundColor: Int = Color.TRANSPARENT,
++  @Field val windowColor: Int = Color.TRANSPARENT,
++  @Field val edgeType: Int = CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW,
++  @Field val edgeColor: Int = Color.BLACK
++) : Record
+diff --git a/android/src/main/java/expo/modules/video/utils/SubtitleUtils.kt b/android/src/main/java/expo/modules/video/utils/SubtitleUtils.kt
+index 52bdcd8593f901bccbfb3ecef34b6cb59288ae65..523fc40025d55379f8ba85bdad91bc29095416a3 100644
+--- a/android/src/main/java/expo/modules/video/utils/SubtitleUtils.kt
++++ b/android/src/main/java/expo/modules/video/utils/SubtitleUtils.kt
+@@ -5,8 +5,14 @@ import android.util.TypedValue
+ import android.view.accessibility.CaptioningManager
+ import androidx.media3.ui.CaptionStyleCompat
+ import androidx.media3.ui.PlayerView
++import androidx.media3.ui.SubtitleView
++import expo.modules.video.records.CaptionStyleOptions
+ 
+ object SubtitleUtils {
++  /** Set by a VideoView's `captionStyle` prop: when present it is used instead of the system caption style. */
++  @Volatile
++  var appStyle: CaptionStyleOptions? = null
++
+   /**
+    * Configures the PlayerView's subtitle view to fix sizing issues with embedded styles.
+    * Disables embedded HLS subtitle styling and applies Android accessibility settings
+@@ -17,6 +23,13 @@ object SubtitleUtils {
+       setApplyEmbeddedStyles(false)
+       setApplyEmbeddedFontSizes(false)
+ 
++      val app = appStyle
++      if (app != null) {
++        setStyle(CaptionStyleCompat(app.foregroundColor, app.backgroundColor, app.windowColor, app.edgeType, app.edgeColor, null))
++        setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * app.textScale)
++        return@apply
++      }
++
+       // Apply system accessibility caption style but with reasonable base font size
+       val captioningManager = context.getSystemService(Context.CAPTIONING_SERVICE) as? CaptioningManager
+       val userStyle = captioningManager?.userStyle
+diff --git a/build/VideoView.types.d.ts b/build/VideoView.types.d.ts
+index 1e9cdeb2380f36d259ebf9115146ba6c8afcaded..c32cdf7fccde260237ba34983ae9ba44f6158b76 100644
+--- a/build/VideoView.types.d.ts
++++ b/build/VideoView.types.d.ts
+@@ -133,6 +133,19 @@ export interface VideoViewProps extends ViewProps {
+      * > **Note:** This event may also be called during playback when the current video track changes (for example when the player switches video quality).
+      */
+     onFirstFrameRender?: () => void;
++    /**
++     * Android only. How captions are drawn, in place of the device's accessibility caption settings.
++     * Colours are ARGB integers (signed 32-bit); `edgeType` is 0 none, 1 outline, 2 drop shadow, 3 raised, 4 depressed.
++     * @platform android
++     */
++    captionStyle?: {
++        textScale?: number;
++        foregroundColor?: number;
++        backgroundColor?: number;
++        windowColor?: number;
++        edgeType?: number;
++        edgeColor?: number;
++    } | null;
+     /**
+      * Determines whether the player should use the default ExoPlayer shutter that covers the `VideoView` before the first video frame is rendered.
+      * Setting this property to `false` makes the Android behavior the same as iOS.
+diff --git a/src/VideoView.types.ts b/src/VideoView.types.ts
+index 665adefa37834affc5ec88ddbd706b1477b0c288..1be6d98c57e694d30259ddb9508ff163930d0a74 100644
+--- a/src/VideoView.types.ts
++++ b/src/VideoView.types.ts
+@@ -152,6 +152,19 @@ export interface VideoViewProps extends ViewProps {
+    */
+   onFirstFrameRender?: () => void;
+ 
++  /**
++   * Android only. How captions are drawn, in place of the device's accessibility caption settings.
++   * Colours are ARGB integers (signed 32-bit); `edgeType` is 0 none, 1 outline, 2 drop shadow, 3 raised, 4 depressed.
++   * @platform android
++   */
++  captionStyle?: {
++      textScale?: number;
++      foregroundColor?: number;
++      backgroundColor?: number;
++      windowColor?: number;
++      edgeType?: number;
++      edgeColor?: number;
++  } | null;
+   /**
+    * Determines whether the player should use the default ExoPlayer shutter that covers the `VideoView` before the first video frame is rendered.
+    * Setting this property to `false` makes the Android behavior the same as iOS.
