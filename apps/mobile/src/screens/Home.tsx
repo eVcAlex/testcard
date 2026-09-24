@@ -1,6 +1,7 @@
 import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Pressable, Text, TVFocusGuideView, useTVEventHandler, View, type CellRendererProps, type ViewProps } from "react-native";
 import { Image } from "expo-image";
+import { ChannelLogo } from "../ui/ChannelLogo";
 import { NavArrowRight } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, styleSheet, uiScale } from "../theme";
@@ -358,7 +359,7 @@ function Hero({ shown, plot, durationSecs, guide }: { shown: { item: HomeItem; r
     <View style={styles.hero}>
       {channel ? (
         <View style={styles.logoPanel} pointerEvents="none">
-          {art !== null && art !== "" ? <Image source={{ uri: art }} style={styles.logoImage} contentFit="contain" cachePolicy="memory-disk" /> : null}
+          <ChannelLogo url={art} name={shown?.item.name ?? ""} size={96} />
         </View>
       ) : art !== null && art !== "" ? (
         <View style={styles.art} pointerEvents="none">
