@@ -38,9 +38,11 @@ export class SyncClient {
    * Origin"), even though it accepts requests with no Origin header at all (e.g. curl). Setting
    * a real Origin matching this client's own baseUrl satisfies the check.
    *
-   * Throws on any non-2xx except 404, which `getSalt` reads as "no salt yet".
+   * Throws on any non-2xx (bar a 404 when `missingIsFine`, which `getSalt` reads as "no salt yet"). The error
+   * carries the HTTP `status`, and its message is the server's reply, which `serverMessage` in the sync controller
+   * reads for the words to show.
    */
-  private async request(path: string, opts: { body?: unknown; authed?: boolean } = {}): Promise<Response> {
+  private async request(path: string, opts: { body?: unknown; authed?: boolean; missingIsFine?: boolean } = {}): Promise<Response> {
     const headers: Record<string, string> = { Origin: this.config.baseUrl };
     const token = opts.authed === true ? this.config.getSessionToken() : undefined;
     if (token !== undefined) headers.Authorization = `Bearer ${token}`;
@@ -49,8 +51,9 @@ export class SyncClient {
       this.config.baseUrl + path,
       opts.body !== undefined ? { method: "POST", headers, body: JSON.stringify(opts.body) } : { headers },
     );
-    if (!res.ok && res.status !== 404) throw Object.assign(new Error(`${res.status} ${res.statusText}`), { status: res.status });
-    return res;
+    if (res.ok || (res.status === 404 && opts.missingIsFine === true)) return res;
+    const reply = await res.text().catch(() => "");
+    throw Object.assign(new Error(reply !== "" ? reply : `${res.status} ${res.statusText}`), { status: res.status });
   }
 
   async signUp(email: string, password: string): Promise<AuthResult> {
@@ -76,7 +79,7 @@ export class SyncClient {
 
   /** Fetches this account's PBKDF2 salt (set once at sign-up). Undefined if none is set yet. */
   async getSalt(): Promise<string | undefined> {
-    const res = await this.request("/sync/salt", { authed: true });
+    const res = await this.request("/sync/salt", { authed: true, missingIsFine: true });
     if (res.status === 404) return undefined;
     return ((await res.json()) as { salt: string }).salt;
   }
