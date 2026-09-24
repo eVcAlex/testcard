@@ -22,6 +22,13 @@ plays back through an embedded `mpv`, stores everything locally.
   and episodes start with them on, in a chosen language (never another: wrong-language captions are worse than none).
   Kept on the device, not synced, beside the Source pick; set from the Settings tab or the player's captions panel.
   The look reaches the native player through a `captionStyle` prop added by `patches/expo-video@57.0.4.patch`.
+  expo-video ships a precompiled Android library that would ignore the patch, so `apps/mobile/package.json` has
+  autolinking build it from source (`buildFromSource`).
+- **Profile** — on the TV app, one person who watches: their own Continue watching, favourites, Home pins and
+  caption and audio settings. Only "Main", the account's own profile, syncs; the others stay on the TV. Their rows
+  are swapped in and out of the usual tables rather than keyed by profile. See `docs/adr/0011-tv-profiles.md`.
+- **Player options row** — below the TV player's transport keys, reached with Down: Audio (the soundtrack, whose
+  language is picked again on the next film), Picture (Fit, Fill or Stretch, kept per channel) and Speed (never kept).
 - **Credits offer** — the "Watch credits / Next episode" buttons at the end of an episode. Where credits start is
   learned per series from when the viewer moves on to the next episode (`playback/credits.ts`, device-local); once
   learned, the next episode also starts after a countdown. Until then an estimate is used, with no countdown before

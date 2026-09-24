@@ -7,6 +7,7 @@ import { installedVersion } from "../update/update";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
 import { CaptionSettings } from "../ui/CaptionSettings";
+import { ProfileSettings } from "../ui/ProfileSettings";
 import { Focusable } from "../ui/Focusable";
 import { MenuRow, withCommas } from "../ui/MenuRow";
 
@@ -21,15 +22,16 @@ function ago(at: number): string {
   return `${days} ${days === 1 ? "day" : "days"} ago`;
 }
 
-type Pane = "sources" | "captions" | "account";
+type Pane = "sources" | "profiles" | "captions" | "account";
 const PANES: { id: Pane; label: string }[] = [
   { id: "sources", label: "Sources" },
+  { id: "profiles", label: "Profiles" },
   { id: "captions", label: "Captions" },
   { id: "account", label: "Account and updates" },
 ];
 
 /**
- * The Settings tab: a short menu down the left (Sources, Captions, Account and updates) and the chosen one beside
+ * The Settings tab: a short menu down the left (Sources, Profiles, Captions, Account and updates) and the chosen one beside
  * it. The pane follows the remote as it moves down the menu, as the category lists do; Right goes into it.
  */
 export function SourcesScreen() {
@@ -42,7 +44,7 @@ export function SourcesScreen() {
           <MenuRow key={entry.id} id={entry.id} label={entry.label} active={pane === entry.id} onPressId={choose} onFocusId={choose} />
         ))}
       </TVFocusGuideView>
-      <View style={styles.pane}>{pane === "sources" ? <SourcesPane /> : pane === "captions" ? <CaptionSettings /> : <AccountPane />}</View>
+      <View style={styles.pane}>{pane === "sources" ? <SourcesPane /> : pane === "profiles" ? <ProfileSettings /> : pane === "captions" ? <CaptionSettings /> : <AccountPane />}</View>
     </View>
   );
 }
@@ -106,7 +108,7 @@ function SourcesPane() {
 
 /** Who this TV is signed in as, syncing, and the app's version and updates. */
 function AccountPane() {
-  const { status, sync, updateStatus } = useApp();
+  const { status, sync, updateStatus, profiles } = useApp();
   // Signing out drops the account from this TV, and the button sits right beside Sync now, so it asks first.
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const update = useUpdate();
@@ -120,7 +122,11 @@ function AccountPane() {
             <Text style={styles.accountEmail} numberOfLines={1}>
               {status.email ?? "Signed out"}
             </Text>
-            {status.lastSyncedAt !== undefined && <Text style={styles.accountSynced}>{`✓ Synced ${ago(status.lastSyncedAt)}`}</Text>}
+            {status.paused === true ? (
+              <Text style={styles.accountSynced}>{`Syncing is off while another profile is watching. Switch to ${profiles[0]?.name ?? "Main"} to sync.`}</Text>
+            ) : (
+              status.lastSyncedAt !== undefined && <Text style={styles.accountSynced}>{`✓ Synced ${ago(status.lastSyncedAt)}`}</Text>
+            )}
           </View>
           <View style={styles.accountActions}>
             <SmallButton

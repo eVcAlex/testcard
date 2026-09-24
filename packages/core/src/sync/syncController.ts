@@ -17,6 +17,8 @@ export interface SyncStatus {
   /** When a sync last brought in anything new from the account. Screens re-read their data on this, not on every sync. */
   readonly lastChangedAt?: number;
   readonly lastError?: string;
+  /** Set while syncing is held off (the TV app, while a profile other than the account's own is watching). */
+  readonly paused?: boolean;
 }
 
 /**
@@ -97,13 +99,16 @@ export class SyncController {
   private rerunRequested = false;
   private changeTimer: ReturnType<typeof setTimeout> | undefined;
   private lastRunStartedAt = 0;
+  private paused: boolean;
 
   constructor(
     private readonly db: Database.Database,
     private readonly platform: SyncPlatform,
     /** Called with the ids of sources that arrived from another device, so they can be refreshed (imported) right away. */
     private readonly onSourcesAdded: (sourceIds: readonly string[]) => void = () => undefined,
+    options: { readonly paused?: boolean } = {},
   ) {
+    this.paused = options.paused ?? false;
     this.client = new SyncClient({ baseUrl: platform.baseUrl, getSessionToken: () => this.sessionToken() });
     const row = this.db.prepare(`SELECT sync_salt, account_email FROM sync_state WHERE id = 1`).get() as
       | { sync_salt: string | null; account_email: string | null }
@@ -121,12 +126,26 @@ export class SyncController {
 
   /** Call after any local change to synced data. Coalesced: one sync shortly after, rate-limited. */
   notifyLocalChange(): void {
-    if (this.accountPassword === undefined || this.changeTimer !== undefined) return;
+    if (this.paused || this.accountPassword === undefined || this.changeTimer !== undefined) return;
     const wait = Math.max(CHANGE_SYNC_DELAY_MS, this.lastRunStartedAt + CHANGE_SYNC_MIN_GAP_MS - Date.now());
     this.changeTimer = setTimeout(() => {
       this.changeTimer = undefined;
       void this.runOnce();
     }, wait);
+  }
+
+  /**
+   * Holds syncing off, or lets it run again (with a sync straight away). Pausing waits for a sync already under way
+   * to finish, so once it resolves nothing more is read from or written to the synced tables until resumed.
+   */
+  async setPaused(paused: boolean): Promise<void> {
+    this.paused = paused;
+    if (paused) {
+      if (this.changeTimer !== undefined) clearTimeout(this.changeTimer);
+      this.changeTimer = undefined;
+      this.rerunRequested = false;
+      await this.running?.catch(() => undefined);
+    } else void this.runOnce();
   }
 
   private sessionToken(): string | undefined {
@@ -146,6 +165,7 @@ export class SyncController {
       ...(this.lastSyncedAt !== undefined ? { lastSyncedAt: this.lastSyncedAt } : {}),
       ...(this.lastChangedAt !== undefined ? { lastChangedAt: this.lastChangedAt } : {}),
       ...(this.lastError !== undefined ? { lastError: this.lastError } : {}),
+      ...(this.paused ? { paused: true } : {}),
     };
   }
 
@@ -239,6 +259,7 @@ export class SyncController {
 
   /** One sync at a time; a request that arrives mid-run triggers exactly one follow-up run. */
   private runOnce(): Promise<void> {
+    if (this.paused) return Promise.resolve();
     if (this.running) {
       this.rerunRequested = true;
       return this.running;
@@ -247,6 +268,7 @@ export class SyncController {
       try {
         do {
           this.rerunRequested = false;
+          if (this.paused) break;
           this.lastRunStartedAt = Date.now();
           await this.syncCycle(true);
         } while (this.rerunRequested);
