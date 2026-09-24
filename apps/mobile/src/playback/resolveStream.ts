@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { getPlaybackTarget } from "@testcard/core/src/db/queries.js";
+import type { ChannelFeed } from "@testcard/core/src/db/channelFeeds.js";
 import { getMoviePlaybackTarget } from "@testcard/core/src/db/vodQueries.js";
 import { getEpisodePlaybackTarget } from "@testcard/core/src/db/seriesQueries.js";
 import { getPlaybackProgress } from "@testcard/core/src/db/progressQueries.js";
@@ -24,11 +25,6 @@ export interface ResolvedStream {
   readonly resumeSecs: number | null;
 }
 
-/** How many ways there are to watch a channel: the same channel offered in more than one quality or feed. */
-export function channelVariantIds(db: Database.Database, channelId: string): string[] {
-  return (db.prepare(`SELECT id FROM channel_variants WHERE channel_id = ? ORDER BY sort_order`).all(channelId) as { id: string }[]).map((row) => row.id);
-}
-
 const xtream = createXtreamAdapter(getCredentials);
 const m3u = createM3UAdapter();
 
@@ -36,11 +32,11 @@ const m3u = createM3UAdapter();
  * Turns a channel, film or episode id into a playable URL. As on desktop, an M3U film or episode
  * stores its direct URL as the provider id; Xtream URLs are built from the stored login. The URL
  * goes straight to the player and is never shown or logged. With `catchup`, a channel plays that past programme
- * from its start instead of the live picture.
+ * from its start instead of the live picture. With `feed`, a channel plays that one of its feeds (see `listChannelFeeds`).
  */
-export async function resolveStream(db: Database.Database, item: PlayItem, resume: boolean, catchup?: CatchupProgramme, variantAt = 0): Promise<ResolvedStream> {
+export async function resolveStream(db: Database.Database, item: PlayItem, resume: boolean, catchup?: CatchupProgramme, feed?: ChannelFeed): Promise<ResolvedStream> {
   if (item.kind === "channel") {
-    const target = getPlaybackTarget(db, item.id, variantAt > 0 ? channelVariantIds(db, item.id)[variantAt] : undefined);
+    const target = feed !== undefined ? getPlaybackTarget(db, feed.channelId, feed.variantId) : getPlaybackTarget(db, item.id);
     if (target === undefined) throw new Error("That channel is no longer available.");
     if (catchup !== undefined) {
       const url = await buildTimeshiftUrl(target.source, target.variant.providerStreamId, catchup, getCredentials);
