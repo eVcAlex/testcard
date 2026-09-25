@@ -32,10 +32,11 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      # electron-builder only installs a strictly higher version, so every build gets the run number.
+      # electron-updater only installs a strictly higher version. The run number alone would
+      # undershoot 0.1.2, already shipped by hand, so it's added on top of the committed patch instead.
       - name: Stamp the version
         working-directory: apps/desktop
-        run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.version='0.1.${{ github.run_number }}';fs.writeFileSync('package.json',JSON.stringify(p,null,2))"
+        run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));const patch=Number(p.version.split('.')[2]);p.version='0.1.'+(patch+${{ github.run_number }});fs.writeFileSync('package.json',JSON.stringify(p,null,2))"
 
       # Full install (not --ignore-scripts): the postinstall rebuilds better-sqlite3 for Electron.
       # sync-worker is pulled in too: release-desktop.mjs publishes through its wrangler.
