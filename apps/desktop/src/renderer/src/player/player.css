@@ -956,6 +956,112 @@
   }
 }
 
+/* ============================ sidebar: profile switcher ============================ */
+
+.pw-profile-switcher {
+  position: relative;
+  margin: var(--s-2) 0 var(--s-3);
+}
+
+.pw-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-1);
+  color: var(--foreground);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pw-profile-trigger:hover {
+  background: var(--card);
+}
+
+.pw-profile-trigger-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--wght-medium);
+}
+
+.pw-profile-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-2);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-2);
+  box-shadow: var(--elev-2), var(--edge-light);
+}
+
+.pw-profile-menu-row,
+.pw-profile-menu-manage {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-1);
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--t-small);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pw-profile-menu-row:hover,
+.pw-profile-menu-manage:hover {
+  background: var(--card-hover);
+}
+
+.pw-profile-menu-row:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pw-profile-menu-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-profile-menu-manage {
+  margin-top: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+/* The avatar disc: a profile's colour, with its avatar glyph or the first letter of its name.
+   Size comes from the `size` prop inline (28px in the switcher/menu, 40px in the profile list,
+   48-64px in the avatar picker), so this only sets what stays constant. */
+.pw-profile-avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  color: var(--accent-foreground);
+  font-weight: var(--wght-semibold);
+  line-height: 1;
+}
+
 /* ============================ sidebar: account chip ============================ */
 
 .pw-sidebar-fill {
@@ -1193,6 +1299,62 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--s-3);
+}
+
+/* ============================ profiles panel ============================ */
+
+.pw-confirm--wide {
+  width: min(560px, calc(100vw - var(--s-8)));
+}
+
+.pw-dress-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+
+.pw-dress-head h3 {
+  margin: 0;
+}
+
+.pw-avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-bottom: var(--s-6);
+}
+
+.pw-avatar-choice {
+  padding: 3px;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+.pw-avatar-choice[data-active="true"] {
+  border-color: var(--accent);
+}
+
+.pw-colour-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+
+.pw-colour-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+.pw-colour-swatch[data-active="true"] {
+  border-color: var(--foreground);
 }
 
 /* ============================ empty state ============================ */

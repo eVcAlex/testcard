@@ -18,6 +18,7 @@ import type {
   MovieRow,
   MovieShelf,
   PlaybackProgressRow,
+  Profile,
   SeriesCategoryRow,
   SeriesDetail,
   SeriesRow,
@@ -369,6 +370,23 @@ export interface TestcardApi {
     reenterPassword(password: string): Promise<SyncStatus>;
     /** Runs one push-then-pull cycle immediately, outside the periodic schedule. */
     triggerNow(): Promise<SyncStatus>;
+  };
+  profiles: {
+    /** Every profile on the account, Main first. */
+    list(): Promise<readonly Profile[]>;
+    /** The id of whoever's rows are in the tables now. */
+    current(): Promise<string>;
+    /**
+     * Swaps in another profile's favourites, recents and progress, and syncs their history down.
+     * No PIN prompt: this device is trusted, even for a profile locked with one on the TV.
+     */
+    switchTo(id: string): Promise<void>;
+    /** Adds a profile with the next free colour and no avatar chosen yet. */
+    add(name: string): Promise<Profile>;
+    /** Renames a profile or changes its avatar/colour. Desktop never sets or changes a PIN — that stays a TV setting. */
+    update(id: string, patch: { name?: string; avatar?: string | null; colour?: number }): Promise<void>;
+    /** Deletes a profile everywhere. Refuses Main and whoever is currently active. */
+    remove(id: string): Promise<void>;
   };
   update: {
     /** Where the app is with updating: the installed version and whether a newer one is out. */

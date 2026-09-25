@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
 import { useSyncStatus } from "./AccountView.js";
+import { ProfileSwitcher } from "./ProfileSwitcher.js";
 import { useUpdateState } from "./UpdatePanel.js";
 import { useSources } from "./useSources.js";
 import type { Theme } from "./useTheme.js";
@@ -62,6 +63,8 @@ export function Sidebar({
       <h1 className="pw-brand">
         TEST<span>CARD</span>
       </h1>
+
+      <ProfileSwitcher onManage={() => onTab("account")} />
 
       {(sourceCount.data?.length ?? 0) > 1 && (
         <label className="pw-source-pick">

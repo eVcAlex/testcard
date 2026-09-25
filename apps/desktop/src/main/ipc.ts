@@ -6,6 +6,7 @@ import {
   browseSeries,
   createM3UAdapter,
   createXtreamAdapter,
+  deleteProfile,
   ensureMovieDetails,
   ensureSeriesEpisodes,
   extractXtreamCredentials,
@@ -22,33 +23,42 @@ import {
   listFavouriteMovies,
   listFavouriteSeries,
   listMovieCategories,
+  listProfiles,
   listRecentChannels,
   listRecentMovies,
   listRecentSeries,
   listSeriesCategories,
+  MAIN_PROFILE,
   movieShelves,
+  newProfileId,
+  nextColour,
   nowNextForChannels,
   probeXtream,
   programmesInWindow,
+  readActiveProfile,
   remoteKeyFor,
   remoteKeyForPlaylist,
   removeChannelFromRecents,
   removeMovieFromHistory,
   removeSeriesFromHistory,
+  saveProfile,
   searchChannels,
   searchMovies,
   searchSeries,
   seriesShelves,
   setPlaybackProgress,
   listCountries,
+  swapProfile,
   toggleFavourite,
   toggleMovieFavourite,
   removeSourceRows,
   moveSource,
   stampSourceOrder,
   toggleSeriesFavourite,
+  writeActiveProfile,
   SyncController,
   type Channel,
+  type Profile,
   type ProgrammeRow,
   type Source,
   type SourceAdapter,
@@ -220,6 +230,9 @@ const SYNCED_MUTATIONS: ReadonlySet<string> = new Set([
   "playback.playMovie",
   "playback.playEpisode",
   "playback.stop",
+  "profiles.add",
+  "profiles.update",
+  "profiles.remove",
 ]);
 
 /**
@@ -250,10 +263,15 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
     db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('source_order_stamped', '1')`).run();
   }
 
-  const sync = new SyncController(db, syncPlatform, (sourceIds) => {
-    // Sources that arrived from another device have no channels/movies yet - import them now.
-    for (const id of sourceIds) refreshInBackground(id);
-  });
+  const sync = new SyncController(
+    db,
+    syncPlatform,
+    (sourceIds) => {
+      // Sources that arrived from another device have no channels/movies yet - import them now.
+      for (const id of sourceIds) refreshInBackground(id);
+    },
+    { profile: readActiveProfile(db) },
+  );
   notifyLocalChange = () => sync.notifyLocalChange();
   mainWindow.on("closed", () => sync.dispose());
 
@@ -874,6 +892,52 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
       async triggerNow() {
         return sync.triggerNow();
+      },
+    },
+
+    profiles: {
+      async list() {
+        return listProfiles(db);
+      },
+      async current() {
+        return readActiveProfile(db);
+      },
+      // Mirrors the mobile app's switchProfile: push what the one leaving did (briefly — a slow
+      // network only delays it to their next turn), hold syncing off across the swap so nothing
+      // reads or writes mid-swap, then resume, which fetches the new profile's history at once.
+      // No PIN check: this device is trusted, even for a profile locked with one on the TV.
+      async switchTo(id: string) {
+        const from = readActiveProfile(db);
+        if (from === id) return;
+        await Promise.race([sync.triggerNow().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 3000))]);
+        await sync.setPaused(true);
+        swapProfile(db, from, id);
+        writeActiveProfile(db, id);
+        sync.setProfile(id);
+        void sync.setPaused(false);
+      },
+      async add(name: string): Promise<Profile> {
+        const profiles = listProfiles(db);
+        const profile: Profile = {
+          id: newProfileId(),
+          name,
+          colour: nextColour(profiles),
+          avatar: null,
+          pin: null,
+          position: Math.max(0, ...profiles.map((entry) => entry.position)) + 1,
+        };
+        saveProfile(db, profile);
+        return profile;
+      },
+      async update(id: string, patch: { name?: string; avatar?: string | null; colour?: number }) {
+        const profile = listProfiles(db).find((entry) => entry.id === id);
+        if (!profile) throw new Error("That profile no longer exists.");
+        saveProfile(db, { ...profile, ...patch });
+      },
+      async remove(id: string) {
+        if (id === MAIN_PROFILE) throw new Error("The account's own profile can't be deleted.");
+        if (id === readActiveProfile(db)) throw new Error("Switch away from a profile before deleting it.");
+        deleteProfile(db, id);
       },
     },
 

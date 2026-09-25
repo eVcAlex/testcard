@@ -110,6 +110,14 @@ const api: TestcardApi = {
     reenterPassword: bind("sync.reenterPassword"),
     triggerNow: bind("sync.triggerNow"),
   },
+  profiles: {
+    list: bind("profiles.list"),
+    current: bind("profiles.current"),
+    switchTo: bind("profiles.switchTo"),
+    add: bind("profiles.add"),
+    update: bind("profiles.update"),
+    remove: bind("profiles.remove"),
+  },
   update: {
     state: bind("update.state"),
     check: bind("update.check"),
