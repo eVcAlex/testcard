@@ -1,11 +1,23 @@
 name: Desktop app
 
-# Builds the Windows installer for the desktop app.
-# Run it from the Actions tab ("Run workflow"), then download the installer from the run's artifacts.
-# A build of main is then published to the update server (the R2 bucket the app updates from, ADR 0010),
-# so running apps offer it. `pnpm release:desktop` still publishes a local build by hand.
+# Builds the Windows installer for the desktop app whenever main changes it or what it depends on.
+# The build is then published to the update server (the R2 bucket the app updates from, ADR 0010), so
+# running apps offer it. Also runnable by hand from the Actions tab; `pnpm release:desktop` still
+# publishes a local build by hand.
 on:
+  push:
+    branches: [main]
+    paths:
+      - apps/desktop/**
+      - packages/core/**
+      - packages/sync-schema/**
+      - .github/workflows/desktop-app.yml
   workflow_dispatch:
+
+# One build at a time; a newer push's build is what should end up published, not an older one still running.
+concurrency:
+  group: desktop-app
+  cancel-in-progress: true
 
 jobs:
   build:
