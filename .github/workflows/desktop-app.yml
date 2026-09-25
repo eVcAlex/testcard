@@ -1,0 +1,51 @@
+name: Desktop app
+
+# Builds the Windows installer for the desktop app.
+# Run it from the Actions tab ("Run workflow"), then download the installer from the run's artifacts.
+# A build of main is then published to the update server (the R2 bucket the app updates from, ADR 0010),
+# so running apps offer it. `pnpm release:desktop` still publishes a local build by hand.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # electron-builder only installs a strictly higher version, so every build gets the run number.
+      - name: Stamp the version
+        working-directory: apps/desktop
+        run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.version='0.1.${{ github.run_number }}';fs.writeFileSync('package.json',JSON.stringify(p,null,2))"
+
+      # Full install (not --ignore-scripts): the postinstall rebuilds better-sqlite3 for Electron.
+      # sync-worker is pulled in too: release-desktop.mjs publishes through its wrangler.
+      - run: pnpm install --frozen-lockfile --filter "@testcard/desktop..." --filter "@testcard/sync-worker..."
+
+      - run: pnpm --filter @testcard/desktop package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: testcard-desktop
+          path: |
+            release/*.exe
+            release/latest.yml
+          if-no-files-found: error
+
+      # Built from main, the installer goes straight to the update server: the installer first, then the
+      # manifest that points at it, so a running app never reads a manifest for a file that is not there yet.
+      - name: Publish to the update server
+        if: github.ref == 'refs/heads/main'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if (-not $env:CLOUDFLARE_API_TOKEN) { echo "No CLOUDFLARE_API_TOKEN secret: not publishing."; exit 0 }
+          node scripts/release-desktop.mjs
