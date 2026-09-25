@@ -179,7 +179,23 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
   const [limit, setLimit] = useState(PAGE);
   useEffect(() => setLimit(PAGE), [shown?.id]);
 
-  const items = useMemo(() => (shown === undefined ? [] : source.load(shown.selection, limit)), [source, shown, limit]);
+  // Items come back from the database as new objects on every read (the next page re-reads the ones before it, a sync
+  // re-reads the lot): an unchanged one keeps the object it had, so its tile's memo holds and only new tiles are drawn.
+  const known = useRef(new Map<string, BrowseItem>());
+  const items = useMemo(() => {
+    const loaded = shown === undefined ? [] : source.load(shown.selection, limit);
+    const kept = new Map<string, BrowseItem>();
+    const out = loaded.map((item) => {
+      const before = known.current.get(item.id);
+      const same = before !== undefined && sameItem(before, item) ? before : item;
+      kept.set(item.id, same);
+      return same;
+    });
+    known.current = kept;
+    return out;
+  }, [source, shown, limit]);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
   const shownEntry = shown !== undefined ? byId.get(shown.id) : undefined;
   // A real category (not Continue watching, My list or a genre) can be pinned to Home.
   const [, setPinTick] = useState(0);
@@ -272,16 +288,19 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
   const gridRow = useRef(-1);
   // Looked up on every key press in the grid, so a map rather than a scan of up to MAX_ITEMS titles each time.
   const indexOf = useMemo(() => new Map(items.map((entry, index) => [entry.id, index])), [items]);
+  const indexRef = useRef(indexOf);
+  indexRef.current = indexOf;
+  // Read through refs, so the callbacks the tiles hold stay the same as pages are added and their memo holds.
   const alignGridRow = useCallback(
     (item: BrowseItem) => {
-      const index = indexOf.get(item.id);
+      const index = indexRef.current.get(item.id);
       if (index === undefined) return;
       const row = Math.floor(index / columns);
       if (gridRow.current === row) return;
       gridRow.current = row;
       gridRef.current?.scrollToIndex({ index: row, viewPosition: 0.3, animated: true });
     },
-    [columns, indexOf],
+    [columns],
   );
   useEffect(() => {
     gridRow.current = -1;
@@ -292,7 +311,9 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
     return [...items, ...Array.from({ length: padding }, () => undefined)];
   }, [items, columns]);
   // Stable across renders of the pane (guide ticks, pin notes) so PosterTile/ChannelTile's memo() actually holds.
-  const selectTile = useCallback((picked: BrowseItem) => onSelect(picked, items), [onSelect, items]);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+  const selectTile = useCallback((picked: BrowseItem) => onSelectRef.current(picked, itemsRef.current), []);
   const focusTile = useCallback(
     (picked: BrowseItem) => {
       alignGridRow(picked);
@@ -408,6 +429,10 @@ export function BrowseScreen({ source, empty, onSelect }: { source: BrowseSource
       {pane}
     </View>
   );
+}
+
+function sameItem(a: BrowseItem, b: BrowseItem): boolean {
+  return a.title === b.title && a.imageUrl === b.imageUrl && a.progress === b.progress && a.number === b.number && a.resume === b.resume && a.watched === b.watched;
 }
 
 const PosterTile = memo(function PosterTile({ item, onSelect, onFocusTile }: { item: BrowseItem; onSelect: (item: BrowseItem) => void; onFocusTile: (item: BrowseItem) => void }) {

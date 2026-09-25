@@ -130,7 +130,10 @@ export function Backdrop({ uri }: { uri: string | null }) {
   if (uri === null || uri === "") return null;
   return (
     <View style={styles.backdrop} pointerEvents="none">
-      <Image source={{ uri: sized(uri, "card") }} style={styles.backdropImage} blurRadius={30} contentFit="cover" cachePolicy="memory-disk" />
+      {/* Decoded and blurred an eighth of the screen's size, then stretched to fill it: the stretch blurs it further for
+          free. Blurring it at full size took the Fire Stick a noticeable moment on every page, longer for artwork that
+          is not TMDB's (which cannot be asked for small), such as many 4K copies'. */}
+      <Image source={{ uri: sized(uri, "card") }} style={styles.backdropImage} blurRadius={4} contentFit="cover" cachePolicy="memory-disk" />
       <View style={styles.backdropShade} />
     </View>
   );
@@ -155,6 +158,6 @@ const styles = styleSheet({
   hint: { height: 34, color: colors.muted, fontSize: 24 },
   hintBeside: { color: colors.muted, fontSize: 26, marginLeft: 6 },
   backdrop: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0 },
-  backdropImage: { width: "100%", height: "100%", opacity: 0.5 },
+  backdropImage: { position: "absolute", left: "43.75%", top: "43.75%", width: "12.5%", height: "12.5%", opacity: 0.5, transform: [{ scale: 8 }] },
   backdropShade: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "#0c0e1199" },
 });

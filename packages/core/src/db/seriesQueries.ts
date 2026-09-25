@@ -208,6 +208,29 @@ export function getSeriesDetail(db: Database.Database, seriesId: string): Series
   };
 }
 
+/**
+ * A series' seasons with the gaps filled from other copies of the same show (`listSeriesVersions`): a season this copy
+ * lists with no episodes, or does not list at all, is taken from the first of `versionIds` that has episodes for it.
+ * Seasons with no episodes anywhere are left out, rather than shown as an empty page. A borrowed season keeps its own
+ * ids, so its episodes play (and keep their progress) from the copy they belong to.
+ */
+export function withBorrowedSeasons(db: Database.Database, detail: SeriesDetail, versionIds: readonly string[]): SeriesDetail {
+  const seasons = detail.seasons.filter((season) => season.episodes.length > 0);
+  const have = new Set(seasons.map((season) => season.season_number));
+  const borrowed: SeasonWithEpisodes[] = [];
+  for (const id of versionIds) {
+    const other = getSeriesDetail(db, id);
+    if (other === undefined) continue;
+    for (const season of other.seasons) {
+      if (season.episodes.length === 0 || have.has(season.season_number)) continue;
+      have.add(season.season_number);
+      borrowed.push(season);
+    }
+  }
+  if (borrowed.length === 0 && seasons.length === detail.seasons.length) return detail;
+  return { series: detail.series, seasons: [...seasons, ...borrowed].sort((a, b) => a.season_number - b.season_number) };
+}
+
 export interface UpNextEpisode {
   readonly episode: EpisodeRow;
   readonly season: SeasonRow;
@@ -221,7 +244,11 @@ export interface UpNextEpisode {
  */
 export function getUpNextEpisode(db: Database.Database, seriesId: string): UpNextEpisode | undefined {
   const detail = getSeriesDetail(db, seriesId);
-  if (detail === undefined) return undefined;
+  return detail === undefined ? undefined : upNextIn(detail);
+}
+
+/** `getUpNextEpisode`'s choice, over a detail already read (one with borrowed seasons, say). */
+export function upNextIn(detail: SeriesDetail): UpNextEpisode | undefined {
   const all = detail.seasons.flatMap((season) => season.episodes.map((episode) => ({ episode, season: season as SeasonRow })));
   const upNext = all.find(({ episode }) => episode.position_secs !== null && episode.watched !== 1 && shouldPromptResume(episode.position_secs, episode.duration_secs)) ?? all.find(({ episode }) => episode.watched !== 1) ?? all[0];
   if (upNext === undefined) return undefined;

@@ -133,6 +133,8 @@ plays back through an embedded `mpv`, stores everything locally.
 - **Copies of a title** — the same dated title in another quality or source (`titleKey`). Lists
   show it once; its page offers "Other versions"; playing a film tries the copies in turn, 4K
   and the first source first (`listMoviePlayOrder`), moving on when one never really starts.
+  A series page fills a season its copy lists empty, or lacks, from up to three other copies
+  (`withBorrowedSeasons`); empty seasons are not shown.
 - **Channel history** — favourite and recently watched channels sync like films' (worker tables
   `channel_favourites` / `channel_recents`, per profile under `p.<id>.`), favourites with their
   order (`favourites.position`). A channel's account key is `ch.` + a 64-bit hash of its
