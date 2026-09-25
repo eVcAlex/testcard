@@ -122,7 +122,7 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
       // back as it was, to try again or put off.
       .then(() => setPhase("idle"))
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : "The update failed.");
+        setError(cause instanceof Error ? plainError(cause.message) : "The update failed.");
         setPhase("error");
       });
   }, []);
@@ -175,6 +175,12 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
     [configured, available, phase, progress, error, checked, auto, prompting, check, install, setAuto, showPrompt, later, openSetting],
   );
   return <UpdateContext.Provider value={value}>{children}</UpdateContext.Provider>;
+}
+
+/** A native module's rejection reads "Call to function 'X' has been rejected. → Caused by: <reason>": just the reason. */
+function plainError(message: string): string {
+  const reason = message.split("Caused by:").pop()?.trim();
+  return reason !== undefined && reason !== "" ? reason : message;
 }
 
 export function useUpdate(): UpdateState {

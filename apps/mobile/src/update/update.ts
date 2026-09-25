@@ -88,6 +88,7 @@ export async function download(info: UpdateInfo, onProgress: (fraction: number) 
   for (const old of Paths.cache.list()) if (old instanceof File && /^testcard-.*\.apk(\.part)?$/.test(old.name)) old.delete();
   const part = new File(Paths.cache, `testcard-${info.versionCode}.apk.part`);
   const abort = new AbortController();
+  let whole = false;
   let moved = Date.now();
   const watchdog = setInterval(() => {
     if (Date.now() - moved > STALL_MS) abort.abort();
@@ -104,11 +105,14 @@ export async function download(info: UpdateInfo, onProgress: (fraction: number) 
       throw abort.signal.aborted ? new Error("The download stopped moving. Check the connection and try again.") : error;
     });
     if (downloaded === null || !part.exists || part.size === 0) throw new Error("The download did not finish.");
+    // `move` re-points `part` at where it moved to, so from here on `part` is the finished download: it must not be
+    // cleaned up below (which is how 0.1.68 deleted every update it had just downloaded).
     part.move(file);
+    whole = true;
     return file;
   } finally {
     clearInterval(watchdog);
-    if (part.exists) part.delete();
+    if (!whole && part.exists) part.delete();
   }
 }
 
@@ -117,6 +121,7 @@ export async function download(info: UpdateInfo, onProgress: (fraction: number) 
  * app. Resolves once that question is on screen; rejects with why, when Android says no.
  */
 export async function install(file: File): Promise<void> {
+  if (!file.exists) throw new Error("The downloaded update is missing. Try again to download it again.");
   if (Installer !== null) {
     await Installer.install(file.uri);
     return;
