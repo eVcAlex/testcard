@@ -345,17 +345,20 @@ export function MoviesScreen({
     },
     [db],
   );
+  // Built once per set of shelves, so coming back to the page (which re-reads the rows above them) keeps these rows'
+  // objects and their memo holds: only what changed is drawn again.
+  const shelfRows = useMemo(() => shelves?.map((shelf) => shelfRow(shelf, homeMovie)) ?? null, [shelves]);
   const rows = useMemo<HomeRow[] | null>(() => timed("movies rows", () => {
-    if (shelves === null) return null;
+    if (shelfRows === null) return null;
     const own = (movie: { source_id: string }) => sourceId === null || movie.source_id === sourceId;
     const continuing = listRecentMovies(db, 60).filter((movie) => own(movie) && movie.position_secs !== null && movie.watched !== 1 && shouldPromptResume(movie.position_secs, movie.duration_secs));
     const myList = listFavouriteMovies(db).filter(own);
     return [
       ...(continuing.length > 0 ? [{ key: "continue", label: "Continue watching", items: continuing.map(continuingMovie) }] : []),
       ...(myList.length > 0 ? [{ key: "my-list", label: "My list", items: myList.slice(0, 30).map(homeMovie) }] : []),
-      ...shelves.map((shelf) => shelfRow(shelf, homeMovie)),
+      ...shelfRows,
     ];
-  }), [db, version, sourceId, shelves, tick]);
+  }), [db, version, sourceId, shelfRows, tick]);
   const heroActions = useCallback(
     (item: HomeItem): HeroActions => ({
       primary: {
@@ -379,10 +382,11 @@ export function MoviesScreen({
     }),
     [db, sync, onOpen, onPlay],
   );
+  const openItem = useCallback((item: { id: string; name: string }) => onOpen({ id: item.id, title: item.name }), [onOpen]);
 
   if (browsing || (rows !== null && rows.length === 0)) return <Padded><MoviesBrowse sourceId={sourceId} onOpen={onOpen} /></Padded>;
   if (rows === null) return <Loading noun="movies" />;
-  return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={(item) => onOpen({ id: item.id, title: item.name })} browseAll={onBrowse} />;
+  return <HomeScreen rows={rows} heroActions={heroActions} fetchDetail={fetchDetail} onSelect={openItem} browseAll={onBrowse} />;
 }
 
 /** Series: the same landing page, with recently watched in place of continue watching. */
@@ -411,8 +415,9 @@ export function SeriesScreen({
   useBackTo(browsing, onBrowseDone);
   const shelves = useBuilt(seriesRows, db, catalogue, sourceId, "series");
   const recentIds = useRef(new Set<string>());
+  const shelfRows = useMemo(() => shelves?.map((shelf) => shelfRow(shelf, homeSeries)) ?? null, [shelves]);
   const rows = useMemo<HomeRow[] | null>(() => timed("series rows", () => {
-    if (shelves === null) return null;
+    if (shelfRows === null) return null;
     const own = (show: { source_id: string }) => sourceId === null || show.source_id === sourceId;
     const recent = listRecentSeries(db, 60).filter(own).slice(0, 20);
     const myList = listFavouriteSeries(db).filter(own);
@@ -421,9 +426,9 @@ export function SeriesScreen({
     return [
       ...(recent.length > 0 ? [{ key: "recent-watched", label: "Recently watched", items: recent.map((show) => continuingSeries(show, upNext.get(show.id))) }] : []),
       ...(myList.length > 0 ? [{ key: "my-list", label: "My list", items: myList.slice(0, 30).map(homeSeries) }] : []),
-      ...shelves.map((shelf) => shelfRow(shelf, homeSeries)),
+      ...shelfRows,
     ];
-  }), [db, version, sourceId, shelves, tick]);
+  }), [db, version, sourceId, shelfRows, tick]);
   const heroActions = useCallback(
     (item: HomeItem): HeroActions => ({
       primary: seriesPrimaryAction(db, item, onOpen, onPlayEpisode),
@@ -457,10 +462,11 @@ export function SeriesScreen({
     }),
     [db, sync, onOpen, onPlayEpisode],
   );
+  const openItem = useCallback((item: { id: string; name: string }) => onOpen({ id: item.id, title: item.name }), [onOpen]);
 
   if (browsing || (rows !== null && rows.length === 0)) return <Padded><SeriesBrowse sourceId={sourceId} onOpen={onOpen} /></Padded>;
   if (rows === null) return <Loading noun="series" />;
-  return <HomeScreen rows={rows} heroActions={heroActions} onSelect={(item) => onOpen({ id: item.id, title: item.name })} browseAll={onBrowse} />;
+  return <HomeScreen rows={rows} heroActions={heroActions} onSelect={openItem} browseAll={onBrowse} />;
 }
 
 /** The category browser and empty states sit under the nav bar, which floats over the landing page's art. */

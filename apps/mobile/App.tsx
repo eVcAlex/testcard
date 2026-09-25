@@ -126,6 +126,10 @@ function Root() {
   }, []);
 
   const goHome = useCallback(() => setRoute({ name: "home" }), []);
+  // Fixed for the life of the app, so the sections they are handed to (whose rows memo on them) are not redrawn
+  // every time a page opens or closes.
+  const openMovie = useCallback((movie: { id: string; title: string }) => setRoute({ name: "movie", id: movie.id, title: movie.title }), []);
+  const openSeries = useCallback((series: { id: string; title: string }) => setRoute({ name: "series", id: series.id, title: series.title }), []);
   // Movies and Series open on a landing page of rows; "Browse all" in the nav bar swaps it for the full category list.
   const [browsing, setBrowsing] = useState<false | "categories" | "guide">(false);
   const [visited, setVisited] = useState<ReadonlySet<Section>>(() => new Set(["home"]));
@@ -320,7 +324,7 @@ function Root() {
               browsing={browsing === "categories" && section === "movies"}
               onBrowse={onBrowse}
               onBrowseDone={onBrowseDone}
-              onOpen={(movie) => setRoute({ name: "movie", id: movie.id, title: movie.title })}
+              onOpen={openMovie}
               onPlay={(movie, resume) => setRoute({ name: "play", item: { kind: "movie", id: movie.id, title: movie.title }, resume, returnTo: { name: "home" } })}
             />,
           )}
@@ -332,7 +336,7 @@ function Root() {
               browsing={browsing === "categories" && section === "series"}
               onBrowse={onBrowse}
               onBrowseDone={onBrowseDone}
-              onOpen={(series) => setRoute({ name: "series", id: series.id, title: series.title })}
+              onOpen={openSeries}
               onPlayEpisode={(episodeId, title, resume, seriesId) => setRoute({ name: "play", item: { kind: "episode", id: episodeId, title }, seriesId, resume, returnTo: { name: "home" } })}
             />,
           )}

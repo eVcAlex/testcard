@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { sized } from "../ui/imageSize";
 import { Check, Movie } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { getSeriesDetail, getSeriesSource, getUpNextEpisode, listSeriesVersions, removeSeriesFromRecents, toggleSeriesFavourite } from "@testcard/core/src/db/seriesQueries.js";
+import { getSeriesDetail, getSeriesSource, listSeriesVersions, removeSeriesFromRecents, toggleSeriesFavourite, upNextIn, withBorrowedSeasons } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { setWatched } from "@testcard/core/src/db/progressQueries.js";
@@ -22,6 +22,8 @@ import { plainReason, serverGone } from "../ui/plainReason";
 import { SourceForm } from "../ui/SourceForm";
 import { hasBackups, pickServer, unreachable } from "../state/hosts";
 
+/** How many other copies of a series are asked for the seasons this one is missing. */
+const MAX_DONORS = 3;
 /** The focus ring every card carries (Focusable's border, rounded to whole dp as styleSheet does), outside its thumbnail: the grid has to leave room for it. */
 const CARD_RING = 3;
 /** Icons take dp, not the 1920-wide design units the styles are written in. */
@@ -61,6 +63,23 @@ function EpisodeArt({ episodeId, still, fallbacks }: { episodeId: string; still:
   const uri = candidates[failed];
   if (uri === undefined) return <FilmGlyph />;
   const borrowed = uri !== still;
+  if (borrowed)
+    // The borrowed poster, decoded small and blurred there, then stretched over the card (see Backdrop): a full-size
+    // blur on every card of a season without stills held the page up.
+    return (
+      <>
+        <Image
+          source={{ uri: sized(uri, "card") }}
+          style={styles.borrowedImage}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={`${episodeId}:${failed}`}
+          blurRadius={3}
+          onError={() => setFailed((count) => count + 1)}
+        />
+        <View style={styles.fallbackVeil} pointerEvents="none" />
+      </>
+    );
   return (
     <>
       <Image
@@ -69,10 +88,8 @@ function EpisodeArt({ episodeId, still, fallbacks }: { episodeId: string; still:
         contentFit="cover"
         cachePolicy="memory-disk"
         recyclingKey={`${episodeId}:${failed}`}
-        {...(borrowed ? { blurRadius: 18 } : {})}
         onError={() => setFailed((count) => count + 1)}
       />
-      {borrowed ? <View style={styles.fallbackVeil} pointerEvents="none" /> : null}
     </>
   );
 }
@@ -203,22 +220,47 @@ export function SeriesDetailScreen({
     };
   }, [db, seriesId, retry]);
 
+  // A season this copy lists empty, or lacks, is filled from another copy of the show: the same quality first, at
+  // most a few of them. Their episode lists are fetched once this one's is in, in the background, and kept for a day
+  // like any other.
+  const donors = useMemo(() => {
+    const is4k = splitTitle(title).is4k;
+    return [...versions].sort((a, b) => Number(splitTitle(a.name).is4k !== is4k) - Number(splitTitle(b.name).is4k !== is4k)).slice(0, MAX_DONORS);
+  }, [versions, title]);
+  const [donorsIn, setDonorsIn] = useState(0);
+  useEffect(() => {
+    if (loading || donors.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      for (const donor of donors) {
+        if (cancelled) return;
+        const source = getSeriesSource(db, donor.id);
+        if (source?.kind !== "xtream") continue;
+        // A copy that will not load just lends nothing.
+        await ensureSeriesEpisodes(db, source, donor.id, getCredentials).catch(() => undefined);
+        if (!cancelled) setDonorsIn((count) => count + 1);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [db, donors, loading]);
+
   // Read straight away, not after the episode fetch: the poster, plot and rating are already stored, so the page
   // shows them while the episodes load (and re-reads once they have).
   const detail = useMemo(() => {
     void version;
     void tick;
     void loading;
-    return getSeriesDetail(db, seriesId);
-  }, [db, seriesId, version, tick, loading]);
+    void donorsIn;
+    const own = getSeriesDetail(db, seriesId);
+    return own === undefined ? undefined : withBorrowedSeasons(db, own, donors.map((donor) => donor.id));
+  }, [db, seriesId, version, tick, loading, donors, donorsIn]);
 
   const seasons = detail?.seasons ?? [];
   const series = detail?.series;
   // The big button: carry on with what you were watching, else the first episode you have not seen.
-  const upNext = useMemo(() => {
-    void tick;
-    return loading ? undefined : getUpNextEpisode(db, seriesId);
-  }, [db, seriesId, version, loading, tick]);
+  const upNext = useMemo(() => (loading || detail === undefined ? undefined : upNextIn(detail)), [loading, detail]);
   const upNextResume = upNext?.resume ?? false;
   // Opens on the season Resume points to, so the highlighted pill always agrees with the big button
   // (rather than a separately computed "first unwatched" that could land on a different season).
@@ -375,7 +417,7 @@ export function SeriesDetailScreen({
         ) : null}
         </View>
       </View>
-      {error !== undefined ? (
+      {error !== undefined && seasons.length === 0 ? (
         <View style={styles.failed}>
           <Text style={styles.error}>{error.text}</Text>
           <View style={styles.failedActions}>
@@ -547,6 +589,7 @@ const styles = styleSheet({
   watchedText: { color: colors.foreground, fontSize: 18, fontWeight: "600" },
   progress: { height: 6, backgroundColor: "#00000080" },
   progressFill: { height: 6, backgroundColor: colors.accent },
+  borrowedImage: { position: "absolute", left: "37.5%", top: "37.5%", width: "25%", height: "25%", transform: [{ scale: 4 }] },
   fallbackVeil: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "#0000006b" },
   placeholder: { flex: 1, alignItems: "center", justifyContent: "center" },
   cardTitle: { color: colors.muted, fontSize: 24, fontWeight: "500" },

@@ -31,6 +31,9 @@ const SEEK_STEP_SECS = 15;
 /** Presses in a row (each within this of the last) reach further: 15 s, then 30 s, 1 min, 2 min. */
 const STREAK_WITHIN_MS = 600;
 const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4 ? 30 : count < 7 ? 60 : 120);
+/** A held key moves the bar this often, by a step that grows the longer it is held (see scrubStep). */
+const SCRUB_TICK_MS = 150;
+const scrubStep = (ticks: number) => (ticks < 10 ? 10 : ticks < 25 ? 30 : ticks < 45 ? 60 : 120);
 const CHROME_HIDES_AFTER_MS = 4000;
 /** A live picture stuck refilling this long is reloaded, at most this many times. */
 const STUCK_AFTER_MS = 12_000;
@@ -506,7 +509,13 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const time = useEvent(player, "timeUpdate", { currentTime: player.currentTime, currentLiveTimestamp: null, currentOffsetFromLive: null, bufferedPosition: player.bufferedPosition });
   // Seeking moves the shown position straight away instead of waiting for the next time update.
   const [seekedTo, setSeekedTo] = useState<number>();
-  useEffect(() => setSeekedTo(undefined), [time.currentTime]);
+  // While a held key scrubs, the bar shows where it has got to, not the picture's own time, until the key is let go.
+  const scrubbing = useRef<{ direction: 1 | -1; target: number; ticks: number; timer: ReturnType<typeof setInterval> } | null>(null);
+  const seekedToRef = useRef(seekedTo);
+  seekedToRef.current = seekedTo;
+  useEffect(() => {
+    if (scrubbing.current === null) setSeekedTo(undefined);
+  }, [time.currentTime]);
   const position = seekedTo ?? time.currentTime;
   const duration = Number.isFinite(player.duration) && player.duration > 0 ? player.duration : 0;
   // Progress is saved from these, not from the player: on leaving, the player is already released by the
@@ -603,7 +612,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       const now = Date.now();
       const streak = lastSeek.current.direction === direction && now - lastSeek.current.at < STREAK_WITHIN_MS ? lastSeek.current.count + 1 : 0;
       lastSeek.current = { at: now, direction, count: streak };
-      const from = player.currentTime;
+      // From a seek still under way, so quick presses add up rather than each starting from where the picture was.
+      const from = seekedToRef.current ?? player.currentTime;
       const target = Math.min(duration > 0 ? duration - 1 : Infinity, Math.max(0, from + direction * stepForStreak(streak)));
       player.currentTime = target;
       setSeekedTo(target);
@@ -612,6 +622,43 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     },
     [duration, player, pulse, vod, wake],
   );
+  // Holding left or right (on the bar, or with the controls hidden) scrubs: the bar runs ahead, faster the longer the
+  // key is held, and the picture jumps there when it is let go. The remote reports a hold once when it starts and once
+  // when it ends, nothing in between, so the run is timed here.
+  const endScrub = useCallback(
+    (commit: boolean) => {
+      const scrub = scrubbing.current;
+      if (scrub === null) return;
+      clearInterval(scrub.timer);
+      scrubbing.current = null;
+      if (commit) {
+        player.currentTime = scrub.target;
+        setSeekedTo(scrub.target);
+      } else setSeekedTo(undefined);
+      wake();
+    },
+    [player, wake],
+  );
+  const startScrub = useCallback(
+    (direction: 1 | -1) => {
+      if (!vod || duration <= 0) return;
+      endScrub(false);
+      const scrub = { direction, target: seekedToRef.current ?? player.currentTime, ticks: 0, timer: setInterval(() => {
+        scrub.ticks += 1;
+        scrub.target = Math.min(duration - 1, Math.max(0, scrub.target + direction * scrubStep(scrub.ticks)));
+        setSeekedTo(scrub.target);
+        wake();
+        // Let go of somewhere the remote never told us about: stop after a minute rather than run on for good.
+        if (scrub.ticks > 300) endScrub(true);
+      }, SCRUB_TICK_MS) };
+      scrubbing.current = scrub;
+      setSeekedTo(scrub.target);
+      pulse(direction === 1 ? "forward" : "back");
+      wake();
+    },
+    [duration, endScrub, player, pulse, vod, wake],
+  );
+  useEffect(() => () => clearInterval(scrubbing.current?.timer), []);
   // A tap or click on the progress bar jumps to that point.
   const [barWidth, setBarWidth] = useState(0);
   const seekToRatio = useCallback(
@@ -780,8 +827,18 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   // Android reports remote keys on release (eventKeyAction 1) and, unless key-down events are on, only then.
   const handleKey = useCallback(
     (event: { eventType: string; eventKeyAction?: number | undefined }) => {
-      if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
       const key = event.eventType;
+      // A held left or right: its start (key down) and its end (key up) are the only two events the remote sends.
+      if (key === "longLeft" || key === "longRight" || key === "longRewind" || key === "longFastForward") {
+        const direction = key === "longRight" || key === "longFastForward" ? 1 : -1;
+        const onBar = !chrome || selected === "seek" || key === "longRewind" || key === "longFastForward";
+        if (event.eventKeyAction === 0) {
+          if (vod && onBar && !captionsOpen && !audioOpen && !guideOpen) startScrub(direction);
+        } else if (scrubbing.current !== null) endScrub(true);
+        return;
+      }
+      if (event.eventKeyAction === 0) return; // a key-down duplicate, if key-down events are ever enabled
+      if (scrubbing.current !== null) endScrub(true);
       // While the next episode is on offer and the controls are hidden, OK starts it. Any other key means the viewer
       // is doing something else: the countdown stops.
       if (cardUp && !captionsOpen && !audioOpen && !guideOpen) {
@@ -845,7 +902,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [audioAt, audioOpen, audioTracks.length, chooseAudio, captionAt, captionOptions.length, captionRows, captions, captionsOpen, cardUp, changeCaptions, chooseCaption, chrome, finished, goNext, guide, guideAt, guideOpen, playEntry, press, remotePlayPause, selected, seek, step, togglePause, vod, wake, zap, zapping],
+    [audioAt, audioOpen, audioTracks.length, chooseAudio, captionAt, captionOptions.length, captionRows, captions, captionsOpen, cardUp, changeCaptions, chooseCaption, chrome, endScrub, finished, goNext, guide, guideAt, guideOpen, playEntry, press, remotePlayPause, selected, seek, startScrub, step, togglePause, vod, wake, zap, zapping],
   );
   // The listener below re-subscribes to the native remote-event emitter whenever its callback identity
   // changes; going through a ref keeps that identity fixed so a run of key presses doesn't churn the
