@@ -6,6 +6,7 @@ import { removeSourceRows } from "@testcard/core/src/sync/sourceRemoval.js";
 import { importCatalogue, type CatalogueSource } from "@testcard/core/src/db/importCatalogue.js";
 import { createM3UAdapter } from "@testcard/core/src/source/m3u/adapter.js";
 import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js";
+import { runDeferredCatalogueMaintenance } from "@testcard/core/src/db/migrateDatabase.js";
 import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
@@ -102,6 +103,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   if (dbRef.current === undefined) {
     dbRef.current = openAppDatabase();
     loadServersInUse(dbRef.current);
+    // Chunked and backgrounded on purpose: on a multi-source install this can touch thousands of
+    // rows, and running it inline here would freeze the remote right through the profile picker.
+    void runDeferredCatalogueMaintenance(dbRef.current).catch((error: unknown) => console.warn("Deferred catalogue maintenance failed", error));
   }
   const db = dbRef.current;
 

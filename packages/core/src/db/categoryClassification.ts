@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { CLASSIFIER_VERSION, classifyCategory, encodeTags } from "../normalise/classifyCategory.js";
+import { applyInSlices } from "./applyInSlices.js";
 
 /**
  * The columns every category table stores for `classifyCategory`'s advisory result. Shared by the
@@ -20,23 +21,28 @@ const CATEGORY_TABLES = ["categories", "movie_categories", "series_categories"] 
 
 /**
  * Recomputes every stored classification when the rules have changed (or on the first open after
- * the columns were added). Categories number in the hundreds and the classifier is pure and
- * synchronous, so this costs milliseconds and needs no refresh, network or provider round trip —
- * which is also what lets a rule improvement reach existing installs. Idempotent: a no-op once
- * `schema_meta.classifier_version` matches.
+ * the columns were added). A multi-source install can have thousands of category rows across the
+ * three tables, so this runs in slices with a yield between them — like every other bulk import
+ * pass — rather than one long transaction that would hold the JS thread (and the TV's remote)
+ * still for its whole duration. Deliberately not part of `migrateDatabase` (which must stay
+ * synchronous): call this once, in the background, after the database is open and already usable.
+ * Idempotent: a no-op once `schema_meta.classifier_version` matches.
  */
-export function reclassifyCategories(db: Database.Database): void {
+export async function reclassifyCategories(db: Database.Database): Promise<void> {
   const stored = db.prepare(`SELECT value FROM schema_meta WHERE key = 'classifier_version'`).get() as { value: string } | undefined;
   if (stored !== undefined && Number(stored.value) === CLASSIFIER_VERSION) return;
 
-  db.transaction(() => {
-    for (const table of CATEGORY_TABLES) {
-      const rows = db.prepare(`SELECT id, raw_name AS rawName FROM ${table}`).all() as { id: string; rawName: string }[];
-      const update = db.prepare(`UPDATE ${table} SET genre = @genre, language = @language, service = @service, tags = @tags WHERE id = @id`);
-      for (const row of rows) update.run({ id: row.id, ...categoryClassificationParams(row.rawName) });
-    }
-    db.prepare(`INSERT INTO schema_meta (key, value) VALUES ('classifier_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(
-      String(CLASSIFIER_VERSION),
+  for (const table of CATEGORY_TABLES) {
+    const rows = db.prepare(`SELECT id, raw_name AS rawName FROM ${table}`).all() as { id: string; rawName: string }[];
+    const update = db.prepare(`UPDATE ${table} SET genre = @genre, language = @language, service = @service, tags = @tags WHERE id = @id`);
+    await applyInSlices(
+      db,
+      rows,
+      () => 1,
+      (row) => update.run({ id: row.id, ...categoryClassificationParams(row.rawName) }),
     );
-  })();
+  }
+  db.prepare(`INSERT INTO schema_meta (key, value) VALUES ('classifier_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(
+    String(CLASSIFIER_VERSION),
+  );
 }
