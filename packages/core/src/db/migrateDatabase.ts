@@ -6,15 +6,26 @@ import { renameChannels } from "./channelNames.js";
 
 /**
  * Brings an already-open SQLite database to the current schema: builds a fresh one, or runs the
- * pending forward-only migrations, then recomputes category classification and channel names if their rules changed.
- * Takes any object with better-sqlite3's synchronous `prepare` / `exec` / `transaction` shape, so
- * the Android apps can pass an expo-sqlite adapter. No native import lives here on purpose.
+ * pending forward-only migrations, then tidies channel names if their rules changed. Takes any
+ * object with better-sqlite3's synchronous `prepare` / `exec` / `transaction` shape, so the
+ * Android apps can pass an expo-sqlite adapter. No native import lives here on purpose.
+ *
+ * Category reclassification is NOT run here (see `runDeferredCatalogueMaintenance`): a large
+ * install can have thousands of categories, and this function must stay synchronous.
  */
 export function migrateDatabase(db: Database.Database): Database.Database {
   migrateSchema(db);
-  reclassifyCategories(db); // no-op unless the category classifier's rules changed since last open
-  renameChannels(db); // likewise for the rules that tidy channel names
+  renameChannels(db); // no-op unless the rules that tidy channel names changed since last open
   return db;
+}
+
+/**
+ * Follow-up maintenance that can't run inside `migrateDatabase` because it may need to yield to
+ * the event loop partway through. Call once, right after opening the database, without awaiting
+ * it on app startup — it no-ops immediately unless a rule actually changed.
+ */
+export async function runDeferredCatalogueMaintenance(db: Database.Database): Promise<void> {
+  await reclassifyCategories(db); // no-op unless the category classifier's rules changed since last open
 }
 
 function migrateSchema(db: Database.Database): Database.Database {

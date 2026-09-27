@@ -6,6 +6,7 @@ import { removeSourceRows } from "@testcard/core/src/sync/sourceRemoval.js";
 import { importCatalogue, type CatalogueSource } from "@testcard/core/src/db/importCatalogue.js";
 import { createM3UAdapter } from "@testcard/core/src/source/m3u/adapter.js";
 import { createXtreamAdapter } from "@testcard/core/src/source/xtream/client.js";
+import { runDeferredCatalogueMaintenance } from "@testcard/core/src/db/migrateDatabase.js";
 import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
@@ -102,6 +103,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   if (dbRef.current === undefined) {
     dbRef.current = openAppDatabase();
     loadServersInUse(dbRef.current);
+    // Chunked and backgrounded on purpose: on a multi-source install this can touch thousands of
+    // rows, and running it inline here would freeze the remote right through the profile picker.
+    void runDeferredCatalogueMaintenance(dbRef.current).catch((error: unknown) => console.warn("Deferred catalogue maintenance failed", error));
   }
   const db = dbRef.current;
 
@@ -334,13 +338,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const rows = db
       .prepare(`SELECT id, kind, name, last_refreshed_at AS lastRefreshedAt FROM sources ORDER BY sort_order IS NULL, sort_order, created_at`)
       .all() as unknown as { id: string; kind: "xtream" | "m3u"; name: string; lastRefreshedAt: number | null }[];
-    const count = (table: string, id: string) =>
-      (db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE source_id = ?`).get(id) as unknown as { n: number }).n;
+    // One grouped query per table instead of one COUNT per source: this used to be 3 round-trips *per
+    // source*, run synchronously on the JS thread on every version bump (including while the profile
+    // picker is waiting to paint), which got slow with more than a couple of sources.
+    const countsByTable = (table: string): ReadonlyMap<string, number> => {
+      const grouped = db.prepare(`SELECT source_id AS id, COUNT(*) AS n FROM ${table} GROUP BY source_id`).all() as unknown as { id: string; n: number }[];
+      return new Map(grouped.map((row) => [row.id, row.n]));
+    };
+    const channelCounts = countsByTable("channels");
+    const movieCounts = countsByTable("movies");
+    const seriesCounts = countsByTable("series");
     return rows.map((row) => ({
       ...row,
-      channels: count("channels", row.id),
-      movies: count("movies", row.id),
-      series: count("series", row.id),
+      channels: channelCounts.get(row.id) ?? 0,
+      movies: movieCounts.get(row.id) ?? 0,
+      series: seriesCounts.get(row.id) ?? 0,
       refreshing: refreshing.has(row.id),
       failures: errors[row.id] ?? noFailures,
     }));

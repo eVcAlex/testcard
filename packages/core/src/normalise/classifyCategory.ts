@@ -12,7 +12,7 @@
  *
  * Bump `CLASSIFIER_VERSION` whenever a rule changes so stored results are recomputed on next open.
  */
-export const CLASSIFIER_VERSION = 3;
+export const CLASSIFIER_VERSION = 4;
 
 export const GENRES = [
   "sports",
@@ -34,7 +34,7 @@ export const GENRES = [
 export type Genre = (typeof GENRES)[number];
 
 /** Things worth knowing about a category that aren't its genre. */
-export const CATEGORY_TAGS = ["ppv", "4k", "8k", "vip", "raw", "adult", "separator", "junk"] as const;
+export const CATEGORY_TAGS = ["ppv", "4k", "8k", "vip", "raw", "adult", "standup", "separator", "junk"] as const;
 export type CategoryTag = (typeof CATEGORY_TAGS)[number];
 
 export interface CategoryClassification {
@@ -141,6 +141,11 @@ const words = (alternatives: string): RegExp => new RegExp(String.raw`\b(?:${alt
 
 const ADULT = words("xxx|adult(?! swim)|18\\+|erotic|porn");
 
+// Stand-up specials are tagged, not genre-classified as comedy: a viewer browsing Comedy movies
+// wants films, not filmed sets, and there is no other way to tell them apart (found from a user
+// report that "Comedy" was surfacing stand-up specials).
+const STANDUP = words("stand.?up|comedy specials?");
+
 const GENRE_RULES: readonly [Genre, RegExp][] = [
   ["holiday", words("christmas|xmas|halloween|thanksgiving|easter|holiday")],
   ["kids", words("kids?|children|family|cartoons?|junior|toons?|cbeebies|cbbc|nick jr|nickelodeon|disney (?:channel|junior)|baby")],
@@ -152,7 +157,7 @@ const GENRE_RULES: readonly [Genre, RegExp][] = [
   ["news", words("news|weather|business|politics")],
   ["music", words("music|musicals?|concerts?|radio|mtv|broadway")],
   ["reality", words("reality|lifestyle|cooking|food|home|hgtv")],
-  ["comedy", words("comedy|stand up|sitcoms?")],
+  ["comedy", words("comedy|sitcoms?")],
   ["action", words("action|adventure|martial arts|war|westerns?|james bond|007|mafia|gangster")],
   ["horror", words("horror|thriller|scary")],
   ["romance", words("romance|romantic|rom com")],
@@ -229,7 +234,13 @@ export function classifyCategory(rawName: string): CategoryClassification {
   const structural = structuralFlag(unstyled);
   if (structural !== null) return { genre: null, service: null, language: null, tags: [structural, ...tags] };
 
-  const genre = detectGenre(rawName, text);
+  const isStandup = STANDUP.test(text);
+  if (isStandup) tags.push("standup");
+
+  const detected = detectGenre(rawName, text);
+  // A stand-up special also containing the word "comedy" would otherwise win the comedy rule;
+  // the "standup" tag is how a viewer tells them apart, so don't also file it under Comedy movies.
+  const genre = isStandup && detected === "comedy" ? null : detected;
   if (genre === "adult") tags.push("adult");
 
   let service: string | null = null;

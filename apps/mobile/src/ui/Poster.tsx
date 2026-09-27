@@ -29,6 +29,8 @@ export const SourceNames = createContext<ReadonlyMap<string, string> | null>(nul
 const sourceOf = (id: string): string => id.slice(0, Math.max(0, id.indexOf(":")));
 
 export const POSTER_ART_WIDTH = POSTER_WIDTH;
+/** A card's full footprint (art width plus its own padding) — what a sibling row must match to keep columns aligned. */
+export const POSTER_CARD_WIDTH = POSTER_WIDTH + 4 * 2;
 
 /** A poster and its title. `grid` lets it share a grid row with its neighbours instead of keeping a fixed width. */
 export const PosterCard = memo(function PosterCard({

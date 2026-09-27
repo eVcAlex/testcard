@@ -5,14 +5,14 @@ import { sized } from "../ui/imageSize";
 import { ChannelLogo } from "../ui/ChannelLogo";
 import { NavArrowRight } from "iconoir-react-native";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { colors, styleSheet, uiScale } from "../theme";
+import { colors, space, styleSheet, uiScale } from "../theme";
 import { Facts, type DetailAction } from "../ui/DetailActions";
 import { OptionsSheet } from "../ui/OptionsSheet";
 import { BackToTop } from "../ui/backToTop";
 import { Fade } from "../ui/Fade";
 import { focusedNow, lastFocused, useFocusTracking } from "../ui/Focusable";
 import { ChannelShelf } from "../ui/ChannelCard";
-import { PosterCard, PosterRow, type PosterItem } from "../ui/Poster";
+import { POSTER_CARD_WIDTH, PosterCard, PosterRow, type PosterItem } from "../ui/Poster";
 
 /** A poster on the landing page, with what the hero shows when the remote rests on it. */
 export interface HomeItem extends PosterItem {
@@ -479,6 +479,9 @@ const RankedRow = memo(function RankedRow({
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
           <View style={styles.rankedItem}>
+            {/* Absolute so it never shifts where the poster sits — a poster's left edge must land at the
+                same x as every other row's, or the TV remote's up/down focus search skips this row (it
+                picks whichever row's cards are actually closest, not the visually "right" one). */}
             <Text style={styles.rank}>{index + 1}</Text>
             <PosterCard item={item} onPress={onPress} onFocusItem={onFocusItem} />
           </View>
@@ -534,7 +537,20 @@ const styles = styleSheet({
   browseAllLabel: { fontSize: 22, fontWeight: "500" },
   ranked: { gap: 16, marginBottom: 24 },
   rankedTitle: { color: colors.foreground, fontSize: 32, fontWeight: "600", letterSpacing: -0.3, paddingLeft: 8 },
-  rankedList: { gap: 4, paddingVertical: 8, paddingHorizontal: 8 },
-  rankedItem: { flexDirection: "row", alignItems: "flex-start" },
-  rank: { width: 118, marginRight: -34, color: "#2a3138", fontSize: 250, lineHeight: 250, fontWeight: "700", letterSpacing: -20, textAlign: "right", marginTop: 74 },
+  // Same gap/padding as PosterRow's rowList, so a card's left edge lands at the same x in every row.
+  rankedList: { gap: space.m, paddingVertical: 8, paddingHorizontal: 8 },
+  // Fixed to the poster's own footprint (not stretched by the rank numeral) so columns line up row to row.
+  rankedItem: { width: POSTER_CARD_WIDTH },
+  rank: {
+    position: "absolute",
+    left: -84,
+    top: 74,
+    width: 118,
+    color: "#2a3138",
+    fontSize: 250,
+    lineHeight: 250,
+    fontWeight: "700",
+    letterSpacing: -20,
+    textAlign: "right",
+  },
 });
