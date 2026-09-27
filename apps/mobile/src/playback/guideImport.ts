@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { deleteInSlices, importEpg } from "@testcard/core/src/epg/importEpg.js";
-import type { Source, SourceAdapter } from "@testcard/core/src/source/types.js";
+import type { SourceAdapter } from "@testcard/core/src/source/types.js";
 import { forgetGuides } from "./airing";
 
 /**
@@ -47,42 +47,24 @@ function guideSources(db: Database.Database): GuideSource[] {
   return db
     .prepare(
       `SELECT id, kind, name, base_url AS baseUrl, playlist_url AS playlistUrl, epg_url AS epgUrl FROM sources
-       WHERE include_live = 1 AND EXISTS (SELECT 1 FROM channels WHERE source_id = sources.id)`,
+       WHERE include_live = 1 AND TRIM(COALESCE(epg_url, '')) <> ''
+         AND EXISTS (SELECT 1 FROM channels WHERE source_id = sources.id)`,
     )
     .all() as GuideSource[];
 }
 
-function toSource(source: GuideSource): Source {
-  return source.kind === "xtream" ? { id: source.id, kind: "xtream", name: source.name, baseUrl: source.baseUrl ?? "" } : { id: source.id, kind: "m3u", name: source.name, playlistUrl: source.playlistUrl ?? "" };
-}
-
-/**
- * The address to read: the one set on the source, else the adapter's auto-detected one (a
- * playlist's `url-tvg` header, or Xtream's derived `xmltv.php`), matching desktop's priority (ADR
- * 0003). `cacheKey` is what staleness is compared against — never the resolved URL itself for
- * Xtream, which embeds credentials and must never be written to disk outside `credentials.enc.json`.
- */
-async function resolveGuideUrl(source: GuideSource, adapters: { readonly xtreamAdapter: SourceAdapter; readonly m3uAdapter: SourceAdapter }): Promise<{ url: string; cacheKey: string }> {
-  const explicit = source.epgUrl?.trim() ?? "";
-  if (explicit !== "") return { url: explicit, cacheKey: explicit };
-  const adapter = source.kind === "xtream" ? adapters.xtreamAdapter : adapters.m3uAdapter;
-  const probed = (await adapter.probeEpgUrl?.(toSource(source)))?.trim() ?? "";
-  if (probed === "") return { url: "", cacheKey: "" };
-  return { url: probed, cacheKey: source.kind === "xtream" ? "xtream-auto" : probed };
-}
+const setAddress = (source: GuideSource) => source.epgUrl?.trim() ?? "";
 
 /** Whether a source's guide is missing, old, or was read from another address than the one set now. */
-function isStale(db: Database.Database, sourceId: string, cacheKey: string): boolean {
-  const record = readRecord(db, sourceId);
-  return record === undefined || Date.now() - record.at > STALE_MS || record.url !== cacheKey;
+function isStale(db: Database.Database, source: GuideSource): boolean {
+  const record = readRecord(db, source.id);
+  return record === undefined || Date.now() - record.at > STALE_MS || record.url !== setAddress(source);
 }
 
-async function importOne(db: Database.Database, source: GuideSource, url: string, cacheKey: string): Promise<void> {
+async function importOne(db: Database.Database, source: GuideSource): Promise<void> {
+  const url = setAddress(source);
   // Tried, whatever happens: a source with no guide, or a broken one, is not asked again until it is stale.
-  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(
-    metaKey(source.id),
-    JSON.stringify({ at: Date.now(), url: cacheKey } satisfies GuideRecord),
-  );
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(metaKey(source.id), JSON.stringify({ at: Date.now(), url } satisfies GuideRecord));
   if (url === "") return;
   const response = await fetch(url);
   if (!response.ok || response.body === null) throw new Error(`The guide address responded with HTTP ${response.status}.`);
@@ -106,7 +88,7 @@ export function refreshGuides(
   busy: () => boolean = () => false,
 ): void {
   for (const source of guideSources(db)) {
-    if (queued.has(source.id)) continue;
+    if (queued.has(source.id) || !(force.includes(source.id) || isStale(db, source))) continue;
     queued.add(source.id);
     queue = queue.then(async () => {
       try {
@@ -114,9 +96,7 @@ export function refreshGuides(
         // Read again when its turn comes: the source may have changed or gone while it waited.
         const current = guideSources(db).find((entry) => entry.id === source.id);
         if (current === undefined) return;
-        const { url, cacheKey } = await resolveGuideUrl(current, adapters);
-        if (!force.includes(source.id) && !isStale(db, source.id, cacheKey)) return;
-        await importOne(db, current, url, cacheKey);
+        await importOne(db, current);
         forgetGuides();
         onImported();
       } catch (error) {
