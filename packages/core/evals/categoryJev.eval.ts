@@ -42,7 +42,7 @@ const GENRE_CRITERIA: Record<string, string> = {
   documentary: "Documentaries, nature, history, science or true-crime factual content",
   music: "Music, concerts, music videos, musicals or radio",
   reality: "Reality TV, lifestyle, cooking or home shows",
-  comedy: "Comedy, sitcoms or stand-up",
+  comedy: "Comedy films or sitcoms (not stand-up specials, which are their own thing)",
   drama: "Drama, soaps or telenovelas",
   action: "Action, adventure, war, western or martial arts",
   horror: "Horror or thriller",

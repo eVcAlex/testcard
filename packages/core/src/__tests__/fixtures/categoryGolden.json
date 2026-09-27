@@ -152,7 +152,7 @@
   {
     "name": "|EN| STAND-UP COMEDY",
     "kind": "movie",
-    "genre": "comedy"
+    "genre": null
   },
   {
     "name": "|EN| WAR",
@@ -427,7 +427,7 @@
   {
     "name": "DISNEY+ STAND-UP COMEDY",
     "kind": "movie",
-    "genre": "comedy"
+    "genre": null
   },
   {
     "name": "DREAMWORKS ANIMATION",
@@ -537,12 +537,12 @@
   {
     "name": "NETFLIX STAND-UP COMEDY",
     "kind": "movie",
-    "genre": "comedy"
+    "genre": null
   },
   {
     "name": "NETFLIX STAND-UP COMEDY",
     "kind": "series",
-    "genre": "comedy"
+    "genre": null
   },
   {
     "name": "UK| MUSIC",

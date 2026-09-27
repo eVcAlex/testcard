@@ -61,6 +61,20 @@ describe("classifyCategory — genre", () => {
     expect(result.tags).toContain("adult");
   });
 
+  it("tags stand-up specials instead of filing them under comedy movies", () => {
+    for (const name of ["|EN| STAND-UP COMEDY", "NETFLIX STAND-UP COMEDY", "COMEDY SPECIALS"]) {
+      const result = classifyCategory(name);
+      expect(result.genre).toBeNull();
+      expect(result.tags).toContain("standup");
+    }
+  });
+
+  it("still classifies sitcoms and comedy films as comedy", () => {
+    for (const name of ["US| 24/7 COMEDY", "UK| SITCOMS", "UK| MOVIES - COMEDY"]) {
+      expect(classifyCategory(name).genre).toBe("comedy");
+    }
+  });
+
   it("does not mistake the Adult Swim cartoon block for adult content", () => {
     for (const name of ["NETFLIX ADULT-SWIM", "HBO MAX (ADULT SWIM)"]) {
       const result = classifyCategory(name);
