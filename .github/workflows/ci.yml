@@ -1,0 +1,46 @@
+name: CI
+
+# The checks a change must pass before it is merged: every pull request, and main after each merge. The Android
+# bundle check is the same Metro build the APK runs, so a module the TV app cannot load (Node's `fs`, say) fails here
+# in about a minute instead of in a 7-minute APK build after the merge.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      # Scripts on: better-sqlite3 is built for Node here (the tests use it); the desktop app is not installed.
+      - run: pnpm install --frozen-lockfile --filter "@testcard/core..." --filter "@testcard/sync-schema..."
+      - run: pnpm --filter @testcard/core typecheck
+      - run: pnpm --filter @testcard/core test
+      - run: pnpm --filter @testcard/sync-schema test
+
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts --filter "@testcard/mobile..."
+      - run: pnpm --filter @testcard/mobile typecheck
+      - name: Bundle the TV app's JavaScript
+        working-directory: apps/mobile
+        env:
+          EXPO_TV: "1"
+        run: pnpm run bundle:check
