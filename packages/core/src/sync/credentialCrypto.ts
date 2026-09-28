@@ -38,7 +38,27 @@ export function generateSalt(): string {
   return toBase64(crypto.getRandomValues(new Uint8Array(16)));
 }
 
-async function deriveKey(password: string, saltBase64: string) {
+/**
+ * The key last derived, kept: 210,000 rounds of PBKDF2 are slow on a TV stick (up to a second or so), and a sync seals or
+ * opens every changed source and profile, each of which used to derive it again (a profile's first sync on a device,
+ * which reads everything, took that many seconds). Keyed by password and salt, so a new sign-in derives afresh.
+ */
+type DerivedKey = Awaited<ReturnType<typeof crypto.subtle.deriveKey>>;
+let cachedKey: { readonly id: string; readonly key: Promise<DerivedKey> } | undefined;
+
+function deriveKey(password: string, saltBase64: string): Promise<DerivedKey> {
+  const id = `${saltBase64}\u0000${password}`;
+  if (cachedKey?.id === id) return cachedKey.key;
+  const key = derive(password, saltBase64);
+  cachedKey = { id, key };
+  // A failure is not kept: the next call tries again.
+  key.catch(() => {
+    if (cachedKey?.key === key) cachedKey = undefined;
+  });
+  return key;
+}
+
+async function derive(password: string, saltBase64: string): Promise<DerivedKey> {
   const baseKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
     { name: "PBKDF2", salt: fromBase64(saltBase64), iterations: 210_000, hash: "SHA-256" },

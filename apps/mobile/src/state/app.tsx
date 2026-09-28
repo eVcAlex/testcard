@@ -84,6 +84,8 @@ const noFailures: readonly SourceFailure[] = [];
 const LAUNCH_SYNC_WAIT_MS = 10_000;
 /** And the getting-ready screen stays at least this long once it is up, so a quick sync does not flash it. */
 const LAUNCH_SYNC_SHOW_MS = 700;
+/** How long a finished import waits for the sync that brings in its history before the app opens. */
+const HISTORY_WAIT_MS = 15_000;
 /** How long after launch the TV guides are looked at. */
 const GUIDES_AFTER_LAUNCH_MS = 60_000;
 /** How long after launch sources with backup addresses are checked. */
@@ -178,7 +180,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // until they exist. Now they do: sync straight away, rather than on the next periodic tick a minute on,
         // so the app opens with its history in place.
         stage(sourceId, "history");
-        await syncRef.current?.triggerNow().catch(() => undefined);
+        // Waited on for a while, never for good: the history also arrives with the next periodic sync.
+        await Promise.race([syncRef.current?.triggerNow().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, HISTORY_WAIT_MS))]);
         // The TV guide comes after, in the background: the app does not wait on it.
         refreshGuides(db, adapters(), bump, [sourceId], importing);
       } catch (error) {

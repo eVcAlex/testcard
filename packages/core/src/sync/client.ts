@@ -6,6 +6,10 @@ import {
   type SyncPushRequest,
   type SyncPushResponse,
 } from "@testcard/sync-schema";
+import { fetchResponding } from "../source/fetchResponding.js";
+
+/** How long the sync server gets to start answering. */
+const SYNC_RESPONSE_TIMEOUT_MS = 20_000;
 
 export interface SyncClientConfig {
   readonly baseUrl: string;
@@ -47,9 +51,12 @@ export class SyncClient {
     const token = opts.authed === true ? this.config.getSessionToken() : undefined;
     if (token !== undefined) headers.Authorization = `Bearer ${token}`;
     if (opts.body !== undefined) headers["Content-Type"] = "application/json";
-    const res = await fetch(
+    // Bounded: a connection that stalls (Fire TV Wi-Fi does) used to hold the sync open for good, and with it
+    // everything waiting on one: the getting-ready screen, a profile switch, every sync after it.
+    const res = await fetchResponding(
       this.config.baseUrl + path,
       opts.body !== undefined ? { method: "POST", headers, body: JSON.stringify(opts.body) } : { headers },
+      SYNC_RESPONSE_TIMEOUT_MS,
     );
     if (res.ok || (res.status === 404 && opts.missingIsFine === true)) return res;
     const reply = await res.text().catch(() => "");
