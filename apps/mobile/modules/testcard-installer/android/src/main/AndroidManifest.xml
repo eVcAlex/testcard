@@ -3,5 +3,11 @@
   <application>
     <!-- Hears from Android's package installer how an update went (InstallerModule). -->
     <receiver android:name="com.evcalex.testcard.installer.InstallResultReceiver" android:exported="false" />
+    <!-- Opens the app again once an update has replaced it (UpdatedReceiver). Only Android sends this. -->
+    <receiver android:name="com.evcalex.testcard.installer.UpdatedReceiver" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+      </intent-filter>
+    </receiver>
   </application>
 </manifest>

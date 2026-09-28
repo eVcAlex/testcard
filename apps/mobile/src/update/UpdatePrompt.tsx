@@ -18,7 +18,7 @@ export function UpdatePrompt() {
     update.phase === "downloading"
       ? `Downloading ${Math.round(update.progress * 100)}%`
       : update.phase === "installing"
-        ? "Opening the installer..."
+        ? "Installing. Testcard closes while it updates, then opens again."
         : update.phase === "permission"
           ? "Android needs your OK first: allow Testcard to install unknown apps. Settings opens; turn Testcard on, then come back and the update carries on."
           : update.phase === "error" && update.error !== undefined
