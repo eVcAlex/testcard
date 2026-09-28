@@ -4,6 +4,7 @@ import { ChannelLogo } from "./ChannelLogo";
 import { colors, space, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
 import { PinBadge } from "./PinBadge";
+import { RowTrack } from "./RowTrack";
 import type { PosterItem } from "./Poster";
 
 /** A channel on a landing row: its logo on a panel, its name beneath. Sits beside the poster cards, drawn the same way. */
@@ -65,16 +66,18 @@ export const ChannelShelf = memo(function ChannelShelf({
         <Text style={styles.rowTitle}>{title}</Text>
         {pinned ? <PinBadge /> : null}
       </View>
-      <FlatList
-        horizontal
-        data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ChannelCard item={item} onPress={onPress} onFocusItem={onFocusItem} />}
-        showsHorizontalScrollIndicator={false}
-        initialNumToRender={6}
-        windowSize={5}
-        contentContainerStyle={styles.rowList}
-      />
+      <RowTrack>
+        <FlatList
+          horizontal
+          data={items}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <ChannelCard item={item} onPress={onPress} onFocusItem={onFocusItem} />}
+          showsHorizontalScrollIndicator={false}
+          initialNumToRender={6}
+          windowSize={5}
+          contentContainerStyle={styles.rowList}
+        />
+      </RowTrack>
     </View>
   );
 });

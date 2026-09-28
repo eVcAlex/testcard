@@ -13,6 +13,7 @@ import { Fade } from "../ui/Fade";
 import { focusedNow, lastFocused, useFocusTracking } from "../ui/Focusable";
 import { ChannelShelf } from "../ui/ChannelCard";
 import { POSTER_CARD_WIDTH, PosterCard, PosterRow, type PosterItem } from "../ui/Poster";
+import { RowTrack } from "../ui/RowTrack";
 
 /** A poster on the landing page, with what the hero shows when the remote rests on it. */
 export interface HomeItem extends PosterItem {
@@ -473,24 +474,24 @@ const RankedRow = memo(function RankedRow({
   return (
     <View style={styles.ranked}>
       <Text style={styles.rankedTitle}>{title}</Text>
-      <FlatList
-        horizontal
-        data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <View style={styles.rankedItem}>
-            {/* Absolute so it never shifts where the poster sits — a poster's left edge must land at the
-                same x as every other row's, or the TV remote's up/down focus search skips this row (it
-                picks whichever row's cards are actually closest, not the visually "right" one). */}
-            <Text style={styles.rank}>{index + 1}</Text>
-            <PosterCard item={item} onPress={onPress} onFocusItem={onFocusItem} />
-          </View>
-        )}
-        showsHorizontalScrollIndicator={false}
-        initialNumToRender={6}
-        windowSize={5}
-        contentContainerStyle={styles.rankedList}
-      />
+      <RowTrack>
+        <FlatList
+          horizontal
+          data={items}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, index }) => (
+            <View style={styles.rankedItem}>
+              {/* Absolute so it never shifts where the poster sits: the posters line up with every other row's. */}
+              <Text style={styles.rank}>{index + 1}</Text>
+              <PosterCard item={item} onPress={onPress} onFocusItem={onFocusItem} />
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+          initialNumToRender={6}
+          windowSize={5}
+          contentContainerStyle={styles.rankedList}
+        />
+      </RowTrack>
     </View>
   );
 });

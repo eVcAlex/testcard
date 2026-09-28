@@ -6,6 +6,7 @@ import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, space, type, styleSheet } from "../theme";
 import { Focusable } from "./Focusable";
 import { PinBadge } from "./PinBadge";
+import { RowTrack } from "./RowTrack";
 
 export interface PosterItem {
   readonly id: string;
@@ -105,12 +106,15 @@ export const PosterRow = memo(function PosterRow({
   onPress,
   onFocusItem,
   pinned = false,
+  leftExits = false,
 }: {
   title: string;
   items: readonly PosterItem[];
   onPress: (item: PosterItem) => void;
   onFocusItem?: (item: PosterItem) => void;
   pinned?: boolean;
+  /** Left from the first poster may leave the row, to a panel beside it (Search's box). */
+  leftExits?: boolean;
 }) {
   if (items.length === 0) return null;
   return (
@@ -119,16 +123,18 @@ export const PosterRow = memo(function PosterRow({
         <Text style={styles.rowTitle}>{title}</Text>
         {pinned ? <PinBadge /> : null}
       </View>
-      <FlatList
-        horizontal
-        data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PosterCard item={item} onPress={onPress} {...(onFocusItem !== undefined ? { onFocusItem } : {})} />}
-        showsHorizontalScrollIndicator={false}
-        initialNumToRender={8}
-        windowSize={5}
-        contentContainerStyle={styles.rowList}
-      />
+      <RowTrack leftExits={leftExits}>
+        <FlatList
+          horizontal
+          data={items}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <PosterCard item={item} onPress={onPress} {...(onFocusItem !== undefined ? { onFocusItem } : {})} />}
+          showsHorizontalScrollIndicator={false}
+          initialNumToRender={8}
+          windowSize={5}
+          contentContainerStyle={styles.rowList}
+        />
+      </RowTrack>
     </View>
   );
 });

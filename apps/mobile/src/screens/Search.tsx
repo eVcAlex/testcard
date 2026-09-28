@@ -98,8 +98,8 @@ export function SearchScreen({
 
   const renderSection = useCallback(
     ({ item }: { item: Section }) => {
-      if (item.key === "movies") return <PosterRow title={`Movies  ${item.items.length}`} items={item.items} onPress={openMovie} />;
-      if (item.key === "series") return <PosterRow title={`Series  ${item.items.length}`} items={item.items} onPress={openSeries} />;
+      if (item.key === "movies") return <PosterRow title={`Movies  ${item.items.length}`} items={item.items} onPress={openMovie} leftExits />;
+      if (item.key === "series") return <PosterRow title={`Series  ${item.items.length}`} items={item.items} onPress={openSeries} leftExits />;
       return <ChannelSection channels={item.items} onPress={playChannel} />;
     },
     [openMovie, openSeries, playChannel],
