@@ -70,6 +70,26 @@ describe("a source whose provider moved", () => {
 });
 
 describe("importEpg's horizon", () => {
+  it("fills every copy of a channel, and channels the guide only knows by name", async () => {
+    const db = seed();
+    db.prepare("INSERT INTO categories (id, source_id, provider_id, raw_name) VALUES ('s1:c', 's1', 'c', 'UK')").run();
+    const channel = db.prepare("INSERT INTO channels (id, source_id, category_id, normalised_name, raw_name, tvg_id, first_seen_at, last_seen_at) VALUES (?, 's1', 's1:c', ?, ?, ?, 1, 1)");
+    channel.run("hd", "BBC One HD", "UK: BBC ONE HD", "bbc1.uk");
+    channel.run("fhd", "BBC One FHD", "UK: BBC ONE FHD", "bbc1.uk");
+    channel.run("itv", "ITV 1", "UK: ITV 1 HD", "provider.itv");
+    const hour = 60 * 60 * 1000;
+    const now = Date.now();
+    const programme = (id: string, title: string) => `<programme channel="${id}" start="${stamp(now)}" stop="${stamp(now + hour)}"><title>${title}</title></programme>`;
+    const xml = `<tv><channel id="bbc1.uk"><display-name>BBC One</display-name></channel><channel id="ITV1.uk"><display-name>ITV 1</display-name></channel>${programme("bbc1.uk", "News")}${programme("ITV1.uk", "Quiz")}</tv>`;
+    const result = await importEpg(db, "s1", streamOf(xml), { horizonMs: 36 * hour });
+    expect(result.channels).toBe(3);
+    expect(db.prepare("SELECT channel_id AS id, title FROM programmes ORDER BY channel_id").all()).toEqual([
+      { id: "fhd", title: "News" },
+      { id: "hd", title: "News" },
+      { id: "itv", title: "Quiz" },
+    ]);
+  });
+
   it("keeps only listings starting within it", async () => {
     const db = seed();
     db.prepare("INSERT INTO categories (id, source_id, provider_id, raw_name) VALUES ('s1:c', 's1', 'c', 'News')").run();

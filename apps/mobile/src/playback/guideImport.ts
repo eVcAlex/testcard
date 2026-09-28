@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { deleteInSlices, importEpg } from "@testcard/core/src/epg/importEpg.js";
+import { fetchResponding } from "@testcard/core/src/source/fetchResponding.js";
 import type { SourceAdapter } from "@testcard/core/src/source/types.js";
 import { forgetGuides } from "./airing";
 
@@ -66,7 +67,7 @@ async function importOne(db: Database.Database, source: GuideSource): Promise<vo
   // Tried, whatever happens: a source with no guide, or a broken one, is not asked again until it is stale.
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(metaKey(source.id), JSON.stringify({ at: Date.now(), url } satisfies GuideRecord));
   if (url === "") return;
-  const response = await fetch(url);
+  const response = await fetchResponding(url);
   if (!response.ok || response.body === null) throw new Error(`The guide address responded with HTTP ${response.status}.`);
   const result = await importEpg(db, source.id, response.body as ReadableStream<Uint8Array>, { horizonMs: HORIZON_MS });
   console.log(`Guide for ${source.name}: ${result.programmes} programmes on ${result.channels} channels in ${Math.round(result.durationMs / 1000)}s`);
@@ -109,15 +110,15 @@ export function refreshGuides(
 }
 
 /**
- * Clears guides this device keeps no longer: sources with no guide address (0.1.60 and 0.1.61 read every source's), in
- * slices. Once; the guides it reads from now on replace themselves.
+ * Clears guides this device keeps no longer: sources with no guide address (0.1.60, 0.1.61 and 0.1.72 read every
+ * source's), in slices. Once for each of those; the guides it reads from now on replace themselves.
  */
 export async function dropUnusedGuides(db: Database.Database): Promise<void> {
-  if (db.prepare(`SELECT 1 FROM schema_meta WHERE key = 'guides_trimmed'`).get() !== undefined) return;
+  if (db.prepare(`SELECT 1 FROM schema_meta WHERE key = 'guides_trimmed_2'`).get() !== undefined) return;
   const removed = await deleteInSlices(
     db,
     `SELECT p.rowid FROM programmes p JOIN channels c ON c.id = p.channel_id JOIN sources s ON s.id = c.source_id WHERE TRIM(COALESCE(s.epg_url, '')) = ''`,
   );
-  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('guides_trimmed', '1')`).run();
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('guides_trimmed_2', '1')`).run();
   if (removed > 0) forgetGuides();
 }

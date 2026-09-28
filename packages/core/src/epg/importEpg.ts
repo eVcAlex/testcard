@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { parseXmltv } from "./parseXmltv.js";
+import { matchGuideChannels, type GuideChannel } from "./matchGuideChannels.js";
 import { yieldToEventLoop } from "../db/applyInSlices.js";
 
 export interface EpgImportResult {
@@ -39,11 +40,15 @@ export async function importEpg(
 ): Promise<EpgImportResult> {
   const startedAt = Date.now();
 
-  const channelIdMap = new Map<string, string>();
-  const channelRows = db
-    .prepare(`SELECT tvg_id AS tvgId, id FROM channels WHERE source_id = ? AND tvg_id IS NOT NULL AND tvg_id <> ''`)
-    .all(sourceId) as { tvgId: string; id: string }[];
-  for (const row of channelRows) channelIdMap.set(row.tvgId, row.id);
+  // Matched once the guide's own channel list has been read: by id, then by name (see matchGuideChannels).
+  const channels = (
+    db.prepare(`SELECT id, tvg_id AS tvgId, normalised_name AS name, raw_name AS rawName FROM channels WHERE source_id = ?`).all(sourceId) as {
+      id: string;
+      tvgId: string | null;
+      name: string;
+      rawName: string;
+    }[]
+  ).map((row): GuideChannel => ({ id: row.id, tvgId: row.tvgId, names: [row.name, row.rawName] }));
 
   const insert = db.prepare(
     `INSERT INTO programmes (channel_id, title, description, start_at, end_at) VALUES (?, ?, ?, ?, ?)`,
@@ -62,7 +67,7 @@ export async function importEpg(
   const { gzipped } = options;
   const oldest = Date.now() - KEEP_PAST_MS;
   const furthest = options.horizonMs !== undefined ? Date.now() + options.horizonMs : Number.POSITIVE_INFINITY;
-  for await (const programme of parseXmltv(body, channelIdMap, gzipped !== undefined ? { gzipped } : {})) {
+  for await (const programme of parseXmltv(body, (guide) => matchGuideChannels(channels, guide), gzipped !== undefined ? { gzipped } : {})) {
     if (programme.end.getTime() < oldest || programme.start.getTime() > furthest) continue;
     buffer.push([
       programme.channelId,

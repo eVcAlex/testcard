@@ -74,4 +74,18 @@ describe("parseXmltv", () => {
   it("fails a body that is not a guide at all", async () => {
     await expect(collect(streamOf("<html><body>Forbidden</body"))).rejects.toThrow();
   });
+
+  it("matches listings by the guide's channel names when a matcher is given, and parses a big document in pieces", async () => {
+    const filler = Array.from({ length: 3000 }, (_, i) => `<programme channel="other" start="20990101120000 +0000" stop="20990101130000 +0000"><title>Filler ${i}</title></programme>`).join("");
+    const xml = `<tv><channel id="bbc1.guide"><display-name>BBC One</display-name></channel>${filler}<programme channel="bbc1.guide" start="20990101120000 +0000" stop="20990101130000 +0000"><title>News</title></programme></tv>`;
+    const out: Programme[] = [];
+    const seen: string[][] = [];
+    const matcher = (guide: readonly { id: string; displayNames: readonly string[] }[]) => {
+      seen.push(guide.flatMap((entry) => entry.displayNames));
+      return new Map([["bbc1.guide", ["hd", "fhd"]]]);
+    };
+    for await (const programme of parseXmltv(streamOf(xml).pipeThrough(new CompressionStream("gzip")) as ReadableStream<Uint8Array>, matcher)) out.push(programme);
+    expect(seen).toEqual([["BBC One"]]);
+    expect(out.map((p) => [p.channelId, p.title])).toEqual([["hd", "News"], ["fhd", "News"]]);
+  });
 });
