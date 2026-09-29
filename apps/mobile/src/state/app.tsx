@@ -30,6 +30,8 @@ export interface SourceSummary {
   readonly name: string;
   readonly kind: "xtream" | "m3u";
   readonly lastRefreshedAt: number | null;
+  /** The TV guide address set for the source, if any. */
+  readonly epgUrl: string | null;
   readonly channels: number;
   readonly movies: number;
   readonly series: number;
@@ -339,8 +341,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const sources = useMemo<SourceSummary[]>(() => {
     void version;
     const rows = db
-      .prepare(`SELECT id, kind, name, last_refreshed_at AS lastRefreshedAt FROM sources ORDER BY sort_order IS NULL, sort_order, created_at`)
-      .all() as unknown as { id: string; kind: "xtream" | "m3u"; name: string; lastRefreshedAt: number | null }[];
+      .prepare(`SELECT id, kind, name, last_refreshed_at AS lastRefreshedAt, epg_url AS epgUrl FROM sources ORDER BY sort_order IS NULL, sort_order, created_at`)
+      .all() as unknown as { id: string; kind: "xtream" | "m3u"; name: string; lastRefreshedAt: number | null; epgUrl: string | null }[];
     // One grouped query per table instead of one COUNT per source: this used to be 3 round-trips *per
     // source*, run synchronously on the JS thread on every version bump (including while the profile
     // picker is waiting to paint), which got slow with more than a couple of sources.

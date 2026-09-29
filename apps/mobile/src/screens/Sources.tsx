@@ -15,6 +15,7 @@ import { plainReason } from "../ui/plainReason";
 import { listHidden, unhide } from "@testcard/core/src/sync/hidden.js";
 import { describeAccount, useSourceAccount } from "../state/account";
 import { backupInUse } from "../state/hosts";
+import { guideStatus } from "../playback/guideImport";
 
 /** "just now", "5 min ago", "3 hours ago", "2 days ago". */
 function ago(at: number): string {
@@ -90,6 +91,7 @@ function SourcesPane() {
                 </Text>
                 <Text style={styles.rowMeta}>{source.refreshing ? "Loading..." : counts(source.channels, source.movies, source.series)}</Text>
                 <AccountLine sourceId={source.id} kind={source.kind} />
+                <GuideLine sourceId={source.id} epgUrl={source.epgUrl} />
                 {backupInUse(source.id) !== undefined ? (
                   <Text style={[styles.rowMeta, styles.accountWarn]} numberOfLines={1}>
                     {`Main server not answering. Using ${backupInUse(source.id)?.replace(/^https?:\/\//, "")}`}
@@ -313,6 +315,22 @@ function AccountLine({ sourceId, kind }: { sourceId: string; kind: "xtream" | "m
   return (
     <Text style={[styles.rowMeta, warn && styles.accountWarn]} numberOfLines={1}>
       {text}
+    </Text>
+  );
+}
+
+/** How the TV guide set for the source last loaded: what it matched, or why not. Nothing when none is set. */
+function GuideLine({ sourceId, epgUrl }: { sourceId: string; epgUrl: string | null }) {
+  // `version` moves when a guide finishes loading, so the line is read again then.
+  const { db, version } = useApp();
+  const status = useMemo(() => {
+    void version;
+    return guideStatus(db, sourceId, epgUrl);
+  }, [db, version, sourceId, epgUrl]);
+  if (status === undefined) return null;
+  return (
+    <Text style={[styles.rowMeta, status.problem && styles.accountWarn]} numberOfLines={2}>
+      {status.text}
     </Text>
   );
 }
