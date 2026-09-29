@@ -39,11 +39,18 @@ export async function importEpg(
 ): Promise<EpgImportResult> {
   const startedAt = Date.now();
 
-  const channelIdMap = new Map<string, string>();
+  // Several channels can share one guide id (a playlist lists a channel under more than one group, or in HD and SD),
+  // and each of them gets the listings; the parser is handed the guide id itself and it is fanned out below.
+  const channelsByGuideId = new Map<string, string[]>();
   const channelRows = db
     .prepare(`SELECT tvg_id AS tvgId, id FROM channels WHERE source_id = ? AND tvg_id IS NOT NULL AND tvg_id <> ''`)
     .all(sourceId) as { tvgId: string; id: string }[];
-  for (const row of channelRows) channelIdMap.set(row.tvgId, row.id);
+  for (const row of channelRows) {
+    const ids = channelsByGuideId.get(row.tvgId);
+    if (ids === undefined) channelsByGuideId.set(row.tvgId, [row.id]);
+    else ids.push(row.id);
+  }
+  const channelIdMap = new Map([...channelsByGuideId.keys()].map((guideId) => [guideId, guideId]));
 
   const insert = db.prepare(
     `INSERT INTO programmes (channel_id, title, description, start_at, end_at) VALUES (?, ?, ?, ?, ?)`,
@@ -64,15 +71,17 @@ export async function importEpg(
   const furthest = options.horizonMs !== undefined ? Date.now() + options.horizonMs : Number.POSITIVE_INFINITY;
   for await (const programme of parseXmltv(body, channelIdMap, gzipped !== undefined ? { gzipped } : {})) {
     if (programme.end.getTime() < oldest || programme.start.getTime() > furthest) continue;
-    buffer.push([
-      programme.channelId,
-      programme.title,
-      programme.description ?? null,
-      programme.start.getTime(),
-      programme.end.getTime(),
-    ]);
-    touchedChannels.add(programme.channelId);
-    programmes += 1;
+    for (const channelId of channelsByGuideId.get(programme.channelId) ?? []) {
+      buffer.push([
+        channelId,
+        programme.title,
+        programme.description ?? null,
+        programme.start.getTime(),
+        programme.end.getTime(),
+      ]);
+      touchedChannels.add(channelId);
+      programmes += 1;
+    }
 
     if (buffer.length >= FLUSH_EVERY) {
       flush(buffer);

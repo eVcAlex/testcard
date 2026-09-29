@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import Database from "better-sqlite3";
 import { migrateDatabase } from "../db/migrateDatabase.js";
 import { buildGuide } from "../epg/buildGuide.js";
+import { importEpg } from "../epg/importEpg.js";
 import { importGuideFile } from "../epg/importGuideFile.js";
 
 const HOUR = 3_600_000;
@@ -47,5 +48,22 @@ describe("importGuideFile", () => {
     const result = await importGuideFile(db, "s1", { at: NOW, c: { bbc1: [[NOW, NOW + HOUR, "Now"]], unknown: [[NOW, NOW + HOUR, "Nobody's"]] } });
     expect(result).toMatchObject({ channels: 1, programmes: 1 });
     expect(db.prepare("SELECT channel_id, title, start_at, end_at FROM programmes").all()).toEqual([{ channel_id: "c1", title: "Now", start_at: NOW, end_at: NOW + HOUR }]);
+  });
+
+  it("gives every channel that shares a guide id its listings, from the file and from the full XMLTV", async () => {
+    const db = migrateDatabase(new Database(":memory:"));
+    db.prepare("INSERT INTO sources (id, kind, name, playlist_url, created_at) VALUES ('s1', 'm3u', 'One', 'http://p/list.m3u', 1)").run();
+    db.prepare("INSERT INTO categories (id, source_id, provider_id, raw_name) VALUES ('cat', 's1', 'news', 'News')").run();
+    for (const id of ["c1", "c2"]) {
+      db.prepare("INSERT INTO channels (id, source_id, category_id, normalised_name, raw_name, tvg_id, first_seen_at, last_seen_at) VALUES (?, 's1', 'cat', 'Channel 4', 'Channel 4', 'ch4', 1, 1)").run(id);
+    }
+    const channelsWithListings = () => (db.prepare("SELECT DISTINCT channel_id FROM programmes ORDER BY channel_id").all() as { channel_id: string }[]).map((row) => row.channel_id);
+
+    await importGuideFile(db, "s1", { at: NOW, c: { ch4: [[NOW, NOW + HOUR, "Now"]] } });
+    expect(channelsWithListings()).toEqual(["c1", "c2"]);
+
+    db.prepare("DELETE FROM programmes").run();
+    await importEpg(db, "s1", streamOf(`<tv>${programme("ch4", Date.now(), Date.now() + HOUR, "Now")}</tv>`));
+    expect(channelsWithListings()).toEqual(["c1", "c2"]);
   });
 });

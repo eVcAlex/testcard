@@ -14,9 +14,14 @@ const FLUSH_EVERY = 500;
  */
 export async function importGuideFile(db: Database.Database, sourceId: string, file: GuideFile): Promise<EpgImportResult> {
   const startedAt = Date.now();
-  const channelIds = new Map<string, string>();
+  // A guide id can be shared by several channels (see `importEpg`); each gets the listings.
+  const channelIds = new Map<string, string[]>();
   const rows = db.prepare(`SELECT tvg_id AS tvgId, id FROM channels WHERE source_id = ? AND tvg_id IS NOT NULL AND tvg_id <> ''`).all(sourceId) as { tvgId: string; id: string }[];
-  for (const row of rows) channelIds.set(row.tvgId, row.id);
+  for (const row of rows) {
+    const ids = channelIds.get(row.tvgId);
+    if (ids === undefined) channelIds.set(row.tvgId, [row.id]);
+    else ids.push(row.id);
+  }
 
   const insert = db.prepare(`INSERT INTO programmes (channel_id, title, description, start_at, end_at) VALUES (?, ?, NULL, ?, ?)`);
   type Pending = readonly [string, string, number, number];
@@ -30,13 +35,13 @@ export async function importGuideFile(db: Database.Database, sourceId: string, f
   let programmes = 0;
   let batch: Pending[] = [];
   for (const [guideId, listings] of Object.entries(file.c)) {
-    const channelId = channelIds.get(guideId);
-    if (channelId === undefined) continue;
-    for (const [start, end, title] of listings) {
-      batch.push([channelId, title, start, end]);
-      programmes += 1;
+    for (const channelId of channelIds.get(guideId) ?? []) {
+      for (const [start, end, title] of listings) {
+        batch.push([channelId, title, start, end]);
+        programmes += 1;
+      }
+      touched.add(channelId);
     }
-    touched.add(channelId);
     if (batch.length >= FLUSH_EVERY) {
       flush(batch);
       batch = [];
