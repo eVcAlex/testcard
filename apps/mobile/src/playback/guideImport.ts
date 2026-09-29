@@ -1,6 +1,9 @@
 import type Database from "better-sqlite3";
 import { deleteInSlices, importEpg } from "@testcard/core/src/epg/importEpg.js";
 import type { SourceAdapter } from "@testcard/core/src/source/types.js";
+import { importGuideFile } from "@testcard/core/src/epg/importGuideFile.js";
+import { guideFileName, isSharableGuideUrl, type GuideFile } from "@testcard/sync-schema";
+import { UPDATE_BASE_URL } from "../update/update";
 import { forgetGuides } from "./airing";
 
 /**
@@ -61,14 +64,70 @@ function isStale(db: Database.Database, source: GuideSource): boolean {
   return record === undefined || Date.now() - record.at > STALE_MS || record.url !== setAddress(source);
 }
 
+/** A failed read is asked again after this, not after `STALE_MS`: a broken address should not be hammered on every launch. */
+const RETRY_AFTER_FAILURE_MS = 60 * 60 * 1000;
+/** How long the provider has to start answering; the body then streams for as long as it needs. */
+const HEADERS_TIMEOUT_MS = 60 * 1000;
+
+/** Tells the Worker a public guide address (set from the sync controller); the answer is the name of its shared file. */
+let registerGuide: (url: string) => Promise<string | undefined> = async () => undefined;
+export function setGuideRegistrar(register: (url: string) => Promise<string | undefined>): void {
+  registerGuide = register;
+}
+
+/** A shared file older than this is no better than reading the guide oneself. */
+const SHARED_MOST_AGE_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * The trimmed guide the daily job keeps for a public guide address (see `scripts/build-guides.mjs`), a few megabytes
+ * in place of tens of megabytes to unpack and parse on the TV. Asking also registers the address, so the job starts
+ * keeping one for it. Undefined when there is none yet (the first time an address is used) or it is not a public one.
+ */
+async function sharedGuide(url: string): Promise<GuideFile | undefined> {
+  if (!isSharableGuideUrl(url)) return undefined;
+  const file = (await registerGuide(url)) ?? (await guideFileName(url));
+  try {
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), HEADERS_TIMEOUT_MS);
+    const response = await fetch(`${UPDATE_BASE_URL}/${file}`, { signal: abort.signal }).finally(() => clearTimeout(timer));
+    if (!response.ok) return undefined;
+    const guide = (await response.json()) as GuideFile;
+    return Date.now() - guide.at < SHARED_MOST_AGE_MS ? guide : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function record(db: Database.Database, sourceId: string, url: string, at: number): void {
+  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(metaKey(sourceId), JSON.stringify({ at, url } satisfies GuideRecord));
+}
+
 async function importOne(db: Database.Database, source: GuideSource): Promise<void> {
   const url = setAddress(source);
-  // Tried, whatever happens: a source with no guide, or a broken one, is not asked again until it is stale.
-  db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)`).run(metaKey(source.id), JSON.stringify({ at: Date.now(), url } satisfies GuideRecord));
-  if (url === "") return;
-  const response = await fetch(url);
-  if (!response.ok || response.body === null) throw new Error(`The guide address responded with HTTP ${response.status}.`);
-  const result = await importEpg(db, source.id, response.body as ReadableStream<Uint8Array>, { horizonMs: HORIZON_MS });
+  if (url === "") return record(db, source.id, url, Date.now());
+  // Recorded only once it has worked (or failed cleanly): on a Fire Stick the read takes many minutes, and one the
+  // app was closed in the middle of must be started again next time, not counted as done for 12 hours.
+  try {
+    const shared = await sharedGuide(url);
+    if (shared !== undefined) {
+      const result = await importGuideFile(db, source.id, shared);
+      record(db, source.id, url, Date.now());
+      return logImported(source, result);
+    }
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), HEADERS_TIMEOUT_MS);
+    const response = await fetch(url, { signal: abort.signal }).finally(() => clearTimeout(timer));
+    if (!response.ok || response.body === null) throw new Error(`The guide address responded with HTTP ${response.status}.`);
+    const result = await importEpg(db, source.id, response.body as ReadableStream<Uint8Array>, { horizonMs: HORIZON_MS });
+    record(db, source.id, url, Date.now());
+    logImported(source, result);
+  } catch (error) {
+    record(db, source.id, url, Date.now() - STALE_MS + RETRY_AFTER_FAILURE_MS);
+    throw error;
+  }
+}
+
+function logImported(source: GuideSource, result: { programmes: number; channels: number; durationMs: number }): void {
   console.log(`Guide for ${source.name}: ${result.programmes} programmes on ${result.channels} channels in ${Math.round(result.durationMs / 1000)}s`);
 }
 

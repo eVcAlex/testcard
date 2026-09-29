@@ -170,6 +170,12 @@ export class SyncController {
     return row?.session_token ?? undefined;
   }
 
+  /** Registers a public guide address (see `isSharableGuideUrl`) and answers the name of its file; undefined when signed out or the Worker will not have it. */
+  async registerGuide(url: string): Promise<string | undefined> {
+    if (this.sessionToken() === undefined) return undefined;
+    return this.client.registerGuide(url).catch(() => undefined);
+  }
+
   status(): SyncStatus {
     const row = this.db.prepare(`SELECT account_email FROM sync_state WHERE id = 1`).get() as { account_email: string | null } | undefined;
     if (!row || row.account_email === null) return { account: "signed-out", ...(this.lastError !== undefined ? { lastError: this.lastError } : {}) };

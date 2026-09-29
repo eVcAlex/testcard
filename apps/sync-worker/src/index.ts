@@ -1,6 +1,7 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { createAuth } from "./auth.js";
 import { handleLinkApprove, handleLinkPage, handleLinkPoll, handleLinkSession, handleLinkStart } from "./routes/link.js";
+import { handleRegisterGuide } from "./routes/guides.js";
 import { handlePull } from "./routes/pull.js";
 import { handlePush } from "./routes/push.js";
 import { handleRelease } from "./routes/release.js";
@@ -45,5 +46,6 @@ app.get("/sync/pull", requireSession, handlePull);
 app.post("/sync/push", requireSession, handlePush);
 app.get("/sync/salt", requireSession, handleGetSalt);
 app.post("/sync/salt", requireSession, handleSetSalt);
+app.post("/guides/register", requireSession, handleRegisterGuide);
 
 export default app;

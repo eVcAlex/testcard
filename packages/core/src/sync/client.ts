@@ -90,6 +90,11 @@ export class SyncClient {
     await this.request("/sync/salt", { body: { salt }, authed: true });
   }
 
+  /** Tells the Worker a public guide address, so its daily job builds a small file for it. Answers the file's name. */
+  async registerGuide(url: string): Promise<string> {
+    return ((await (await this.request("/guides/register", { body: { url }, authed: true })).json()) as { file: string }).file;
+  }
+
   async push(request: SyncPushRequest): Promise<SyncPushResponse> {
     const body = SyncPushRequestSchema.parse(request);
     const json = await (await this.request("/sync/push", { body, authed: true })).json();

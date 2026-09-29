@@ -11,7 +11,7 @@ import { openAppDatabase } from "../platform/sqlite";
 import { deleteCredentials, getCredentials, syncPlatform } from "../platform/secrets";
 import { readCaptionPrefs, writeCaptionPrefs, type CaptionPrefs } from "../playback/captions";
 import { readAudioLanguage, writeAudioLanguage } from "../playback/viewing";
-import { dropUnusedGuides, refreshGuides } from "../playback/guideImport";
+import { dropUnusedGuides, refreshGuides, setGuideRegistrar } from "../playback/guideImport";
 import { hasBackups, loadServersInUse, pickServer } from "./hosts";
 import { saveSource as saveStoredSource, type SourceDraft } from "./sourceEdit";
 import { forgetProfile, swapProfile } from "@testcard/core/src/db/profileSwap.js";
@@ -227,6 +227,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     { profile: readActiveProfile(db) },
   );
   const sync = syncRef.current;
+  setGuideRegistrar((url) => sync.registerGuide(url));
 
   const removeSource = useCallback(
     async (sourceId: string) => {

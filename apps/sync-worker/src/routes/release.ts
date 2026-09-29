@@ -23,6 +23,8 @@ export async function handleRelease(c: Context<{ Bindings: Env }>): Promise<Resp
     headers: {
       "content-type": CONTENT_TYPES[extension],
       "content-length": String(object.size),
+      // A guide file is stored gzipped (see scripts/build-guides.mjs); the client's HTTP stack undoes it.
+      ...(object.httpMetadata?.contentEncoding !== undefined ? { "content-encoding": object.httpMetadata.contentEncoding } : {}),
       etag: object.httpEtag,
       // The manifest must never be served stale; the versioned installers can be cached.
       "cache-control": extension === ".json" || extension === ".yml" ? "no-cache" : "public, max-age=300",
