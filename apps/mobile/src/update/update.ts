@@ -106,8 +106,9 @@ export async function download(info: UpdateInfo, onProgress: (fraction: number) 
     });
     if (downloaded === null || !part.exists || part.size === 0) throw new Error("The download did not finish.");
     // `move` re-points `part` at where it moved to, so from here on `part` is the finished download: it must not be
-    // cleaned up below (which is how 0.1.68 deleted every update it had just downloaded).
-    part.move(file);
+    // cleaned up below (which is how 0.1.68 deleted every update it had just downloaded). It is asynchronous on
+    // Android: without the wait the installer was handed a file that had not arrived yet ("update is missing").
+    await part.move(file);
     whole = true;
     return file;
   } finally {
