@@ -90,5 +90,5 @@ jobs:
           npx --yes wrangler@3 r2 object put "testcard-releases/$APK" --file testcard-firetv.apk --content-type application/vnd.android.package-archive
           # A copy under a fixed name, for a link that never changes (a URL shortener, say). The updater uses the numbered one.
           npx --yes wrangler@3 r2 object put testcard-releases/testcard-firetv.apk --file testcard-firetv.apk --content-type application/vnd.android.package-archive
-          npx --yes wrangler@3 r2 object put testcard-releases/latest.json--file latest.json --content-type application/json
+          npx --yes wrangler@3 r2 object put testcard-releases/latest.json --file latest.json --content-type application/json
           echo "Published $(node -p "require('./build.json').versionName")"
