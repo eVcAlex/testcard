@@ -96,6 +96,7 @@ describe("signing a TV in with a code", () => {
     expect(res.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
     const html = await res.text();
     expect(html).toContain("Link your TV");
+    expect(html).toContain("/auth/sign-up/email"); // the page can create the account too
     expect(html).not.toMatch(/https?:\/\//);
   });
 });

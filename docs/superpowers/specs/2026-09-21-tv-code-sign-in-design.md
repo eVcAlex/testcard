@@ -66,5 +66,13 @@ before it is built.
 
 ## Out of scope
 
-Account creation on the site, a device list, sign-out of other devices, a custom domain. Deploying the migration and
+A device list, sign-out of other devices, a custom domain. Deploying the migration and
 the Worker is a separate step that needs an explicit go.
+
+## Addendum: creating an account on the page
+
+The page has Sign in and Create account tabs. Create account asks for the password twice (at least 8 characters),
+checks the code is live first (so an expired code leaves no account behind), then calls `POST /auth/sign-up/email`
+instead of sign-in and carries on unchanged: seal, `/link/approve`, the TV's `SyncController.signIn`, which also sets
+the new account's salt. No worker route, migration or TV logic changed. An email that already has an account switches
+the page to Sign in. If the code runs out after the account is made, the page says so and asks for a new code.

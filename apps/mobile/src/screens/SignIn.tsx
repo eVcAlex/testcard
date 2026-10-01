@@ -195,7 +195,7 @@ function CodeSignIn({ onTypeInstead }: { onTypeInstead: () => void }) {
           <Text style={styles.brand}>
             TEST<Text style={styles.brandAccent}>CARD</Text>
           </Text>
-          <Heading>Sign in with your phone</Heading>
+          <Heading>Sign in or create an account with your phone</Heading>
           <Muted>On your phone or computer, go to</Muted>
           <Text style={styles.address}>{linkAddress}</Text>
           <Muted>and enter this code:</Muted>

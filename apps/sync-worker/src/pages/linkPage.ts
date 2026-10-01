@@ -17,7 +17,10 @@ main { width: 100%; max-width: 440px; }
 .tv { display: block; width: 84px; height: 64px; margin-bottom: 22px; }
 h1 { font-size: 34px; line-height: 1.1; font-weight: 600; letter-spacing: -0.9px; overflow-wrap: anywhere; }
 .lead { color: var(--muted); font-size: 17px; margin-top: 12px; }
-form { margin-top: 30px; display: grid; gap: 18px; }
+.tabs { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line); }
+.tabs button { height: 44px; margin: 0; background: transparent; color: var(--muted); font-size: 16px; }
+.tabs button[aria-selected="true"] { background: var(--active); color: var(--fg); }
+form { margin-top: 24px; display: grid; gap: 18px; }
 label { display: grid; gap: 8px; font-size: 14px; font-weight: 500; color: var(--muted); }
 input { width: 100%; height: 56px; padding: 0 18px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--card); color: var(--fg); font: inherit; font-size: 17px; outline: none; }
 input::placeholder { color: var(--faint); }
@@ -64,10 +67,23 @@ const SCRIPT = `
   function post(path, body) {
     return fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   }
-  function busy(on) { $("go").disabled = on; $("go").textContent = on ? "Linking..." : "Link this TV"; }
+  var mode = "signin";
+  function busy(on) { $("go").disabled = on; $("go").textContent = on ? "Linking..." : mode === "signup" ? "Create account and link TV" : "Link this TV"; }
+  function setMode(next) {
+    mode = next;
+    $("tab-signin").setAttribute("aria-selected", String(next === "signin"));
+    $("tab-signup").setAttribute("aria-selected", String(next === "signup"));
+    $("confirm-row").hidden = next === "signin";
+    $("password").setAttribute("autocomplete", next === "signup" ? "new-password" : "current-password");
+    $("password").placeholder = next === "signup" ? "At least 8 characters" : "Your Testcard password";
+    $("error").textContent = "";
+    busy(false);
+  }
+  $("tab-signin").addEventListener("click", function () { setMode("signin"); });
+  $("tab-signup").addEventListener("click", function () { setMode("signup"); });
   function fail(msg, field) {
     $("error").textContent = msg;
-    ["code", "email", "password"].forEach(function (id) { $(id).removeAttribute("aria-invalid"); });
+    ["code", "email", "password", "confirm"].forEach(function (id) { $(id).removeAttribute("aria-invalid"); });
     if (field) { $(field).setAttribute("aria-invalid", "true"); $(field).focus(); }
     busy(false);
   }
@@ -83,6 +99,9 @@ const SCRIPT = `
     if (!valid(code)) return fail("That code is not 8 letters and numbers. Check your TV and try again.", "code");
     if (!email) return fail("Enter the email you use for Testcard.", "email");
     if (!password) return fail("Enter your password.", "password");
+    var signup = mode === "signup", created = false;
+    if (signup && password.length < 8) return fail("Use at least 8 characters for your password.", "password");
+    if (signup && password !== $("confirm").value) return fail("The two passwords do not match.", "confirm");
     busy(true);
     var lookup, salt;
     lookupFor(code).then(function (l) {
@@ -93,17 +112,29 @@ const SCRIPT = `
       return r.json();
     }).then(function (s) {
       salt = s.salt;
-      return post("/auth/sign-in/email", { email: email, password: password });
+      // The code is known good before an account is made, so an expired code never leaves an account behind.
+      return signup ? post("/auth/sign-up/email", { email: email, password: password, name: email }) : post("/auth/sign-in/email", { email: email, password: password });
     }).then(function (r) {
-      if (!r.ok) throw { field: "password", message: "That email and password do not match a Testcard account." };
-      return keyFor(code, salt);
+      if (r.ok) { created = signup; return keyFor(code, salt); }
+      if (!signup) throw { field: "password", message: "That email and password do not match a Testcard account." };
+      if (r.status === 422 || r.status === 409) {
+        setMode("signin");
+        throw { field: "password", message: "There is already an account with that email. Enter its password to sign in instead." };
+      }
+      return r.json().catch(function () { return {}; }).then(function (b) {
+        throw { field: "password", message: (b && typeof b.message === "string" && b.message) || "Could not create the account. Check your details and try again." };
+      });
     }).then(function (key) {
       var iv = crypto.getRandomValues(new Uint8Array(12));
       return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(JSON.stringify({ email: email, password: password }))).then(function (blob) {
         return post("/link/approve", { lookup: lookup, blob: b64(new Uint8Array(blob)), iv: b64(iv) });
       });
     }).then(function (r) {
-      if (!r.ok) throw { field: "code", message: "That code was not found, or it has expired. Ask your TV for a new one." };
+      if (!r.ok) {
+        // The account exists now, so the next try is a sign-in, not another sign-up.
+        if (created) setMode("signin");
+        throw { field: "code", message: created ? "Your account was created, but the code ran out. Ask your TV for a new code, then sign in." : "That code was not found, or it has expired. Ask your TV for a new one." };
+      }
       $("form-view").hidden = true;
       $("done-view").hidden = false;
     }).catch(function (e) {
@@ -133,15 +164,20 @@ export const linkPageHtml = `<!doctype html>
   <section id="form-view">
     ${TV}
     <h1>Link your TV</h1>
-    <p class="lead">Enter the code on your TV, then sign in with your Testcard account. Your TV will sign in on its own.</p>
+    <p class="lead">Enter the code on your TV, then sign in or create your Testcard account. Your TV will sign in on its own.</p>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-signin" aria-selected="true">Sign in</button>
+      <button type="button" role="tab" id="tab-signup" aria-selected="false">Create account</button>
+    </div>
     <form id="form" novalidate autocomplete="on">
       <label>Code on your TV<input id="code" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX" maxlength="9"></label>
       <label>Email<input id="email" type="email" autocomplete="username" inputmode="email" placeholder="you@example.com"></label>
       <label>Password<input id="password" type="password" autocomplete="current-password" placeholder="Your Testcard password"></label>
+      <label id="confirm-row" hidden>Confirm password<input id="confirm" type="password" autocomplete="new-password" placeholder="Type it again"></label>
       <div class="error" id="error" role="alert" aria-live="polite"></div>
       <button id="go" type="submit">Link this TV</button>
     </form>
-    <p class="note">Your password is scrambled in this page before it is sent, so the Testcard server never sees it. Only your TV can unscramble it, and only for the next 10 minutes.</p>
+    <p class="note">Your password is checked by Testcard, then scrambled in this page before it is passed to your TV. Only your TV can unscramble that copy, and only for the next 10 minutes. Your sources are encrypted with your password, so keep it safe: it cannot be recovered.</p>
   </section>
   <section id="done-view" class="done" hidden>
     <div class="tick">${TICK}</div>
