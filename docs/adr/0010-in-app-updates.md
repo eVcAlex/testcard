@@ -32,8 +32,11 @@ release assets without a token, and a token must never ship inside the app.
    `ACTION_VIEW` intent did (0.1.66 and earlier sat at "Downloading 100%"). If Testcard may not
    install apps yet, the dialog opens that setting and carries on once it is allowed.
 5. **Signing key.** Updates install only if signed with the same key as the installed app. Builds
-   use Expo's debug keystore, which is the same on every run. A dedicated keystore in GitHub
-   secrets should replace it before the app leaves the owner's devices.
+   use Expo's debug keystore, which is the same on every run, until the GitHub secrets
+   `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` exist: then
+   `scripts/sign-release.mjs` signs the release with that keystore instead. Adding them is a one-time break: a device
+   running a debug-signed build must be uninstalled before the first build signed with the new key, and the keystore
+   must then never change (keep a backup of it).
 
 ## Consequences
 

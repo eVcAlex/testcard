@@ -3,7 +3,7 @@ name: Android APK
 # Builds sideloadable APKs of the Android app for Fire TV / Android TV. (Phones are not supported for now:
 # the layout is drawn for a TV and does not fit a phone screen.)
 # Run it from the Actions tab ("Run workflow"), then download the APKs from the run's artifacts.
-# The APKs are signed with Expo's debug key, which is fine for sideloading but not for a store.
+# The APKs are signed with Expo's debug key, unless the ANDROID_KEYSTORE_* secrets exist (scripts/sign-release.mjs).
 # The Fire TV build is 32-bit ARM only (every Fire stick runs it, and it halves the native compile time).
 # A Fire TV build of main is then published to the update server (the R2 bucket the app updates from, ADR 0010), with
 # what changed since the last one, so devices offer it. `pnpm release:android <run-id>` still publishes any run by hand.
@@ -60,8 +60,22 @@ jobs:
           EXPO_TV: ${{ matrix.tv }}
         run: pnpm exec expo prebuild --platform android --no-install --clean
 
+      # Own signing key when the ANDROID_* secrets exist, else Expo's debug key (see the script for the one-time catch).
+      - name: Sign with the release key
+        if: matrix.target == 'firetv'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: node scripts/sign-release.mjs
+
       - name: Build the release APK
         working-directory: apps/mobile/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew ${{ matrix.task }} --no-daemon --build-cache
 
       - name: Name the APK

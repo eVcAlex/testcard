@@ -1,7 +1,7 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, BackHandler, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, useTVEventHandler, View } from "react-native";
 import { useEvent } from "expo";
-import { ArrowLeft, Backward15Seconds, ClosedCaptionsTag, DashboardSpeed, Forward15Seconds, Headset, NavArrowLeft, NavArrowRight, Pause, Play, ScaleFrameEnlarge, SkipNext } from "iconoir-react-native";
+import { DashboardSpeed, Headset, Pause, Play, ScaleFrameEnlarge } from "iconoir-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import type Database from "better-sqlite3";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
@@ -14,17 +14,18 @@ import { playerTitle } from "../ui/titles";
 import { resolveStream, type PlayItem, type ResolvedStream } from "../playback/resolveStream";
 import { listChannelFeeds, type ChannelFeed } from "@testcard/core/src/db/channelFeeds.js";
 import { useApp } from "../state/app";
-import { accountProblem, sourceOfPlay, xtreamSourceOf } from "../state/account";
+import { sourceOfPlay, xtreamSourceOf } from "../state/account";
 import { hasBackups, pickServer, unreachable } from "../state/hosts";
 import { plainReason, serverGone } from "../ui/plainReason";
-import { SourceForm } from "../ui/SourceForm";
-import { colors, space, type, styleSheet, uiScale } from "../theme";
-import { Button } from "../ui/controls";
-import { streamFacts } from "../playback/streamInfo";
-import { channelCatchup, loadCatchupGuide, type CatchupGuide } from "../playback/catchup";
+import { colors, space, type, styleSheet } from "../theme";
+import { channelCatchup, loadCatchupGuide } from "../playback/catchup";
 import { fetchGuide, type Airing } from "../playback/airing";
 import { autoCaptionTrack, CAPTION_SETTINGS, nativeCaptionStyle, settingLabel, stepSetting, type CaptionPrefs, type CaptionSetting } from "../playback/captions";
 import { audioLanguage as languageOfAudio, audioName, autoAudioTrack, nextFit, nextSpeed, pictureLabel, readPictureFit, speedLabel, writePictureFit } from "../playback/viewing";
+import { usePlaybackHealth } from "./player/usePlaybackHealth";
+import { Failure, explain } from "./player/Failure";
+import { clock, clock24, catchupEntries, two, type CatchupEntry } from "./player/format";
+import { INK, u, Key, TextKey, OptionKey, CcGlyph, NextGlyph, Scrim, Chip, ChevronGlyph, ChannelGlyph, PauseGlyph, PlayGlyph, SkipGlyph } from "./player/keys";
 
 /** 15 s, what the skip buttons' icons say (Iconoir only draws 15 s ones). */
 const SEEK_STEP_SECS = 15;
@@ -35,11 +36,6 @@ const stepForStreak = (count: number) => (count < 2 ? SEEK_STEP_SECS : count < 4
 const SCRUB_TICK_MS = 150;
 const scrubStep = (ticks: number) => (ticks < 10 ? 10 : ticks < 25 ? 30 : ticks < 45 ? 60 : 120);
 const CHROME_HIDES_AFTER_MS = 4000;
-/** A live picture stuck refilling this long is reloaded, at most this many times. */
-const STUCK_AFTER_MS = 12_000;
-const MAX_RELOADS = 4;
-/** How long a live feed may take to show a picture before the next one is tried. */
-const START_WITHIN_MS = 15_000;
 /** After an episode ends, the next one starts by itself this many seconds later unless a key is pressed. */
 const AUTO_NEXT_SECS = 8;
 /** Stepping to another channel remounts the player, so the highlighted control is carried across, and spamming next or previous keeps working. */
@@ -54,9 +50,6 @@ const PROGRESS_EVERY_MS = 5000;
 const REMOTE_KEYS = new Set(["up", "down", "left", "right", "select", "playPause", "rewind", "fastForward"]);
 
 type Control = "exit" | "seek" | "back" | "play" | "forward" | "captions" | "next" | "last" | "live" | "catchup" | "audio" | "picture" | "speed";
-
-/** A length written in 1920 px design units, for the shapes below that are sized in code. */
-const u = (n: number) => Math.round(n * uiScale);
 
 /**
  * Fullscreen playback. On a TV remote: Left/Right seek, OK plays or pauses, Up/Down show the controls,
@@ -198,95 +191,7 @@ function fellBackLabel(title: string, feed: ChannelFeed): string {
   return feed.quality !== null ? `Playing the ${feed.quality} feed instead` : "Playing a backup feed instead";
 }
 
-function Failure({ title, message: given, detail, onRetry, onExit, sourceId, raw = "", editSourceId }: { title: string; message: string; detail?: string; onRetry?: () => void; onExit: () => void; sourceId?: string | null; raw?: string; editSourceId?: string | null }) {
-  // A server name that no longer exists is nearly always a provider that moved: say so, and offer to put it right.
-  const gone = serverGone(raw) && editSourceId != null;
-  const [editing, setEditing] = useState(false);
-  // A refused stream is often the account (every stream it allows in use, or it has ended): the provider says which.
-  const [problem, setProblem] = useState<string | null>(null);
-  useEffect(() => {
-    if (sourceId === undefined || sourceId === null) return;
-    let live = true;
-    void accountProblem(sourceId).then((found) => live && setProblem(found));
-    return () => {
-      live = false;
-    };
-  }, [sourceId]);
-  const message = gone ? plainReason(raw) : (problem ?? given);
-  return (
-    <View style={styles.centre}>
-      {editing && editSourceId != null ? (
-        <SourceForm
-          sourceId={editSourceId}
-          onClose={() => {
-            setEditing(false);
-            onRetry?.();
-          }}
-        />
-      ) : null}
-      <Text style={styles.title} numberOfLines={2}>
-        {title}
-      </Text>
-      <Text style={styles.error}>{message}</Text>
-      {!gone && detail !== undefined && detail !== "" ? (
-        <Text style={styles.detail} numberOfLines={2}>
-          {detail}
-        </Text>
-      ) : null}
-      <View style={styles.row}>
-        {gone ? <Button preferred label="Edit source" onPress={() => setEditing(true)} /> : null}
-        {onRetry !== undefined ? <Button label="Try again" onPress={onRetry} /> : null}
-        <Button preferred={!gone} label="Back" onPress={onExit} />
-      </View>
-    </View>
-  );
-}
-
-/** The device's decoder said no (a 4K or 10-bit stream on hardware that cannot do it) or the network did. */
-function explain(raw: string): string {
-  if (/EXCEEDS_CAPABILITIES|MediaCodec|Decoder|decoder/i.test(raw)) return "This device can't decode this video (its format or resolution is beyond the hardware).";
-  if (/40[13]/.test(raw)) return "The provider refused this stream.";
-  if (/404|410/.test(raw)) return "The provider has no stream at that address (it may have been removed).";
-  if (serverGone(raw)) return plainReason(raw);
-  if (/Unable to connect|timeout|timed out|Network|ConnectException/i.test(raw)) return "Couldn't reach the stream. Check the connection and try again.";
-  return "This couldn't be played.";
-}
-
-const two = (n: number) => String(n).padStart(2, "0");
-
-function clock(seconds: number): string {
-  const total = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  return h > 0 ? `${h}:${two(m)}:${two(s)}` : `${m}:${two(s)}`;
-}
-
 const GUIDE_ROW = 64;
-/** A live picture paused for longer than this has fallen behind the broadcast. */
-const BEHIND_AFTER_MS = 2000;
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-/** One line of the Catch up list: what to call the day, the start time and the programme. */
-interface CatchupEntry {
-  readonly programme: CatchupProgramme;
-  readonly when: string;
-  readonly time: string;
-}
-
-const hourMinute = (date: Date) => `${two(date.getHours())}:${two(date.getMinutes())}`;
-
-function dayLabel(date: Date, now: Date): string {
-  const days = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()) / 86_400_000);
-  return days === 0 ? "Today" : days === 1 ? "Yesterday" : (DAYS[date.getDay()] ?? "");
-}
-
-/** What is on now (to start over) comes first, then the past programmes, newest first. */
-function catchupEntries(guide: CatchupGuide): CatchupEntry[] {
-  const now = new Date();
-  const past = guide.past.map((programme) => ({ programme, when: dayLabel(programme.start, now), time: hourMinute(programme.start) }));
-  return guide.current === undefined ? past : [{ programme: guide.current, when: "Start over", time: hourMinute(guide.current.start) }, ...past];
-}
 
 function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, onNextEpisode, moreFeeds, onFailOver, fellBack, onExit, onResolveAgain, onServerDown }: { onResolveAgain: () => void; onServerDown: (raw: string) => Promise<boolean> | null; onNextEpisode: ((episode: PlayItem) => void) | undefined; moreFeeds: boolean; onFailOver: () => void; fellBack: string | undefined; item: PlayItem; stream: ResolvedStream; catchup: CatchupProgramme | undefined; onCatchup: (programme: CatchupProgramme | undefined) => void; seriesId?: string; channels: readonly PlayItem[] | undefined; onZap: ((channel: PlayItem) => void) | undefined; onExit: () => void }) {
   const { db, sync, version, captions, setCaptions, audioLanguage, setAudioLanguage } = useApp();
@@ -309,91 +214,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     instance.play();
   });
 
-  const { status, error } = useEvent(player, "statusChange", { status: player.status });
-  const { isPlaying } = useEvent(player, "playingChange", { isPlaying: player.playing });
-  const { videoTrack } = useEvent(player, "videoTrackChange", { videoTrack: player.videoTrack });
-  const facts = streamFacts(videoTrack);
-  const everPlayed = useRef(false);
-  useEffect(() => {
-    if (status === "readyToPlay") everPlayed.current = true;
-  }, [status]);
-  // Live TV: a picture that stays stuck refilling is asked for again from the start, a few times, before giving up.
-  const reloads = useRef(0);
-  useEffect(() => {
-    if (vod || timeshift || status !== "loading" || !everPlayed.current || reloads.current >= MAX_RELOADS) return;
-    const timer = setTimeout(() => {
-      reloads.current += 1;
-      player.replace(stream.url);
-      player.play();
-    }, STUCK_AFTER_MS);
-    return () => clearTimeout(timer);
-  }, [player, status, stream.url, timeshift, vod]);
-  // A live channel that errors is tried on its next feed, if it has one.
-  // A film's next copy is only tried when this one never really played (a 4K copy the hardware cannot decode fails
-  // just after it is ready): one that fails part-way through says so instead.
-  const playingSince = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (isPlaying) playingSince.current ??= Date.now();
-  }, [isPlaying]);
-  const failing = status === "error" && !timeshift && moreFeeds;
-  // With no other feed or copy left, a server that cannot be reached is tried on the source's other addresses.
-  const [otherServer, setOtherServer] = useState<"checking" | "none">();
-  const serverDownRef = useRef(onServerDown);
-  serverDownRef.current = onServerDown;
-  useEffect(() => {
-    if (status !== "error" || failing || otherServer !== undefined) return;
-    const trying = serverDownRef.current(error?.message ?? "");
-    if (trying === null) return;
-    setOtherServer("checking");
-    void trying.then((changed) => {
-      if (!changed) setOtherServer("none");
-    });
-  }, [status, failing, otherServer, error]);
-  useEffect(() => {
-    if (failing && (!vod || playingSince.current === undefined || Date.now() - playingSince.current < 8000)) onFailOver();
-  }, [failing, onFailOver, vod]);
-  // Some dead streams never error, they just never start: after a while, the next feed is tried instead.
-  const neverStarted = !timeshift && moreFeeds && status !== "readyToPlay" && status !== "error";
-  useEffect(() => {
-    if (!neverStarted || everPlayed.current) return;
-    const timer = setTimeout(() => {
-      if (!everPlayed.current) onFailOver();
-    }, START_WITHIN_MS);
-    return () => clearTimeout(timer);
-  }, [neverStarted, onFailOver]);
-  // Once the picture is up on a feed that was not the first, say which, for a moment.
-  const [fellBackShown, setFellBackShown] = useState(false);
-  const pictureUp = status === "readyToPlay";
-  const fellBackSaid = useRef(false);
-  useEffect(() => {
-    if (fellBack === undefined || !pictureUp || fellBackSaid.current) return;
-    fellBackSaid.current = true;
-    setFellBackShown(true);
-  }, [fellBack, pictureUp]);
-  useEffect(() => {
-    if (!fellBackShown) return;
-    const timer = setTimeout(() => setFellBackShown(false), 5000);
-    return () => clearTimeout(timer);
-  }, [fellBackShown]);
-
-  // Live TV: pausing lets the picture fall behind the broadcast. Once it has, there is a way back to live.
-  const [behindLive, setBehindLive] = useState(false);
-  const pausedAt = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (vod || timeshift) return;
-    // Only a real pause counts: not the picture still starting up, and not a stall while it refills.
-    if (!isPlaying && status === "readyToPlay" && everPlayed.current) pausedAt.current ??= Date.now();
-    else if (isPlaying && pausedAt.current !== undefined) {
-      if (Date.now() - pausedAt.current > BEHIND_AFTER_MS) setBehindLive(true);
-      pausedAt.current = undefined;
-    }
-  }, [isPlaying, status, timeshift, vod]);
-  const goLive = useCallback(() => {
-    setBehindLive(false);
-    pausedAt.current = undefined;
-    player.replace(stream.url);
-    player.play();
-  }, [player, stream.url]);
+  const { status, error, isPlaying, facts, everPlayed, failing, otherServer, fellBackShown, behindLive, goLive } = usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, fellBack, onFailOver, onServerDown });
   // Live TV: what is on now, for the programme bar. Asked once, then again when that programme ends.
   const [airing, setAiring] = useState<Airing | null>(null);
   useEffect(() => {
@@ -1243,121 +1064,11 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   );
 }
 
-const INK = "#0b0e10";
 /** The Next episode button is a fixed width so its countdown fill can be scaled across it. */
 const NEXT_KEY_WIDTH = 330;
 
-/** "13:00" from epoch ms. */
-const clock24 = (ms: number): string => `${two(new Date(ms).getHours())}:${two(new Date(ms).getMinutes())}`;
-
-/** A transport key: a bare glyph at rest, a solid white disc with a dark glyph when the remote's highlight is on it. */
-function Key({ big = false, selected = false, active = false, disabled = false, onPress, children }: { big?: boolean; selected?: boolean; active?: boolean; disabled?: boolean; onPress: () => void; children: (ink: string) => ReactNode }) {
-  const filled = selected || active;
-  return (
-    <Pressable
-      focusable={false}
-      onPress={disabled ? undefined : onPress}
-      style={[styles.key, big ? styles.keyBig : styles.keySmall, filled && styles.keyFilled, filled && { transform: [{ scale: 1.08 }] }, disabled && styles.keyDisabled]}
-    >
-      {children(filled ? INK : disabled ? "#ffffff42" : colors.foreground)}
-    </Pressable>
-  );
-}
-
-/** A transport key with a word on it, for the few actions that have no familiar symbol. */
-function TextKey({ label, dot = false, selected = false, onPress }: { label: string; /** A red dot: this is the state the viewer is in right now (watching live). */ dot?: boolean; selected?: boolean; onPress: () => void }) {
-  return (
-    <Pressable focusable={false} onPress={onPress} style={[styles.key, styles.textKey, selected && styles.keyFilled, selected && { transform: [{ scale: 1.08 }] }]}>
-      {dot ? <View style={styles.keyDot} /> : null}
-      <Text style={[styles.textKeyLabel, selected && { color: INK }]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-/** A key of the options row: its symbol in a disc (white under the remote's highlight), what it is below, and what it is set to. */
-function OptionKey({ icon: Icon, label, value, selected = false, onPress }: { icon: typeof Headset; label: string; value: string; selected?: boolean; onPress: () => void }) {
-  return (
-    <Pressable focusable={false} onPress={onPress} style={styles.optionKey}>
-      <View style={[styles.key, styles.keySmall, styles.optionDisc, selected && styles.keyFilled, selected && { transform: [{ scale: 1.08 }] }]}>
-        <Icon color={selected ? INK : colors.foreground} width={u(36)} height={u(36)} strokeWidth={1.75} />
-      </View>
-      <Text style={[styles.optionLabel, selected && styles.optionLabelLit]} numberOfLines={1}>
-        {label}
-      </Text>
-      <Text style={styles.optionValue} numberOfLines={1}>
-        {value}
-      </Text>
-    </Pressable>
-  );
-}
-
-/** The closed-captions mark: cream as an icon while a track is on. */
-function CcGlyph({ on, color }: { on: boolean; color: string }) {
-  return <ClosedCaptionsTag color={on ? colors.accent : color} width={u(38)} height={u(38)} strokeWidth={1.75} />;
-}
-
-/** Skip-to-next: the streaming apps' "next episode" mark. */
-function NextGlyph({ color }: { color: string }) {
-  return <SkipNext color={color} width={u(38)} height={u(38)} strokeWidth={1.75} />;
-}
-
-/**
- * A darkening that fades out from one edge. It is layered rather than banded: each layer covers from the edge
- * to a little further in, so the darkness builds up in many small steps with no seams between them. (Solid
- * stacked bands showed as stripes across the picture on a big screen.)
- */
-const SCRIM_LAYERS = 28;
-const SCRIM_ALPHAS = (() => {
-  const darkness = (band: number) => (band >= SCRIM_LAYERS ? 0 : 0.85 * (1 - (band + 0.5) / SCRIM_LAYERS) ** 1.5);
-  // Layer i covers the first i of the bands, so a band under layers i..N is as dark as the product of them says.
-  return Array.from({ length: SCRIM_LAYERS }, (_, index) => 1 - (1 - darkness(index)) / (1 - darkness(index + 1)));
-})();
-
-const Scrim = memo(function Scrim({ from }: { from: "top" | "bottom" }) {
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {SCRIM_ALPHAS.map((alpha, index) => (
-        <View key={index} style={{ position: "absolute", left: 0, right: 0, [from]: 0, height: `${((index + 1) / SCRIM_LAYERS) * 100}%`, backgroundColor: `rgba(5,7,9,${alpha.toFixed(4)})` }} />
-      ))}
-    </View>
-  );
-});
-
-function Chip({ label }: { label: string }) {
-  return (
-    <View style={styles.chip}>
-      <Text style={styles.chipText}>{label}</Text>
-    </View>
-  );
-}
-
-function ChevronGlyph({ color }: { color: string }) {
-  return <ArrowLeft color={color} width={u(32)} height={u(32)} strokeWidth={1.75} />;
-}
-
-/** Previous and next channel. */
-function ChannelGlyph({ direction, color }: { direction: "back" | "forward"; color: string }) {
-  const Icon = direction === "back" ? NavArrowLeft : NavArrowRight;
-  return <Icon color={color} width={u(40)} height={u(40)} strokeWidth={1.75} />;
-}
-
-function PauseGlyph({ color }: { color: string }) {
-  return <Pause color={color} width={u(42)} height={u(42)} strokeWidth={1.75} />;
-}
-
-function PlayGlyph({ color }: { color: string }) {
-  return <Play color={color} width={u(44)} height={u(44)} strokeWidth={1.75} />;
-}
-
-/** Replay and advance by the seek step. */
-function SkipGlyph({ direction, color }: { direction: "back" | "forward"; color: string }) {
-  const Icon = direction === "back" ? Backward15Seconds : Forward15Seconds;
-  return <Icon color={color} width={u(44)} height={u(44)} strokeWidth={1.75} />;
-}
-
 const styles = styleSheet({
   centre: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: space.l, padding: space.xl },
-  row: { flexDirection: "row", gap: space.m },
   player: { flex: 1, backgroundColor: "#000" },
   centreLayer: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center" },
   fellBack: { position: "absolute", left: 0, right: 0, top: 48, alignItems: "center" },
@@ -1406,29 +1117,14 @@ const styles = styleSheet({
   controls: { flexDirection: "row", alignItems: "center" },
   side: { flex: 1, alignItems: "flex-start" },
   secondary: { flexDirection: "row", justifyContent: "center", gap: 48 },
-  optionKey: { width: 170, alignItems: "center", gap: 6 },
-  optionDisc: { backgroundColor: "#ffffff1a", marginBottom: 4 },
-  optionLabel: { color: colors.foreground, opacity: 0.85, fontSize: 22, fontWeight: "500" },
-  optionLabelLit: { opacity: 1, fontWeight: "600" },
-  optionValue: { color: colors.muted, fontSize: 20, maxWidth: 170 },
   sideRight: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 20 },
   chips: { flexDirection: "row", gap: 10, marginTop: -12 },
-  chip: { borderRadius: 7, borderWidth: 2, borderColor: "#ffffff66", paddingHorizontal: 12, paddingVertical: 3 },
-  chipText: { color: colors.foreground, fontSize: 20, fontWeight: "600", letterSpacing: 0.5 },
   statsTitle: { color: colors.muted, fontSize: 20, fontWeight: "500", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 },
   clock: { color: colors.foreground, fontSize: 28, fontWeight: "500" },
   clockDim: { color: colors.foreground, opacity: 0.6, fontSize: 28, fontWeight: "400" },
   transport: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 24 },
-  key: { alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "transparent" },
-  keySmall: { width: 80, height: 80, borderRadius: 40 },
-  keyBig: { width: 92, height: 92, borderRadius: 46 },
-  keyFilled: { backgroundColor: colors.foreground, borderColor: "transparent" },
-  keyDisabled: { opacity: 0.35 },
-  textKey: { height: 80, borderRadius: 40, paddingHorizontal: 32, backgroundColor: "#ffffff24", flexDirection: "row", gap: 12 },
-  keyDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.live },
   liveRow: { flexDirection: "row", alignItems: "center", gap: 24 },
   programme: { color: colors.foreground, opacity: 0.75, fontSize: 26, marginTop: -14 },
-  textKeyLabel: { color: colors.foreground, fontSize: 26, fontWeight: "500" },
 
   guide: { position: "absolute", right: 96, top: 110, bottom: 110, width: 780, gap: 12, padding: 28, borderRadius: 18, backgroundColor: "#000000e0" },
   guideList: { flex: 1 },
@@ -1442,6 +1138,4 @@ const styles = styleSheet({
 
   title: { color: colors.foreground, fontSize: 44, fontWeight: "600", letterSpacing: -0.5, textAlign: "center", maxWidth: 1200 },
   muted: { color: colors.muted, fontSize: type.body },
-  error: { color: colors.muted, fontSize: 30, textAlign: "center", maxWidth: 1000, lineHeight: 44 },
-  detail: { color: colors.faint, fontSize: 20, textAlign: "center", maxWidth: 1000 },
 });

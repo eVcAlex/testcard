@@ -12,6 +12,7 @@ import { UpdateProvider, useUpdate } from "./src/update/UpdateProvider";
 import { UpdatePrompt } from "./src/update/UpdatePrompt";
 import { colors, styleSheet, uiScale } from "./src/theme";
 import { focusedNow, lastFocused } from "./src/ui/Focusable";
+import { ErrorBoundary } from "./src/ui/ErrorBoundary";
 import { SourcePicker } from "./src/ui/SourcePicker";
 import { BackToTop } from "./src/ui/backToTop";
 import { NavTab } from "./src/ui/NavTab";
