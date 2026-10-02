@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { decryptCredentials, encryptCredentials, generateSalt } from "../sync/credentialCrypto.js";
 
 describe("credentialCrypto", () => {
@@ -22,5 +22,21 @@ describe("credentialCrypto", () => {
     const salt = generateSalt();
     const encrypted = await encryptCredentials({ host: "http://example.com", username: "alex", password: "hunter2" }, "right-password", salt);
     await expect(decryptCredentials(encrypted, "wrong-password", salt)).rejects.toThrow();
+  });
+});
+
+describe("credentialCrypto key cache", () => {
+  it("derives the key once for the same password and salt, and again when either changes", async () => {
+    const derive = vi.spyOn(crypto.subtle, "deriveKey");
+    const salt = generateSalt();
+    const payload = { host: "http://example.com", username: "alex", password: "hunter2" };
+    await encryptCredentials(payload, "cache-pw", salt);
+    await encryptCredentials(payload, "cache-pw", salt);
+    const sealed = await encryptCredentials(payload, "cache-pw", salt);
+    await decryptCredentials(sealed, "cache-pw", salt);
+    expect(derive).toHaveBeenCalledTimes(1);
+    await encryptCredentials(payload, "other-pw", salt);
+    expect(derive).toHaveBeenCalledTimes(2);
+    derive.mockRestore();
   });
 });

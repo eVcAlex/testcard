@@ -15,6 +15,7 @@ import { dropUnusedGuides, refreshGuides, setGuideRegistrar } from "../playback/
 import { hasBackups, loadServersInUse, pickServer } from "./hosts";
 import { saveSource as saveStoredSource, type SourceDraft } from "./sourceEdit";
 import { forgetProfile, swapProfile } from "@testcard/core/src/db/profileSwap.js";
+import { timed } from "../platform/perf";
 import { deleteProfile as deleteStoredProfile, saveProfile as saveStoredProfile } from "@testcard/core/src/db/profiles.js";
 import { MAIN_PROFILE, PROFILE_META_KEYS, readActiveProfile, readProfiles, writeActiveProfile, type Profile } from "./profiles";
 import { describeSetup, type ContentKind, type ImportProgress, type ImportStage, type SetupProgress } from "./setup";
@@ -416,10 +417,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const from = readActiveProfile(db);
       if (from === id) return;
       // What the one leaving did is pushed first (briefly: a slow network only delays it to their next turn).
+      const started = Date.now();
       await Promise.race([sync.triggerNow().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 3000))]);
+      const pushed = Date.now();
       // Nothing may sync mid-swap.
       await sync.setPaused(true);
-      swapProfile(db, from, id, PROFILE_META_KEYS);
+      const paused = Date.now();
+      timed("switchProfile: swap rows", () => swapProfile(db, from, id, PROFILE_META_KEYS));
+      console.log(`[perf] switchProfile push ${pushed - started}ms, pause ${paused - pushed}ms, swap ${Date.now() - paused}ms`);
       writeActiveProfile(db, id);
       sync.setProfile(id);
       setProfileId(id);

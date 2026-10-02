@@ -150,6 +150,9 @@ export class SyncController {
       if (this.changeTimer !== undefined) clearTimeout(this.changeTimer);
       this.changeTimer = undefined;
       this.rerunRequested = false;
+      // A sync waiting on the network is cut off rather than waited for; one past that point (writing what it
+      // pulled) finishes, so nothing is left half-applied.
+      this.client.abortAll();
       await this.running?.catch(() => undefined);
     } else void this.runOnce();
   }
@@ -411,7 +414,8 @@ export class SyncController {
           return;
         }
       }
-      this.lastError = describeSyncError(error);
+      // Cut off on purpose by a pause (see setPaused): not a failure to show.
+      if (!this.paused) this.lastError = describeSyncError(error);
       // Best-effort: a failed sync never blocks playback/browsing — see the design spec's
       // "Error handling". The next periodic tick (or a manual triggerNow) retries.
     }

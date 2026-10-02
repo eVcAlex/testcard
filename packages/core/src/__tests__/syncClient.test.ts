@@ -73,3 +73,34 @@ describe("SyncClient", () => {
     await expect(client.getSalt()).resolves.toBe("c2FsdA==");
   });
 });
+
+describe("SyncClient timeouts", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  // A fetch that never answers, until its signal says stop (as a real one does).
+  const hangingFetch = () =>
+    vi.fn().mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new Error("aborted")))),
+    );
+
+  it("gives up on a request that never answers", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", hangingFetch());
+    const client = new SyncClient({ baseUrl: "https://sync.example.com", getSessionToken: () => "tok" });
+    const pull = expect(client.pull(0)).rejects.toThrow("aborted");
+    await vi.advanceTimersByTimeAsync(15_001);
+    await pull;
+  });
+
+  it("abortAll cuts off requests under way at once", async () => {
+    vi.stubGlobal("fetch", hangingFetch());
+    const client = new SyncClient({ baseUrl: "https://sync.example.com", getSessionToken: () => "tok" });
+    const pull = expect(client.pull(0)).rejects.toThrow("aborted");
+    client.abortAll();
+    await pull;
+  });
+});

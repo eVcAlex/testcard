@@ -38,15 +38,31 @@ export function generateSalt(): string {
   return toBase64(crypto.getRandomValues(new Uint8Array(16)));
 }
 
-async function deriveKey(password: string, saltBase64: string) {
-  const baseKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
-  return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: fromBase64(saltBase64), iterations: 210_000, hash: "SHA-256" },
-    baseKey,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"],
-  );
+// 210,000 PBKDF2 rounds is deliberately slow, and a sync seals or opens one record per source and profile: on a
+// Fire Stick, deriving afresh each time made a first pull of a few sources take many seconds. The key depends only
+// on the password and salt, so the last one is kept (in memory only, like the password itself).
+type Key = Awaited<ReturnType<typeof crypto.subtle.deriveKey>>;
+let cachedKey: { readonly id: string; readonly key: Promise<Key> } | undefined;
+
+function deriveKey(password: string, saltBase64: string): Promise<Key> {
+  const id = `${saltBase64}\0${password}`;
+  if (cachedKey?.id === id) return cachedKey.key;
+  const key = (async () => {
+    const baseKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: fromBase64(saltBase64), iterations: 210_000, hash: "SHA-256" },
+      baseKey,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"],
+    );
+  })();
+  cachedKey = { id, key };
+  // A failed derivation is not kept.
+  key.catch(() => {
+    if (cachedKey?.key === key) cachedKey = undefined;
+  });
+  return key;
 }
 
 /** Seals any JSON value under the account's key (a source's login, a profile). */

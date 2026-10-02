@@ -28,8 +28,18 @@ interface BetterAuthEmailResponse {
  * `packages/sync-schema` zod schema before this class hands it back — a shape drift between the
  * Worker and this client fails loudly here instead of surfacing as a confusing UI bug later.
  */
+/** A request that has not finished by now is given up on: a stalled connection must not hold the whole sync (and the app's profile picker) forever. */
+const REQUEST_TIMEOUT_MS = 15_000;
+
 export class SyncClient {
+  private readonly inFlight = new Set<AbortController>();
+
   constructor(private readonly config: SyncClientConfig) {}
+
+  /** Cancels every request under way, so a caller that must wait for the sync to stop (a profile swap) does not wait on the network. */
+  abortAll(): void {
+    for (const controller of this.inFlight) controller.abort();
+  }
 
   /**
    * Electron's main process runs fetch() outside any browsing context, so Chromium's network
@@ -47,13 +57,21 @@ export class SyncClient {
     const token = opts.authed === true ? this.config.getSessionToken() : undefined;
     if (token !== undefined) headers.Authorization = `Bearer ${token}`;
     if (opts.body !== undefined) headers["Content-Type"] = "application/json";
-    const res = await fetch(
-      this.config.baseUrl + path,
-      opts.body !== undefined ? { method: "POST", headers, body: JSON.stringify(opts.body) } : { headers },
-    );
-    if (res.ok || (res.status === 404 && opts.missingIsFine === true)) return res;
-    const reply = await res.text().catch(() => "");
-    throw Object.assign(new Error(reply !== "" ? reply : `${res.status} ${res.statusText}`), { status: res.status });
+    const controller = new AbortController();
+    this.inFlight.add(controller);
+    // Left to fire after a quick request is harmless (aborting a finished one does nothing); it also covers reading the body.
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(
+        this.config.baseUrl + path,
+        opts.body !== undefined ? { method: "POST", headers, body: JSON.stringify(opts.body), signal: controller.signal } : { headers, signal: controller.signal },
+      );
+      if (res.ok || (res.status === 404 && opts.missingIsFine === true)) return res;
+      const reply = await res.text().catch(() => "");
+      throw Object.assign(new Error(reply !== "" ? reply : `${res.status} ${res.statusText}`), { status: res.status });
+    } finally {
+      this.inFlight.delete(controller);
+    }
   }
 
   async signUp(email: string, password: string): Promise<AuthResult> {
