@@ -1,0 +1,7 @@
+# Hand-written baseline profile: everything the app itself runs at launch and while browsing is compiled ahead of time
+# (startup 'S', hot 'H', post-startup 'P'). The libraries (Compose, Media3, OkHttp) ship their own rules. A measured profile
+# from a macrobenchmark run on the stick can replace this file; the ledger is apps/tv-native/parity/parity-report.md.
+HSPLcom/evcalex/testcard/tv/**->**(**)**
+HSPLcom/evcalex/testcard/core/**->**(**)**
+Lcom/evcalex/testcard/tv/**;
+Lcom/evcalex/testcard/core/**;

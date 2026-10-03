@@ -1,0 +1,35 @@
+# React Native strings that are not for a person, or have no native counterpart. Compared the way strings-diff.mjs does (case,
+# quotes and ${holes} ignored). Anything not here and not in the Kotlin is a parity gap.
+
+# accessibility/semantic names of lists in the RN screens (no native equivalent: Compose lists are not named)
+movies rows
+series rows
+guide channels
+live rows
+home rows
+# developer messages that never reach a screen
+Guide for ${source.name}: ${result.programmes} programmes on ${result.channels} channels in ${Math.round(result.durationMs / 1000)}s
+Deferred catalogue maintenance failed
+switchProfile: swap rows
+Import of ${row.name} failed (${part}): ${message}
+Import of ${row.name} failed: ${message}
+useUpdate needs an UpdateProvider
+new Promise
+createM3UAdapter used with a non-m3u source: ${source.kind}
+fetchCatchupProgrammes used with a non-xtream source
+buildTimeshiftUrl used with a non-xtream source
+buildStreamUrl(xtream) used with a non-xtream source
+fetchShortEpg used with a non-xtream source
+createXtreamAdapter used with a non-xtream source: ${source.kind}
+buildMovieStreamUrl used with a non-xtream source
+buildEpisodeStreamUrl used with a non-xtream source
+Xtream VOD/series call used with a non-xtream source: ${source.kind}
+# the Expo native module's wrapper text, which the native installer does not have
+Caused by:
+# a branch that cannot be reached: the address always gets http:// in front first, so its scheme is always http or https
+A server address starts with http:// or https://.
+# there is always an updater in the native build
+Updates are not set up for this build.
+# developer messages
+useApp must be used inside <AppProvider>
+[perf] switchProfile push ${pushed - started}ms, pause ${paused - pushed}ms, swap ${Date.now() - paused}ms
