@@ -1,0 +1,42 @@
+[
+ {
+  "fn": "parseXmltv",
+  "in": [
+   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<tv>\n  <channel id=\"tnt1\"><display-name>TNT 1</display-name></channel>\n  <programme channel=\"tnt1\" start=\"20990101120000 +0000\" stop=\"20990101130000 +0000\">\n    <title>The Match</title>\n    <desc>Live coverage &amp; analysis.</desc>\n  </programme>\n  <programme channel=\"tnt1\" start=\"20990101130000 +0100\" stop=\"20990101140000 +0100\"><title lang=\"en\">Post-Match</title></programme>\n  <programme channel=\"tnt1\" start=\"20990101140000\" stop=\"20990101150000\"><title>No offset</title><desc/></programme>\n  <programme channel=\"tnt1\" start=\"bad\" stop=\"20990101150000\"><title>Bad start</title></programme>\n  <programme channel=\"tnt1\" start=\"20990101150000 +0000\" stop=\"20990101160000 +0000\"></programme>\n  <programme channel=\"not-mapped\" start=\"20990101120000 +0000\" stop=\"20990101130000 +0000\"><title>Ignored</title></programme>\n  <programme channel=\"TNT1\" start=\"20990101160000 +0000\" stop=\"20990101170000 +0000\"><title>Case</title></programme>\n</tv>",
+   {
+    "tnt1": "channel-1"
+   }
+  ],
+  "out": [
+   {
+    "channelId": "channel-1",
+    "title": "The Match",
+    "start": "2099-01-01T12:00:00.000Z",
+    "end": "2099-01-01T13:00:00.000Z",
+    "description": "Live coverage & analysis."
+   },
+   {
+    "channelId": "channel-1",
+    "title": "Post-Match",
+    "start": "2099-01-01T12:00:00.000Z",
+    "end": "2099-01-01T13:00:00.000Z"
+   },
+   {
+    "channelId": "channel-1",
+    "title": "No offset",
+    "start": "2099-01-01T14:00:00.000Z",
+    "end": "2099-01-01T15:00:00.000Z"
+   }
+  ]
+ },
+ {
+  "fn": "parseXmltv",
+  "in": [
+   "",
+   {
+    "tnt1": "channel-1"
+   }
+  ],
+  "out": []
+ }
+]

@@ -1,0 +1,2667 @@
+{
+ "xtream": {
+  "get_live_categories|": [
+   {
+    "category_id": "1",
+    "category_name": "UK| SPORTS"
+   },
+   {
+    "category_id": "2",
+    "category_name": "US| NEWS ᴴᴰ"
+   },
+   {
+    "category_id": "3",
+    "category_name": "|EN| MOVIES 4K"
+   },
+   {
+    "category_id": "4",
+    "category_name": "XXX ADULT"
+   },
+   {
+    "category_id": "5",
+    "category_name": "##### PPV #####"
+   },
+   {
+    "category_id": "6",
+    "category_name": "FR| KIDS (HD)"
+   }
+  ],
+  "get_vod_categories|": [
+   {
+    "category_id": "1",
+    "category_name": "EN - ACTION"
+   },
+   {
+    "category_id": "2",
+    "category_name": "EN - COMEDY"
+   },
+   {
+    "category_id": "3",
+    "category_name": "4K-TOP - NEW RELEASES"
+   },
+   {
+    "category_id": "4",
+    "category_name": "FR - COMEDIE"
+   },
+   {
+    "category_id": "5",
+    "category_name": "ASIA MOVIES (MULTI-SUBS)"
+   },
+   {
+    "category_id": "6",
+    "category_name": "XXX"
+   }
+  ],
+  "get_series_categories|": [
+   {
+    "category_id": "1",
+    "category_name": "EN - DRAMA"
+   },
+   {
+    "category_id": "2",
+    "category_name": "EN - KIDS"
+   }
+  ],
+  "get_live_streams|1": [
+   {
+    "stream_id": 1001,
+    "name": "UK| TNT Sports 1 (1080p50)",
+    "category_id": "1",
+    "num": 1,
+    "stream_icon": "http://img.example/1001.png"
+   },
+   {
+    "stream_id": 1002,
+    "name": "UK| TNT Sports 1 (720p25)",
+    "category_id": "1",
+    "num": 2,
+    "epg_channel_id": "ch1.guide"
+   },
+   {
+    "stream_id": 1003,
+    "name": "UK| TNT Sports 1 (OFFLINE)",
+    "category_id": "1",
+    "num": 3,
+    "stream_icon": "http://img.example/1003.png"
+   },
+   {
+    "stream_id": 1004,
+    "name": "UK| TNT Sports 2 (1080p50)",
+    "category_id": "1",
+    "num": 4,
+    "stream_icon": "http://img.example/1004.png",
+    "epg_channel_id": "ch3.guide"
+   },
+   {
+    "stream_id": 1005,
+    "name": "UK| Sky Sports Main Event HD",
+    "category_id": "1",
+    "num": 5,
+    "tv_archive": 1,
+    "tv_archive_duration": 3
+   },
+   {
+    "stream_id": 1006,
+    "name": "UK| Sky Sports Premier League ᵁᴴᴰ",
+    "category_id": "1",
+    "num": 6,
+    "stream_icon": "http://img.example/1006.png",
+    "epg_channel_id": "ch5.guide"
+   },
+   {
+    "stream_id": 1007,
+    "name": "UK| BT Sport 1 (4K)",
+    "category_id": "1",
+    "num": 7,
+    "stream_icon": "http://img.example/1007.png"
+   },
+   {
+    "stream_id": 1008,
+    "name": "UK| BT Sport 1 (HD)",
+    "category_id": "1",
+    "num": 8,
+    "epg_channel_id": "ch0.guide"
+   },
+   {
+    "stream_id": 1009,
+    "name": "UK| Eurosport 1",
+    "category_id": "1",
+    "num": 9,
+    "stream_icon": "http://img.example/1009.png"
+   },
+   {
+    "stream_id": 1010,
+    "name": "UK| Premier Sports 1 FHD",
+    "category_id": "1",
+    "num": 10,
+    "stream_icon": "http://img.example/1010.png",
+    "epg_channel_id": "ch2.guide",
+    "tv_archive": 1,
+    "tv_archive_duration": 3
+   },
+   {
+    "stream_id": 1011,
+    "name": "UK| ITV 4 (SD)",
+    "category_id": "1",
+    "num": 11
+   }
+  ],
+  "get_live_streams|2": [
+   {
+    "stream_id": 1012,
+    "name": "US| CNN",
+    "category_id": "2",
+    "num": 12,
+    "stream_icon": "http://img.example/1012.png",
+    "epg_channel_id": "ch4.guide"
+   },
+   {
+    "stream_id": 1013,
+    "name": "US| FOX NEWS (HD)",
+    "category_id": "2",
+    "num": 13,
+    "stream_icon": "http://img.example/1013.png"
+   },
+   {
+    "stream_id": 1014,
+    "name": "US| MSNBC",
+    "category_id": "2",
+    "num": 14,
+    "epg_channel_id": "ch6.guide"
+   },
+   {
+    "stream_id": 1015,
+    "name": "US| Bloomberg (720p25)",
+    "category_id": "2",
+    "num": 15,
+    "stream_icon": "http://img.example/1015.png",
+    "tv_archive": 1,
+    "tv_archive_duration": 3
+   },
+   {
+    "stream_id": 1016,
+    "name": "US| Bloomberg (1080p50)",
+    "category_id": "2",
+    "num": 16,
+    "stream_icon": "http://img.example/1016.png",
+    "epg_channel_id": "ch1.guide"
+   },
+   {
+    "stream_id": 1017,
+    "name": "US| Newsmax",
+    "category_id": "2",
+    "num": 17
+   },
+   {
+    "stream_id": 1018,
+    "name": "UK| TNT Sports 1 (720p25)",
+    "category_id": "2",
+    "num": 18,
+    "stream_icon": "http://img.example/1018.png",
+    "epg_channel_id": "ch3.guide"
+   }
+  ],
+  "get_live_streams|3": [
+   {
+    "stream_id": 1019,
+    "name": "|EN| Movie Channel A",
+    "category_id": "3",
+    "num": 19,
+    "stream_icon": "http://img.example/1019.png"
+   },
+   {
+    "stream_id": 1020,
+    "name": "|EN| Movie Channel B (4K)",
+    "category_id": "3",
+    "num": 20,
+    "epg_channel_id": "ch5.guide",
+    "tv_archive": 1,
+    "tv_archive_duration": 3
+   },
+   {
+    "stream_id": 1021,
+    "name": "|EN| Movie Channel B (HD)",
+    "category_id": "3",
+    "num": 21,
+    "stream_icon": "http://img.example/1021.png"
+   }
+  ],
+  "get_live_streams|4": [
+   {
+    "stream_id": 1022,
+    "name": "XXX Channel 1",
+    "category_id": "4",
+    "num": 22,
+    "stream_icon": "http://img.example/1022.png",
+    "epg_channel_id": "ch0.guide"
+   },
+   {
+    "stream_id": 1023,
+    "name": "XXX Channel 2",
+    "category_id": "4",
+    "num": 23
+   }
+  ],
+  "get_live_streams|5": [
+   {
+    "stream_id": 1024,
+    "name": "##### PPV 1 #####",
+    "category_id": "5",
+    "num": 24,
+    "stream_icon": "http://img.example/1024.png",
+    "epg_channel_id": "ch2.guide"
+   },
+   {
+    "stream_id": 1025,
+    "name": "UFC 300 Main Card",
+    "category_id": "5",
+    "num": 25,
+    "stream_icon": "http://img.example/1025.png",
+    "tv_archive": 1,
+    "tv_archive_duration": 3
+   }
+  ],
+  "get_live_streams|6": [
+   {
+    "stream_id": 1026,
+    "name": "FR| Cartoon Network",
+    "category_id": "6",
+    "num": 26,
+    "epg_channel_id": "ch4.guide"
+   },
+   {
+    "stream_id": 1027,
+    "name": "FR| Disney Junior",
+    "category_id": "6",
+    "num": 27,
+    "stream_icon": "http://img.example/1027.png"
+   },
+   {
+    "stream_id": 1028,
+    "name": "FR| TF1 (HD)",
+    "category_id": "6",
+    "num": 28,
+    "stream_icon": "http://img.example/1028.png",
+    "epg_channel_id": "ch6.guide"
+   },
+   {
+    "stream_id": 1029,
+    "name": "FR| TF1",
+    "category_id": "6",
+    "num": 29
+   }
+  ],
+  "get_vod_streams|1": [
+   {
+    "stream_id": 5001,
+    "name": "Action Film 1 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5001.jpg",
+    "container_extension": "mkv",
+    "rating": "5.2"
+   },
+   {
+    "stream_id": 5002,
+    "name": "Action Film 2 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5002.jpg",
+    "container_extension": "mp4",
+    "rating": "5.4"
+   },
+   {
+    "stream_id": 5003,
+    "name": "Action Film 3 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5003.jpg",
+    "container_extension": "mkv",
+    "rating": "5.6"
+   },
+   {
+    "stream_id": 5004,
+    "name": "Action Film 4 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5004.jpg",
+    "container_extension": "mp4",
+    "rating": "5.8"
+   },
+   {
+    "stream_id": 5005,
+    "name": "Action Film 5 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5005.jpg",
+    "container_extension": "mkv",
+    "rating": "6"
+   },
+   {
+    "stream_id": 5006,
+    "name": "Action Film 6 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5006.jpg",
+    "container_extension": "mp4",
+    "rating": "6.2"
+   },
+   {
+    "stream_id": 5007,
+    "name": "Action Film 7 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5007.jpg",
+    "container_extension": "mkv",
+    "rating": "6.4"
+   },
+   {
+    "stream_id": 5008,
+    "name": "Action Film 8 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5008.jpg",
+    "container_extension": "mp4",
+    "rating": "6.6"
+   },
+   {
+    "stream_id": 5009,
+    "name": "Action Film 9 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5009.jpg",
+    "container_extension": "mkv",
+    "rating": "6.8"
+   },
+   {
+    "stream_id": 5010,
+    "name": "Action Film 10 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5010.jpg",
+    "container_extension": "mp4",
+    "rating": "7"
+   },
+   {
+    "stream_id": 5011,
+    "name": "Action Film 11 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5011.jpg",
+    "container_extension": "mkv",
+    "rating": "7.2"
+   },
+   {
+    "stream_id": 5012,
+    "name": "Action Film 12 (2020)",
+    "category_id": "1",
+    "stream_icon": "http://img.example/m5012.jpg",
+    "container_extension": "mp4",
+    "rating": "7.4"
+   },
+   {
+    "stream_id": 5013,
+    "name": "No Poster",
+    "category_id": "1",
+    "container_extension": "mp4",
+    "rating": "9.5"
+   }
+  ],
+  "get_vod_info|5001": {
+   "info": {
+    "plot": "Plot of Action Film 1 (2020)",
+    "duration_secs": 10401
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5002": {
+   "info": {
+    "plot": "Plot of Action Film 2 (2020)",
+    "duration_secs": 10402
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5003": {
+   "info": {
+    "plot": "Plot of Action Film 3 (2020)",
+    "duration_secs": 10403
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5004": {
+   "info": {
+    "plot": "Plot of Action Film 4 (2020)",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5005": {
+   "info": {
+    "plot": "Plot of Action Film 5 (2020)",
+    "duration_secs": 10405
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_info|5006": {
+   "info": {
+    "plot": "Plot of Action Film 6 (2020)",
+    "duration_secs": 10406
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5007": {
+   "info": {
+    "plot": "Plot of Action Film 7 (2020)",
+    "duration_secs": 10407
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5008": {
+   "info": {
+    "plot": "Plot of Action Film 8 (2020)",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5009": {
+   "info": {
+    "plot": "Plot of Action Film 9 (2020)",
+    "duration_secs": 10409
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5010": {
+   "info": {
+    "plot": "Plot of Action Film 10 (2020)",
+    "duration_secs": 10410
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5011": {
+   "info": {
+    "plot": "Plot of Action Film 11 (2020)",
+    "duration_secs": 10411
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5012": {
+   "info": {
+    "plot": "Plot of Action Film 12 (2020)",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_info|5013": {
+   "info": {
+    "plot": "Plot of No Poster",
+    "duration_secs": 10413
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_streams|2": [
+   {
+    "stream_id": 5014,
+    "name": "Comedy Film 1",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5014.jpg",
+    "container_extension": "mp4",
+    "rating": 6.1
+   },
+   {
+    "stream_id": 5015,
+    "name": "Comedy Film 2",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5015.jpg",
+    "container_extension": "mp4",
+    "rating": 6.2
+   },
+   {
+    "stream_id": 5016,
+    "name": "Comedy Film 3",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5016.jpg",
+    "container_extension": "mp4",
+    "rating": 0
+   },
+   {
+    "stream_id": 5017,
+    "name": "Comedy Film 4",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5017.jpg",
+    "container_extension": "mp4",
+    "rating": 6.4
+   },
+   {
+    "stream_id": 5018,
+    "name": "Comedy Film 5",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5018.jpg",
+    "container_extension": "mp4",
+    "rating": 6.5
+   },
+   {
+    "stream_id": 5019,
+    "name": "Comedy Film 6",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5019.jpg",
+    "container_extension": "mp4",
+    "rating": 0
+   },
+   {
+    "stream_id": 5020,
+    "name": "Comedy Film 7",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5020.jpg",
+    "container_extension": "mp4",
+    "rating": 6.7
+   },
+   {
+    "stream_id": 5021,
+    "name": "Comedy Film 8",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5021.jpg",
+    "container_extension": "mp4",
+    "rating": 6.8
+   },
+   {
+    "stream_id": 5022,
+    "name": "Comedy Film 9",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5022.jpg",
+    "container_extension": "mp4",
+    "rating": 0
+   },
+   {
+    "stream_id": 5023,
+    "name": "Comedy Film 10",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5023.jpg",
+    "container_extension": "mp4",
+    "rating": 7
+   },
+   {
+    "stream_id": 5024,
+    "name": "Single Vote Wonder",
+    "category_id": "2",
+    "stream_icon": "http://img.example/m5024.jpg",
+    "container_extension": "mp4",
+    "rating": 10
+   }
+  ],
+  "get_vod_info|5014": {
+   "info": {
+    "plot": "Plot of Comedy Film 1",
+    "duration_secs": 10414
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5015": {
+   "info": {
+    "plot": "Plot of Comedy Film 2",
+    "duration_secs": 10415
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5016": {
+   "info": {
+    "plot": "Plot of Comedy Film 3",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5017": {
+   "info": {
+    "plot": "Plot of Comedy Film 4",
+    "duration_secs": 10417
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5018": {
+   "info": {
+    "plot": "Plot of Comedy Film 5",
+    "duration_secs": 10418
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5019": {
+   "info": {
+    "plot": "Plot of Comedy Film 6",
+    "duration_secs": 10419
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_info|5020": {
+   "info": {
+    "plot": "Plot of Comedy Film 7",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5021": {
+   "info": {
+    "plot": "Plot of Comedy Film 8",
+    "duration_secs": 10421
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5022": {
+   "info": {
+    "plot": "Plot of Comedy Film 9",
+    "duration_secs": 10422
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5023": {
+   "info": {
+    "plot": "Plot of Comedy Film 10",
+    "duration_secs": 10423
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5024": {
+   "info": {
+    "plot": "Plot of Single Vote Wonder",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_streams|3": [
+   {
+    "stream_id": 5025,
+    "name": "4K-TOP - Action Film 1 (2020)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5025.jpg",
+    "container_extension": "mkv",
+    "rating": "9.1"
+   },
+   {
+    "stream_id": 5026,
+    "name": "4K-TOP - Action Film 2 (2020)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5026.jpg",
+    "container_extension": "mkv",
+    "rating": "9.1"
+   },
+   {
+    "stream_id": 5027,
+    "name": "4K-TOP - Action Film 3 (2020)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5027.jpg",
+    "container_extension": "mkv",
+    "rating": "9.1"
+   },
+   {
+    "stream_id": 5028,
+    "name": "Fresh Film 1 (2026)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5028.jpg",
+    "rating": "6.5"
+   },
+   {
+    "stream_id": 5029,
+    "name": "Fresh Film 2 (2026)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5029.jpg",
+    "rating": "7"
+   },
+   {
+    "stream_id": 5030,
+    "name": "Fresh Film 3 (2026)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5030.jpg",
+    "rating": "7.5"
+   },
+   {
+    "stream_id": 5031,
+    "name": "Fresh Film 4 (2026)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5031.jpg",
+    "rating": "8"
+   },
+   {
+    "stream_id": 5032,
+    "name": "Fresh Film 5 (2026)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5032.jpg",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5033,
+    "name": "Fresh Film 6 (2026)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5033.jpg",
+    "rating": "9"
+   },
+   {
+    "stream_id": 5034,
+    "name": "Last Year Film 1 (2025)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5034.jpg",
+    "container_extension": "mp4",
+    "rating": "8.75"
+   },
+   {
+    "stream_id": 5035,
+    "name": "Last Year Film 2 (2025)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5035.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5036,
+    "name": "Last Year Film 3 (2025)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5036.jpg",
+    "container_extension": "mp4",
+    "rating": "8.25"
+   },
+   {
+    "stream_id": 5037,
+    "name": "Last Year Film 4 (2025)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5037.jpg",
+    "container_extension": "mp4",
+    "rating": "8"
+   },
+   {
+    "stream_id": 5038,
+    "name": "Last Year Film 5 (2025)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5038.jpg",
+    "container_extension": "mp4",
+    "rating": "7.75"
+   },
+   {
+    "stream_id": 5039,
+    "name": "Last Year Film 6 (2025)",
+    "category_id": "3",
+    "stream_icon": "http://img.example/m5039.jpg",
+    "container_extension": "mp4",
+    "rating": "7.5"
+   }
+  ],
+  "get_vod_info|5025": {
+   "info": {
+    "plot": "Plot of 4K-TOP - Action Film 1 (2020)",
+    "duration_secs": 10425
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5026": {
+   "info": {
+    "plot": "Plot of 4K-TOP - Action Film 2 (2020)",
+    "duration_secs": 10426
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_info|5027": {
+   "info": {
+    "plot": "Plot of 4K-TOP - Action Film 3 (2020)",
+    "duration_secs": 10427
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5028": {
+   "info": {
+    "plot": "Plot of Fresh Film 1 (2026)",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5029": {
+   "info": {
+    "plot": "Plot of Fresh Film 2 (2026)",
+    "duration_secs": 10429
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5030": {
+   "info": {
+    "plot": "Plot of Fresh Film 3 (2026)",
+    "duration_secs": 10430
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5031": {
+   "info": {
+    "plot": "Plot of Fresh Film 4 (2026)",
+    "duration_secs": 10431
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5032": {
+   "info": {
+    "plot": "Plot of Fresh Film 5 (2026)",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5033": {
+   "info": {
+    "plot": "Plot of Fresh Film 6 (2026)",
+    "duration_secs": 10433
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_info|5034": {
+   "info": {
+    "plot": "Plot of Last Year Film 1 (2025)",
+    "duration_secs": 10434
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5035": {
+   "info": {
+    "plot": "Plot of Last Year Film 2 (2025)",
+    "duration_secs": 10435
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5036": {
+   "info": {
+    "plot": "Plot of Last Year Film 3 (2025)",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5037": {
+   "info": {
+    "plot": "Plot of Last Year Film 4 (2025)",
+    "duration_secs": 10437
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5038": {
+   "info": {
+    "plot": "Plot of Last Year Film 5 (2025)",
+    "duration_secs": 10438
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5039": {
+   "info": {
+    "plot": "Plot of Last Year Film 6 (2025)",
+    "duration_secs": 10439
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_streams|4": [
+   {
+    "stream_id": 5040,
+    "name": "Film Francais 1",
+    "category_id": "4",
+    "stream_icon": "http://img.example/m5040.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4"
+   },
+   {
+    "stream_id": 5041,
+    "name": "Film Francais 2",
+    "category_id": "4",
+    "stream_icon": "http://img.example/m5041.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4"
+   },
+   {
+    "stream_id": 5042,
+    "name": "Film Francais 3",
+    "category_id": "4",
+    "stream_icon": "http://img.example/m5042.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4"
+   },
+   {
+    "stream_id": 5043,
+    "name": "Film Francais 4",
+    "category_id": "4",
+    "stream_icon": "http://img.example/m5043.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4"
+   },
+   {
+    "stream_id": 5044,
+    "name": "Film Francais 5",
+    "category_id": "4",
+    "stream_icon": "http://img.example/m5044.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4"
+   },
+   {
+    "stream_id": 5045,
+    "name": "Film Francais 6",
+    "category_id": "4",
+    "stream_icon": "http://img.example/m5045.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4"
+   },
+   {
+    "stream_id": 5046,
+    "name": "Film Francais 7",
+    "category_id": "4",
+    "stream_icon": "http://img.example/m5046.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4"
+   },
+   {
+    "stream_id": 5047,
+    "name": "Film Francais 8",
+    "category_id": "4",
+    "stream_icon": "http://img.example/m5047.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4"
+   }
+  ],
+  "get_vod_info|5040": {
+   "info": {
+    "plot": "Plot of Film Francais 1",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_info|5041": {
+   "info": {
+    "plot": "Plot of Film Francais 2",
+    "duration_secs": 10441
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5042": {
+   "info": {
+    "plot": "Plot of Film Francais 3",
+    "duration_secs": 10442
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5043": {
+   "info": {
+    "plot": "Plot of Film Francais 4",
+    "duration_secs": 10443
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5044": {
+   "info": {
+    "plot": "Plot of Film Francais 5",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5045": {
+   "info": {
+    "plot": "Plot of Film Francais 6",
+    "duration_secs": 10445
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5046": {
+   "info": {
+    "plot": "Plot of Film Francais 7",
+    "duration_secs": 10446
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5047": {
+   "info": {
+    "plot": "Plot of Film Francais 8",
+    "duration_secs": 10447
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_streams|5": [
+   {
+    "stream_id": 5048,
+    "name": "Asian Film 1",
+    "category_id": "5",
+    "stream_icon": "http://img.example/m5048.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5049,
+    "name": "Asian Film 2",
+    "category_id": "5",
+    "stream_icon": "http://img.example/m5049.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5050,
+    "name": "Asian Film 3",
+    "category_id": "5",
+    "stream_icon": "http://img.example/m5050.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5051,
+    "name": "Asian Film 4",
+    "category_id": "5",
+    "stream_icon": "http://img.example/m5051.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5052,
+    "name": "Asian Film 5",
+    "category_id": "5",
+    "stream_icon": "http://img.example/m5052.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5053,
+    "name": "Asian Film 6",
+    "category_id": "5",
+    "stream_icon": "http://img.example/m5053.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5054,
+    "name": "Asian Film 7",
+    "category_id": "5",
+    "stream_icon": "http://img.example/m5054.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   },
+   {
+    "stream_id": 5055,
+    "name": "Asian Film 8",
+    "category_id": "5",
+    "stream_icon": "http://img.example/m5055.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5"
+   }
+  ],
+  "get_vod_info|5048": {
+   "info": {
+    "plot": "Plot of Asian Film 1",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5049": {
+   "info": {
+    "plot": "Plot of Asian Film 2",
+    "duration_secs": 10449
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5050": {
+   "info": {
+    "plot": "Plot of Asian Film 3",
+    "duration_secs": 10450
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5051": {
+   "info": {
+    "plot": "Plot of Asian Film 4",
+    "duration_secs": 10451
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5052": {
+   "info": {
+    "plot": "Plot of Asian Film 5",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5053": {
+   "info": {
+    "plot": "Plot of Asian Film 6",
+    "duration_secs": 10453
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5054": {
+   "info": {
+    "plot": "Plot of Asian Film 7",
+    "duration_secs": 10454
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_info|5055": {
+   "info": {
+    "plot": "Plot of Asian Film 8",
+    "duration_secs": 10455
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_streams|6": [
+   {
+    "stream_id": 5056,
+    "name": "Adult 1",
+    "category_id": "6",
+    "stream_icon": "http://img.example/m5056.jpg",
+    "container_extension": "mp4",
+    "rating": "9"
+   },
+   {
+    "stream_id": 5057,
+    "name": "Adult 2",
+    "category_id": "6",
+    "stream_icon": "http://img.example/m5057.jpg",
+    "container_extension": "mp4",
+    "rating": "9"
+   },
+   {
+    "stream_id": 5058,
+    "name": "Adult 3",
+    "category_id": "6",
+    "stream_icon": "http://img.example/m5058.jpg",
+    "container_extension": "mp4",
+    "rating": "9"
+   },
+   {
+    "stream_id": 5059,
+    "name": "Adult 4",
+    "category_id": "6",
+    "stream_icon": "http://img.example/m5059.jpg",
+    "container_extension": "mp4",
+    "rating": "9"
+   },
+   {
+    "stream_id": 5060,
+    "name": "Adult 5",
+    "category_id": "6",
+    "stream_icon": "http://img.example/m5060.jpg",
+    "container_extension": "mp4",
+    "rating": "9"
+   },
+   {
+    "stream_id": 5061,
+    "name": "Adult 6",
+    "category_id": "6",
+    "stream_icon": "http://img.example/m5061.jpg",
+    "container_extension": "mp4",
+    "rating": "9"
+   },
+   {
+    "stream_id": 5062,
+    "name": "Adult 7",
+    "category_id": "6",
+    "stream_icon": "http://img.example/m5062.jpg",
+    "container_extension": "mp4",
+    "rating": "9"
+   },
+   {
+    "stream_id": 5063,
+    "name": "Adult 8",
+    "category_id": "6",
+    "stream_icon": "http://img.example/m5063.jpg",
+    "container_extension": "mp4",
+    "rating": "9"
+   }
+  ],
+  "get_vod_info|5056": {
+   "info": {
+    "plot": "Plot of Adult 1",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5057": {
+   "info": {
+    "plot": "Plot of Adult 2",
+    "duration_secs": 10457
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5058": {
+   "info": {
+    "plot": "Plot of Adult 3",
+    "duration_secs": 10458
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5059": {
+   "info": {
+    "plot": "Plot of Adult 4",
+    "duration_secs": 10459
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5060": {
+   "info": {
+    "plot": "Plot of Adult 5",
+    "duration_secs": ""
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5061": {
+   "info": {
+    "plot": "Plot of Adult 6",
+    "duration_secs": 10461
+   },
+   "movie_data": {
+    "container_extension": "avi"
+   }
+  },
+  "get_vod_info|5062": {
+   "info": {
+    "plot": "Plot of Adult 7",
+    "duration_secs": 10462
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_vod_info|5063": {
+   "info": {
+    "plot": "Plot of Adult 8",
+    "duration_secs": 10463
+   },
+   "movie_data": {
+    "container_extension": ""
+   }
+  },
+  "get_series|1": [
+   {
+    "series_id": 801,
+    "name": "Drama Show 1 (2019)",
+    "category_id": "1",
+    "cover": "http://img.example/s801.jpg",
+    "plot": "Plot of Drama Show 1 (2019)",
+    "rating": "7"
+   },
+   {
+    "series_id": 802,
+    "name": "Drama Show 2 (2019)",
+    "category_id": "1",
+    "cover": "http://img.example/s802.jpg",
+    "plot": "Plot of Drama Show 2 (2019)",
+    "rating": "7.5"
+   },
+   {
+    "series_id": 803,
+    "name": "Drama Show 3 (2019)",
+    "category_id": "1",
+    "cover": "http://img.example/s803.jpg",
+    "plot": "Plot of Drama Show 3 (2019)",
+    "rating": "8"
+   },
+   {
+    "series_id": 804,
+    "name": "Drama Show 4 (2019)",
+    "category_id": "1",
+    "cover": "http://img.example/s804.jpg",
+    "plot": "Plot of Drama Show 4 (2019)",
+    "rating": "7"
+   },
+   {
+    "series_id": 805,
+    "name": "Drama Show 5 (2019)",
+    "category_id": "1",
+    "cover": "http://img.example/s805.jpg",
+    "plot": "Plot of Drama Show 5 (2019)",
+    "rating": "7.5"
+   },
+   {
+    "series_id": 806,
+    "name": "Drama Show 6 (2019)",
+    "category_id": "1",
+    "cover": "http://img.example/s806.jpg",
+    "plot": "Plot of Drama Show 6 (2019)",
+    "rating": "8"
+   },
+   {
+    "series_id": 807,
+    "name": "Drama Show 7 (2019)",
+    "category_id": "1",
+    "cover": "http://img.example/s807.jpg",
+    "plot": "Plot of Drama Show 7 (2019)",
+    "rating": "7"
+   },
+   {
+    "series_id": 808,
+    "name": "Drama Show 8 (2019)",
+    "category_id": "1",
+    "cover": "http://img.example/s808.jpg",
+    "plot": "Plot of Drama Show 8 (2019)",
+    "rating": "7.5"
+   }
+  ],
+  "get_series|2": [
+   {
+    "series_id": 809,
+    "name": "4K-TOP - Drama Show 1 (2019)",
+    "category_id": "2",
+    "cover": "http://img.example/s809.jpg",
+    "plot": "Plot of 4K-TOP - Drama Show 1 (2019)",
+    "rating": "8"
+   },
+   {
+    "series_id": 810,
+    "name": "Kids Show 1",
+    "category_id": "2",
+    "cover": "http://img.example/s810.jpg",
+    "plot": "Plot of Kids Show 1",
+    "rating": "7"
+   },
+   {
+    "series_id": 811,
+    "name": "Kids Show 2",
+    "category_id": "2",
+    "cover": "http://img.example/s811.jpg",
+    "plot": "Plot of Kids Show 2",
+    "rating": "7.5"
+   },
+   {
+    "series_id": 812,
+    "name": "Kids Show 3",
+    "category_id": "2",
+    "cover": "http://img.example/s812.jpg",
+    "plot": "Plot of Kids Show 3",
+    "rating": "8"
+   },
+   {
+    "series_id": 813,
+    "name": "Kids Show 4",
+    "category_id": "2",
+    "cover": "http://img.example/s813.jpg",
+    "plot": "Plot of Kids Show 4",
+    "rating": "7"
+   },
+   {
+    "series_id": 814,
+    "name": "Kids Show 5",
+    "category_id": "2",
+    "cover": "http://img.example/s814.jpg",
+    "plot": "Plot of Kids Show 5",
+    "rating": "7.5"
+   },
+   {
+    "series_id": 815,
+    "name": "Kids Show 6",
+    "category_id": "2",
+    "cover": "http://img.example/s815.jpg",
+    "plot": "Plot of Kids Show 6",
+    "rating": "8"
+   },
+   {
+    "series_id": 816,
+    "name": "Kids Show 7",
+    "category_id": "2",
+    "cover": "http://img.example/s816.jpg",
+    "plot": "Plot of Kids Show 7",
+    "rating": "7"
+   }
+  ],
+  "get_series_info|801": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "80111",
+      "episode_num": 1,
+      "title": "Drama Show 1 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80111.jpg"
+      }
+     },
+     {
+      "id": "80112",
+      "episode_num": 2,
+      "title": "Drama Show 1 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80112.jpg"
+      }
+     },
+     {
+      "id": "80113",
+      "episode_num": 3,
+      "title": "Drama Show 1 (2019) S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e80113.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "80121",
+      "episode_num": 1,
+      "title": "Drama Show 1 (2019) S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80121.jpg"
+      }
+     },
+     {
+      "id": "80122",
+      "episode_num": 2,
+      "title": "Drama Show 1 (2019) S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80122.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|802": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "80211",
+      "episode_num": 1,
+      "title": "Drama Show 2 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80211.jpg"
+      }
+     },
+     {
+      "id": "80212",
+      "episode_num": 2,
+      "title": "Drama Show 2 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80212.jpg"
+      }
+     },
+     {
+      "id": "80213",
+      "episode_num": 3,
+      "title": "Drama Show 2 (2019) S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e80213.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "80221",
+      "episode_num": 1,
+      "title": "Drama Show 2 (2019) S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80221.jpg"
+      }
+     },
+     {
+      "id": "80222",
+      "episode_num": 2,
+      "title": "Drama Show 2 (2019) S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80222.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|803": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c.jpg"
+    }
+   ],
+   "episodes": {
+    "0": [
+     {
+      "id": "80301",
+      "episode_num": 1,
+      "title": "Drama Show 3 (2019) S0E1",
+      "container_extension": "mp4",
+      "season": 0,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80301.jpg"
+      }
+     }
+    ],
+    "1": [
+     {
+      "id": "80311",
+      "episode_num": 1,
+      "title": "Drama Show 3 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80311.jpg"
+      }
+     },
+     {
+      "id": "80312",
+      "episode_num": 2,
+      "title": "Drama Show 3 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80312.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|804": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "80411",
+      "episode_num": 1,
+      "title": "Drama Show 4 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80411.jpg"
+      }
+     },
+     {
+      "id": "80412",
+      "episode_num": 2,
+      "title": "Drama Show 4 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80412.jpg"
+      }
+     },
+     {
+      "id": "80413",
+      "episode_num": 3,
+      "title": "Drama Show 4 (2019) S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e80413.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "80421",
+      "episode_num": 1,
+      "title": "Drama Show 4 (2019) S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80421.jpg"
+      }
+     },
+     {
+      "id": "80422",
+      "episode_num": 2,
+      "title": "Drama Show 4 (2019) S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80422.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|805": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "80511",
+      "episode_num": 1,
+      "title": "Drama Show 5 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80511.jpg"
+      }
+     },
+     {
+      "id": "80512",
+      "episode_num": 2,
+      "title": "Drama Show 5 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80512.jpg"
+      }
+     },
+     {
+      "id": "80513",
+      "episode_num": 3,
+      "title": "Drama Show 5 (2019) S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e80513.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "80521",
+      "episode_num": 1,
+      "title": "Drama Show 5 (2019) S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80521.jpg"
+      }
+     },
+     {
+      "id": "80522",
+      "episode_num": 2,
+      "title": "Drama Show 5 (2019) S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80522.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|806": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "80611",
+      "episode_num": 1,
+      "title": "Drama Show 6 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80611.jpg"
+      }
+     },
+     {
+      "id": "80612",
+      "episode_num": 2,
+      "title": "Drama Show 6 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80612.jpg"
+      }
+     },
+     {
+      "id": "80613",
+      "episode_num": 3,
+      "title": "Drama Show 6 (2019) S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e80613.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "80621",
+      "episode_num": 1,
+      "title": "Drama Show 6 (2019) S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80621.jpg"
+      }
+     },
+     {
+      "id": "80622",
+      "episode_num": 2,
+      "title": "Drama Show 6 (2019) S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80622.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|807": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "80711",
+      "episode_num": 1,
+      "title": "Drama Show 7 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80711.jpg"
+      }
+     },
+     {
+      "id": "80712",
+      "episode_num": 2,
+      "title": "Drama Show 7 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80712.jpg"
+      }
+     },
+     {
+      "id": "80713",
+      "episode_num": 3,
+      "title": "Drama Show 7 (2019) S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e80713.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "80721",
+      "episode_num": 1,
+      "title": "Drama Show 7 (2019) S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80721.jpg"
+      }
+     },
+     {
+      "id": "80722",
+      "episode_num": 2,
+      "title": "Drama Show 7 (2019) S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80722.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|808": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "80811",
+      "episode_num": 1,
+      "title": "Drama Show 8 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80811.jpg"
+      }
+     },
+     {
+      "id": "80812",
+      "episode_num": 2,
+      "title": "Drama Show 8 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80812.jpg"
+      }
+     },
+     {
+      "id": "80813",
+      "episode_num": 3,
+      "title": "Drama Show 8 (2019) S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e80813.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "80821",
+      "episode_num": 1,
+      "title": "Drama Show 8 (2019) S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80821.jpg"
+      }
+     },
+     {
+      "id": "80822",
+      "episode_num": 2,
+      "title": "Drama Show 8 (2019) S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80822.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|809": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "80911",
+      "episode_num": 1,
+      "title": "4K-TOP - Drama Show 1 (2019) S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80911.jpg"
+      }
+     },
+     {
+      "id": "80912",
+      "episode_num": 2,
+      "title": "4K-TOP - Drama Show 1 (2019) S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80912.jpg"
+      }
+     },
+     {
+      "id": "80913",
+      "episode_num": 3,
+      "title": "4K-TOP - Drama Show 1 (2019) S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e80913.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "80921",
+      "episode_num": 1,
+      "title": "4K-TOP - Drama Show 1 (2019) S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e80921.jpg"
+      }
+     },
+     {
+      "id": "80922",
+      "episode_num": 2,
+      "title": "4K-TOP - Drama Show 1 (2019) S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e80922.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|810": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "81011",
+      "episode_num": 1,
+      "title": "Kids Show 1 S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81011.jpg"
+      }
+     },
+     {
+      "id": "81012",
+      "episode_num": 2,
+      "title": "Kids Show 1 S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81012.jpg"
+      }
+     },
+     {
+      "id": "81013",
+      "episode_num": 3,
+      "title": "Kids Show 1 S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e81013.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "81021",
+      "episode_num": 1,
+      "title": "Kids Show 1 S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81021.jpg"
+      }
+     },
+     {
+      "id": "81022",
+      "episode_num": 2,
+      "title": "Kids Show 1 S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81022.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|811": {
+   "seasons": [],
+   "episodes": []
+  },
+  "get_series_info|812": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "81211",
+      "episode_num": 1,
+      "title": "Kids Show 3 S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81211.jpg"
+      }
+     },
+     {
+      "id": "81212",
+      "episode_num": 2,
+      "title": "Kids Show 3 S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81212.jpg"
+      }
+     },
+     {
+      "id": "81213",
+      "episode_num": 3,
+      "title": "Kids Show 3 S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e81213.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "81221",
+      "episode_num": 1,
+      "title": "Kids Show 3 S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81221.jpg"
+      }
+     },
+     {
+      "id": "81222",
+      "episode_num": 2,
+      "title": "Kids Show 3 S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81222.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|813": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "81311",
+      "episode_num": 1,
+      "title": "Kids Show 4 S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81311.jpg"
+      }
+     },
+     {
+      "id": "81312",
+      "episode_num": 2,
+      "title": "Kids Show 4 S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81312.jpg"
+      }
+     },
+     {
+      "id": "81313",
+      "episode_num": 3,
+      "title": "Kids Show 4 S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e81313.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "81321",
+      "episode_num": 1,
+      "title": "Kids Show 4 S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81321.jpg"
+      }
+     },
+     {
+      "id": "81322",
+      "episode_num": 2,
+      "title": "Kids Show 4 S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81322.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|814": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "81411",
+      "episode_num": 1,
+      "title": "Kids Show 5 S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81411.jpg"
+      }
+     },
+     {
+      "id": "81412",
+      "episode_num": 2,
+      "title": "Kids Show 5 S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81412.jpg"
+      }
+     },
+     {
+      "id": "81413",
+      "episode_num": 3,
+      "title": "Kids Show 5 S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e81413.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "81421",
+      "episode_num": 1,
+      "title": "Kids Show 5 S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81421.jpg"
+      }
+     },
+     {
+      "id": "81422",
+      "episode_num": 2,
+      "title": "Kids Show 5 S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81422.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|815": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "81511",
+      "episode_num": 1,
+      "title": "Kids Show 6 S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81511.jpg"
+      }
+     },
+     {
+      "id": "81512",
+      "episode_num": 2,
+      "title": "Kids Show 6 S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81512.jpg"
+      }
+     },
+     {
+      "id": "81513",
+      "episode_num": 3,
+      "title": "Kids Show 6 S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e81513.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "81521",
+      "episode_num": 1,
+      "title": "Kids Show 6 S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81521.jpg"
+      }
+     },
+     {
+      "id": "81522",
+      "episode_num": 2,
+      "title": "Kids Show 6 S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81522.jpg"
+      }
+     }
+    ]
+   }
+  },
+  "get_series_info|816": {
+   "seasons": [
+    {
+     "season_number": 1,
+     "name": "Season 1",
+     "cover": "http://img.example/c1.jpg"
+    },
+    {
+     "season_number": 2,
+     "name": ""
+    }
+   ],
+   "episodes": {
+    "1": [
+     {
+      "id": "81611",
+      "episode_num": 1,
+      "title": "Kids Show 7 S1E1",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81611.jpg"
+      }
+     },
+     {
+      "id": "81612",
+      "episode_num": 2,
+      "title": "Kids Show 7 S1E2",
+      "container_extension": "mkv",
+      "season": 1,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81612.jpg"
+      }
+     },
+     {
+      "id": "81613",
+      "episode_num": 3,
+      "title": "Kids Show 7 S1E3",
+      "container_extension": "mp4",
+      "season": 1,
+      "info": {
+       "duration_secs": "3600",
+       "plot": "Episode 3",
+       "movie_image": "http://img.example/e81613.jpg"
+      }
+     }
+    ],
+    "2": [
+     {
+      "id": "81621",
+      "episode_num": 1,
+      "title": "Kids Show 7 S2E1",
+      "container_extension": "mp4",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 1",
+       "movie_image": "http://img.example/e81621.jpg"
+      }
+     },
+     {
+      "id": "81622",
+      "episode_num": 2,
+      "title": "Kids Show 7 S2E2",
+      "container_extension": "mkv",
+      "season": 2,
+      "info": {
+       "duration_secs": 2700,
+       "plot": "Episode 2",
+       "movie_image": "http://img.example/e81622.jpg"
+      }
+     }
+    ]
+   }
+  }
+ },
+ "playlist": "#EXTM3U url-tvg=\"http://guides.example/uk.xml.gz\"\n#EXTINF:-1 tvg-id=\"bbc1.uk\" tvg-logo=\"http://img.example/bbc1.png\" tvg-chno=\"101\" group-title=\"UK| NEWS\",UK| BBC One (1080p50)\nhttp://host.example/u/p/101.ts\n#EXTINF:-1 tvg-id=\"bbc1.uk\" group-title=\"UK| NEWS\",UK| BBC One (720p25)\nhttp://host.example/u/p/102.ts\n#EXTINF:-1 group-title=\"UK| NEWS\" catchup-type=\"flussonic\" catchup-days=\"3\",UK| Sky News\nhttp://host.example/u/p/103.ts\n#EXTINF:-1 group-title=\"Sports\",TNT Sports Ultimate (OFFLINE)\nhttp://host.example/u/p/104.ts\n#EXTINF:-1,No Group Channel\nhttp://host.example/u/p/105.m3u8\n#EXTINF:-1 tvg-logo=\"http://img.example/p1.jpg\" group-title=\"Movies\",Playlist Movie One (2018)\nhttp://host.example/movie/u/p/201.mp4\n#EXTINF:-1 group-title=\"Movies\",Playlist Movie Two (2019)\nhttp://host.example/movie/u/p/202.mkv\n#EXTINF:-1 group-title=\"Movies\",Playlist Movie One (2018)\nhttp://host.example/movie/u/p/203.mp4\n#EXTINF:-1 tvg-logo=\"http://img.example/ps.jpg\" group-title=\"Shows\",The Playlist Show S01E01 Pilot\nhttp://host.example/series/u/p/301.mkv\n#EXTINF:-1 group-title=\"Shows\",The Playlist Show S01E02 Second\nhttp://host.example/series/u/p/302.mkv\n#EXTINF:-1 group-title=\"Shows\",The Playlist Show S02E01\nhttp://host.example/series/u/p/303.mkv\n#EXTINF:-1 group-title=\"Shows\",Another Show 1x05\nhttp://host.example/series/u/p/304.mp4",
+ "guide": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<tv>\n<channel id=\"ch0.guide\"><display-name>Channel 0</display-name></channel>\n<programme start=\"20261002040000 +0000\" stop=\"20261002060000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0--4</title></programme>\n<programme start=\"20261002060000 +0000\" stop=\"20261002080000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0--3</title><desc>About Show 0--3</desc></programme>\n<programme start=\"20261002080000 +0000\" stop=\"20261002100000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0--2</title></programme>\n<programme start=\"20261002100000 +0000\" stop=\"20261002120000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0--1</title></programme>\n<programme start=\"20261002120000 +0000\" stop=\"20261002140000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">News &amp; Weather 0</title><desc>About News &amp; Weather 0</desc></programme>\n<programme start=\"20261002140000 +0000\" stop=\"20261002160000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-1</title></programme>\n<programme start=\"20261002160000 +0000\" stop=\"20261002180000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-2</title></programme>\n<programme start=\"20261002180000 +0000\" stop=\"20261002200000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-3</title><desc>About Show 0-3</desc></programme>\n<programme start=\"20261002200000 +0000\" stop=\"20261002220000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-4</title></programme>\n<programme start=\"20261002220000 +0000\" stop=\"20261003000000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">News &amp; Weather 5</title></programme>\n<programme start=\"20261003000000 +0000\" stop=\"20261003020000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-6</title><desc>About Show 0-6</desc></programme>\n<programme start=\"20261003020000 +0000\" stop=\"20261003040000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-7</title></programme>\n<programme start=\"20261003040000 +0000\" stop=\"20261003060000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-8</title></programme>\n<programme start=\"20261003060000 +0000\" stop=\"20261003080000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-9</title><desc>About Show 0-9</desc></programme>\n<programme start=\"20261003080000 +0000\" stop=\"20261003100000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">News &amp; Weather 10</title></programme>\n<programme start=\"20261003100000 +0000\" stop=\"20261003120000 +0000\" channel=\"ch0.guide\"><title lang=\"en\">Show 0-11</title></programme>\n<channel id=\"ch1.guide\"><display-name>Channel 1</display-name></channel>\n<programme start=\"20261002041000 +0000\" stop=\"20261002061000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1--4</title></programme>\n<programme start=\"20261002061000 +0000\" stop=\"20261002081000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1--3</title><desc>About Show 1--3</desc></programme>\n<programme start=\"20261002081000 +0000\" stop=\"20261002101000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1--2</title></programme>\n<programme start=\"20261002101000 +0000\" stop=\"20261002121000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1--1</title></programme>\n<programme start=\"20261002121000 +0000\" stop=\"20261002141000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">News &amp; Weather 0</title><desc>About News &amp; Weather 0</desc></programme>\n<programme start=\"20261002141000 +0000\" stop=\"20261002161000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-1</title></programme>\n<programme start=\"20261002161000 +0000\" stop=\"20261002181000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-2</title></programme>\n<programme start=\"20261002181000 +0000\" stop=\"20261002201000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-3</title><desc>About Show 1-3</desc></programme>\n<programme start=\"20261002201000 +0000\" stop=\"20261002221000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-4</title></programme>\n<programme start=\"20261002221000 +0000\" stop=\"20261003001000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">News &amp; Weather 5</title></programme>\n<programme start=\"20261003001000 +0000\" stop=\"20261003021000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-6</title><desc>About Show 1-6</desc></programme>\n<programme start=\"20261003021000 +0000\" stop=\"20261003041000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-7</title></programme>\n<programme start=\"20261003041000 +0000\" stop=\"20261003061000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-8</title></programme>\n<programme start=\"20261003061000 +0000\" stop=\"20261003081000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-9</title><desc>About Show 1-9</desc></programme>\n<programme start=\"20261003081000 +0000\" stop=\"20261003101000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">News &amp; Weather 10</title></programme>\n<programme start=\"20261003101000 +0000\" stop=\"20261003121000 +0000\" channel=\"ch1.guide\"><title lang=\"en\">Show 1-11</title></programme>\n<channel id=\"ch2.guide\"><display-name>Channel 2</display-name></channel>\n<programme start=\"20261002042000 +0000\" stop=\"20261002062000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2--4</title></programme>\n<programme start=\"20261002062000 +0000\" stop=\"20261002082000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2--3</title><desc>About Show 2--3</desc></programme>\n<programme start=\"20261002082000 +0000\" stop=\"20261002102000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2--2</title></programme>\n<programme start=\"20261002102000 +0000\" stop=\"20261002122000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2--1</title></programme>\n<programme start=\"20261002122000 +0000\" stop=\"20261002142000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">News &amp; Weather 0</title><desc>About News &amp; Weather 0</desc></programme>\n<programme start=\"20261002142000 +0000\" stop=\"20261002162000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-1</title></programme>\n<programme start=\"20261002162000 +0000\" stop=\"20261002182000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-2</title></programme>\n<programme start=\"20261002182000 +0000\" stop=\"20261002202000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-3</title><desc>About Show 2-3</desc></programme>\n<programme start=\"20261002202000 +0000\" stop=\"20261002222000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-4</title></programme>\n<programme start=\"20261002222000 +0000\" stop=\"20261003002000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">News &amp; Weather 5</title></programme>\n<programme start=\"20261003002000 +0000\" stop=\"20261003022000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-6</title><desc>About Show 2-6</desc></programme>\n<programme start=\"20261003022000 +0000\" stop=\"20261003042000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-7</title></programme>\n<programme start=\"20261003042000 +0000\" stop=\"20261003062000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-8</title></programme>\n<programme start=\"20261003062000 +0000\" stop=\"20261003082000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-9</title><desc>About Show 2-9</desc></programme>\n<programme start=\"20261003082000 +0000\" stop=\"20261003102000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">News &amp; Weather 10</title></programme>\n<programme start=\"20261003102000 +0000\" stop=\"20261003122000 +0000\" channel=\"ch2.guide\"><title lang=\"en\">Show 2-11</title></programme>\n<channel id=\"ch3.guide\"><display-name>Channel 3</display-name></channel>\n<programme start=\"20261002043000 +0000\" stop=\"20261002063000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3--4</title></programme>\n<programme start=\"20261002063000 +0000\" stop=\"20261002083000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3--3</title><desc>About Show 3--3</desc></programme>\n<programme start=\"20261002083000 +0000\" stop=\"20261002103000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3--2</title></programme>\n<programme start=\"20261002103000 +0000\" stop=\"20261002123000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3--1</title></programme>\n<programme start=\"20261002123000 +0000\" stop=\"20261002143000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">News &amp; Weather 0</title><desc>About News &amp; Weather 0</desc></programme>\n<programme start=\"20261002143000 +0000\" stop=\"20261002163000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-1</title></programme>\n<programme start=\"20261002163000 +0000\" stop=\"20261002183000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-2</title></programme>\n<programme start=\"20261002183000 +0000\" stop=\"20261002203000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-3</title><desc>About Show 3-3</desc></programme>\n<programme start=\"20261002203000 +0000\" stop=\"20261002223000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-4</title></programme>\n<programme start=\"20261002223000 +0000\" stop=\"20261003003000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">News &amp; Weather 5</title></programme>\n<programme start=\"20261003003000 +0000\" stop=\"20261003023000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-6</title><desc>About Show 3-6</desc></programme>\n<programme start=\"20261003023000 +0000\" stop=\"20261003043000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-7</title></programme>\n<programme start=\"20261003043000 +0000\" stop=\"20261003063000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-8</title></programme>\n<programme start=\"20261003063000 +0000\" stop=\"20261003083000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-9</title><desc>About Show 3-9</desc></programme>\n<programme start=\"20261003083000 +0000\" stop=\"20261003103000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">News &amp; Weather 10</title></programme>\n<programme start=\"20261003103000 +0000\" stop=\"20261003123000 +0000\" channel=\"ch3.guide\"><title lang=\"en\">Show 3-11</title></programme>\n<channel id=\"ch4.guide\"><display-name>Channel 4</display-name></channel>\n<programme start=\"20261002044000 +0000\" stop=\"20261002064000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4--4</title></programme>\n<programme start=\"20261002064000 +0000\" stop=\"20261002084000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4--3</title><desc>About Show 4--3</desc></programme>\n<programme start=\"20261002084000 +0000\" stop=\"20261002104000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4--2</title></programme>\n<programme start=\"20261002104000 +0000\" stop=\"20261002124000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4--1</title></programme>\n<programme start=\"20261002124000 +0000\" stop=\"20261002144000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">News &amp; Weather 0</title><desc>About News &amp; Weather 0</desc></programme>\n<programme start=\"20261002144000 +0000\" stop=\"20261002164000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-1</title></programme>\n<programme start=\"20261002164000 +0000\" stop=\"20261002184000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-2</title></programme>\n<programme start=\"20261002184000 +0000\" stop=\"20261002204000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-3</title><desc>About Show 4-3</desc></programme>\n<programme start=\"20261002204000 +0000\" stop=\"20261002224000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-4</title></programme>\n<programme start=\"20261002224000 +0000\" stop=\"20261003004000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">News &amp; Weather 5</title></programme>\n<programme start=\"20261003004000 +0000\" stop=\"20261003024000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-6</title><desc>About Show 4-6</desc></programme>\n<programme start=\"20261003024000 +0000\" stop=\"20261003044000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-7</title></programme>\n<programme start=\"20261003044000 +0000\" stop=\"20261003064000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-8</title></programme>\n<programme start=\"20261003064000 +0000\" stop=\"20261003084000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-9</title><desc>About Show 4-9</desc></programme>\n<programme start=\"20261003084000 +0000\" stop=\"20261003104000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">News &amp; Weather 10</title></programme>\n<programme start=\"20261003104000 +0000\" stop=\"20261003124000 +0000\" channel=\"ch4.guide\"><title lang=\"en\">Show 4-11</title></programme>\n<channel id=\"ch5.guide\"><display-name>Channel 5</display-name></channel>\n<programme start=\"20261002045000 +0000\" stop=\"20261002065000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5--4</title></programme>\n<programme start=\"20261002065000 +0000\" stop=\"20261002085000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5--3</title><desc>About Show 5--3</desc></programme>\n<programme start=\"20261002085000 +0000\" stop=\"20261002105000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5--2</title></programme>\n<programme start=\"20261002105000 +0000\" stop=\"20261002125000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5--1</title></programme>\n<programme start=\"20261002125000 +0000\" stop=\"20261002145000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">News &amp; Weather 0</title><desc>About News &amp; Weather 0</desc></programme>\n<programme start=\"20261002145000 +0000\" stop=\"20261002165000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-1</title></programme>\n<programme start=\"20261002165000 +0000\" stop=\"20261002185000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-2</title></programme>\n<programme start=\"20261002185000 +0000\" stop=\"20261002205000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-3</title><desc>About Show 5-3</desc></programme>\n<programme start=\"20261002205000 +0000\" stop=\"20261002225000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-4</title></programme>\n<programme start=\"20261002225000 +0000\" stop=\"20261003005000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">News &amp; Weather 5</title></programme>\n<programme start=\"20261003005000 +0000\" stop=\"20261003025000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-6</title><desc>About Show 5-6</desc></programme>\n<programme start=\"20261003025000 +0000\" stop=\"20261003045000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-7</title></programme>\n<programme start=\"20261003045000 +0000\" stop=\"20261003065000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-8</title></programme>\n<programme start=\"20261003065000 +0000\" stop=\"20261003085000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-9</title><desc>About Show 5-9</desc></programme>\n<programme start=\"20261003085000 +0000\" stop=\"20261003105000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">News &amp; Weather 10</title></programme>\n<programme start=\"20261003105000 +0000\" stop=\"20261003125000 +0000\" channel=\"ch5.guide\"><title lang=\"en\">Show 5-11</title></programme>\n<channel id=\"ch6.guide\"><display-name>Channel 6</display-name></channel>\n<programme start=\"20261002050000 +0000\" stop=\"20261002070000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6--4</title></programme>\n<programme start=\"20261002070000 +0000\" stop=\"20261002090000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6--3</title><desc>About Show 6--3</desc></programme>\n<programme start=\"20261002090000 +0000\" stop=\"20261002110000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6--2</title></programme>\n<programme start=\"20261002110000 +0000\" stop=\"20261002130000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6--1</title></programme>\n<programme start=\"20261002130000 +0000\" stop=\"20261002150000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">News &amp; Weather 0</title><desc>About News &amp; Weather 0</desc></programme>\n<programme start=\"20261002150000 +0000\" stop=\"20261002170000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-1</title></programme>\n<programme start=\"20261002170000 +0000\" stop=\"20261002190000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-2</title></programme>\n<programme start=\"20261002190000 +0000\" stop=\"20261002210000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-3</title><desc>About Show 6-3</desc></programme>\n<programme start=\"20261002210000 +0000\" stop=\"20261002230000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-4</title></programme>\n<programme start=\"20261002230000 +0000\" stop=\"20261003010000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">News &amp; Weather 5</title></programme>\n<programme start=\"20261003010000 +0000\" stop=\"20261003030000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-6</title><desc>About Show 6-6</desc></programme>\n<programme start=\"20261003030000 +0000\" stop=\"20261003050000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-7</title></programme>\n<programme start=\"20261003050000 +0000\" stop=\"20261003070000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-8</title></programme>\n<programme start=\"20261003070000 +0000\" stop=\"20261003090000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-9</title><desc>About Show 6-9</desc></programme>\n<programme start=\"20261003090000 +0000\" stop=\"20261003110000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">News &amp; Weather 10</title></programme>\n<programme start=\"20261003110000 +0000\" stop=\"20261003130000 +0000\" channel=\"ch6.guide\"><title lang=\"en\">Show 6-11</title></programme>\n<programme start=\"20261002120000 +0000\" stop=\"20261002130000 +0000\" channel=\"unknown.guide\"><title>Unwanted</title></programme>\n</tv>",
+ "now": 1790942400000
+}

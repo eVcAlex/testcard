@@ -9,6 +9,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "vectors": "vitest run src/__tests__/vectors.test.ts -u",
+    "vectors:db": "vitest run src/__tests__/dbVectors.test.ts src/__tests__/migrationVectors.test.ts -u",
     "eval:categories": "vitest run --config vitest.eval.config.ts"
   },
   "dependencies": {

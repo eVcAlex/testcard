@@ -1,0 +1,761 @@
+[
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTM3U url-tvg=\"https://example.com/epg.xml.gz\"\n#EXTINF:-1 tvg-id=\"tnt1\" tvg-logo=\"https://example.com/tnt1.png\" group-title=\"UK| TNT Sports ᴳᴬᴺᴶᴬ\" catchup-type=\"flussonic\" catchup-days=\"3\",TNT Sports 1 (1080p50)\nhttp://host/user/pass/token/1.ts\n#EXTINF:-1 group-title=\"CA| SPORTS PPV\",Rolex SailGP Championship\nhttp://host/user/pass/token/2.ts",
+   345
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {
+     "urlTvg": "https://example.com/epg.xml.gz"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "TNT Sports 1 (1080p50)",
+     "url": "http://host/user/pass/token/1.ts",
+     "attributes": {
+      "tvg-id": "tnt1",
+      "tvg-logo": "https://example.com/tnt1.png",
+      "group-title": "UK| TNT Sports ᴳᴬᴺᴶᴬ",
+      "catchup-type": "flussonic",
+      "catchup-days": "3"
+     },
+     "groupTitle": "UK| TNT Sports ᴳᴬᴺᴶᴬ"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Rolex SailGP Championship",
+     "url": "http://host/user/pass/token/2.ts",
+     "attributes": {
+      "group-title": "CA| SPORTS PPV"
+     },
+     "groupTitle": "CA| SPORTS PPV"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTM3U url-tvg=\"https://example.com/epg.xml.gz\"\n#EXTINF:-1 tvg-id=\"tnt1\" tvg-logo=\"https://example.com/tnt1.png\" group-title=\"UK| TNT Sports ᴳᴬᴺᴶᴬ\" catchup-type=\"flussonic\" catchup-days=\"3\",TNT Sports 1 (1080p50)\nhttp://host/user/pass/token/1.ts\n#EXTINF:-1 group-title=\"CA| SPORTS PPV\",Rolex SailGP Championship\nhttp://host/user/pass/token/2.ts",
+   7
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {
+     "urlTvg": "https://example.com/epg.xml.gz"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "TNT Sports 1 (1080p50)",
+     "url": "http://host/user/pass/token/1.ts",
+     "attributes": {
+      "tvg-id": "tnt1",
+      "tvg-logo": "https://example.com/tnt1.png",
+      "group-title": "UK| TNT Sports ᴳᴬᴺᴶᴬ",
+      "catchup-type": "flussonic",
+      "catchup-days": "3"
+     },
+     "groupTitle": "UK| TNT Sports ᴳᴬᴺᴶᴬ"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Rolex SailGP Championship",
+     "url": "http://host/user/pass/token/2.ts",
+     "attributes": {
+      "group-title": "CA| SPORTS PPV"
+     },
+     "groupTitle": "CA| SPORTS PPV"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTM3U url-tvg=\"https://example.com/epg.xml.gz\"\n#EXTINF:-1 tvg-id=\"tnt1\" tvg-logo=\"https://example.com/tnt1.png\" group-title=\"UK| TNT Sports ᴳᴬᴺᴶᴬ\" catchup-type=\"flussonic\" catchup-days=\"3\",TNT Sports 1 (1080p50)\nhttp://host/user/pass/token/1.ts\n#EXTINF:-1 group-title=\"CA| SPORTS PPV\",Rolex SailGP Championship\nhttp://host/user/pass/token/2.ts",
+   1
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {
+     "urlTvg": "https://example.com/epg.xml.gz"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "TNT Sports 1 (1080p50)",
+     "url": "http://host/user/pass/token/1.ts",
+     "attributes": {
+      "tvg-id": "tnt1",
+      "tvg-logo": "https://example.com/tnt1.png",
+      "group-title": "UK| TNT Sports ᴳᴬᴺᴶᴬ",
+      "catchup-type": "flussonic",
+      "catchup-days": "3"
+     },
+     "groupTitle": "UK| TNT Sports ᴳᴬᴺᴶᴬ"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Rolex SailGP Championship",
+     "url": "http://host/user/pass/token/2.ts",
+     "attributes": {
+      "group-title": "CA| SPORTS PPV"
+     },
+     "groupTitle": "CA| SPORTS PPV"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "﻿#EXTM3U\r\n\r\n#EXTINF:-1 tvg-id=\"a\" group-title=\"News\",Name, with comma\r\nhttp://h/1.ts\r\n#EXTVLCOPT:foo=bar\r\n#EXTINF:-1,Second\r\nhttp://h/2.m3u8\r\n#EXTM3U\r\n#EXTINF:-1,Orphan with no url\r\n",
+   182
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {}
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "with comma",
+     "url": "http://h/1.ts",
+     "attributes": {
+      "tvg-id": "a",
+      "group-title": "News"
+     },
+     "groupTitle": "News"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Second",
+     "url": "http://h/2.m3u8",
+     "attributes": {}
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "﻿#EXTM3U\r\n\r\n#EXTINF:-1 tvg-id=\"a\" group-title=\"News\",Name, with comma\r\nhttp://h/1.ts\r\n#EXTVLCOPT:foo=bar\r\n#EXTINF:-1,Second\r\nhttp://h/2.m3u8\r\n#EXTM3U\r\n#EXTINF:-1,Orphan with no url\r\n",
+   7
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {}
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "with comma",
+     "url": "http://h/1.ts",
+     "attributes": {
+      "tvg-id": "a",
+      "group-title": "News"
+     },
+     "groupTitle": "News"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Second",
+     "url": "http://h/2.m3u8",
+     "attributes": {}
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "﻿#EXTM3U\r\n\r\n#EXTINF:-1 tvg-id=\"a\" group-title=\"News\",Name, with comma\r\nhttp://h/1.ts\r\n#EXTVLCOPT:foo=bar\r\n#EXTINF:-1,Second\r\nhttp://h/2.m3u8\r\n#EXTM3U\r\n#EXTINF:-1,Orphan with no url\r\n",
+   1
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {}
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "with comma",
+     "url": "http://h/1.ts",
+     "attributes": {
+      "tvg-id": "a",
+      "group-title": "News"
+     },
+     "groupTitle": "News"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Second",
+     "url": "http://h/2.m3u8",
+     "attributes": {}
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTINF:-1 tvg-name=\"Only\" group-title=\"G\",Only\nhttp://h/only.ts\n",
+   65
+  ],
+  "out": [
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Only",
+     "url": "http://h/only.ts",
+     "attributes": {
+      "tvg-name": "Only",
+      "group-title": "G"
+     },
+     "groupTitle": "G"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTINF:-1 tvg-name=\"Only\" group-title=\"G\",Only\nhttp://h/only.ts\n",
+   7
+  ],
+  "out": [
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Only",
+     "url": "http://h/only.ts",
+     "attributes": {
+      "tvg-name": "Only",
+      "group-title": "G"
+     },
+     "groupTitle": "G"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTINF:-1 tvg-name=\"Only\" group-title=\"G\",Only\nhttp://h/only.ts\n",
+   1
+  ],
+  "out": [
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Only",
+     "url": "http://h/only.ts",
+     "attributes": {
+      "tvg-name": "Only",
+      "group-title": "G"
+     },
+     "groupTitle": "G"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTM3U\n#EXTINF:-1 group-title=\"Movies\",Some Movie (2020)\nhttp://h/movie/u/p/1.mp4\n#EXTINF:-1 group-title=\"Series\",Show S01E02 Title\nhttp://h/series/u/p/2.mkv\n",
+   159
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {}
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Some Movie (2020)",
+     "url": "http://h/movie/u/p/1.mp4",
+     "attributes": {
+      "group-title": "Movies"
+     },
+     "groupTitle": "Movies"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Show S01E02 Title",
+     "url": "http://h/series/u/p/2.mkv",
+     "attributes": {
+      "group-title": "Series"
+     },
+     "groupTitle": "Series"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTM3U\n#EXTINF:-1 group-title=\"Movies\",Some Movie (2020)\nhttp://h/movie/u/p/1.mp4\n#EXTINF:-1 group-title=\"Series\",Show S01E02 Title\nhttp://h/series/u/p/2.mkv\n",
+   7
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {}
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Some Movie (2020)",
+     "url": "http://h/movie/u/p/1.mp4",
+     "attributes": {
+      "group-title": "Movies"
+     },
+     "groupTitle": "Movies"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Show S01E02 Title",
+     "url": "http://h/series/u/p/2.mkv",
+     "attributes": {
+      "group-title": "Series"
+     },
+     "groupTitle": "Series"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "parseM3U",
+  "in": [
+   "#EXTM3U\n#EXTINF:-1 group-title=\"Movies\",Some Movie (2020)\nhttp://h/movie/u/p/1.mp4\n#EXTINF:-1 group-title=\"Series\",Show S01E02 Title\nhttp://h/series/u/p/2.mkv\n",
+   1
+  ],
+  "out": [
+   {
+    "kind": "header",
+    "header": {}
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Some Movie (2020)",
+     "url": "http://h/movie/u/p/1.mp4",
+     "attributes": {
+      "group-title": "Movies"
+     },
+     "groupTitle": "Movies"
+    }
+   },
+   {
+    "kind": "entry",
+    "entry": {
+     "rawName": "Show S01E02 Title",
+     "url": "http://h/series/u/p/2.mkv",
+     "attributes": {
+      "group-title": "Series"
+     },
+     "groupTitle": "Series"
+    }
+   }
+  ]
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "TNT Sports 1",
+    "url": "http://h/live/u/p/1.ts"
+   }
+  ],
+  "out": {
+   "kind": "live"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/live/u/p/1.ts"
+  ],
+  "out": "ts"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Some Movie (2020)",
+    "url": "http://h/movie/u/p/1.mp4"
+   }
+  ],
+  "out": {
+   "kind": "movie",
+   "title": "Some Movie (2020)",
+   "extension": "mp4"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/movie/u/p/1.mp4"
+  ],
+  "out": "mp4"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Some Movie (2020)",
+    "url": "http://h/movies/u/p/1.mkv?token=abc#frag"
+   }
+  ],
+  "out": {
+   "kind": "movie",
+   "title": "Some Movie (2020)",
+   "extension": "mkv"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/movies/u/p/1.mkv?token=abc#frag"
+  ],
+  "out": "mkv"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Show S01E02 Title",
+    "url": "http://h/series/u/p/2.mkv"
+   }
+  ],
+  "out": {
+   "kind": "episode",
+   "series": "Show",
+   "season": 1,
+   "episode": 2,
+   "title": "Title",
+   "extension": "mkv"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/series/u/p/2.mkv"
+  ],
+  "out": "mkv"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Show S1 E2",
+    "url": "http://h/x/2.avi"
+   }
+  ],
+  "out": {
+   "kind": "episode",
+   "series": "Show",
+   "season": 1,
+   "episode": 2,
+   "title": "",
+   "extension": "avi"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/x/2.avi"
+  ],
+  "out": "avi"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "The.Wire.S01E02E03.720p",
+    "url": "http://h/x/2.mp4"
+   }
+  ],
+  "out": {
+   "kind": "episode",
+   "series": "The Wire",
+   "season": 1,
+   "episode": 2,
+   "title": "720p",
+   "extension": "mp4"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/x/2.mp4"
+  ],
+  "out": "mp4"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Show 1x02 Pilot",
+    "url": "http://h/x/2.mp4"
+   }
+  ],
+  "out": {
+   "kind": "episode",
+   "series": "Show",
+   "season": 1,
+   "episode": 2,
+   "title": "Pilot",
+   "extension": "mp4"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/x/2.mp4"
+  ],
+  "out": "mp4"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Show 12x105",
+    "url": "http://h/x/2.mp4"
+   }
+  ],
+  "out": {
+   "kind": "episode",
+   "series": "Show",
+   "season": 12,
+   "episode": 105,
+   "title": "",
+   "extension": "mp4"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/x/2.mp4"
+  ],
+  "out": "mp4"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Just a film",
+    "url": "http://h/vod/u/p/9.m4v"
+   }
+  ],
+  "out": {
+   "kind": "movie",
+   "title": "Just a film",
+   "extension": "m4v"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/vod/u/p/9.m4v"
+  ],
+  "out": "m4v"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Live thing",
+    "url": "http://h/u/p/9.ts"
+   }
+  ],
+  "out": {
+   "kind": "live"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/u/p/9.ts"
+  ],
+  "out": "ts"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Live thing",
+    "url": "http://h/u/p/9.m3u8"
+   }
+  ],
+  "out": {
+   "kind": "live"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "http://h/u/p/9.m3u8"
+  ],
+  "out": "m3u8"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Not a url",
+    "url": "not a url"
+   }
+  ],
+  "out": {
+   "kind": "live"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "not a url"
+  ],
+  "out": null
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "Mixed CASE",
+    "url": "HTTP://H/MOVIE/U/P/1.MP4"
+   }
+  ],
+  "out": {
+   "kind": "movie",
+   "title": "Mixed CASE",
+   "extension": "mp4"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   "HTTP://H/MOVIE/U/P/1.MP4"
+  ],
+  "out": "mp4"
+ },
+ {
+  "fn": "classifyEntry",
+  "in": [
+   {
+    "rawName": "",
+    "url": ""
+   }
+  ],
+  "out": {
+   "kind": "live"
+  }
+ },
+ {
+  "fn": "urlExtension",
+  "in": [
+   ""
+  ],
+  "out": null
+ },
+ {
+  "fn": "seriesKey",
+  "in": [
+   "The Wire"
+  ],
+  "out": "the-wire"
+ },
+ {
+  "fn": "movieKey",
+  "in": [
+   "The Wire"
+  ],
+  "out": "the-wire"
+ },
+ {
+  "fn": "seriesKey",
+  "in": [
+   "The.Wire"
+  ],
+  "out": "the-wire"
+ },
+ {
+  "fn": "movieKey",
+  "in": [
+   "The.Wire"
+  ],
+  "out": "the-wire"
+ },
+ {
+  "fn": "seriesKey",
+  "in": [
+   "UK| The Wire (2002)"
+  ],
+  "out": "uk-the-wire"
+ },
+ {
+  "fn": "movieKey",
+  "in": [
+   "UK| The Wire (2002)"
+  ],
+  "out": "uk-the-wire-2002"
+ },
+ {
+  "fn": "seriesKey",
+  "in": [
+   "A  B"
+  ],
+  "out": "a-b"
+ },
+ {
+  "fn": "movieKey",
+  "in": [
+   "A  B"
+  ],
+  "out": "a-b"
+ },
+ {
+  "fn": "seriesKey",
+  "in": [
+   ""
+  ],
+  "out": ""
+ },
+ {
+  "fn": "movieKey",
+  "in": [
+   ""
+  ],
+  "out": ""
+ }
+]

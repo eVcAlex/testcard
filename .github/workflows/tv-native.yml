@@ -1,0 +1,72 @@
+name: TV native
+
+# The native Kotlin + Compose Fire TV app (apps/tv-native, ADR 0012). Checks run on every change to it or to the TypeScript
+# core whose test vectors it must reproduce. "Run workflow" builds a release APK as an artifact; nothing is published yet.
+on:
+  push:
+    paths: ["apps/tv-native/**", "packages/core/**", ".github/workflows/tv-native.yml"]
+  pull_request:
+    paths: ["apps/tv-native/**", "packages/core/**", ".github/workflows/tv-native.yml"]
+  workflow_dispatch:
+
+jobs:
+  # The TypeScript side of the contract: the committed test vectors must still be what the real TS core produces.
+  vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter "@testcard/core..."
+      - run: pnpm --filter @testcard/core exec vitest run src/__tests__/vectors.test.ts src/__tests__/dbVectors.test.ts src/__tests__/migrationVectors.test.ts
+
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/tv-native
+    steps:
+      - uses: actions/checkout@v4
+
+      # Every sentence the React Native app shows must be in the native app too (allowances: parity/strings-allow.txt).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node parity/strings-diff.mjs
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # No Gradle wrapper is checked in, so the action supplies Gradle itself.
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.3
+
+      - run: gradle :core:test :app:assembleDebug :app:lintDebug --no-daemon
+
+      - name: Build the release APK
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
+          fi
+          # The beta installs beside the old app under its own id, so the run number is a safe versionCode. The cutover
+          # build (same id as the old app) must use 100000 + run number to be a higher version than the old app.
+          gradle :app:assembleRelease -PbuildNumber=${{ github.run_number }} --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          name: testcard-tv-native
+          path: apps/tv-native/app/build/outputs/apk/release/*.apk

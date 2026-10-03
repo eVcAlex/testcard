@@ -1,0 +1,178 @@
+[
+ {
+  "fn": "isWatched",
+  "in": [
+   0,
+   100
+  ],
+  "out": false
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   0,
+   100
+  ],
+  "out": false
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   29,
+   100
+  ],
+  "out": false
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   29,
+   100
+  ],
+  "out": false
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   30,
+   100
+  ],
+  "out": false
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   30,
+   100
+  ],
+  "out": true
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   94,
+   100
+  ],
+  "out": false
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   94,
+   100
+  ],
+  "out": true
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   95,
+   100
+  ],
+  "out": true
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   95,
+   100
+  ],
+  "out": false
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   100,
+   100
+  ],
+  "out": true
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   100,
+   100
+  ],
+  "out": false
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   10,
+   0
+  ],
+  "out": false
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   10,
+   0
+  ],
+  "out": false
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   10,
+   null
+  ],
+  "out": false
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   10,
+   null
+  ],
+  "out": false
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   10,
+   null
+  ],
+  "out": false
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   10,
+   null
+  ],
+  "out": false
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   30,
+   600
+  ],
+  "out": false
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   30,
+   600
+  ],
+  "out": true
+ },
+ {
+  "fn": "isWatched",
+  "in": [
+   570,
+   600
+  ],
+  "out": true
+ },
+ {
+  "fn": "shouldPromptResume",
+  "in": [
+   570,
+   600
+  ],
+  "out": false
+ }
+]

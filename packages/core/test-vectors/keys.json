@@ -1,0 +1,323 @@
+[
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "host"
+  ],
+  "out": "host"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "host",
+   "12345"
+  ],
+  "out": "dba8d2754acff84e6d1147ea134a3b1c2d26b264"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "HOST.com"
+  ],
+  "out": "host.com"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "HOST.com",
+   "12345"
+  ],
+  "out": "8b186284bae2ae243ec5e51d19f2810b422f3618"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "http://Host.com:80/"
+  ],
+  "out": "host.com"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "http://Host.com:80/",
+   "12345"
+  ],
+  "out": "8b186284bae2ae243ec5e51d19f2810b422f3618"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "https://host.com:443"
+  ],
+  "out": "host.com"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "https://host.com:443",
+   "12345"
+  ],
+  "out": "8b186284bae2ae243ec5e51d19f2810b422f3618"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "host.com:8080"
+  ],
+  "out": "host.com:8080"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "host.com:8080",
+   "12345"
+  ],
+  "out": "c483caa45360c62d6029e1042797b6d413ae4421"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "http://host.com:8080/path"
+  ],
+  "out": "host.com:8080"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "http://host.com:8080/path",
+   "12345"
+  ],
+  "out": "c483caa45360c62d6029e1042797b6d413ae4421"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "host"
+  ],
+  "out": "host"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "host",
+   "12345"
+  ],
+  "out": "dba8d2754acff84e6d1147ea134a3b1c2d26b264"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "host.com/"
+  ],
+  "out": "host.com"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "host.com/",
+   "12345"
+  ],
+  "out": "8b186284bae2ae243ec5e51d19f2810b422f3618"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "192.168.0.1:8000"
+  ],
+  "out": "192.168.0.1:8000"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "192.168.0.1:8000",
+   "12345"
+  ],
+  "out": "cdb2a2a62b62d88f889ddeeb42c1eb26326fad84"
+ },
+ {
+  "fn": "normalizeProviderHost",
+  "in": [
+   "[::1]:80"
+  ],
+  "out": "[::1]"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "[::1]:80",
+   "12345"
+  ],
+  "out": "1560012d73f168921a28959a46cfb0b136993761"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "host",
+   ""
+  ],
+  "out": "53a93c24129c001fcca2a5940f69555e30fdc855"
+ },
+ {
+  "fn": "remoteKeyFor",
+  "in": [
+   "host",
+   "ünï|cöde"
+  ],
+  "out": "2151281cd38e33e9986526f962971a7d96d3f304"
+ },
+ {
+  "fn": "remoteKeyForPlaylist",
+  "in": [
+   "http://h/get.php?username=u&password=p"
+  ],
+  "out": "912b661046109ee7a554f94397abaef269f77fd1"
+ },
+ {
+  "fn": "remoteKeyForPlaylist",
+  "in": [
+   "  http://h/list.m3u  "
+  ],
+  "out": "35ba7b144f0b03689a3847712ae83cbb6ac82f30"
+ },
+ {
+  "fn": "remoteKeyForPlaylist",
+  "in": [
+   "http://h/list.m3u?x=1&y=2"
+  ],
+  "out": "a3b33d3eeff3d4987922f0c519eb45e6912ef37c"
+ },
+ {
+  "fn": "remoteKeyForPlaylist",
+  "in": [
+   ""
+  ],
+  "out": "ba6401b241420b3c1f434c03430376bcc980b1d4"
+ },
+ {
+  "fn": "remoteKeyForPlaylistItem",
+  "in": [
+   "  http://h/list.m3u ",
+   "the wire"
+  ],
+  "out": "d6a689558fd0ed6b04c9d189e18dc7b3530fdcdd"
+ },
+ {
+  "fn": "remoteKeyForPlaylistItem",
+  "in": [
+   "  http://h/list.m3u ",
+   "ünï"
+  ],
+  "out": "a0970ac71c6fe860cdcb61fa74af65c8eac24854"
+ },
+ {
+  "fn": "remoteKeyForPlaylistItem",
+  "in": [
+   "  http://h/list.m3u ",
+   ""
+  ],
+  "out": "ad1ca1697fc265098367a9e4568a6518e18fc36e"
+ },
+ {
+  "fn": "channelKeyFor",
+  "in": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "6002e48c-0000-4000-8000-000000000001",
+   "6002e48c-0000-4000-8000-000000000001:channel:6002e48c-0000-4000-8000-000000000001\u00016002e48c-0000-4000-8000-000000000001:cat\u0001Sky Sports\u0001UK"
+  ],
+  "out": "ch.addcd24cb0c3ace1"
+ },
+ {
+  "fn": "channelKeyFor",
+  "in": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "6002e48c-0000-4000-8000-000000000001",
+   "6002e48c-0000-4000-8000-000000000001:channel:6002e48c-0000-4000-8000-000000000001\u00006002e48c-0000-4000-8000-000000000001:cat\u0000Sky Sports\u0000UK"
+  ],
+  "out": "ch.addcd24cb0c3ace1"
+ },
+ {
+  "fn": "channelKeyFor",
+  "in": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "6002e48c-0000-4000-8000-000000000001",
+   "6002e48c-0000-4000-8000-000000000001:plain"
+  ],
+  "out": "ch.556a5a6531c77a1c"
+ },
+ {
+  "fn": "channelKeyFor",
+  "in": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "6002e48c-0000-4000-8000-000000000001",
+   "6002e48c-0000-4000-8000-000000000001:"
+  ],
+  "out": "ch.f1614123f47ab208"
+ },
+ {
+  "fn": "channelKeyFor",
+  "in": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "6002e48c-0000-4000-8000-000000000001",
+   "6002e48c-0000-4000-8000-000000000001:ünï 🔥"
+  ],
+  "out": "ch.76c9d30c57cff023"
+ },
+ {
+  "fn": "channelKeyFor",
+  "in": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "6002e48c-0000-4000-8000-000000000001",
+   "other:channel"
+  ],
+  "out": null
+ },
+ {
+  "fn": "channelKeyFor",
+  "in": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "6002e48c-0000-4000-8000-000000000001",
+   "6002e48c-0000-4000-8000-000000000001"
+  ],
+  "out": null
+ },
+ {
+  "fn": "pinHash",
+  "in": [
+   "p1abc",
+   "1234"
+  ],
+  "out": "ef015230"
+ },
+ {
+  "fn": "pinHash",
+  "in": [
+   "p1abc",
+   "0000"
+  ],
+  "out": "301f579c"
+ },
+ {
+  "fn": "pinHash",
+  "in": [
+   "p2",
+   "1234"
+  ],
+  "out": "e6a7da37"
+ },
+ {
+  "fn": "pinHash",
+  "in": [
+   "",
+   ""
+  ],
+  "out": "3f0cb86d"
+ },
+ {
+  "fn": "pinHash",
+  "in": [
+   "pé",
+   "99"
+  ],
+  "out": "8a93903e"
+ }
+]

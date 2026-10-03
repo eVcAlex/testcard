@@ -1,0 +1,216 @@
+[
+ {
+  "fn": "encryptJson",
+  "in": [
+   {
+    "kind": "xtream",
+    "baseUrl": "http://host:8080",
+    "username": "u",
+    "password": "p"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "jaFKH2D69VAfU12RyvKLbcN5TgoSD5pSHBI30bRbKRjF+8YzLbKrS2ApiMpgA6PWSQit/YXtDuHTzdBBVbTpOetq/OaapKETM53OcTj60a6yp/Dk7z5bznhS5aI=",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "decryptJson",
+  "in": [
+   {
+    "blob": "jaFKH2D69VAfU12RyvKLbcN5TgoSD5pSHBI30bRbKRjF+8YzLbKrS2ApiMpgA6PWSQit/YXtDuHTzdBBVbTpOetq/OaapKETM53OcTj60a6yp/Dk7z5bznhS5aI=",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "kind": "xtream",
+   "baseUrl": "http://host:8080",
+   "username": "u",
+   "password": "p"
+  }
+ },
+ {
+  "fn": "encryptJson",
+  "in": [
+   {
+    "kind": "xtream",
+    "baseUrl": "http://host",
+    "username": "ünï",
+    "password": "p\"w'\\\u0000",
+    "backupHosts": [
+     "http://b1",
+     "http://b2"
+    ],
+    "epgUrl": null
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "jaFKH2D69VAfU12RyvKLbcN5TgoSD5pSHBI30bRbKRjF+8YzLbKrU3Q7xYknXe/CVwj9qcZD160qQIdPW+b4K+tu5PuM4rkLYbHOe5Op8uBxz6t+peTp4s69KmnH7foP3/12sZua75TUb18csJIaFdlGY289Qd6GC6GplmxX1ec3OT+aMgnYJnvQT0p5OZKEzwU0rNzGq73Ne2vyZg==",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "decryptJson",
+  "in": [
+   {
+    "blob": "jaFKH2D69VAfU12RyvKLbcN5TgoSD5pSHBI30bRbKRjF+8YzLbKrU3Q7xYknXe/CVwj9qcZD160qQIdPW+b4K+tu5PuM4rkLYbHOe5Op8uBxz6t+peTp4s69KmnH7foP3/12sZua75TUb18csJIaFdlGY289Qd6GC6GplmxX1ec3OT+aMgnYJnvQT0p5OZKEzwU0rNzGq73Ne2vyZg==",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "kind": "xtream",
+   "baseUrl": "http://host",
+   "username": "ünï",
+   "password": "p\"w'\\\u0000",
+   "backupHosts": [
+    "http://b1",
+    "http://b2"
+   ],
+   "epgUrl": null
+  }
+ },
+ {
+  "fn": "encryptJson",
+  "in": [
+   {
+    "url": "http://h/list.m3u?token=abc",
+    "label": "Playlist"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "jaFUBGK87UhVX12TlbzJJ8A3RRgVRKITBQ95nLdKM1Wetop5buOzEDp83Nh4DdHPWxSz+pf0Sb5RgiGMtOhbdMJBqSeQj42O",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "decryptJson",
+  "in": [
+   {
+    "blob": "jaFUBGK87UhVX12TlbzJJ8A3RRgVRKITBQ95nLdKM1Wetop5buOzEDp83Nh4DdHPWxSz+pf0Sb5RgiGMtOhbdMJBqSeQj42O",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "url": "http://h/list.m3u?token=abc",
+   "label": "Playlist"
+  }
+ },
+ {
+  "fn": "encryptJson",
+  "in": [
+   {
+    "id": "p1abc",
+    "name": "Kids",
+    "avatar": "fox",
+    "colour": 3,
+    "pin": "0badf00d"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "jaFIEiyk9RoMSkuAjb/EIY42SUlbSIRJFEMv3/5OKwmLtZt5eOO5HiA7nNghQO3MTx/9qdesSbOAgYdZW6b7Ofx/u7mM4v5xkh4YVzAdPsixWtbkNpHm",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "decryptJson",
+  "in": [
+   {
+    "blob": "jaFIEiyk9RoMSkuAjb/EIY42SUlbSIRJFEMv3/5OKwmLtZt5eOO5HiA7nNghQO3MTx/9qdesSbOAgYdZW6b7Ofx/u7mM4v5xkh4YVzAdPsixWtbkNpHm",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "id": "p1abc",
+   "name": "Kids",
+   "avatar": "fox",
+   "colour": 3,
+   "pin": "0badf00d"
+  }
+ },
+ {
+  "fn": "encryptJson",
+  "in": [
+   [
+    1,
+    2,
+    3
+   ],
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "rbINRCKtikbWxsnieSJlhD6/eHbj56k=",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "decryptJson",
+  "in": [
+   {
+    "blob": "rbINRCKtikbWxsnieSJlhD6/eHbj56k=",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": [
+   1,
+   2,
+   3
+  ]
+ },
+ {
+  "fn": "encryptJson",
+  "in": [
+   "plain string",
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "1PNNF2fw9xlJWUCNyLEkvTHXirHkM5C3gbXGFMxt",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "decryptJson",
+  "in": [
+   {
+    "blob": "1PNNF2fw9xlJWUCNyLEkvTHXirHkM5C3gbXGFMxt",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "correct horse",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": "plain string"
+ },
+ {
+  "fn": "encryptJson",
+  "in": [
+   {
+    "a": 1
+   },
+   "pässwörd 🔑",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "qJH83W1Pq8pNktiQc7phGuTTJsBWDTs=",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ }
+]

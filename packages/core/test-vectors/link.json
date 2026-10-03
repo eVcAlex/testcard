@@ -1,0 +1,231 @@
+[
+ {
+  "fn": "sealLinkSecrets",
+  "in": [
+   {
+    "email": "a@b.c",
+    "password": "pw ü"
+   },
+   "ABCD2345",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "9lOA0UGeyhYasjP9dDbhmxAPv41h0V8ndbO54isHoFtnRClDYfkEOkLeOGq+ZIAfuqocBQ==",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "openLinkSecrets",
+  "in": [
+   {
+    "blob": "9lOA0UGeyhYasjP9dDbhmxAPv41h0V8ndbO54isHoFtnRClDYfkEOkLeOGq+ZIAfuqocBQ==",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "ABCD2345",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "email": "a@b.c",
+   "password": "pw ü"
+  }
+ },
+ {
+  "fn": "deriveLinkLookup",
+  "in": [
+   "ABCD2345"
+  ],
+  "out": "RoysEQyQCu4/HA7MyTGXTg3aHQgAJrq08Py4zQ4Rw6o="
+ },
+ {
+  "fn": "sealLinkSecrets",
+  "in": [
+   {
+    "email": "a@b.c",
+    "password": "pw ü"
+   },
+   "K7M4QX2P",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "oWj0U32RYR3KUZwGs66Jnq5duBQ1m2ZJhlmKtmQRGD94RwTs+sg1JgDRHGtiNy327fjLBg==",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "openLinkSecrets",
+  "in": [
+   {
+    "blob": "oWj0U32RYR3KUZwGs66Jnq5duBQ1m2ZJhlmKtmQRGD94RwTs+sg1JgDRHGtiNy327fjLBg==",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "K7M4QX2P",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "email": "a@b.c",
+   "password": "pw ü"
+  }
+ },
+ {
+  "fn": "deriveLinkLookup",
+  "in": [
+   "K7M4QX2P"
+  ],
+  "out": "MD4sos1TD3dwo6rm9emlLvMJlGjDRBWqO1j1xkjBnF0="
+ },
+ {
+  "fn": "generateLinkCode",
+  "in": [],
+  "out": "MSX49EKQ"
+ },
+ {
+  "fn": "constants",
+  "in": [],
+  "out": {
+   "LINK_ALPHABET": "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
+   "LINK_CODE_LENGTH": 8,
+   "LINK_ITERATIONS": 210000,
+   "LINK_LOOKUP_SALT": "testcard-link-lookup-v1"
+  }
+ },
+ {
+  "fn": "normaliseLinkCode",
+  "in": [
+   "k7m4-qx2p"
+  ],
+  "out": "K7M4QX2P"
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "K7M4QX2P"
+  ],
+  "out": true
+ },
+ {
+  "fn": "formatLinkCode",
+  "in": [
+   "K7M4QX2P"
+  ],
+  "out": "K7M4-QX2P"
+ },
+ {
+  "fn": "normaliseLinkCode",
+  "in": [
+   " K7M4 QX2P "
+  ],
+  "out": "K7M4QX2P"
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "K7M4QX2P"
+  ],
+  "out": true
+ },
+ {
+  "fn": "formatLinkCode",
+  "in": [
+   "K7M4QX2P"
+  ],
+  "out": "K7M4-QX2P"
+ },
+ {
+  "fn": "normaliseLinkCode",
+  "in": [
+   "k7m4_qx2p!"
+  ],
+  "out": "K7M4QX2P"
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "K7M4QX2P"
+  ],
+  "out": true
+ },
+ {
+  "fn": "formatLinkCode",
+  "in": [
+   "K7M4QX2P"
+  ],
+  "out": "K7M4-QX2P"
+ },
+ {
+  "fn": "normaliseLinkCode",
+  "in": [
+   ""
+  ],
+  "out": ""
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   ""
+  ],
+  "out": false
+ },
+ {
+  "fn": "formatLinkCode",
+  "in": [
+   ""
+  ],
+  "out": "-"
+ },
+ {
+  "fn": "normaliseLinkCode",
+  "in": [
+   "ABCDEFGH"
+  ],
+  "out": "ABCDEFGH"
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "ABCDEFGH"
+  ],
+  "out": true
+ },
+ {
+  "fn": "formatLinkCode",
+  "in": [
+   "ABCDEFGH"
+  ],
+  "out": "ABCD-EFGH"
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "ABCDEFGH"
+  ],
+  "out": true
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "ABCDEFG"
+  ],
+  "out": false
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "ABCDEFG0"
+  ],
+  "out": false
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "ABCDEFGHI"
+  ],
+  "out": false
+ },
+ {
+  "fn": "isValidLinkCode",
+  "in": [
+   "abcdefgh"
+  ],
+  "out": false
+ }
+]

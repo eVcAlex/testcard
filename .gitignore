@@ -43,3 +43,12 @@ pnpm-debug.log*
 # dev-time TypeSafe/Jev audit cache (category names + Jev's answers; regenerable)
 packages/core/evals/.cache/
 .android-device
+
+# Android Gradle build output (native modules)
+**/android/build/
+.gradle/
+
+# Native TV app (Gradle)
+apps/tv-native/**/build/
+apps/tv-native/local.properties
+perf-results/

@@ -1,0 +1,1933 @@
+{
+ "seed": "\nINSERT INTO sources (id, kind, name, base_url, created_at, include_live, include_movies, include_series) VALUES ('s1', 'xtream', 'One', 'http://a', 1, 1, 1, 1);\nINSERT INTO sources (id, kind, name, base_url, created_at, include_live, include_movies, include_series) VALUES ('s2', 'xtream', 'Two', 'http://b', 2, 1, 0, 0);\nINSERT INTO movie_categories (id, source_id, provider_id, raw_name) VALUES ('mc1', 's1', '1', 'Films'), ('mc2', 's2', '1', 'Films');\nINSERT INTO movies (id, source_id, category_id, provider_stream_id, name, first_seen_at, last_seen_at) VALUES ('m1', 's1', 'mc1', '1', 'Kept', 1, 1), ('m2', 's2', 'mc2', '2', 'Stray', 1, 1);\nINSERT INTO series_categories (id, source_id, provider_id, raw_name) VALUES ('sc1', 's1', '1', 'Shows'), ('sc2', 's2', '1', 'Shows');\nINSERT INTO series (id, source_id, category_id, provider_series_id, name, episodes_fetched_at, first_seen_at, last_seen_at) VALUES ('t1', 's1', 'sc1', '1', 'Show', 5, 1, 1), ('t2', 's2', 'sc2', '2', 'Stray show', 5, 1, 1);\nINSERT INTO favourites (channel_id, added_at) VALUES ('c1', 10);\nINSERT INTO recents (channel_id, played_at) VALUES ('c1', 20);\n",
+ "cases": [
+  {
+   "from": 7,
+   "now": 1790942400000,
+   "objects": [
+    {
+     "type": "index",
+     "name": "idx_categories_country"
+    },
+    {
+     "type": "index",
+     "name": "idx_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_tvg_id"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_season"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_series"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_favourites_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_recents_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_playback_progress_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_profile_stash_profile"
+    },
+    {
+     "type": "index",
+     "name": "idx_programmes_channel_time"
+    },
+    {
+     "type": "index",
+     "name": "idx_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_seasons_series"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_favourites_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_recents_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_sources_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_sync_tombstones_table"
+    },
+    {
+     "type": "index",
+     "name": "idx_variants_channel"
+    },
+    {
+     "type": "table",
+     "name": "categories"
+    },
+    {
+     "type": "table",
+     "name": "channel_variants"
+    },
+    {
+     "type": "table",
+     "name": "channels"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "episodes"
+    },
+    {
+     "type": "table",
+     "name": "favourites"
+    },
+    {
+     "type": "table",
+     "name": "hidden_categories"
+    },
+    {
+     "type": "table",
+     "name": "hidden_channels"
+    },
+    {
+     "type": "table",
+     "name": "home_pins"
+    },
+    {
+     "type": "table",
+     "name": "movie_categories"
+    },
+    {
+     "type": "table",
+     "name": "movie_favourites"
+    },
+    {
+     "type": "table",
+     "name": "movie_recents"
+    },
+    {
+     "type": "table",
+     "name": "movies"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "pending_channel_sync"
+    },
+    {
+     "type": "table",
+     "name": "playback_progress"
+    },
+    {
+     "type": "table",
+     "name": "profile_stash"
+    },
+    {
+     "type": "table",
+     "name": "profiles"
+    },
+    {
+     "type": "table",
+     "name": "programmes"
+    },
+    {
+     "type": "table",
+     "name": "recents"
+    },
+    {
+     "type": "table",
+     "name": "schema_meta"
+    },
+    {
+     "type": "table",
+     "name": "seasons"
+    },
+    {
+     "type": "table",
+     "name": "series"
+    },
+    {
+     "type": "table",
+     "name": "series_categories"
+    },
+    {
+     "type": "table",
+     "name": "series_favourites"
+    },
+    {
+     "type": "table",
+     "name": "series_fts"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "series_recents"
+    },
+    {
+     "type": "table",
+     "name": "series_skip"
+    },
+    {
+     "type": "table",
+     "name": "sources"
+    },
+    {
+     "type": "table",
+     "name": "sync_state"
+    },
+    {
+     "type": "table",
+     "name": "sync_tombstones"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_update"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_update"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_update"
+    }
+   ],
+   "columns": {
+    "categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "channel_variants": [
+     "id",
+     "channel_id",
+     "provider_stream_id",
+     "quality",
+     "is_offline",
+     "sort_order"
+    ],
+    "channels": [
+     "id",
+     "source_id",
+     "category_id",
+     "normalised_name",
+     "raw_name",
+     "country",
+     "logo_url",
+     "channel_number",
+     "catchup_type",
+     "catchup_days",
+     "tvg_id",
+     "first_seen_at",
+     "last_seen_at"
+    ],
+    "channels_fts": [
+     "normalised_name"
+    ],
+    "episodes": [
+     "id",
+     "season_id",
+     "series_id",
+     "provider_episode_id",
+     "episode_number",
+     "name",
+     "container_extension",
+     "duration_secs",
+     "plot",
+     "remote_key",
+     "image_url"
+    ],
+    "favourites": [
+     "channel_id",
+     "added_at",
+     "position",
+     "updated_at"
+    ],
+    "hidden_categories": [
+     "source_id",
+     "kind",
+     "category_key",
+     "label",
+     "hidden_at"
+    ],
+    "hidden_channels": [
+     "source_id",
+     "channel_key",
+     "label",
+     "hidden_at"
+    ],
+    "home_pins": [
+     "source_id",
+     "kind",
+     "category_key",
+     "label",
+     "pinned_at"
+    ],
+    "movie_categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "movie_favourites": [
+     "movie_id",
+     "added_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "movie_recents": [
+     "movie_id",
+     "played_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "movies": [
+     "id",
+     "source_id",
+     "category_id",
+     "provider_stream_id",
+     "name",
+     "poster_url",
+     "container_extension",
+     "rating",
+     "plot",
+     "duration_secs",
+     "details_fetched_at",
+     "first_seen_at",
+     "last_seen_at",
+     "remote_key"
+    ],
+    "movies_fts": [
+     "name"
+    ],
+    "pending_channel_sync": [
+     "kind",
+     "remote_key",
+     "row",
+     "received_at"
+    ],
+    "playback_progress": [
+     "item_type",
+     "item_id",
+     "position_secs",
+     "duration_secs",
+     "watched",
+     "updated_at",
+     "remote_key",
+     "deleted_at"
+    ],
+    "profile_stash": [
+     "profile_id",
+     "table_name",
+     "row"
+    ],
+    "profiles": [
+     "id",
+     "name",
+     "colour",
+     "avatar",
+     "pin",
+     "position",
+     "updated_at",
+     "deleted_at"
+    ],
+    "programmes": [
+     "channel_id",
+     "title",
+     "description",
+     "start_at",
+     "end_at"
+    ],
+    "recents": [
+     "channel_id",
+     "played_at",
+     "updated_at"
+    ],
+    "schema_meta": [
+     "key",
+     "value"
+    ],
+    "seasons": [
+     "id",
+     "series_id",
+     "season_number",
+     "name",
+     "poster_url"
+    ],
+    "series": [
+     "id",
+     "source_id",
+     "category_id",
+     "provider_series_id",
+     "name",
+     "poster_url",
+     "rating",
+     "plot",
+     "episodes_fetched_at",
+     "first_seen_at",
+     "last_seen_at",
+     "remote_key"
+    ],
+    "series_categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "series_favourites": [
+     "series_id",
+     "added_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "series_fts": [
+     "name"
+    ],
+    "series_recents": [
+     "series_id",
+     "played_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "series_skip": [
+     "series_id",
+     "from_secs",
+     "to_secs",
+     "updated_at"
+    ],
+    "sources": [
+     "id",
+     "kind",
+     "name",
+     "base_url",
+     "playlist_url",
+     "epg_url",
+     "refresh_interval_hours",
+     "created_at",
+     "last_refreshed_at",
+     "remote_key",
+     "sync_updated_at",
+     "sync_deleted_at",
+     "include_live",
+     "include_movies",
+     "include_series",
+     "sort_order",
+     "backup_urls"
+    ],
+    "sync_state": [
+     "id",
+     "last_pulled_at",
+     "last_pushed_at",
+     "account_email",
+     "session_token",
+     "sync_salt"
+    ],
+    "sync_tombstones": [
+     "table_name",
+     "remote_key",
+     "deleted_at"
+    ]
+   },
+   "data": {
+    "schema_meta": [
+     {
+      "key": "version",
+      "value": "15"
+     }
+    ],
+    "sources": [
+     {
+      "id": "s1",
+      "include_live": 1,
+      "include_movies": 1,
+      "include_series": 1,
+      "sort_order": null,
+      "backup_urls": null
+     },
+     {
+      "id": "s2",
+      "include_live": 1,
+      "include_movies": 0,
+      "include_series": 0,
+      "sort_order": null,
+      "backup_urls": null
+     }
+    ],
+    "movies": [
+     {
+      "id": "m1"
+     }
+    ],
+    "series": [
+     {
+      "id": "t1",
+      "episodes_fetched_at": null
+     }
+    ],
+    "favourites": [
+     {
+      "channel_id": "c1",
+      "added_at": 10,
+      "position": null,
+      "updated_at": 1790942400000
+     }
+    ],
+    "recents": [
+     {
+      "channel_id": "c1",
+      "played_at": 20,
+      "updated_at": 1790942400000
+     }
+    ]
+   }
+  },
+  {
+   "from": 10,
+   "now": 1790942400000,
+   "objects": [
+    {
+     "type": "index",
+     "name": "idx_categories_country"
+    },
+    {
+     "type": "index",
+     "name": "idx_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_tvg_id"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_season"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_series"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_favourites_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_recents_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_playback_progress_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_profile_stash_profile"
+    },
+    {
+     "type": "index",
+     "name": "idx_programmes_channel_time"
+    },
+    {
+     "type": "index",
+     "name": "idx_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_seasons_series"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_favourites_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_recents_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_sources_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_sync_tombstones_table"
+    },
+    {
+     "type": "index",
+     "name": "idx_variants_channel"
+    },
+    {
+     "type": "table",
+     "name": "categories"
+    },
+    {
+     "type": "table",
+     "name": "channel_variants"
+    },
+    {
+     "type": "table",
+     "name": "channels"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "episodes"
+    },
+    {
+     "type": "table",
+     "name": "favourites"
+    },
+    {
+     "type": "table",
+     "name": "hidden_categories"
+    },
+    {
+     "type": "table",
+     "name": "hidden_channels"
+    },
+    {
+     "type": "table",
+     "name": "home_pins"
+    },
+    {
+     "type": "table",
+     "name": "movie_categories"
+    },
+    {
+     "type": "table",
+     "name": "movie_favourites"
+    },
+    {
+     "type": "table",
+     "name": "movie_recents"
+    },
+    {
+     "type": "table",
+     "name": "movies"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "pending_channel_sync"
+    },
+    {
+     "type": "table",
+     "name": "playback_progress"
+    },
+    {
+     "type": "table",
+     "name": "profile_stash"
+    },
+    {
+     "type": "table",
+     "name": "profiles"
+    },
+    {
+     "type": "table",
+     "name": "programmes"
+    },
+    {
+     "type": "table",
+     "name": "recents"
+    },
+    {
+     "type": "table",
+     "name": "schema_meta"
+    },
+    {
+     "type": "table",
+     "name": "seasons"
+    },
+    {
+     "type": "table",
+     "name": "series"
+    },
+    {
+     "type": "table",
+     "name": "series_categories"
+    },
+    {
+     "type": "table",
+     "name": "series_favourites"
+    },
+    {
+     "type": "table",
+     "name": "series_fts"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "series_recents"
+    },
+    {
+     "type": "table",
+     "name": "series_skip"
+    },
+    {
+     "type": "table",
+     "name": "sources"
+    },
+    {
+     "type": "table",
+     "name": "sync_state"
+    },
+    {
+     "type": "table",
+     "name": "sync_tombstones"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_update"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_update"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_update"
+    }
+   ],
+   "columns": {
+    "categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "channel_variants": [
+     "id",
+     "channel_id",
+     "provider_stream_id",
+     "quality",
+     "is_offline",
+     "sort_order"
+    ],
+    "channels": [
+     "id",
+     "source_id",
+     "category_id",
+     "normalised_name",
+     "raw_name",
+     "country",
+     "logo_url",
+     "channel_number",
+     "catchup_type",
+     "catchup_days",
+     "tvg_id",
+     "first_seen_at",
+     "last_seen_at"
+    ],
+    "channels_fts": [
+     "normalised_name"
+    ],
+    "episodes": [
+     "id",
+     "season_id",
+     "series_id",
+     "provider_episode_id",
+     "episode_number",
+     "name",
+     "container_extension",
+     "duration_secs",
+     "plot",
+     "image_url",
+     "remote_key"
+    ],
+    "favourites": [
+     "channel_id",
+     "added_at",
+     "position",
+     "updated_at"
+    ],
+    "hidden_categories": [
+     "source_id",
+     "kind",
+     "category_key",
+     "label",
+     "hidden_at"
+    ],
+    "hidden_channels": [
+     "source_id",
+     "channel_key",
+     "label",
+     "hidden_at"
+    ],
+    "home_pins": [
+     "source_id",
+     "kind",
+     "category_key",
+     "label",
+     "pinned_at"
+    ],
+    "movie_categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "movie_favourites": [
+     "movie_id",
+     "added_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "movie_recents": [
+     "movie_id",
+     "played_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "movies": [
+     "id",
+     "source_id",
+     "category_id",
+     "provider_stream_id",
+     "name",
+     "poster_url",
+     "container_extension",
+     "rating",
+     "plot",
+     "duration_secs",
+     "details_fetched_at",
+     "first_seen_at",
+     "last_seen_at",
+     "remote_key"
+    ],
+    "movies_fts": [
+     "name"
+    ],
+    "pending_channel_sync": [
+     "kind",
+     "remote_key",
+     "row",
+     "received_at"
+    ],
+    "playback_progress": [
+     "item_type",
+     "item_id",
+     "position_secs",
+     "duration_secs",
+     "watched",
+     "updated_at",
+     "remote_key",
+     "deleted_at"
+    ],
+    "profile_stash": [
+     "profile_id",
+     "table_name",
+     "row"
+    ],
+    "profiles": [
+     "id",
+     "name",
+     "colour",
+     "avatar",
+     "pin",
+     "position",
+     "updated_at",
+     "deleted_at"
+    ],
+    "programmes": [
+     "channel_id",
+     "title",
+     "description",
+     "start_at",
+     "end_at"
+    ],
+    "recents": [
+     "channel_id",
+     "played_at",
+     "updated_at"
+    ],
+    "schema_meta": [
+     "key",
+     "value"
+    ],
+    "seasons": [
+     "id",
+     "series_id",
+     "season_number",
+     "name",
+     "poster_url"
+    ],
+    "series": [
+     "id",
+     "source_id",
+     "category_id",
+     "provider_series_id",
+     "name",
+     "poster_url",
+     "rating",
+     "plot",
+     "episodes_fetched_at",
+     "first_seen_at",
+     "last_seen_at",
+     "remote_key"
+    ],
+    "series_categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "series_favourites": [
+     "series_id",
+     "added_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "series_fts": [
+     "name"
+    ],
+    "series_recents": [
+     "series_id",
+     "played_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "series_skip": [
+     "series_id",
+     "from_secs",
+     "to_secs",
+     "updated_at"
+    ],
+    "sources": [
+     "id",
+     "kind",
+     "name",
+     "base_url",
+     "playlist_url",
+     "epg_url",
+     "refresh_interval_hours",
+     "created_at",
+     "last_refreshed_at",
+     "remote_key",
+     "sync_updated_at",
+     "sync_deleted_at",
+     "include_live",
+     "include_movies",
+     "include_series",
+     "sort_order",
+     "backup_urls"
+    ],
+    "sync_state": [
+     "id",
+     "last_pulled_at",
+     "last_pushed_at",
+     "account_email",
+     "session_token",
+     "sync_salt"
+    ],
+    "sync_tombstones": [
+     "table_name",
+     "remote_key",
+     "deleted_at"
+    ]
+   },
+   "data": {
+    "schema_meta": [
+     {
+      "key": "version",
+      "value": "15"
+     }
+    ],
+    "sources": [
+     {
+      "id": "s1",
+      "include_live": 1,
+      "include_movies": 1,
+      "include_series": 1,
+      "sort_order": null,
+      "backup_urls": null
+     },
+     {
+      "id": "s2",
+      "include_live": 1,
+      "include_movies": 0,
+      "include_series": 0,
+      "sort_order": null,
+      "backup_urls": null
+     }
+    ],
+    "movies": [
+     {
+      "id": "m1"
+     },
+     {
+      "id": "m2"
+     }
+    ],
+    "series": [
+     {
+      "id": "t1",
+      "episodes_fetched_at": 5
+     },
+     {
+      "id": "t2",
+      "episodes_fetched_at": 5
+     }
+    ],
+    "favourites": [
+     {
+      "channel_id": "c1",
+      "added_at": 10,
+      "position": null,
+      "updated_at": 1790942400000
+     }
+    ],
+    "recents": [
+     {
+      "channel_id": "c1",
+      "played_at": 20,
+      "updated_at": 1790942400000
+     }
+    ]
+   }
+  },
+  {
+   "from": 13,
+   "now": 1790942400000,
+   "objects": [
+    {
+     "type": "index",
+     "name": "idx_categories_country"
+    },
+    {
+     "type": "index",
+     "name": "idx_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_channels_tvg_id"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_season"
+    },
+    {
+     "type": "index",
+     "name": "idx_episodes_series"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_favourites_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_movie_recents_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_movies_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_playback_progress_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_profile_stash_profile"
+    },
+    {
+     "type": "index",
+     "name": "idx_programmes_channel_time"
+    },
+    {
+     "type": "index",
+     "name": "idx_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_seasons_series"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_categories_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_category"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_favourites_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_recents_played_at"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_recents_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_series_source"
+    },
+    {
+     "type": "index",
+     "name": "idx_sources_remote_key"
+    },
+    {
+     "type": "index",
+     "name": "idx_sync_tombstones_table"
+    },
+    {
+     "type": "index",
+     "name": "idx_variants_channel"
+    },
+    {
+     "type": "table",
+     "name": "categories"
+    },
+    {
+     "type": "table",
+     "name": "channel_variants"
+    },
+    {
+     "type": "table",
+     "name": "channels"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "channels_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "episodes"
+    },
+    {
+     "type": "table",
+     "name": "favourites"
+    },
+    {
+     "type": "table",
+     "name": "hidden_categories"
+    },
+    {
+     "type": "table",
+     "name": "hidden_channels"
+    },
+    {
+     "type": "table",
+     "name": "home_pins"
+    },
+    {
+     "type": "table",
+     "name": "movie_categories"
+    },
+    {
+     "type": "table",
+     "name": "movie_favourites"
+    },
+    {
+     "type": "table",
+     "name": "movie_recents"
+    },
+    {
+     "type": "table",
+     "name": "movies"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "movies_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "pending_channel_sync"
+    },
+    {
+     "type": "table",
+     "name": "playback_progress"
+    },
+    {
+     "type": "table",
+     "name": "profile_stash"
+    },
+    {
+     "type": "table",
+     "name": "profiles"
+    },
+    {
+     "type": "table",
+     "name": "programmes"
+    },
+    {
+     "type": "table",
+     "name": "recents"
+    },
+    {
+     "type": "table",
+     "name": "schema_meta"
+    },
+    {
+     "type": "table",
+     "name": "seasons"
+    },
+    {
+     "type": "table",
+     "name": "series"
+    },
+    {
+     "type": "table",
+     "name": "series_categories"
+    },
+    {
+     "type": "table",
+     "name": "series_favourites"
+    },
+    {
+     "type": "table",
+     "name": "series_fts"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_config"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_data"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_docsize"
+    },
+    {
+     "type": "table",
+     "name": "series_fts_idx"
+    },
+    {
+     "type": "table",
+     "name": "series_recents"
+    },
+    {
+     "type": "table",
+     "name": "series_skip"
+    },
+    {
+     "type": "table",
+     "name": "sources"
+    },
+    {
+     "type": "table",
+     "name": "sync_state"
+    },
+    {
+     "type": "table",
+     "name": "sync_tombstones"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "channels_fts_update"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "movies_fts_update"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_delete"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_insert"
+    },
+    {
+     "type": "trigger",
+     "name": "series_fts_update"
+    }
+   ],
+   "columns": {
+    "categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "channel_variants": [
+     "id",
+     "channel_id",
+     "provider_stream_id",
+     "quality",
+     "is_offline",
+     "sort_order"
+    ],
+    "channels": [
+     "id",
+     "source_id",
+     "category_id",
+     "normalised_name",
+     "raw_name",
+     "country",
+     "logo_url",
+     "channel_number",
+     "catchup_type",
+     "catchup_days",
+     "tvg_id",
+     "first_seen_at",
+     "last_seen_at"
+    ],
+    "channels_fts": [
+     "normalised_name"
+    ],
+    "episodes": [
+     "id",
+     "season_id",
+     "series_id",
+     "provider_episode_id",
+     "episode_number",
+     "name",
+     "container_extension",
+     "duration_secs",
+     "plot",
+     "image_url",
+     "remote_key"
+    ],
+    "favourites": [
+     "channel_id",
+     "added_at",
+     "position",
+     "updated_at"
+    ],
+    "hidden_categories": [
+     "source_id",
+     "kind",
+     "category_key",
+     "label",
+     "hidden_at"
+    ],
+    "hidden_channels": [
+     "source_id",
+     "channel_key",
+     "label",
+     "hidden_at"
+    ],
+    "home_pins": [
+     "source_id",
+     "kind",
+     "category_key",
+     "label",
+     "pinned_at"
+    ],
+    "movie_categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "movie_favourites": [
+     "movie_id",
+     "added_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "movie_recents": [
+     "movie_id",
+     "played_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "movies": [
+     "id",
+     "source_id",
+     "category_id",
+     "provider_stream_id",
+     "name",
+     "poster_url",
+     "container_extension",
+     "rating",
+     "plot",
+     "duration_secs",
+     "details_fetched_at",
+     "first_seen_at",
+     "last_seen_at",
+     "remote_key"
+    ],
+    "movies_fts": [
+     "name"
+    ],
+    "pending_channel_sync": [
+     "kind",
+     "remote_key",
+     "row",
+     "received_at"
+    ],
+    "playback_progress": [
+     "item_type",
+     "item_id",
+     "position_secs",
+     "duration_secs",
+     "watched",
+     "updated_at",
+     "remote_key",
+     "deleted_at"
+    ],
+    "profile_stash": [
+     "profile_id",
+     "table_name",
+     "row"
+    ],
+    "profiles": [
+     "id",
+     "name",
+     "colour",
+     "avatar",
+     "pin",
+     "position",
+     "updated_at",
+     "deleted_at"
+    ],
+    "programmes": [
+     "channel_id",
+     "title",
+     "description",
+     "start_at",
+     "end_at"
+    ],
+    "recents": [
+     "channel_id",
+     "played_at",
+     "updated_at"
+    ],
+    "schema_meta": [
+     "key",
+     "value"
+    ],
+    "seasons": [
+     "id",
+     "series_id",
+     "season_number",
+     "name",
+     "poster_url"
+    ],
+    "series": [
+     "id",
+     "source_id",
+     "category_id",
+     "provider_series_id",
+     "name",
+     "poster_url",
+     "rating",
+     "plot",
+     "episodes_fetched_at",
+     "first_seen_at",
+     "last_seen_at",
+     "remote_key"
+    ],
+    "series_categories": [
+     "id",
+     "source_id",
+     "provider_id",
+     "raw_name",
+     "country",
+     "genre",
+     "language",
+     "service",
+     "tags"
+    ],
+    "series_favourites": [
+     "series_id",
+     "added_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "series_fts": [
+     "name"
+    ],
+    "series_recents": [
+     "series_id",
+     "played_at",
+     "remote_key",
+     "updated_at"
+    ],
+    "series_skip": [
+     "series_id",
+     "from_secs",
+     "to_secs",
+     "updated_at"
+    ],
+    "sources": [
+     "id",
+     "kind",
+     "name",
+     "base_url",
+     "playlist_url",
+     "epg_url",
+     "refresh_interval_hours",
+     "created_at",
+     "last_refreshed_at",
+     "remote_key",
+     "sync_updated_at",
+     "sync_deleted_at",
+     "include_live",
+     "include_movies",
+     "include_series",
+     "sort_order",
+     "backup_urls"
+    ],
+    "sync_state": [
+     "id",
+     "last_pulled_at",
+     "last_pushed_at",
+     "account_email",
+     "session_token",
+     "sync_salt"
+    ],
+    "sync_tombstones": [
+     "table_name",
+     "remote_key",
+     "deleted_at"
+    ]
+   },
+   "data": {
+    "schema_meta": [
+     {
+      "key": "version",
+      "value": "15"
+     }
+    ],
+    "sources": [
+     {
+      "id": "s1",
+      "include_live": 1,
+      "include_movies": 1,
+      "include_series": 1,
+      "sort_order": null,
+      "backup_urls": null
+     },
+     {
+      "id": "s2",
+      "include_live": 1,
+      "include_movies": 0,
+      "include_series": 0,
+      "sort_order": null,
+      "backup_urls": null
+     }
+    ],
+    "movies": [
+     {
+      "id": "m1"
+     },
+     {
+      "id": "m2"
+     }
+    ],
+    "series": [
+     {
+      "id": "t1",
+      "episodes_fetched_at": 5
+     },
+     {
+      "id": "t2",
+      "episodes_fetched_at": 5
+     }
+    ],
+    "favourites": [
+     {
+      "channel_id": "c1",
+      "added_at": 10,
+      "position": null,
+      "updated_at": 1790942400000
+     }
+    ],
+    "recents": [
+     {
+      "channel_id": "c1",
+      "played_at": 20,
+      "updated_at": 1790942400000
+     }
+    ]
+   }
+  }
+ ]
+}

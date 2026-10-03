@@ -1,0 +1,103 @@
+[
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "http://host:8080/get.php?username=U&password=P&type=m3u_plus"
+  ],
+  "out": {
+   "baseUrl": "http://host:8080",
+   "username": "U",
+   "password": "P"
+  }
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "http://host/get.php?username=U&password="
+  ],
+  "out": null
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "http://host/U/P/1234.ts"
+  ],
+  "out": {
+   "baseUrl": "http://host",
+   "username": "U",
+   "password": "P"
+  }
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "http://host/U/P/token/1234.ts"
+  ],
+  "out": {
+   "baseUrl": "http://host",
+   "username": "U",
+   "password": "P"
+  }
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "https://host:443/live/U/P/1.ts"
+  ],
+  "out": {
+   "baseUrl": "https://host",
+   "username": "live",
+   "password": "U"
+  }
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "http://host/"
+  ],
+  "out": null
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "http://host/only"
+  ],
+  "out": null
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "not a url"
+  ],
+  "out": null
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   ""
+  ],
+  "out": null
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "http://host/get.php?username=us%20er&password=p%26w"
+  ],
+  "out": {
+   "baseUrl": "http://host",
+   "username": "us er",
+   "password": "p&w"
+  }
+ },
+ {
+  "fn": "extractXtreamCredentials",
+  "in": [
+   "HTTP://HOST:80/a/b/c"
+  ],
+  "out": {
+   "baseUrl": "http://host",
+   "username": "a",
+   "password": "b"
+  }
+ }
+]

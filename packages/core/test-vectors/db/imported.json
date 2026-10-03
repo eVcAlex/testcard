@@ -1,0 +1,4632 @@
+{
+ "dump": {
+  "categories": [
+   {
+    "id": "x1:1",
+    "source_id": "x1",
+    "provider_id": "1",
+    "raw_name": "UK| SPORTS",
+    "country": "UK",
+    "genre": "sports",
+    "language": null,
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "x1:2",
+    "source_id": "x1",
+    "provider_id": "2",
+    "raw_name": "US| NEWS ᴴᴰ",
+    "country": "US",
+    "genre": "news",
+    "language": null,
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "x1:3",
+    "source_id": "x1",
+    "provider_id": "3",
+    "raw_name": "|EN| MOVIES 4K",
+    "country": null,
+    "genre": null,
+    "language": "en",
+    "service": null,
+    "tags": "4k"
+   },
+   {
+    "id": "x1:4",
+    "source_id": "x1",
+    "provider_id": "4",
+    "raw_name": "XXX ADULT",
+    "country": null,
+    "genre": "adult",
+    "language": null,
+    "service": null,
+    "tags": "adult"
+   },
+   {
+    "id": "x1:5",
+    "source_id": "x1",
+    "provider_id": "5",
+    "raw_name": "##### PPV #####",
+    "country": null,
+    "genre": null,
+    "language": null,
+    "service": null,
+    "tags": "ppv"
+   },
+   {
+    "id": "x1:6",
+    "source_id": "x1",
+    "provider_id": "6",
+    "raw_name": "FR| KIDS (HD)",
+    "country": "FR",
+    "genre": "kids",
+    "language": "fr",
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "m1:cat:UK| NEWS",
+    "source_id": "m1",
+    "provider_id": "UK| NEWS",
+    "raw_name": "UK| NEWS",
+    "country": "UK",
+    "genre": "news",
+    "language": null,
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "m1:cat:Sports",
+    "source_id": "m1",
+    "provider_id": "Sports",
+    "raw_name": "Sports",
+    "country": null,
+    "genre": "sports",
+    "language": null,
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "m1:cat:Uncategorised",
+    "source_id": "m1",
+    "provider_id": "Uncategorised",
+    "raw_name": "Uncategorised",
+    "country": null,
+    "genre": null,
+    "language": null,
+    "service": null,
+    "tags": ""
+   }
+  ],
+  "channel_variants": [
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1001",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "provider_stream_id": "1001",
+    "quality": "1080p50",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1002",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "provider_stream_id": "1002",
+    "quality": "720p25",
+    "is_offline": 0,
+    "sort_order": 1
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1003",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "provider_stream_id": "1003",
+    "quality": null,
+    "is_offline": 1,
+    "sort_order": 2
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000TNT Sports 2\u0000UK:1004",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "provider_stream_id": "1004",
+    "quality": "1080p50",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000Sky Sports Main Event HD\u0000UK:1005",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Main Event HD\u0000UK",
+    "provider_stream_id": "1005",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK:1006",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "provider_stream_id": "1006",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000BT Sport 1\u0000UK:1007",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "provider_stream_id": "1007",
+    "quality": "4k",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000BT Sport 1\u0000UK:1008",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "provider_stream_id": "1008",
+    "quality": "hd",
+    "is_offline": 0,
+    "sort_order": 1
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000Eurosport 1\u0000UK:1009",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Eurosport 1\u0000UK",
+    "provider_stream_id": "1009",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK:1010",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "provider_stream_id": "1010",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000ITV 4\u0000UK:1011",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
+    "provider_stream_id": "1011",
+    "quality": "sd",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:2\u0000CNN\u0000US:1012",
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "provider_stream_id": "1012",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:2\u0000FOX NEWS\u0000US:1013",
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000FOX NEWS\u0000US",
+    "provider_stream_id": "1013",
+    "quality": "hd",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:2\u0000MSNBC\u0000US:1014",
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "provider_stream_id": "1014",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:2\u0000Bloomberg\u0000US:1016",
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "provider_stream_id": "1016",
+    "quality": "1080p50",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:2\u0000Bloomberg\u0000US:1015",
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "provider_stream_id": "1015",
+    "quality": "720p25",
+    "is_offline": 0,
+    "sort_order": 1
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:2\u0000Newsmax\u0000US:1017",
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Newsmax\u0000US",
+    "provider_stream_id": "1017",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:2\u0000TNT Sports 1\u0000UK:1018",
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "provider_stream_id": "1018",
+    "quality": "720p25",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:3\u0000|EN| Movie Channel A\u0000:1019",
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel A\u0000",
+    "provider_stream_id": "1019",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000:1020",
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "provider_stream_id": "1020",
+    "quality": "4k",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000:1021",
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "provider_stream_id": "1021",
+    "quality": "hd",
+    "is_offline": 0,
+    "sort_order": 1
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:4\u0000XXX Channel 1\u0000:1022",
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "provider_stream_id": "1022",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:4\u0000XXX Channel 2\u0000:1023",
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 2\u0000",
+    "provider_stream_id": "1023",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:5\u0000PPV 1\u0000:1024",
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "provider_stream_id": "1024",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:5\u0000UFC 300 Main Card\u0000:1025",
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000UFC 300 Main Card\u0000",
+    "provider_stream_id": "1025",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:6\u0000Cartoon Network\u0000FR:1026",
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "provider_stream_id": "1026",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:6\u0000Disney Junior\u0000FR:1027",
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Disney Junior\u0000FR",
+    "provider_stream_id": "1027",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:6\u0000TF1\u0000FR:1028",
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "provider_stream_id": "1028",
+    "quality": "hd",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:6\u0000TF1\u0000FR:1029",
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "provider_stream_id": "1029",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 1
+   },
+   {
+    "id": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK:http://host.example/u/p/101.ts",
+    "channel_id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
+    "provider_stream_id": "http://host.example/u/p/101.ts",
+    "quality": "1080p50",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK:http://host.example/u/p/102.ts",
+    "channel_id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
+    "provider_stream_id": "http://host.example/u/p/102.ts",
+    "quality": "720p25",
+    "is_offline": 0,
+    "sort_order": 1
+   },
+   {
+    "id": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000Sky News\u0000UK:http://host.example/u/p/103.ts",
+    "channel_id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000Sky News\u0000UK",
+    "provider_stream_id": "http://host.example/u/p/103.ts",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
+    "id": "m1:variant:m1\u0000m1:cat:Sports\u0000TNT Sports Ultimate\u0000:http://host.example/u/p/104.ts",
+    "channel_id": "m1:channel:m1\u0000m1:cat:Sports\u0000TNT Sports Ultimate\u0000",
+    "provider_stream_id": "http://host.example/u/p/104.ts",
+    "quality": null,
+    "is_offline": 1,
+    "sort_order": 0
+   },
+   {
+    "id": "m1:variant:m1\u0000m1:cat:Uncategorised\u0000No Group Channel\u0000:http://host.example/u/p/105.m3u8",
+    "channel_id": "m1:channel:m1\u0000m1:cat:Uncategorised\u0000No Group Channel\u0000",
+    "provider_stream_id": "http://host.example/u/p/105.m3u8",
+    "quality": null,
+    "is_offline": 0,
+    "sort_order": 0
+   }
+  ],
+  "channels": [
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1",
+    "raw_name": "UK| TNT Sports 1 (1080p50)",
+    "country": "UK",
+    "logo_url": "http://img.example/1001.png",
+    "channel_number": 1,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch1.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 2",
+    "raw_name": "UK| TNT Sports 2 (1080p50)",
+    "country": "UK",
+    "logo_url": "http://img.example/1004.png",
+    "channel_number": 4,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch3.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Main Event HD\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "Sky Sports Main Event HD",
+    "raw_name": "UK| Sky Sports Main Event HD",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 5,
+    "catchup_type": "xtream",
+    "catchup_days": 3,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "Sky Sports Premier League UHD",
+    "raw_name": "UK| Sky Sports Premier League ᵁᴴᴰ",
+    "country": "UK",
+    "logo_url": "http://img.example/1006.png",
+    "channel_number": 6,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch5.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "BT Sport 1",
+    "raw_name": "UK| BT Sport 1 (4K)",
+    "country": "UK",
+    "logo_url": "http://img.example/1007.png",
+    "channel_number": 7,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch0.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000Eurosport 1\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "Eurosport 1",
+    "raw_name": "UK| Eurosport 1",
+    "country": "UK",
+    "logo_url": "http://img.example/1009.png",
+    "channel_number": 9,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "Premier Sports 1 FHD",
+    "raw_name": "UK| Premier Sports 1 FHD",
+    "country": "UK",
+    "logo_url": "http://img.example/1010.png",
+    "channel_number": 10,
+    "catchup_type": "xtream",
+    "catchup_days": 3,
+    "tvg_id": "ch2.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "ITV 4",
+    "raw_name": "UK| ITV 4 (SD)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 11,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "normalised_name": "CNN",
+    "raw_name": "US| CNN",
+    "country": "US",
+    "logo_url": "http://img.example/1012.png",
+    "channel_number": 12,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch4.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:2\u0000FOX NEWS\u0000US",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "normalised_name": "FOX News",
+    "raw_name": "US| FOX NEWS (HD)",
+    "country": "US",
+    "logo_url": "http://img.example/1013.png",
+    "channel_number": 13,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "normalised_name": "MSNBC",
+    "raw_name": "US| MSNBC",
+    "country": "US",
+    "logo_url": null,
+    "channel_number": 14,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch6.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "normalised_name": "Bloomberg",
+    "raw_name": "US| Bloomberg (720p25)",
+    "country": "US",
+    "logo_url": "http://img.example/1015.png",
+    "channel_number": 15,
+    "catchup_type": "xtream",
+    "catchup_days": 3,
+    "tvg_id": "ch1.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:2\u0000Newsmax\u0000US",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "normalised_name": "Newsmax",
+    "raw_name": "US| Newsmax",
+    "country": "US",
+    "logo_url": null,
+    "channel_number": 17,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "normalised_name": "TNT Sports 1",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": "http://img.example/1018.png",
+    "channel_number": 18,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch3.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel A\u0000",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "normalised_name": "Movie Channel A",
+    "raw_name": "|EN| Movie Channel A",
+    "country": null,
+    "logo_url": "http://img.example/1019.png",
+    "channel_number": 19,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "normalised_name": "Movie Channel B",
+    "raw_name": "|EN| Movie Channel B (4K)",
+    "country": null,
+    "logo_url": null,
+    "channel_number": 20,
+    "catchup_type": "xtream",
+    "catchup_days": 3,
+    "tvg_id": "ch5.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "normalised_name": "XXX Channel 1",
+    "raw_name": "XXX Channel 1",
+    "country": null,
+    "logo_url": "http://img.example/1022.png",
+    "channel_number": 22,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch0.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 2\u0000",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "normalised_name": "XXX Channel 2",
+    "raw_name": "XXX Channel 2",
+    "country": null,
+    "logo_url": null,
+    "channel_number": 23,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "normalised_name": "PPV 1",
+    "raw_name": "##### PPV 1 #####",
+    "country": null,
+    "logo_url": "http://img.example/1024.png",
+    "channel_number": 24,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch2.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:5\u0000UFC 300 Main Card\u0000",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "normalised_name": "UFC 300 Main Card",
+    "raw_name": "UFC 300 Main Card",
+    "country": null,
+    "logo_url": "http://img.example/1025.png",
+    "channel_number": 25,
+    "catchup_type": "xtream",
+    "catchup_days": 3,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "normalised_name": "Cartoon Network",
+    "raw_name": "FR| Cartoon Network",
+    "country": "FR",
+    "logo_url": null,
+    "channel_number": 26,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch4.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:6\u0000Disney Junior\u0000FR",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "normalised_name": "Disney Junior",
+    "raw_name": "FR| Disney Junior",
+    "country": "FR",
+    "logo_url": "http://img.example/1027.png",
+    "channel_number": 27,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "normalised_name": "TF1",
+    "raw_name": "FR| TF1 (HD)",
+    "country": "FR",
+    "logo_url": "http://img.example/1028.png",
+    "channel_number": 28,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch6.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
+    "source_id": "m1",
+    "category_id": "m1:cat:UK| NEWS",
+    "normalised_name": "BBC One",
+    "raw_name": "UK| BBC One (1080p50)",
+    "country": "UK",
+    "logo_url": "http://img.example/bbc1.png",
+    "channel_number": 101,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "bbc1.uk",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000Sky News\u0000UK",
+    "source_id": "m1",
+    "category_id": "m1:cat:UK| NEWS",
+    "normalised_name": "Sky News",
+    "raw_name": "UK| Sky News",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": null,
+    "catchup_type": "flussonic",
+    "catchup_days": 3,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:Sports\u0000TNT Sports Ultimate\u0000",
+    "source_id": "m1",
+    "category_id": "m1:cat:Sports",
+    "normalised_name": "TNT Sports Ultimate",
+    "raw_name": "TNT Sports Ultimate (OFFLINE)",
+    "country": null,
+    "logo_url": null,
+    "channel_number": null,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:Uncategorised\u0000No Group Channel\u0000",
+    "source_id": "m1",
+    "category_id": "m1:cat:Uncategorised",
+    "normalised_name": "No Group Channel",
+    "raw_name": "No Group Channel",
+    "country": null,
+    "logo_url": null,
+    "channel_number": null,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   }
+  ],
+  "episodes": [
+   {
+    "id": "m1:s:the-playlist-show:1:e1",
+    "season_id": "m1:s:the-playlist-show:1",
+    "series_id": "m1:s:the-playlist-show",
+    "provider_episode_id": "http://host.example/series/u/p/301.mkv",
+    "episode_number": 1,
+    "name": "Pilot",
+    "container_extension": "mkv",
+    "duration_secs": null,
+    "plot": null,
+    "image_url": null,
+    "remote_key": "818591588fabaede082c9f4de5924a742d2f8e79"
+   },
+   {
+    "id": "m1:s:the-playlist-show:1:e2",
+    "season_id": "m1:s:the-playlist-show:1",
+    "series_id": "m1:s:the-playlist-show",
+    "provider_episode_id": "http://host.example/series/u/p/302.mkv",
+    "episode_number": 2,
+    "name": "Second",
+    "container_extension": "mkv",
+    "duration_secs": null,
+    "plot": null,
+    "image_url": null,
+    "remote_key": "3bcdc23f12298803e2f231cd4dddd33adaf6e60c"
+   },
+   {
+    "id": "m1:s:the-playlist-show:2:e1",
+    "season_id": "m1:s:the-playlist-show:2",
+    "series_id": "m1:s:the-playlist-show",
+    "provider_episode_id": "http://host.example/series/u/p/303.mkv",
+    "episode_number": 1,
+    "name": "Episode 1",
+    "container_extension": "mkv",
+    "duration_secs": null,
+    "plot": null,
+    "image_url": null,
+    "remote_key": "c9ec4741f7aeae60d2de492bbad1581dbcad8526"
+   },
+   {
+    "id": "m1:s:another-show:1:e5",
+    "season_id": "m1:s:another-show:1",
+    "series_id": "m1:s:another-show",
+    "provider_episode_id": "http://host.example/series/u/p/304.mp4",
+    "episode_number": 5,
+    "name": "Episode 5",
+    "container_extension": "mp4",
+    "duration_secs": null,
+    "plot": null,
+    "image_url": null,
+    "remote_key": "fd740f89d324b59c446109dd92200cbfcf0aca0f"
+   },
+   {
+    "id": "x1:801:1:80111",
+    "season_id": "x1:801:1",
+    "series_id": "x1:801",
+    "provider_episode_id": "80111",
+    "episode_number": 1,
+    "name": "Drama Show 1 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80111.jpg",
+    "remote_key": "d4adc699dc27cc8394ad3360151dc89fef3458b5"
+   },
+   {
+    "id": "x1:801:1:80112",
+    "season_id": "x1:801:1",
+    "series_id": "x1:801",
+    "provider_episode_id": "80112",
+    "episode_number": 2,
+    "name": "Drama Show 1 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80112.jpg",
+    "remote_key": "0a9232569be6f390e4280b2ca9a6ebe9505dd773"
+   },
+   {
+    "id": "x1:801:1:80113",
+    "season_id": "x1:801:1",
+    "series_id": "x1:801",
+    "provider_episode_id": "80113",
+    "episode_number": 3,
+    "name": "Drama Show 1 (2019) S1E3",
+    "container_extension": "mp4",
+    "duration_secs": 3600,
+    "plot": "Episode 3",
+    "image_url": "http://img.example/e80113.jpg",
+    "remote_key": "c19a72abba2d8e050160077c4c30e9676bc8d724"
+   },
+   {
+    "id": "x1:801:2:80121",
+    "season_id": "x1:801:2",
+    "series_id": "x1:801",
+    "provider_episode_id": "80121",
+    "episode_number": 1,
+    "name": "Drama Show 1 (2019) S2E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80121.jpg",
+    "remote_key": "3503ecdc7291e7d6bcbb040f203db5e1694535f1"
+   },
+   {
+    "id": "x1:801:2:80122",
+    "season_id": "x1:801:2",
+    "series_id": "x1:801",
+    "provider_episode_id": "80122",
+    "episode_number": 2,
+    "name": "Drama Show 1 (2019) S2E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80122.jpg",
+    "remote_key": "114ab0115257cab1cda438fa206013fcebf310d5"
+   },
+   {
+    "id": "x1:802:1:80211",
+    "season_id": "x1:802:1",
+    "series_id": "x1:802",
+    "provider_episode_id": "80211",
+    "episode_number": 1,
+    "name": "Drama Show 2 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80211.jpg",
+    "remote_key": "9b6b00885f3ff73b77611f80d34e271518932076"
+   },
+   {
+    "id": "x1:802:1:80212",
+    "season_id": "x1:802:1",
+    "series_id": "x1:802",
+    "provider_episode_id": "80212",
+    "episode_number": 2,
+    "name": "Drama Show 2 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80212.jpg",
+    "remote_key": "157aaa94929e729bd2a700d6ca0983dfc8704037"
+   },
+   {
+    "id": "x1:802:1:80213",
+    "season_id": "x1:802:1",
+    "series_id": "x1:802",
+    "provider_episode_id": "80213",
+    "episode_number": 3,
+    "name": "Drama Show 2 (2019) S1E3",
+    "container_extension": "mp4",
+    "duration_secs": 3600,
+    "plot": "Episode 3",
+    "image_url": "http://img.example/e80213.jpg",
+    "remote_key": "e1fe4c711a1f7d11ad9ec41063133f24924731c9"
+   },
+   {
+    "id": "x1:802:2:80221",
+    "season_id": "x1:802:2",
+    "series_id": "x1:802",
+    "provider_episode_id": "80221",
+    "episode_number": 1,
+    "name": "Drama Show 2 (2019) S2E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80221.jpg",
+    "remote_key": "05317820bf3215d07b672d45a87642c252b97730"
+   },
+   {
+    "id": "x1:802:2:80222",
+    "season_id": "x1:802:2",
+    "series_id": "x1:802",
+    "provider_episode_id": "80222",
+    "episode_number": 2,
+    "name": "Drama Show 2 (2019) S2E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80222.jpg",
+    "remote_key": "c8920f8112040ec183a41457470eb2fe56b18d4c"
+   },
+   {
+    "id": "x1:803:0:80301",
+    "season_id": "x1:803:0",
+    "series_id": "x1:803",
+    "provider_episode_id": "80301",
+    "episode_number": 1,
+    "name": "Drama Show 3 (2019) S0E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80301.jpg",
+    "remote_key": "175fe2d98764abd83f4d6f4d72ba887482c7ee41"
+   },
+   {
+    "id": "x1:803:1:80311",
+    "season_id": "x1:803:1",
+    "series_id": "x1:803",
+    "provider_episode_id": "80311",
+    "episode_number": 1,
+    "name": "Drama Show 3 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80311.jpg",
+    "remote_key": "68d861da9ed0cb0f068187b0dbfc1cdb92a91fc5"
+   },
+   {
+    "id": "x1:803:1:80312",
+    "season_id": "x1:803:1",
+    "series_id": "x1:803",
+    "provider_episode_id": "80312",
+    "episode_number": 2,
+    "name": "Drama Show 3 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80312.jpg",
+    "remote_key": "f1ee36a8b42b73d68900386ca48085e4319a7050"
+   },
+   {
+    "id": "x1:804:1:80411",
+    "season_id": "x1:804:1",
+    "series_id": "x1:804",
+    "provider_episode_id": "80411",
+    "episode_number": 1,
+    "name": "Drama Show 4 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80411.jpg",
+    "remote_key": "8842649011db5c94cee14f0e944a95f5b0f1fbd8"
+   },
+   {
+    "id": "x1:804:1:80412",
+    "season_id": "x1:804:1",
+    "series_id": "x1:804",
+    "provider_episode_id": "80412",
+    "episode_number": 2,
+    "name": "Drama Show 4 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80412.jpg",
+    "remote_key": "e2193064eb32daf4e3c59c8a322babc51dade972"
+   },
+   {
+    "id": "x1:804:1:80413",
+    "season_id": "x1:804:1",
+    "series_id": "x1:804",
+    "provider_episode_id": "80413",
+    "episode_number": 3,
+    "name": "Drama Show 4 (2019) S1E3",
+    "container_extension": "mp4",
+    "duration_secs": 3600,
+    "plot": "Episode 3",
+    "image_url": "http://img.example/e80413.jpg",
+    "remote_key": "4588e09eb4ae096f0c3caf4ddb2f00d063123be5"
+   },
+   {
+    "id": "x1:804:2:80421",
+    "season_id": "x1:804:2",
+    "series_id": "x1:804",
+    "provider_episode_id": "80421",
+    "episode_number": 1,
+    "name": "Drama Show 4 (2019) S2E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80421.jpg",
+    "remote_key": "ccf9c9bd59ed2d47bbe784891ccb2e960aa53db7"
+   },
+   {
+    "id": "x1:804:2:80422",
+    "season_id": "x1:804:2",
+    "series_id": "x1:804",
+    "provider_episode_id": "80422",
+    "episode_number": 2,
+    "name": "Drama Show 4 (2019) S2E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80422.jpg",
+    "remote_key": "983ca54a4d2952d4251d0870488c2a0cb7ffb094"
+   },
+   {
+    "id": "x1:805:1:80511",
+    "season_id": "x1:805:1",
+    "series_id": "x1:805",
+    "provider_episode_id": "80511",
+    "episode_number": 1,
+    "name": "Drama Show 5 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80511.jpg",
+    "remote_key": "db23454e2cf189d787e33d265eea0d9a500c3338"
+   },
+   {
+    "id": "x1:805:1:80512",
+    "season_id": "x1:805:1",
+    "series_id": "x1:805",
+    "provider_episode_id": "80512",
+    "episode_number": 2,
+    "name": "Drama Show 5 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80512.jpg",
+    "remote_key": "8cbdad7a459c3118eba266622a13590b466494cf"
+   },
+   {
+    "id": "x1:805:1:80513",
+    "season_id": "x1:805:1",
+    "series_id": "x1:805",
+    "provider_episode_id": "80513",
+    "episode_number": 3,
+    "name": "Drama Show 5 (2019) S1E3",
+    "container_extension": "mp4",
+    "duration_secs": 3600,
+    "plot": "Episode 3",
+    "image_url": "http://img.example/e80513.jpg",
+    "remote_key": "fddbe2b2f8515caf2cc96b59d8c0bd04f2d86731"
+   },
+   {
+    "id": "x1:805:2:80521",
+    "season_id": "x1:805:2",
+    "series_id": "x1:805",
+    "provider_episode_id": "80521",
+    "episode_number": 1,
+    "name": "Drama Show 5 (2019) S2E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80521.jpg",
+    "remote_key": "7e683fe6b21c09aff6192add00faed823a65001f"
+   },
+   {
+    "id": "x1:805:2:80522",
+    "season_id": "x1:805:2",
+    "series_id": "x1:805",
+    "provider_episode_id": "80522",
+    "episode_number": 2,
+    "name": "Drama Show 5 (2019) S2E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80522.jpg",
+    "remote_key": "d9d85fdffbfcdc58be0c2c3c64441140a4ed5378"
+   },
+   {
+    "id": "x1:806:1:80611",
+    "season_id": "x1:806:1",
+    "series_id": "x1:806",
+    "provider_episode_id": "80611",
+    "episode_number": 1,
+    "name": "Drama Show 6 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80611.jpg",
+    "remote_key": "11d760e02bf265d0eed97243f6b66977ca72783b"
+   },
+   {
+    "id": "x1:806:1:80612",
+    "season_id": "x1:806:1",
+    "series_id": "x1:806",
+    "provider_episode_id": "80612",
+    "episode_number": 2,
+    "name": "Drama Show 6 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80612.jpg",
+    "remote_key": "fcc2233f4ca29f4f224c06eade0ecedceb86aad3"
+   },
+   {
+    "id": "x1:806:1:80613",
+    "season_id": "x1:806:1",
+    "series_id": "x1:806",
+    "provider_episode_id": "80613",
+    "episode_number": 3,
+    "name": "Drama Show 6 (2019) S1E3",
+    "container_extension": "mp4",
+    "duration_secs": 3600,
+    "plot": "Episode 3",
+    "image_url": "http://img.example/e80613.jpg",
+    "remote_key": "ff5cd693a71017baae7b91bb94170d006132f56e"
+   },
+   {
+    "id": "x1:806:2:80621",
+    "season_id": "x1:806:2",
+    "series_id": "x1:806",
+    "provider_episode_id": "80621",
+    "episode_number": 1,
+    "name": "Drama Show 6 (2019) S2E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80621.jpg",
+    "remote_key": "5475093d8fd5859a7859d58a0692bef00ee92c3b"
+   },
+   {
+    "id": "x1:806:2:80622",
+    "season_id": "x1:806:2",
+    "series_id": "x1:806",
+    "provider_episode_id": "80622",
+    "episode_number": 2,
+    "name": "Drama Show 6 (2019) S2E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80622.jpg",
+    "remote_key": "838ea1d4917183689b35e89f0e7b03ee5f959569"
+   },
+   {
+    "id": "x1:807:1:80711",
+    "season_id": "x1:807:1",
+    "series_id": "x1:807",
+    "provider_episode_id": "80711",
+    "episode_number": 1,
+    "name": "Drama Show 7 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80711.jpg",
+    "remote_key": "27b5afab6afbb58831f739fe4344b26026fe98be"
+   },
+   {
+    "id": "x1:807:1:80712",
+    "season_id": "x1:807:1",
+    "series_id": "x1:807",
+    "provider_episode_id": "80712",
+    "episode_number": 2,
+    "name": "Drama Show 7 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80712.jpg",
+    "remote_key": "543a96f412b1e31a7a81c00cc177c530f98c5c1a"
+   },
+   {
+    "id": "x1:807:1:80713",
+    "season_id": "x1:807:1",
+    "series_id": "x1:807",
+    "provider_episode_id": "80713",
+    "episode_number": 3,
+    "name": "Drama Show 7 (2019) S1E3",
+    "container_extension": "mp4",
+    "duration_secs": 3600,
+    "plot": "Episode 3",
+    "image_url": "http://img.example/e80713.jpg",
+    "remote_key": "48685fdce8a398c6e5da49b2e57eacc19296f0b4"
+   },
+   {
+    "id": "x1:807:2:80721",
+    "season_id": "x1:807:2",
+    "series_id": "x1:807",
+    "provider_episode_id": "80721",
+    "episode_number": 1,
+    "name": "Drama Show 7 (2019) S2E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80721.jpg",
+    "remote_key": "993b6c9961412ddcd4f19f75c9bbd15d947ff0d4"
+   },
+   {
+    "id": "x1:807:2:80722",
+    "season_id": "x1:807:2",
+    "series_id": "x1:807",
+    "provider_episode_id": "80722",
+    "episode_number": 2,
+    "name": "Drama Show 7 (2019) S2E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80722.jpg",
+    "remote_key": "5fcab10b4eac0be28efbc23f050126a72fa300e8"
+   },
+   {
+    "id": "x1:808:1:80811",
+    "season_id": "x1:808:1",
+    "series_id": "x1:808",
+    "provider_episode_id": "80811",
+    "episode_number": 1,
+    "name": "Drama Show 8 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80811.jpg",
+    "remote_key": "7a771f3a7dbd7c58a7cac93e3cc49e657c551a50"
+   },
+   {
+    "id": "x1:808:1:80812",
+    "season_id": "x1:808:1",
+    "series_id": "x1:808",
+    "provider_episode_id": "80812",
+    "episode_number": 2,
+    "name": "Drama Show 8 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80812.jpg",
+    "remote_key": "1f1082de0aa9c1c3fd8b5e39df7b3a03d049262e"
+   },
+   {
+    "id": "x1:808:1:80813",
+    "season_id": "x1:808:1",
+    "series_id": "x1:808",
+    "provider_episode_id": "80813",
+    "episode_number": 3,
+    "name": "Drama Show 8 (2019) S1E3",
+    "container_extension": "mp4",
+    "duration_secs": 3600,
+    "plot": "Episode 3",
+    "image_url": "http://img.example/e80813.jpg",
+    "remote_key": "739a429a8d1489ec4c78a6d6b95e1ac8ea6eb526"
+   },
+   {
+    "id": "x1:808:2:80821",
+    "season_id": "x1:808:2",
+    "series_id": "x1:808",
+    "provider_episode_id": "80821",
+    "episode_number": 1,
+    "name": "Drama Show 8 (2019) S2E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80821.jpg",
+    "remote_key": "2b6bf70acb9496fc87739acde2bb4be01a8755b7"
+   },
+   {
+    "id": "x1:808:2:80822",
+    "season_id": "x1:808:2",
+    "series_id": "x1:808",
+    "provider_episode_id": "80822",
+    "episode_number": 2,
+    "name": "Drama Show 8 (2019) S2E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80822.jpg",
+    "remote_key": "bfc6bd316c97fa868deb8686205fb0f30f410716"
+   },
+   {
+    "id": "x1:809:1:80911",
+    "season_id": "x1:809:1",
+    "series_id": "x1:809",
+    "provider_episode_id": "80911",
+    "episode_number": 1,
+    "name": "4K-TOP - Drama Show 1 (2019) S1E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80911.jpg",
+    "remote_key": "d504e9199ea9c3ae51426bd0299ecaa576a35b20"
+   },
+   {
+    "id": "x1:809:1:80912",
+    "season_id": "x1:809:1",
+    "series_id": "x1:809",
+    "provider_episode_id": "80912",
+    "episode_number": 2,
+    "name": "4K-TOP - Drama Show 1 (2019) S1E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80912.jpg",
+    "remote_key": "a9dfdfd38c7a681265453d5b3ea14a26466e5adc"
+   },
+   {
+    "id": "x1:809:1:80913",
+    "season_id": "x1:809:1",
+    "series_id": "x1:809",
+    "provider_episode_id": "80913",
+    "episode_number": 3,
+    "name": "4K-TOP - Drama Show 1 (2019) S1E3",
+    "container_extension": "mp4",
+    "duration_secs": 3600,
+    "plot": "Episode 3",
+    "image_url": "http://img.example/e80913.jpg",
+    "remote_key": "88fe5a06d3ebe5b4efc20a5a0765d7718ae58fc7"
+   },
+   {
+    "id": "x1:809:2:80921",
+    "season_id": "x1:809:2",
+    "series_id": "x1:809",
+    "provider_episode_id": "80921",
+    "episode_number": 1,
+    "name": "4K-TOP - Drama Show 1 (2019) S2E1",
+    "container_extension": "mp4",
+    "duration_secs": 2700,
+    "plot": "Episode 1",
+    "image_url": "http://img.example/e80921.jpg",
+    "remote_key": "4907bd974f7f2327b76d059593356567ef4e9013"
+   },
+   {
+    "id": "x1:809:2:80922",
+    "season_id": "x1:809:2",
+    "series_id": "x1:809",
+    "provider_episode_id": "80922",
+    "episode_number": 2,
+    "name": "4K-TOP - Drama Show 1 (2019) S2E2",
+    "container_extension": "mkv",
+    "duration_secs": 2700,
+    "plot": "Episode 2",
+    "image_url": "http://img.example/e80922.jpg",
+    "remote_key": "09967063cc6681b4c3057617738e890e242fdab5"
+   }
+  ],
+  "favourites": [],
+  "hidden_categories": [],
+  "hidden_channels": [],
+  "home_pins": [],
+  "movie_categories": [
+   {
+    "id": "x1:1",
+    "source_id": "x1",
+    "provider_id": "1",
+    "raw_name": "EN - ACTION",
+    "country": null,
+    "genre": "action",
+    "language": "en",
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "x1:2",
+    "source_id": "x1",
+    "provider_id": "2",
+    "raw_name": "EN - COMEDY",
+    "country": null,
+    "genre": "comedy",
+    "language": "en",
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "x1:3",
+    "source_id": "x1",
+    "provider_id": "3",
+    "raw_name": "4K-TOP - NEW RELEASES",
+    "country": null,
+    "genre": null,
+    "language": null,
+    "service": null,
+    "tags": "4k"
+   },
+   {
+    "id": "x1:4",
+    "source_id": "x1",
+    "provider_id": "4",
+    "raw_name": "FR - COMEDIE",
+    "country": null,
+    "genre": null,
+    "language": "fr",
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "x1:5",
+    "source_id": "x1",
+    "provider_id": "5",
+    "raw_name": "ASIA MOVIES (MULTI-SUBS)",
+    "country": null,
+    "genre": null,
+    "language": "multi",
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "x1:6",
+    "source_id": "x1",
+    "provider_id": "6",
+    "raw_name": "XXX",
+    "country": null,
+    "genre": "adult",
+    "language": null,
+    "service": null,
+    "tags": "adult"
+   },
+   {
+    "id": "m1:mcat:Movies",
+    "source_id": "m1",
+    "provider_id": "Movies",
+    "raw_name": "Movies",
+    "country": null,
+    "genre": null,
+    "language": null,
+    "service": null,
+    "tags": ""
+   }
+  ],
+  "movie_favourites": [],
+  "movie_recents": [],
+  "movies": [
+   {
+    "id": "x1:5001",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5001",
+    "name": "Action Film 1 (2020)",
+    "poster_url": "http://img.example/m5001.jpg",
+    "container_extension": "mkv",
+    "rating": "5.2",
+    "plot": "Plot of Action Film 1 (2020)",
+    "duration_secs": 10401,
+    "details_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "83c0e31c6fac358dd5ad895532cba15b9c65faad"
+   },
+   {
+    "id": "x1:5002",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5002",
+    "name": "Action Film 2 (2020)",
+    "poster_url": "http://img.example/m5002.jpg",
+    "container_extension": "mp4",
+    "rating": "5.4",
+    "plot": "Plot of Action Film 2 (2020)",
+    "duration_secs": 10402,
+    "details_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "3aea0d8611449db65f935399a3f954a26a04b5b2"
+   },
+   {
+    "id": "x1:5003",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5003",
+    "name": "Action Film 3 (2020)",
+    "poster_url": "http://img.example/m5003.jpg",
+    "container_extension": "mkv",
+    "rating": "5.6",
+    "plot": "Plot of Action Film 3 (2020)",
+    "duration_secs": 10403,
+    "details_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "8d976b992abce4f0d5cd3fe0f1e403df39bf55b3"
+   },
+   {
+    "id": "x1:5004",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5004",
+    "name": "Action Film 4 (2020)",
+    "poster_url": "http://img.example/m5004.jpg",
+    "container_extension": "mp4",
+    "rating": "5.8",
+    "plot": "Plot of Action Film 4 (2020)",
+    "duration_secs": null,
+    "details_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "7187ff87f1b56f8bcb002c583217ebc7e2945b6a"
+   },
+   {
+    "id": "x1:5005",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5005",
+    "name": "Action Film 5 (2020)",
+    "poster_url": "http://img.example/m5005.jpg",
+    "container_extension": "avi",
+    "rating": "6",
+    "plot": "Plot of Action Film 5 (2020)",
+    "duration_secs": 10405,
+    "details_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "c3f4588d0929698a5f3fac32963a37d1fa96684e"
+   },
+   {
+    "id": "x1:5006",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5006",
+    "name": "Action Film 6 (2020)",
+    "poster_url": "http://img.example/m5006.jpg",
+    "container_extension": "mp4",
+    "rating": "6.2",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "53b8f023f4310dded0291cda4d0ebde1331806fe"
+   },
+   {
+    "id": "x1:5007",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5007",
+    "name": "Action Film 7 (2020)",
+    "poster_url": "http://img.example/m5007.jpg",
+    "container_extension": "mkv",
+    "rating": "6.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "5a09ffa586fa4eb5beff4b0ed96b4da88c896b59"
+   },
+   {
+    "id": "x1:5008",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5008",
+    "name": "Action Film 8 (2020)",
+    "poster_url": "http://img.example/m5008.jpg",
+    "container_extension": "mp4",
+    "rating": "6.6",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "13756af37016be645b4ee8bcdf79d3778cdacedf"
+   },
+   {
+    "id": "x1:5009",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5009",
+    "name": "Action Film 9 (2020)",
+    "poster_url": "http://img.example/m5009.jpg",
+    "container_extension": "mkv",
+    "rating": "6.8",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "dd63cb6e5e6d0ad6adf92e2b1a0c9818f1192bae"
+   },
+   {
+    "id": "x1:5010",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5010",
+    "name": "Action Film 10 (2020)",
+    "poster_url": "http://img.example/m5010.jpg",
+    "container_extension": "mp4",
+    "rating": "7",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "dc20f4537014294873014756dd99f5aa4f143f55"
+   },
+   {
+    "id": "x1:5011",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5011",
+    "name": "Action Film 11 (2020)",
+    "poster_url": "http://img.example/m5011.jpg",
+    "container_extension": "mkv",
+    "rating": "7.2",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "b255b9a32a57a32ac70d8dca5fc68c56dbf57356"
+   },
+   {
+    "id": "x1:5012",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5012",
+    "name": "Action Film 12 (2020)",
+    "poster_url": "http://img.example/m5012.jpg",
+    "container_extension": "mp4",
+    "rating": "7.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "bf440b7b3690058867efa484e7c8f98a721829b4"
+   },
+   {
+    "id": "x1:5013",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_stream_id": "5013",
+    "name": "No Poster",
+    "poster_url": null,
+    "container_extension": "mp4",
+    "rating": "9.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "6eff2c3a295c6077099ca4066f1ec748d13b3533"
+   },
+   {
+    "id": "x1:5014",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5014",
+    "name": "Comedy Film 1",
+    "poster_url": "http://img.example/m5014.jpg",
+    "container_extension": "mp4",
+    "rating": "6.1",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "53d2af07ca7f12e44d07d7cef9926977825fd964"
+   },
+   {
+    "id": "x1:5015",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5015",
+    "name": "Comedy Film 2",
+    "poster_url": "http://img.example/m5015.jpg",
+    "container_extension": "mp4",
+    "rating": "6.2",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "521c83229dc3bafd23cad0794231df227392262d"
+   },
+   {
+    "id": "x1:5016",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5016",
+    "name": "Comedy Film 3",
+    "poster_url": "http://img.example/m5016.jpg",
+    "container_extension": "mp4",
+    "rating": null,
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "a9094c61960f26edb749d577b6f593f8fd138e97"
+   },
+   {
+    "id": "x1:5017",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5017",
+    "name": "Comedy Film 4",
+    "poster_url": "http://img.example/m5017.jpg",
+    "container_extension": "mp4",
+    "rating": "6.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "0e9951948072221f9dfade2562624729ea50a9d1"
+   },
+   {
+    "id": "x1:5018",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5018",
+    "name": "Comedy Film 5",
+    "poster_url": "http://img.example/m5018.jpg",
+    "container_extension": "mp4",
+    "rating": "6.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "b5a30a94ee8847c5d0981d31f1fff80ee68491dd"
+   },
+   {
+    "id": "x1:5019",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5019",
+    "name": "Comedy Film 6",
+    "poster_url": "http://img.example/m5019.jpg",
+    "container_extension": "mp4",
+    "rating": null,
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "537b2ccd57bf3bf6e2c7d99da7d6d48ce1eda512"
+   },
+   {
+    "id": "x1:5020",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5020",
+    "name": "Comedy Film 7",
+    "poster_url": "http://img.example/m5020.jpg",
+    "container_extension": "mp4",
+    "rating": "6.7",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "2cd75a0043d7de9d659c1f0d3880120a07f7704a"
+   },
+   {
+    "id": "x1:5021",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5021",
+    "name": "Comedy Film 8",
+    "poster_url": "http://img.example/m5021.jpg",
+    "container_extension": "mp4",
+    "rating": "6.8",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "6c8b6b1d264bfa46dcf6cc9071b0076f34e6ef77"
+   },
+   {
+    "id": "x1:5022",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5022",
+    "name": "Comedy Film 9",
+    "poster_url": "http://img.example/m5022.jpg",
+    "container_extension": "mp4",
+    "rating": null,
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "5e0c6380e62b7175173a89bc5e0fe50e476f8ea6"
+   },
+   {
+    "id": "x1:5023",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5023",
+    "name": "Comedy Film 10",
+    "poster_url": "http://img.example/m5023.jpg",
+    "container_extension": "mp4",
+    "rating": "7",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "ce8c0768bb863e7599ac76ce066b0c8151ebb692"
+   },
+   {
+    "id": "x1:5024",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_stream_id": "5024",
+    "name": "Single Vote Wonder",
+    "poster_url": "http://img.example/m5024.jpg",
+    "container_extension": "mp4",
+    "rating": "10",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "e01a9379b416d301772c76d9c4010a0abdc36e69"
+   },
+   {
+    "id": "x1:5025",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5025",
+    "name": "4K-TOP - Action Film 1 (2020)",
+    "poster_url": "http://img.example/m5025.jpg",
+    "container_extension": "mkv",
+    "rating": "9.1",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "74b49a96695d0be1671e09d456822d2c6fcc0aa4"
+   },
+   {
+    "id": "x1:5026",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5026",
+    "name": "4K-TOP - Action Film 2 (2020)",
+    "poster_url": "http://img.example/m5026.jpg",
+    "container_extension": "mkv",
+    "rating": "9.1",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "260d3c1ccd50ca58cd9898cc4630c4c951b8d310"
+   },
+   {
+    "id": "x1:5027",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5027",
+    "name": "4K-TOP - Action Film 3 (2020)",
+    "poster_url": "http://img.example/m5027.jpg",
+    "container_extension": "mkv",
+    "rating": "9.1",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "ddab96d380cf5b98ada9583285ac729a55216f2a"
+   },
+   {
+    "id": "x1:5028",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5028",
+    "name": "Fresh Film 1 (2026)",
+    "poster_url": "http://img.example/m5028.jpg",
+    "container_extension": null,
+    "rating": "6.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "f99c6540cf8902928507deb77d5dadc705356941"
+   },
+   {
+    "id": "x1:5029",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5029",
+    "name": "Fresh Film 2 (2026)",
+    "poster_url": "http://img.example/m5029.jpg",
+    "container_extension": null,
+    "rating": "7",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "d8ee208c72f78d90c4016bb27ad576325185b421"
+   },
+   {
+    "id": "x1:5030",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5030",
+    "name": "Fresh Film 3 (2026)",
+    "poster_url": "http://img.example/m5030.jpg",
+    "container_extension": null,
+    "rating": "7.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "4f2994629b4d6f1e15442447ce88c2c1fdf03bda"
+   },
+   {
+    "id": "x1:5031",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5031",
+    "name": "Fresh Film 4 (2026)",
+    "poster_url": "http://img.example/m5031.jpg",
+    "container_extension": null,
+    "rating": "8",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "a2a58177ed4aaa45d4a6412011ee1158661b7733"
+   },
+   {
+    "id": "x1:5032",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5032",
+    "name": "Fresh Film 5 (2026)",
+    "poster_url": "http://img.example/m5032.jpg",
+    "container_extension": null,
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "a8a6fc7516b4adf7240cb51569d665ed9866a45b"
+   },
+   {
+    "id": "x1:5033",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5033",
+    "name": "Fresh Film 6 (2026)",
+    "poster_url": "http://img.example/m5033.jpg",
+    "container_extension": null,
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "e807132741bb3fa5d9fc2d4607d8f99ea0b05cb9"
+   },
+   {
+    "id": "x1:5034",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5034",
+    "name": "Last Year Film 1 (2025)",
+    "poster_url": "http://img.example/m5034.jpg",
+    "container_extension": "mp4",
+    "rating": "8.75",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "dee20363ca6e57793e90b20aa64ad0f2d57d7b3c"
+   },
+   {
+    "id": "x1:5035",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5035",
+    "name": "Last Year Film 2 (2025)",
+    "poster_url": "http://img.example/m5035.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "51cda9553ad6bdb10250b285e4ed8be94a8ab792"
+   },
+   {
+    "id": "x1:5036",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5036",
+    "name": "Last Year Film 3 (2025)",
+    "poster_url": "http://img.example/m5036.jpg",
+    "container_extension": "mp4",
+    "rating": "8.25",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "07390f434746110d28bd754393d1aa644f984210"
+   },
+   {
+    "id": "x1:5037",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5037",
+    "name": "Last Year Film 4 (2025)",
+    "poster_url": "http://img.example/m5037.jpg",
+    "container_extension": "mp4",
+    "rating": "8",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "0007efa02b255e7595100b16ea95322debe6b771"
+   },
+   {
+    "id": "x1:5038",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5038",
+    "name": "Last Year Film 5 (2025)",
+    "poster_url": "http://img.example/m5038.jpg",
+    "container_extension": "mp4",
+    "rating": "7.75",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "838a82e3ea7d2f47049ab855a3fbe8a3c60283b5"
+   },
+   {
+    "id": "x1:5039",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "provider_stream_id": "5039",
+    "name": "Last Year Film 6 (2025)",
+    "poster_url": "http://img.example/m5039.jpg",
+    "container_extension": "mp4",
+    "rating": "7.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "b5cc8da8de21538acf6f1f6e4c6ddd8755135689"
+   },
+   {
+    "id": "x1:5040",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "provider_stream_id": "5040",
+    "name": "Film Francais 1",
+    "poster_url": "http://img.example/m5040.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "b579162d844eaf5aff04463bef1936539ef3baa3"
+   },
+   {
+    "id": "x1:5041",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "provider_stream_id": "5041",
+    "name": "Film Francais 2",
+    "poster_url": "http://img.example/m5041.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "4f9ec37c45661a7b20fff377e1d9a7baab8f0fdf"
+   },
+   {
+    "id": "x1:5042",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "provider_stream_id": "5042",
+    "name": "Film Francais 3",
+    "poster_url": "http://img.example/m5042.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "84902d235ccb5dae00f9cf3a88a4617387671f89"
+   },
+   {
+    "id": "x1:5043",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "provider_stream_id": "5043",
+    "name": "Film Francais 4",
+    "poster_url": "http://img.example/m5043.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "d8b10574e91ee4ecaff47a7485d1102d3f12d801"
+   },
+   {
+    "id": "x1:5044",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "provider_stream_id": "5044",
+    "name": "Film Francais 5",
+    "poster_url": "http://img.example/m5044.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "d239286bf5157e50b197d3d3e2245c44c50bd922"
+   },
+   {
+    "id": "x1:5045",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "provider_stream_id": "5045",
+    "name": "Film Francais 6",
+    "poster_url": "http://img.example/m5045.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "79a579e3a9af6f5feecf20f3eb5a4eb5251e2838"
+   },
+   {
+    "id": "x1:5046",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "provider_stream_id": "5046",
+    "name": "Film Francais 7",
+    "poster_url": "http://img.example/m5046.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "a55c3d98e93c8745e54fcca9a114a12931a6dd3c"
+   },
+   {
+    "id": "x1:5047",
+    "source_id": "x1",
+    "category_id": "x1:4",
+    "provider_stream_id": "5047",
+    "name": "Film Francais 8",
+    "poster_url": "http://img.example/m5047.jpg",
+    "container_extension": "mp4",
+    "rating": "8.4",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "fea38373b3f8b8579b0b419848d6534984c026bc"
+   },
+   {
+    "id": "x1:5048",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "provider_stream_id": "5048",
+    "name": "Asian Film 1",
+    "poster_url": "http://img.example/m5048.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "ac0ecaa7b921038ce4f6e37e8bc0d590239a0971"
+   },
+   {
+    "id": "x1:5049",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "provider_stream_id": "5049",
+    "name": "Asian Film 2",
+    "poster_url": "http://img.example/m5049.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "d396585ec673e5b570a77734482520e9b24addf2"
+   },
+   {
+    "id": "x1:5050",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "provider_stream_id": "5050",
+    "name": "Asian Film 3",
+    "poster_url": "http://img.example/m5050.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "92644e67052484dead7c63392e595d9b04f8c41c"
+   },
+   {
+    "id": "x1:5051",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "provider_stream_id": "5051",
+    "name": "Asian Film 4",
+    "poster_url": "http://img.example/m5051.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "314f473c2f30985dc7370a4e87e2b6dd98c58a24"
+   },
+   {
+    "id": "x1:5052",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "provider_stream_id": "5052",
+    "name": "Asian Film 5",
+    "poster_url": "http://img.example/m5052.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "290de007aac00d2c8f93d619cf939f0dc347d2db"
+   },
+   {
+    "id": "x1:5053",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "provider_stream_id": "5053",
+    "name": "Asian Film 6",
+    "poster_url": "http://img.example/m5053.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "d032559cab86bfdb29e112d4747ecea7fb1517d6"
+   },
+   {
+    "id": "x1:5054",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "provider_stream_id": "5054",
+    "name": "Asian Film 7",
+    "poster_url": "http://img.example/m5054.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "e64304252cbb5d4755658b68b60fc6497f613086"
+   },
+   {
+    "id": "x1:5055",
+    "source_id": "x1",
+    "category_id": "x1:5",
+    "provider_stream_id": "5055",
+    "name": "Asian Film 8",
+    "poster_url": "http://img.example/m5055.jpg",
+    "container_extension": "mp4",
+    "rating": "8.5",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "90f393d33919df4eb03df3b2e9d1b06f471d5b60"
+   },
+   {
+    "id": "x1:5056",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "provider_stream_id": "5056",
+    "name": "Adult 1",
+    "poster_url": "http://img.example/m5056.jpg",
+    "container_extension": "mp4",
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "f9948dda80121fce80600ab6c81f4911fab7447e"
+   },
+   {
+    "id": "x1:5057",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "provider_stream_id": "5057",
+    "name": "Adult 2",
+    "poster_url": "http://img.example/m5057.jpg",
+    "container_extension": "mp4",
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "dfd9b6ee23be6dda9595f9712cafa187ddf27235"
+   },
+   {
+    "id": "x1:5058",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "provider_stream_id": "5058",
+    "name": "Adult 3",
+    "poster_url": "http://img.example/m5058.jpg",
+    "container_extension": "mp4",
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "9e6480c4327cdda86baa0fac859a4d1e9aa66953"
+   },
+   {
+    "id": "x1:5059",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "provider_stream_id": "5059",
+    "name": "Adult 4",
+    "poster_url": "http://img.example/m5059.jpg",
+    "container_extension": "mp4",
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "30ab5dd2694c1d7bd5ebef9bcb4216436d6fcbf7"
+   },
+   {
+    "id": "x1:5060",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "provider_stream_id": "5060",
+    "name": "Adult 5",
+    "poster_url": "http://img.example/m5060.jpg",
+    "container_extension": "mp4",
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "970ae3024cb45f6709dfe571ed66082bef40ddc7"
+   },
+   {
+    "id": "x1:5061",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "provider_stream_id": "5061",
+    "name": "Adult 6",
+    "poster_url": "http://img.example/m5061.jpg",
+    "container_extension": "mp4",
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "974a3c5762ef891c5c32129e39f644db96278de8"
+   },
+   {
+    "id": "x1:5062",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "provider_stream_id": "5062",
+    "name": "Adult 7",
+    "poster_url": "http://img.example/m5062.jpg",
+    "container_extension": "mp4",
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "228c9160bd09532a95b4e14f19a15ac7c292f082"
+   },
+   {
+    "id": "x1:5063",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "provider_stream_id": "5063",
+    "name": "Adult 8",
+    "poster_url": "http://img.example/m5063.jpg",
+    "container_extension": "mp4",
+    "rating": "9",
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "78c6384865d5d372cd033ccae1b8bb485caa9d90"
+   },
+   {
+    "id": "m1:m:playlist-movie-one-2018",
+    "source_id": "m1",
+    "category_id": "m1:mcat:Movies",
+    "provider_stream_id": "http://host.example/movie/u/p/201.mp4",
+    "name": "Playlist Movie One (2018)",
+    "poster_url": "http://img.example/p1.jpg",
+    "container_extension": "mp4",
+    "rating": null,
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "5b2bd23ab01c226dd467513b731ea2af9810862a"
+   },
+   {
+    "id": "m1:m:playlist-movie-two-2019",
+    "source_id": "m1",
+    "category_id": "m1:mcat:Movies",
+    "provider_stream_id": "http://host.example/movie/u/p/202.mkv",
+    "name": "Playlist Movie Two (2019)",
+    "poster_url": null,
+    "container_extension": "mkv",
+    "rating": null,
+    "plot": null,
+    "duration_secs": null,
+    "details_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "05bb2d972b65b10df6f3fb899182381d4c5c9f37"
+   }
+  ],
+  "pending_channel_sync": [],
+  "playback_progress": [],
+  "profile_stash": [],
+  "profiles": [],
+  "programmes": [
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0--4",
+    "description": null,
+    "start_at": 1790913600000,
+    "end_at": 1790920800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0--4",
+    "description": null,
+    "start_at": 1790913600000,
+    "end_at": 1790920800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0--3",
+    "description": "About Show 0--3",
+    "start_at": 1790920800000,
+    "end_at": 1790928000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0--3",
+    "description": "About Show 0--3",
+    "start_at": 1790920800000,
+    "end_at": 1790928000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0--2",
+    "description": null,
+    "start_at": 1790928000000,
+    "end_at": 1790935200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0--2",
+    "description": null,
+    "start_at": 1790928000000,
+    "end_at": 1790935200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0--1",
+    "description": null,
+    "start_at": 1790935200000,
+    "end_at": 1790942400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0--1",
+    "description": null,
+    "start_at": 1790935200000,
+    "end_at": 1790942400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790942400000,
+    "end_at": 1790949600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790942400000,
+    "end_at": 1790949600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-1",
+    "description": null,
+    "start_at": 1790949600000,
+    "end_at": 1790956800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-1",
+    "description": null,
+    "start_at": 1790949600000,
+    "end_at": 1790956800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-2",
+    "description": null,
+    "start_at": 1790956800000,
+    "end_at": 1790964000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-2",
+    "description": null,
+    "start_at": 1790956800000,
+    "end_at": 1790964000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-3",
+    "description": "About Show 0-3",
+    "start_at": 1790964000000,
+    "end_at": 1790971200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-3",
+    "description": "About Show 0-3",
+    "start_at": 1790964000000,
+    "end_at": 1790971200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-4",
+    "description": null,
+    "start_at": 1790971200000,
+    "end_at": 1790978400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-4",
+    "description": null,
+    "start_at": 1790971200000,
+    "end_at": 1790978400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790978400000,
+    "end_at": 1790985600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790978400000,
+    "end_at": 1790985600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-6",
+    "description": "About Show 0-6",
+    "start_at": 1790985600000,
+    "end_at": 1790992800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-6",
+    "description": "About Show 0-6",
+    "start_at": 1790985600000,
+    "end_at": 1790992800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-7",
+    "description": null,
+    "start_at": 1790992800000,
+    "end_at": 1791000000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-7",
+    "description": null,
+    "start_at": 1790992800000,
+    "end_at": 1791000000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-8",
+    "description": null,
+    "start_at": 1791000000000,
+    "end_at": 1791007200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-8",
+    "description": null,
+    "start_at": 1791000000000,
+    "end_at": 1791007200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-9",
+    "description": "About Show 0-9",
+    "start_at": 1791007200000,
+    "end_at": 1791014400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-9",
+    "description": "About Show 0-9",
+    "start_at": 1791007200000,
+    "end_at": 1791014400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791014400000,
+    "end_at": 1791021600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791014400000,
+    "end_at": 1791021600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "title": "Show 0-11",
+    "description": null,
+    "start_at": 1791021600000,
+    "end_at": 1791028800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
+    "title": "Show 0-11",
+    "description": null,
+    "start_at": 1791021600000,
+    "end_at": 1791028800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1--4",
+    "description": null,
+    "start_at": 1790914200000,
+    "end_at": 1790921400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1--4",
+    "description": null,
+    "start_at": 1790914200000,
+    "end_at": 1790921400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1--3",
+    "description": "About Show 1--3",
+    "start_at": 1790921400000,
+    "end_at": 1790928600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1--3",
+    "description": "About Show 1--3",
+    "start_at": 1790921400000,
+    "end_at": 1790928600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1--2",
+    "description": null,
+    "start_at": 1790928600000,
+    "end_at": 1790935800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1--2",
+    "description": null,
+    "start_at": 1790928600000,
+    "end_at": 1790935800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1--1",
+    "description": null,
+    "start_at": 1790935800000,
+    "end_at": 1790943000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1--1",
+    "description": null,
+    "start_at": 1790935800000,
+    "end_at": 1790943000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790943000000,
+    "end_at": 1790950200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790943000000,
+    "end_at": 1790950200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-1",
+    "description": null,
+    "start_at": 1790950200000,
+    "end_at": 1790957400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-1",
+    "description": null,
+    "start_at": 1790950200000,
+    "end_at": 1790957400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-2",
+    "description": null,
+    "start_at": 1790957400000,
+    "end_at": 1790964600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-2",
+    "description": null,
+    "start_at": 1790957400000,
+    "end_at": 1790964600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-3",
+    "description": "About Show 1-3",
+    "start_at": 1790964600000,
+    "end_at": 1790971800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-3",
+    "description": "About Show 1-3",
+    "start_at": 1790964600000,
+    "end_at": 1790971800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-4",
+    "description": null,
+    "start_at": 1790971800000,
+    "end_at": 1790979000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-4",
+    "description": null,
+    "start_at": 1790971800000,
+    "end_at": 1790979000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790979000000,
+    "end_at": 1790986200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790979000000,
+    "end_at": 1790986200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-6",
+    "description": "About Show 1-6",
+    "start_at": 1790986200000,
+    "end_at": 1790993400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-6",
+    "description": "About Show 1-6",
+    "start_at": 1790986200000,
+    "end_at": 1790993400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-7",
+    "description": null,
+    "start_at": 1790993400000,
+    "end_at": 1791000600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-7",
+    "description": null,
+    "start_at": 1790993400000,
+    "end_at": 1791000600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-8",
+    "description": null,
+    "start_at": 1791000600000,
+    "end_at": 1791007800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-8",
+    "description": null,
+    "start_at": 1791000600000,
+    "end_at": 1791007800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-9",
+    "description": "About Show 1-9",
+    "start_at": 1791007800000,
+    "end_at": 1791015000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-9",
+    "description": "About Show 1-9",
+    "start_at": 1791007800000,
+    "end_at": 1791015000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791015000000,
+    "end_at": 1791022200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791015000000,
+    "end_at": 1791022200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "title": "Show 1-11",
+    "description": null,
+    "start_at": 1791022200000,
+    "end_at": 1791029400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-11",
+    "description": null,
+    "start_at": 1791022200000,
+    "end_at": 1791029400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2--4",
+    "description": null,
+    "start_at": 1790914800000,
+    "end_at": 1790922000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2--4",
+    "description": null,
+    "start_at": 1790914800000,
+    "end_at": 1790922000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2--3",
+    "description": "About Show 2--3",
+    "start_at": 1790922000000,
+    "end_at": 1790929200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2--3",
+    "description": "About Show 2--3",
+    "start_at": 1790922000000,
+    "end_at": 1790929200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2--2",
+    "description": null,
+    "start_at": 1790929200000,
+    "end_at": 1790936400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2--2",
+    "description": null,
+    "start_at": 1790929200000,
+    "end_at": 1790936400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2--1",
+    "description": null,
+    "start_at": 1790936400000,
+    "end_at": 1790943600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2--1",
+    "description": null,
+    "start_at": 1790936400000,
+    "end_at": 1790943600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790943600000,
+    "end_at": 1790950800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790943600000,
+    "end_at": 1790950800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-1",
+    "description": null,
+    "start_at": 1790950800000,
+    "end_at": 1790958000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-1",
+    "description": null,
+    "start_at": 1790950800000,
+    "end_at": 1790958000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-2",
+    "description": null,
+    "start_at": 1790958000000,
+    "end_at": 1790965200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-2",
+    "description": null,
+    "start_at": 1790958000000,
+    "end_at": 1790965200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-3",
+    "description": "About Show 2-3",
+    "start_at": 1790965200000,
+    "end_at": 1790972400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-3",
+    "description": "About Show 2-3",
+    "start_at": 1790965200000,
+    "end_at": 1790972400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-4",
+    "description": null,
+    "start_at": 1790972400000,
+    "end_at": 1790979600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-4",
+    "description": null,
+    "start_at": 1790972400000,
+    "end_at": 1790979600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790979600000,
+    "end_at": 1790986800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790979600000,
+    "end_at": 1790986800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-6",
+    "description": "About Show 2-6",
+    "start_at": 1790986800000,
+    "end_at": 1790994000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-6",
+    "description": "About Show 2-6",
+    "start_at": 1790986800000,
+    "end_at": 1790994000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-7",
+    "description": null,
+    "start_at": 1790994000000,
+    "end_at": 1791001200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-7",
+    "description": null,
+    "start_at": 1790994000000,
+    "end_at": 1791001200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-8",
+    "description": null,
+    "start_at": 1791001200000,
+    "end_at": 1791008400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-8",
+    "description": null,
+    "start_at": 1791001200000,
+    "end_at": 1791008400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-9",
+    "description": "About Show 2-9",
+    "start_at": 1791008400000,
+    "end_at": 1791015600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-9",
+    "description": "About Show 2-9",
+    "start_at": 1791008400000,
+    "end_at": 1791015600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791015600000,
+    "end_at": 1791022800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791015600000,
+    "end_at": 1791022800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
+    "title": "Show 2-11",
+    "description": null,
+    "start_at": 1791022800000,
+    "end_at": 1791030000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
+    "title": "Show 2-11",
+    "description": null,
+    "start_at": 1791022800000,
+    "end_at": 1791030000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3--4",
+    "description": null,
+    "start_at": 1790915400000,
+    "end_at": 1790922600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3--4",
+    "description": null,
+    "start_at": 1790915400000,
+    "end_at": 1790922600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3--3",
+    "description": "About Show 3--3",
+    "start_at": 1790922600000,
+    "end_at": 1790929800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3--3",
+    "description": "About Show 3--3",
+    "start_at": 1790922600000,
+    "end_at": 1790929800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3--2",
+    "description": null,
+    "start_at": 1790929800000,
+    "end_at": 1790937000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3--2",
+    "description": null,
+    "start_at": 1790929800000,
+    "end_at": 1790937000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3--1",
+    "description": null,
+    "start_at": 1790937000000,
+    "end_at": 1790944200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3--1",
+    "description": null,
+    "start_at": 1790937000000,
+    "end_at": 1790944200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790944200000,
+    "end_at": 1790951400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790944200000,
+    "end_at": 1790951400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-1",
+    "description": null,
+    "start_at": 1790951400000,
+    "end_at": 1790958600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-1",
+    "description": null,
+    "start_at": 1790951400000,
+    "end_at": 1790958600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-2",
+    "description": null,
+    "start_at": 1790958600000,
+    "end_at": 1790965800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-2",
+    "description": null,
+    "start_at": 1790958600000,
+    "end_at": 1790965800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-3",
+    "description": "About Show 3-3",
+    "start_at": 1790965800000,
+    "end_at": 1790973000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-3",
+    "description": "About Show 3-3",
+    "start_at": 1790965800000,
+    "end_at": 1790973000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-4",
+    "description": null,
+    "start_at": 1790973000000,
+    "end_at": 1790980200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-4",
+    "description": null,
+    "start_at": 1790973000000,
+    "end_at": 1790980200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790980200000,
+    "end_at": 1790987400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790980200000,
+    "end_at": 1790987400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-6",
+    "description": "About Show 3-6",
+    "start_at": 1790987400000,
+    "end_at": 1790994600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-6",
+    "description": "About Show 3-6",
+    "start_at": 1790987400000,
+    "end_at": 1790994600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-7",
+    "description": null,
+    "start_at": 1790994600000,
+    "end_at": 1791001800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-7",
+    "description": null,
+    "start_at": 1790994600000,
+    "end_at": 1791001800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-8",
+    "description": null,
+    "start_at": 1791001800000,
+    "end_at": 1791009000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-8",
+    "description": null,
+    "start_at": 1791001800000,
+    "end_at": 1791009000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-9",
+    "description": "About Show 3-9",
+    "start_at": 1791009000000,
+    "end_at": 1791016200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-9",
+    "description": "About Show 3-9",
+    "start_at": 1791009000000,
+    "end_at": 1791016200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791016200000,
+    "end_at": 1791023400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791016200000,
+    "end_at": 1791023400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "title": "Show 3-11",
+    "description": null,
+    "start_at": 1791023400000,
+    "end_at": 1791030600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
+    "title": "Show 3-11",
+    "description": null,
+    "start_at": 1791023400000,
+    "end_at": 1791030600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4--4",
+    "description": null,
+    "start_at": 1790916000000,
+    "end_at": 1790923200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4--4",
+    "description": null,
+    "start_at": 1790916000000,
+    "end_at": 1790923200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4--3",
+    "description": "About Show 4--3",
+    "start_at": 1790923200000,
+    "end_at": 1790930400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4--3",
+    "description": "About Show 4--3",
+    "start_at": 1790923200000,
+    "end_at": 1790930400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4--2",
+    "description": null,
+    "start_at": 1790930400000,
+    "end_at": 1790937600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4--2",
+    "description": null,
+    "start_at": 1790930400000,
+    "end_at": 1790937600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4--1",
+    "description": null,
+    "start_at": 1790937600000,
+    "end_at": 1790944800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4--1",
+    "description": null,
+    "start_at": 1790937600000,
+    "end_at": 1790944800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790944800000,
+    "end_at": 1790952000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790944800000,
+    "end_at": 1790952000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-1",
+    "description": null,
+    "start_at": 1790952000000,
+    "end_at": 1790959200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-1",
+    "description": null,
+    "start_at": 1790952000000,
+    "end_at": 1790959200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-2",
+    "description": null,
+    "start_at": 1790959200000,
+    "end_at": 1790966400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-2",
+    "description": null,
+    "start_at": 1790959200000,
+    "end_at": 1790966400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-3",
+    "description": "About Show 4-3",
+    "start_at": 1790966400000,
+    "end_at": 1790973600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-3",
+    "description": "About Show 4-3",
+    "start_at": 1790966400000,
+    "end_at": 1790973600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-4",
+    "description": null,
+    "start_at": 1790973600000,
+    "end_at": 1790980800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-4",
+    "description": null,
+    "start_at": 1790973600000,
+    "end_at": 1790980800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790980800000,
+    "end_at": 1790988000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790980800000,
+    "end_at": 1790988000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-6",
+    "description": "About Show 4-6",
+    "start_at": 1790988000000,
+    "end_at": 1790995200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-6",
+    "description": "About Show 4-6",
+    "start_at": 1790988000000,
+    "end_at": 1790995200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-7",
+    "description": null,
+    "start_at": 1790995200000,
+    "end_at": 1791002400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-7",
+    "description": null,
+    "start_at": 1790995200000,
+    "end_at": 1791002400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-8",
+    "description": null,
+    "start_at": 1791002400000,
+    "end_at": 1791009600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-8",
+    "description": null,
+    "start_at": 1791002400000,
+    "end_at": 1791009600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-9",
+    "description": "About Show 4-9",
+    "start_at": 1791009600000,
+    "end_at": 1791016800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-9",
+    "description": "About Show 4-9",
+    "start_at": 1791009600000,
+    "end_at": 1791016800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791016800000,
+    "end_at": 1791024000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791016800000,
+    "end_at": 1791024000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
+    "title": "Show 4-11",
+    "description": null,
+    "start_at": 1791024000000,
+    "end_at": 1791031200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
+    "title": "Show 4-11",
+    "description": null,
+    "start_at": 1791024000000,
+    "end_at": 1791031200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5--4",
+    "description": null,
+    "start_at": 1790916600000,
+    "end_at": 1790923800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5--4",
+    "description": null,
+    "start_at": 1790916600000,
+    "end_at": 1790923800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5--3",
+    "description": "About Show 5--3",
+    "start_at": 1790923800000,
+    "end_at": 1790931000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5--3",
+    "description": "About Show 5--3",
+    "start_at": 1790923800000,
+    "end_at": 1790931000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5--2",
+    "description": null,
+    "start_at": 1790931000000,
+    "end_at": 1790938200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5--2",
+    "description": null,
+    "start_at": 1790931000000,
+    "end_at": 1790938200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5--1",
+    "description": null,
+    "start_at": 1790938200000,
+    "end_at": 1790945400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5--1",
+    "description": null,
+    "start_at": 1790938200000,
+    "end_at": 1790945400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790945400000,
+    "end_at": 1790952600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790945400000,
+    "end_at": 1790952600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-1",
+    "description": null,
+    "start_at": 1790952600000,
+    "end_at": 1790959800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-1",
+    "description": null,
+    "start_at": 1790952600000,
+    "end_at": 1790959800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-2",
+    "description": null,
+    "start_at": 1790959800000,
+    "end_at": 1790967000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-2",
+    "description": null,
+    "start_at": 1790959800000,
+    "end_at": 1790967000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-3",
+    "description": "About Show 5-3",
+    "start_at": 1790967000000,
+    "end_at": 1790974200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-3",
+    "description": "About Show 5-3",
+    "start_at": 1790967000000,
+    "end_at": 1790974200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-4",
+    "description": null,
+    "start_at": 1790974200000,
+    "end_at": 1790981400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-4",
+    "description": null,
+    "start_at": 1790974200000,
+    "end_at": 1790981400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790981400000,
+    "end_at": 1790988600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790981400000,
+    "end_at": 1790988600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-6",
+    "description": "About Show 5-6",
+    "start_at": 1790988600000,
+    "end_at": 1790995800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-6",
+    "description": "About Show 5-6",
+    "start_at": 1790988600000,
+    "end_at": 1790995800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-7",
+    "description": null,
+    "start_at": 1790995800000,
+    "end_at": 1791003000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-7",
+    "description": null,
+    "start_at": 1790995800000,
+    "end_at": 1791003000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-8",
+    "description": null,
+    "start_at": 1791003000000,
+    "end_at": 1791010200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-8",
+    "description": null,
+    "start_at": 1791003000000,
+    "end_at": 1791010200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-9",
+    "description": "About Show 5-9",
+    "start_at": 1791010200000,
+    "end_at": 1791017400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-9",
+    "description": "About Show 5-9",
+    "start_at": 1791010200000,
+    "end_at": 1791017400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791017400000,
+    "end_at": 1791024600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791017400000,
+    "end_at": 1791024600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
+    "title": "Show 5-11",
+    "description": null,
+    "start_at": 1791024600000,
+    "end_at": 1791031800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-11",
+    "description": null,
+    "start_at": 1791024600000,
+    "end_at": 1791031800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6--4",
+    "description": null,
+    "start_at": 1790917200000,
+    "end_at": 1790924400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6--4",
+    "description": null,
+    "start_at": 1790917200000,
+    "end_at": 1790924400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6--3",
+    "description": "About Show 6--3",
+    "start_at": 1790924400000,
+    "end_at": 1790931600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6--3",
+    "description": "About Show 6--3",
+    "start_at": 1790924400000,
+    "end_at": 1790931600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6--2",
+    "description": null,
+    "start_at": 1790931600000,
+    "end_at": 1790938800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6--2",
+    "description": null,
+    "start_at": 1790931600000,
+    "end_at": 1790938800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6--1",
+    "description": null,
+    "start_at": 1790938800000,
+    "end_at": 1790946000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6--1",
+    "description": null,
+    "start_at": 1790938800000,
+    "end_at": 1790946000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790946000000,
+    "end_at": 1790953200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790946000000,
+    "end_at": 1790953200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-1",
+    "description": null,
+    "start_at": 1790953200000,
+    "end_at": 1790960400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-1",
+    "description": null,
+    "start_at": 1790953200000,
+    "end_at": 1790960400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-2",
+    "description": null,
+    "start_at": 1790960400000,
+    "end_at": 1790967600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-2",
+    "description": null,
+    "start_at": 1790960400000,
+    "end_at": 1790967600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-3",
+    "description": "About Show 6-3",
+    "start_at": 1790967600000,
+    "end_at": 1790974800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-3",
+    "description": "About Show 6-3",
+    "start_at": 1790967600000,
+    "end_at": 1790974800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-4",
+    "description": null,
+    "start_at": 1790974800000,
+    "end_at": 1790982000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-4",
+    "description": null,
+    "start_at": 1790974800000,
+    "end_at": 1790982000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790982000000,
+    "end_at": 1790989200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790982000000,
+    "end_at": 1790989200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-6",
+    "description": "About Show 6-6",
+    "start_at": 1790989200000,
+    "end_at": 1790996400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-6",
+    "description": "About Show 6-6",
+    "start_at": 1790989200000,
+    "end_at": 1790996400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-7",
+    "description": null,
+    "start_at": 1790996400000,
+    "end_at": 1791003600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-7",
+    "description": null,
+    "start_at": 1790996400000,
+    "end_at": 1791003600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-8",
+    "description": null,
+    "start_at": 1791003600000,
+    "end_at": 1791010800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-8",
+    "description": null,
+    "start_at": 1791003600000,
+    "end_at": 1791010800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-9",
+    "description": "About Show 6-9",
+    "start_at": 1791010800000,
+    "end_at": 1791018000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-9",
+    "description": "About Show 6-9",
+    "start_at": 1791010800000,
+    "end_at": 1791018000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791018000000,
+    "end_at": 1791025200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791018000000,
+    "end_at": 1791025200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "title": "Show 6-11",
+    "description": null,
+    "start_at": 1791025200000,
+    "end_at": 1791032400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-11",
+    "description": null,
+    "start_at": 1791025200000,
+    "end_at": 1791032400000
+   }
+  ],
+  "recents": [],
+  "schema_meta": [
+   {
+    "key": "version",
+    "value": "15"
+   },
+   {
+    "key": "display_name_version",
+    "value": "1"
+   },
+   {
+    "key": "classifier_version",
+    "value": "4"
+   }
+  ],
+  "seasons": [
+   {
+    "id": "m1:s:the-playlist-show:1",
+    "series_id": "m1:s:the-playlist-show",
+    "season_number": 1,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "m1:s:the-playlist-show:2",
+    "series_id": "m1:s:the-playlist-show",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "m1:s:another-show:1",
+    "series_id": "m1:s:another-show",
+    "season_number": 1,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:801:1",
+    "series_id": "x1:801",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c1.jpg"
+   },
+   {
+    "id": "x1:801:2",
+    "series_id": "x1:801",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:802:1",
+    "series_id": "x1:802",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c1.jpg"
+   },
+   {
+    "id": "x1:802:2",
+    "series_id": "x1:802",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:803:1",
+    "series_id": "x1:803",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c.jpg"
+   },
+   {
+    "id": "x1:803:0",
+    "series_id": "x1:803",
+    "season_number": 0,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:804:1",
+    "series_id": "x1:804",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c1.jpg"
+   },
+   {
+    "id": "x1:804:2",
+    "series_id": "x1:804",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:805:1",
+    "series_id": "x1:805",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c1.jpg"
+   },
+   {
+    "id": "x1:805:2",
+    "series_id": "x1:805",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:806:1",
+    "series_id": "x1:806",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c1.jpg"
+   },
+   {
+    "id": "x1:806:2",
+    "series_id": "x1:806",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:807:1",
+    "series_id": "x1:807",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c1.jpg"
+   },
+   {
+    "id": "x1:807:2",
+    "series_id": "x1:807",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:808:1",
+    "series_id": "x1:808",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c1.jpg"
+   },
+   {
+    "id": "x1:808:2",
+    "series_id": "x1:808",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   },
+   {
+    "id": "x1:809:1",
+    "series_id": "x1:809",
+    "season_number": 1,
+    "name": "Season 1",
+    "poster_url": "http://img.example/c1.jpg"
+   },
+   {
+    "id": "x1:809:2",
+    "series_id": "x1:809",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null
+   }
+  ],
+  "series": [
+   {
+    "id": "x1:801",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_series_id": "801",
+    "name": "Drama Show 1 (2019)",
+    "poster_url": "http://img.example/s801.jpg",
+    "rating": "7",
+    "plot": "Plot of Drama Show 1 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "eb131e7d62be870c73fb692b651e12c65e649679"
+   },
+   {
+    "id": "x1:802",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_series_id": "802",
+    "name": "Drama Show 2 (2019)",
+    "poster_url": "http://img.example/s802.jpg",
+    "rating": "7.5",
+    "plot": "Plot of Drama Show 2 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "6a290e342bf6fee2a084e4d169908d3121fa42a4"
+   },
+   {
+    "id": "x1:803",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_series_id": "803",
+    "name": "Drama Show 3 (2019)",
+    "poster_url": "http://img.example/s803.jpg",
+    "rating": "8",
+    "plot": "Plot of Drama Show 3 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "95b9d557cee59c4ed866db8a75be8b2ec1a6aa12"
+   },
+   {
+    "id": "x1:804",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_series_id": "804",
+    "name": "Drama Show 4 (2019)",
+    "poster_url": "http://img.example/s804.jpg",
+    "rating": "7",
+    "plot": "Plot of Drama Show 4 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "a8cc0696501d671f055771d3fc06fa53ee4ebc15"
+   },
+   {
+    "id": "x1:805",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_series_id": "805",
+    "name": "Drama Show 5 (2019)",
+    "poster_url": "http://img.example/s805.jpg",
+    "rating": "7.5",
+    "plot": "Plot of Drama Show 5 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "22406aa631b69dd1d6d7a8b4451103ba62ef55e8"
+   },
+   {
+    "id": "x1:806",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_series_id": "806",
+    "name": "Drama Show 6 (2019)",
+    "poster_url": "http://img.example/s806.jpg",
+    "rating": "8",
+    "plot": "Plot of Drama Show 6 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "cf1ebe9c3828a6ae4dc136eac3d18e802248fe9c"
+   },
+   {
+    "id": "x1:807",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_series_id": "807",
+    "name": "Drama Show 7 (2019)",
+    "poster_url": "http://img.example/s807.jpg",
+    "rating": "7",
+    "plot": "Plot of Drama Show 7 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "c3bcd4cc606d072c0cfa30e82e72dc5aeb0896b5"
+   },
+   {
+    "id": "x1:808",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "provider_series_id": "808",
+    "name": "Drama Show 8 (2019)",
+    "poster_url": "http://img.example/s808.jpg",
+    "rating": "7.5",
+    "plot": "Plot of Drama Show 8 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "d42280910837a3997e1dd91f468e1e47def469f3"
+   },
+   {
+    "id": "x1:809",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_series_id": "809",
+    "name": "4K-TOP - Drama Show 1 (2019)",
+    "poster_url": "http://img.example/s809.jpg",
+    "rating": "8",
+    "plot": "Plot of 4K-TOP - Drama Show 1 (2019)",
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "49cbda4461235ccf301e67e9b310b88ed8835e46"
+   },
+   {
+    "id": "x1:810",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_series_id": "810",
+    "name": "Kids Show 1",
+    "poster_url": "http://img.example/s810.jpg",
+    "rating": "7",
+    "plot": "Plot of Kids Show 1",
+    "episodes_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "82100a3f148b79a413d6dae569826f6ded72d2cf"
+   },
+   {
+    "id": "x1:811",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_series_id": "811",
+    "name": "Kids Show 2",
+    "poster_url": "http://img.example/s811.jpg",
+    "rating": "7.5",
+    "plot": "Plot of Kids Show 2",
+    "episodes_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "03cf74d15cbeccde8c6b3efa15f73d747d3fe072"
+   },
+   {
+    "id": "x1:812",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_series_id": "812",
+    "name": "Kids Show 3",
+    "poster_url": "http://img.example/s812.jpg",
+    "rating": "8",
+    "plot": "Plot of Kids Show 3",
+    "episodes_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "fae95ce112be102dec7e60a82ef1154b47ba7685"
+   },
+   {
+    "id": "x1:813",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_series_id": "813",
+    "name": "Kids Show 4",
+    "poster_url": "http://img.example/s813.jpg",
+    "rating": "7",
+    "plot": "Plot of Kids Show 4",
+    "episodes_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "158b58a05c44b66617e22430530db6dc65d84c89"
+   },
+   {
+    "id": "x1:814",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_series_id": "814",
+    "name": "Kids Show 5",
+    "poster_url": "http://img.example/s814.jpg",
+    "rating": "7.5",
+    "plot": "Plot of Kids Show 5",
+    "episodes_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "24b3a8d57fcf874e1c33f2a87e33a3b8a42d7050"
+   },
+   {
+    "id": "x1:815",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_series_id": "815",
+    "name": "Kids Show 6",
+    "poster_url": "http://img.example/s815.jpg",
+    "rating": "8",
+    "plot": "Plot of Kids Show 6",
+    "episodes_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "d14c0f5faa73d07fa86bc05fff561011e5971ef8"
+   },
+   {
+    "id": "x1:816",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "provider_series_id": "816",
+    "name": "Kids Show 7",
+    "poster_url": "http://img.example/s816.jpg",
+    "rating": "7",
+    "plot": "Plot of Kids Show 7",
+    "episodes_fetched_at": null,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "f6eaff5eaef68788d3064b6f3278791ee6a7c786"
+   },
+   {
+    "id": "m1:s:the-playlist-show",
+    "source_id": "m1",
+    "category_id": "m1:scat:Shows",
+    "provider_series_id": "the-playlist-show",
+    "name": "The Playlist Show",
+    "poster_url": "http://img.example/ps.jpg",
+    "rating": null,
+    "plot": null,
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "b9687eb7e9428bda16ae4822ca1d07b48e876a9d"
+   },
+   {
+    "id": "m1:s:another-show",
+    "source_id": "m1",
+    "category_id": "m1:scat:Shows",
+    "provider_series_id": "another-show",
+    "name": "Another Show",
+    "poster_url": null,
+    "rating": null,
+    "plot": null,
+    "episodes_fetched_at": 1790942400000,
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000,
+    "remote_key": "5798f4afbafb8c40c79cd2578a38a172349e5c38"
+   }
+  ],
+  "series_categories": [
+   {
+    "id": "x1:1",
+    "source_id": "x1",
+    "provider_id": "1",
+    "raw_name": "EN - DRAMA",
+    "country": null,
+    "genre": "drama",
+    "language": "en",
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "x1:2",
+    "source_id": "x1",
+    "provider_id": "2",
+    "raw_name": "EN - KIDS",
+    "country": null,
+    "genre": "kids",
+    "language": "en",
+    "service": null,
+    "tags": ""
+   },
+   {
+    "id": "m1:scat:Shows",
+    "source_id": "m1",
+    "provider_id": "Shows",
+    "raw_name": "Shows",
+    "country": null,
+    "genre": null,
+    "language": null,
+    "service": null,
+    "tags": ""
+   }
+  ],
+  "series_favourites": [],
+  "series_recents": [],
+  "series_skip": [],
+  "sources": [
+   {
+    "id": "x1",
+    "kind": "xtream",
+    "name": "Panel",
+    "base_url": "http://panel.example:8080",
+    "playlist_url": null,
+    "epg_url": null,
+    "refresh_interval_hours": null,
+    "created_at": 1790942400000,
+    "last_refreshed_at": 1790942400000,
+    "remote_key": "rk-x1",
+    "sync_updated_at": 10,
+    "sync_deleted_at": null,
+    "include_live": 1,
+    "include_movies": 1,
+    "include_series": 1,
+    "sort_order": null,
+    "backup_urls": null
+   },
+   {
+    "id": "m1",
+    "kind": "m3u",
+    "name": "Playlist",
+    "base_url": null,
+    "playlist_url": "http://lists.example/main.m3u",
+    "epg_url": null,
+    "refresh_interval_hours": null,
+    "created_at": 1790942400001,
+    "last_refreshed_at": 1790942400000,
+    "remote_key": "rk-m1",
+    "sync_updated_at": 20,
+    "sync_deleted_at": null,
+    "include_live": 1,
+    "include_movies": 1,
+    "include_series": 1,
+    "sort_order": null,
+    "backup_urls": null
+   }
+  ],
+  "sync_state": [],
+  "sync_tombstones": []
+ },
+ "results": [
+  {
+   "categories": 6,
+   "channels": 23,
+   "variants": 29,
+   "movies": 63,
+   "series": 16
+  },
+  {
+   "categories": 3,
+   "channels": 4,
+   "variants": 5,
+   "movies": 2,
+   "series": 2
+  }
+ ],
+ "movieIds": [
+  "x1:5001",
+  "x1:5002",
+  "x1:5003",
+  "x1:5004",
+  "x1:5005"
+ ],
+ "detailSeriesIds": [
+  "x1:801",
+  "x1:802",
+  "x1:803",
+  "x1:804",
+  "x1:805",
+  "x1:806",
+  "x1:807",
+  "x1:808",
+  "x1:809"
+ ]
+}
