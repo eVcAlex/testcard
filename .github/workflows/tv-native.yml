@@ -1,7 +1,8 @@
 name: TV native
 
 # The native Kotlin + Compose Fire TV app (apps/tv-native, ADR 0012). Checks run on every change to it or to the TypeScript
-# core whose test vectors it must reproduce. "Run workflow" builds a release APK as an artifact; nothing is published yet.
+# core whose test vectors it must reproduce. "Run workflow" on main builds the release APK and publishes it to the update
+# server as the Fire TV app (an in-place update of the old Expo app, ADR 0012); on any other branch the APK is only kept as an artifact.
 on:
   push:
     paths: ["apps/tv-native/**", "packages/core/**", ".github/workflows/tv-native.yml"]
@@ -30,6 +31,9 @@ jobs:
         working-directory: apps/tv-native
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whole history, so the update manifest can list what changed since the last published build.
+          fetch-depth: 0
 
       # Every sentence the React Native app shows must be in the native app too (allowances: parity/strings-allow.txt).
       - uses: actions/setup-node@v4
@@ -61,8 +65,8 @@ jobs:
             echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
           fi
-          # The beta installs beside the old app under its own id, so the run number is a safe versionCode. The cutover
-          # build (same id as the old app) must use 100000 + run number to be a higher version than the old app.
+          # This app has the old app's id, so its versionCode (100000 + run number, set in build.gradle.kts) must be above
+          # every old build for Android to accept it as an update.
           gradle :app:assembleRelease -PbuildNumber=${{ github.run_number }} --no-daemon
 
       - uses: actions/upload-artifact@v4
@@ -70,3 +74,23 @@ jobs:
         with:
           name: testcard-tv-native
           path: apps/tv-native/app/build/outputs/apk/release/*.apk
+
+      # Built from main, the APK goes to the update server: the APK first, then the manifest that points at it, so a device
+      # never sees a manifest for a file that is not there yet. It takes over the old app's entry (apks.firetv).
+      - name: Publish to the update server
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        working-directory: .
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "No CLOUDFLARE_API_TOKEN secret: not publishing."; exit 0; fi
+          CODE=$((100000 + ${{ github.run_number }}))
+          echo "{\"versionCode\":$CODE,\"versionName\":\"0.2.${{ github.run_number }}\"}" > build.json
+          cp apps/tv-native/app/build/outputs/apk/release/app-release.apk testcard-firetv.apk
+          APK="testcard-firetv-$CODE.apk"
+          node scripts/release-manifest.mjs build.json "$APK" "$GITHUB_SHA" latest.json
+          npx --yes wrangler@3 r2 object put "testcard-releases/$APK" --file testcard-firetv.apk --content-type application/vnd.android.package-archive
+          npx --yes wrangler@3 r2 object put testcard-releases/testcard-firetv.apk --file testcard-firetv.apk --content-type application/vnd.android.package-archive
+          npx --yes wrangler@3 r2 object put testcard-releases/latest.json --file latest.json --content-type application/json
+          echo "Published $(node -p "require('./build.json').versionName")"

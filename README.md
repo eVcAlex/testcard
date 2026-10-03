@@ -21,7 +21,7 @@ auto-refresh) of commercial IPTV players. See [`CONTEXT.md`](CONTEXT.md) for the
   the XMLTV guide imported alongside.
 - Updates itself from the release bucket ([ADR 0010](docs/adr/0010-in-app-updates.md)).
 
-**Fire TV** (`apps/mobile`, Expo + react-native-tvos, [ADR 0009](docs/adr/0009-android-app-fire-tv-and-phone.md))
+**Fire TV** (`apps/tv-native`, Kotlin + Compose for TV + Media3, [ADR 0012](docs/adr/0012-native-android-tv.md); it replaces the Expo app in `apps/mobile`, [ADR 0009](docs/adr/0009-android-app-fire-tv-and-phone.md))
 - Sign in to the same account and your sources, favourites and progress arrive.
 - Home, Movies, Series, Live TV and Search, laid out for a remote, with a TV guide grid on Live TV.
 - A live channel that won't start falls back to its other feeds and qualities (4K to HD) by itself.
@@ -57,7 +57,9 @@ packages/core/        pure TypeScript shared by both apps: source adapters (Xtre
                       No Electron, React or Expo.
 packages/sync-schema/ the sync API's request and response shapes (zod), shared by apps and worker.
 apps/desktop/         the Electron app: main process (SQLite, credentials, mpv, IPC), preload, renderer.
-apps/mobile/          the Fire TV app.
+apps/tv-native/       the Fire TV app (Kotlin): `:core` is the data layer, a port of packages/core checked against
+                      its test vectors; `:app` is the UI and player.
+apps/mobile/          the previous Fire TV app (Expo); kept for rollback, no longer where Fire TV work happens.
 apps/sync-worker/     the Cloudflare Worker behind accounts, sync and the release bucket.
 docs/adr/             decisions worth recording.
 ```

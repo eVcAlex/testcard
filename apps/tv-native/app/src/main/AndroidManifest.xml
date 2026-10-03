@@ -12,7 +12,7 @@
         android:allowBackup="false"
         android:banner="@drawable/tv_banner"
         android:icon="@mipmap/ic_launcher"
-        android:label="Testcard (native spike)"
+        android:label="Testcard"
         android:theme="@style/Theme.Testcard"
         android:usesCleartextTraffic="true">
 

@@ -4,7 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// CI stamps the build number; Android refuses an update that is not a higher versionCode.
+// CI stamps the build number; Android refuses an update that is not a higher versionCode. Native builds start at 100000 so they
+// are above every React Native build (those stay below it), which is what lets this app update the old one in place.
 val buildNumber = (findProperty("buildNumber") as String?)?.toInt() ?: 1
 
 android {
@@ -12,21 +13,29 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.evcalex.testcard.tv"
+        // The old React Native app's id, so installing this over it is an update that keeps its data (adopted on first launch).
+        applicationId = "com.evcalex.testcard"
         minSdk = 24
         targetSdk = 36
-        versionCode = buildNumber
-        versionName = "0.1.$buildNumber"
+        versionCode = 100000 + buildNumber
+        versionName = "0.2.$buildNumber"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The sync server; `-PsyncUrl=http://10.0.2.2:8787` points a build at a local `wrangler dev` from the emulator.
-        // Which manifest entry the updater follows: the native beta has its own until the cutover (then -PapkKey=firetv).
-        buildConfigField("String", "UPDATE_APK_KEY", "\"${findProperty("apkKey") ?: "firetvNative"}\"")
+        // Which manifest entry the updater follows: `firetv`, the entry the old app followed.
+        buildConfigField("String", "UPDATE_APK_KEY", "\"${findProperty("apkKey") ?: "firetv"}\"")
         buildConfigField("String", "SYNC_URL", "\"${findProperty("syncUrl") ?: "https://testcard-sync.evcalex.workers.dev"}\"")
     }
 
-    // Own signing key when the keystore file is given (the workflow decodes ANDROID_KEYSTORE_BASE64 into it), else debug.
+    // Own signing key when the keystore file is given (the workflow decodes ANDROID_KEYSTORE_BASE64 into it). Otherwise the Expo debug
+    // key the old app is signed with (public, so no secret): Android only installs an update signed by the same key.
     val keystore = System.getenv("ANDROID_KEYSTORE_FILE")
     signingConfigs {
+        create("oldApp") {
+            storeFile = file("expo-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (keystore != null) {
             create("release") {
                 storeFile = file(keystore)
@@ -51,7 +60,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("oldApp")
         }
     }
 
