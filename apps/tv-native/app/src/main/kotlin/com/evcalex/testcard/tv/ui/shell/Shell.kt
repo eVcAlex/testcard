@@ -73,6 +73,8 @@ class SectionContext(
     val browsing: Browsing,
     /** Bumped each time Search is chosen in the nav bar: the keyboard opens, ready to type. */
     val openKeyboard: Int = 0,
+    /** Puts the remote on the open section's tab in the nav bar (Up from a page's top edge). */
+    val focusNav: () -> Unit = {},
 )
 
 /** Movies, Series and Live open on a landing page of rows; "Browse all" swaps it for the full category list. */
@@ -165,7 +167,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
         Box(Modifier.fillMaxSize().then(if (covered) Modifier.focusProperties { canFocus = false } else Modifier)) {
             Box(Modifier.fillMaxSize()) {
                 holder.SaveableStateProvider(section.name) {
-                    content.section(section, SectionContext(app, sourceId, !covered, backToTop, actions, sourceNames, Browsing(browsing) { browsing = it }, searchPing))
+                    content.section(section, SectionContext(app, sourceId, !covered, backToTop, actions, sourceNames, Browsing(browsing) { browsing = it }, searchPing, focusNav = { runCatching { tabFocus.getValue(section).requestFocus() } }))
                 }
             }
             // The nav bar floats over the page so the Movies and Series art can run behind it.

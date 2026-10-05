@@ -33,3 +33,6 @@ Updates are not set up for this build.
 # developer messages
 useApp must be used inside <AppProvider>
 [perf] switchProfile push ${pushed - started}ms, pause ${paused - pushed}ms, swap ${Date.now() - paused}ms
+
+# Live TV rework (2026-10-05): rows never show a loading line, the cell is a skeleton
+Loading the guide…

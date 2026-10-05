@@ -29,6 +29,10 @@ class ChannelGuide(val now: Airing?, val next: Airing?)
 /** Thrown to a caller whose guide was never fetched because another channel was asked for while it waited. */
 class GuideSuperseded : CancellationException("Another channel's guide was asked for first.")
 
+/** The window of imported-guide listings kept per channel (EPG-02): a little of the past, a day and a half ahead. */
+private const val PAST_MS = 6 * 60 * 60 * 1000L
+private const val AHEAD_MS = 36 * 60 * 60 * 1000L
+
 /** How long a channel's answer is reused when nothing in it says sooner (no guide, or nothing airing now). */
 private const val FRESH_MS = 5 * 60 * 1000L
 
@@ -134,6 +138,22 @@ class GuideRepository(private val db: Db, private val logins: SourceLogins, priv
     fun knownListings(channelId: String): List<Airing>? = listings[channelId]?.takeIf { nowMs() < it.until }?.airings
 
     /**
+     * Listings from the imported guide for many channels in one query, kept like [fetchListings]'s. Channels already fresh
+     * are not asked again; channels the imported guide does not have are missing from the result (ask [fetchListings]).
+     */
+    suspend fun storedListings(channelIds: List<String>): Map<String, List<Airing>> {
+        val out = HashMap<String, List<Airing>>()
+        val missing = ArrayList<String>()
+        for (id in channelIds) knownListings(id)?.let { out[id] = it } ?: missing.add(id)
+        if (missing.isEmpty()) return out
+        val at = nowMs()
+        val found = listingsByChannel(db.read { it.programmesInWindow(missing, at - PAST_MS, at + AHEAD_MS) })
+        val until = nowMs() + LISTINGS_FRESH_MS
+        for ((id, airings) in found) { listings[id] = Listing(airings, until); out[id] = airings }
+        return out
+    }
+
+    /**
      * A channel's programmes from now on, in start order, for the guide grid: from the imported guide when the database has
      * one for it, else asked of the provider (Xtream only). Empty when neither has anything. A few channels are asked about
      * at a time, newest request first, and answers are kept for a while.
@@ -173,8 +193,8 @@ class GuideRepository(private val db: Db, private val logins: SourceLogins, priv
 
     private suspend fun readListings(channelId: String): List<Airing> {
         val at = nowMs()
-        val stored = db.read { it.programmesInWindow(listOf(channelId), at - 6 * 60 * 60 * 1000, at + 36 * 60 * 60 * 1000) }
-        if (stored.isNotEmpty()) return stored.map { Airing(it.title, it.startAt, it.endAt) }
+        val stored = listingsByChannel(db.read { it.programmesInWindow(listOf(channelId), at - PAST_MS, at + AHEAD_MS) })[channelId].orEmpty()
+        if (stored.isNotEmpty()) return stored
         val target = db.read { it.getPlaybackTarget(channelId) } ?: return emptyList()
         if (target.source.kind != "xtream") return emptyList()
         val short = XtreamApi({ logins.current(target.source.id) }, http).fetchShortEpg(target.variant.providerStreamId, LISTINGS_LIMIT)

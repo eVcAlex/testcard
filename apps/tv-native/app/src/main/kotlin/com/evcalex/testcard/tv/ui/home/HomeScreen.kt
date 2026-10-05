@@ -84,7 +84,6 @@ fun HomeScreen(
     backToTop: Int,
     fetchDetail: (suspend (String) -> HomeDetail?)? = null,
     browseAll: (() -> Unit)? = null,
-    openGuide: (() -> Unit)? = null,
 ) {
     val byKey = remember(rows) {
         val map = HashMap<String, Shown>()
@@ -129,7 +128,7 @@ fun HomeScreen(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val listState = rememberLazyListState()
     val bandPx = with(androidx.compose.ui.platform.LocalDensity.current) { ROWS_BAND.dp.roundToPx() }
-    val offsetRows = if (browseAll != null || openGuide != null) 1 else 0
+    val offsetRows = if (browseAll != null) 1 else 0
     var rowOnFocus by remember { mutableIntStateOf(-1) }
     var scrolled by remember { mutableStateOf(false) }
     var moved by remember { mutableStateOf(false) }
@@ -177,7 +176,6 @@ fun HomeScreen(
                 if (offsetRows == 1) item("header") {
                     Row(Modifier.padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         if (browseAll != null) HeaderButton("All categories", browseAll)
-                        if (openGuide != null) HeaderButton("TV guide", openGuide)
                     }
                 }
                 itemsIndexed(rows, key = { _, row -> row.key }) { index, row ->

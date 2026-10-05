@@ -84,6 +84,9 @@ plays back through an embedded `mpv`, stores everything locally.
   `get_short_epg` path exists (`fetchShortEpg`) but is not yet wired.
 - **Guide** — the timeline view: channels down a sticky gutter, a scrolling time axis, and
   `Programme` blocks on a px-per-minute scale. `epg.window(channelIds, from, to)` feeds it.
+- **Category rail** — on the Fire TV Live TV guide, the strip at the left
+  listing Favourites, Recently watched, the categories and All channels; Left from the guide's first block opens it
+  over the grid.
 - **Dead channel** — a Variant that returns no stream data within the 10s playback timeout.
   Expected and frequent at 18k-channel scale; a designed UI state ("Channel didn't
   respond"), not an error.

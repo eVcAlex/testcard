@@ -176,7 +176,6 @@ internal fun categoryOf(row: CategoryRow) = BrowseCategory(row.id, displayName(r
 internal fun List<CategoryRow>.browsable() = filter { !hiddenTags(it.tags) }.map(::categoryOf)
 
 internal const val BROWSE = "browse"
-internal const val GUIDE = "guide"
 internal const val NOTHING_FROM_SOURCE = "Nothing from this source. Use the Source button at the top right to switch."
 internal const val SIGN_IN_FIRST = "Sign in to the account your computer uses and its sources will load here. Open Sources to see progress."
 

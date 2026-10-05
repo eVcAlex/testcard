@@ -32,7 +32,8 @@ a real local Worker), *inst* = instrumented on the emulator. **Emu** = seen work
 | SYNC-08 pick-up from another TV | `ui/player/Playing.kt` | – | – | not driven |
 | HOME-01..07 | `ui/home/*`, `core/db/HomeQueries.kt` | gold (row content and order) | Home rows, hero, focus | scroll snapping feel; persisted rows cache is **not** built (rows are re-read on entry) |
 | LIVE-01..06 | `ui/sections/Sections.kt`, `Browse` | gold | Live rows, categories, hidden | favourite reorder |
-| EPG-01 guide grid | `ui/sections/Guide.kt` | – | grid, focus, paging | **programme blocks with real listings** (fake provider has no EPG for listed channels) |
+| EPG-01 guide grid | `ui/sections/Guide.kt` | – | grid, focus, paging | Live TV opens on the guide; list rail replaces pills; Left at the first block with the window at now opens the rail. **Programme blocks with real listings** (fake provider has no EPG for listed channels) |
+| LIVE-01/02 landing and Browse all | `ui/sections/Guide.kt`, `GuideRail.kt` | unit (`GuideGridTest`) | – | replaced by the guide (2026-10-05 spec); pin/hide category and channel actions moved to long-press sheets; not run on a device |
 | EPG-02/03 airing queues | `core/guide/GuideRepository.kt` | unit | – | – |
 | EPG-04/05 guide import | `GuideImporter.kt`, `epg/*` | vec (XMLTV), gold | – | a real guide file's timing |
 | EPG-06, 07 programme bar, catch-up | `Playing.kt`, `playback/Catchup.kt` | vec (`timeshiftStamp`, entries) | – | **catch-up playback** |
