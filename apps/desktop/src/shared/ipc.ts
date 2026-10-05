@@ -65,6 +65,8 @@ export type AddSourceInput = {
       readonly baseUrl: string;
       readonly username: string;
       readonly password: string;
+      /** Other addresses for the same login; used when `baseUrl` can't be reached. */
+      readonly backupUrls?: readonly string[];
     }
 );
 
@@ -89,6 +91,8 @@ export interface UpdateSourceInput {
     readonly baseUrl?: string;
     readonly username?: string;
     readonly password?: string;
+    /** Replaces the backup addresses (`[]` clears them). Omit to keep them. */
+    readonly backupUrls?: readonly string[];
   };
   /** Omit to leave unchanged; `null` turns auto-refresh off (manual only). */
   readonly refreshIntervalHours?: number | null;
@@ -101,6 +105,8 @@ export type SourceListItem = Source & {
   readonly refreshing?: boolean;
   /** Why the last background import failed. Cleared when the next one starts. */
   readonly refreshError?: string;
+  /** Xtream only: the backup server addresses, when there are any. */
+  readonly backupUrls?: readonly string[];
   readonly createdAt: number;
   readonly lastRefreshedAt?: number;
   readonly refreshIntervalHours?: number;

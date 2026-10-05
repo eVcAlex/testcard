@@ -121,6 +121,11 @@
   box-shadow: var(--elev-2), var(--edge-light);
 }
 
+.pw-source-menu-pop--up {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .pw-source-menu-pop button {
   display: flex;
   align-items: center;

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Profile } from "@testcard/core";
+import { ConfirmDialog } from "../components/ConfirmDialog.js";
 import { Icon } from "../components/Icon.js";
+import { opensUp } from "../lib/menu.js";
 import { ProfileAvatar } from "./ProfileAvatar.js";
 
 /** One row on the Profiles panel: avatar, name, and a kebab menu (Choose avatar / Rename / Delete). */
@@ -20,6 +22,7 @@ export function ProfileRow({
 }) {
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuUp, setMenuUp] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -37,10 +40,6 @@ export function ProfileRow({
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [menuOpen]);
-
-  useEffect(() => {
-    if (!menuOpen) setConfirmingRemove(false);
   }, [menuOpen]);
 
   const remove = useMutation({
@@ -67,12 +66,15 @@ export function ProfileRow({
           className="btn btn--ghost btn--icon"
           aria-label={`${profile.name} actions`}
           aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={(event) => {
+            setMenuUp(opensUp(event.currentTarget));
+            setMenuOpen((open) => !open);
+          }}
         >
           <Icon name="more" />
         </button>
         {menuOpen && (
-          <div className="pw-source-menu-pop" role="menu">
+          <div className={menuUp ? "pw-source-menu-pop pw-source-menu-pop--up" : "pw-source-menu-pop"} role="menu">
             <button
               type="button"
               role="menuitem"
@@ -102,20 +104,30 @@ export function ProfileRow({
                 className="pw-source-menu-danger"
                 disabled={remove.isPending}
                 onClick={() => {
-                  if (!confirmingRemove) {
-                    setConfirmingRemove(true);
-                    return;
-                  }
-                  remove.mutate();
+                  setMenuOpen(false);
+                  setConfirmingRemove(true);
                 }}
               >
                 <Icon name="trash" />
-                {remove.isPending ? "Deleting…" : confirmingRemove ? "Click again to confirm" : "Delete profile"}
+                {remove.isPending ? "Deleting…" : "Delete profile"}
               </button>
             )}
           </div>
         )}
       </div>
+      {confirmingRemove && (
+        <ConfirmDialog
+          title={`Delete ${profile.name}?`}
+          body="Its favourites, recents and progress are deleted from your account."
+          confirmLabel="Delete"
+          busy={remove.isPending}
+          onCancel={() => setConfirmingRemove(false)}
+          onConfirm={() => {
+            setConfirmingRemove(false);
+            remove.mutate();
+          }}
+        />
+      )}
     </li>
   );
 }

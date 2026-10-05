@@ -62,7 +62,7 @@ import com.evcalex.testcard.tv.ui.theme.Palette
 import kotlinx.coroutines.launch
 
 /** As many as Settings allows. */
-private const val MAX_PROFILES = 6
+private const val MAX_PROFILES = 4
 
 private fun parseColour(hex: String) = Color(android.graphics.Color.parseColor(hex))
 

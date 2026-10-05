@@ -33,6 +33,7 @@ import {
   newProfileId,
   nextColour,
   nowNextForChannels,
+  parseBackupUrls,
   probeXtream,
   programmesInWindow,
   readActiveProfile,
@@ -60,6 +61,7 @@ import {
   fetchShortEpg,
   getPlaybackTarget,
   type Channel,
+  type CredentialsLookup,
   type Profile,
   type ProgrammeRow,
   type Source,
@@ -78,7 +80,8 @@ import {
   type TestcardApi,
   type UpdateSourceInput,
 } from "../shared/ipc.js";
-import { deleteCredentials, getCredentials, saveCredentials } from "./credentials.js";
+import { deleteCredentials, getCredentials, getStoredCredentials, saveCredentials } from "./credentials.js";
+import { ensureServer, loadServersInUse, recheckServer } from "./hosts.js";
 import { purgeCachedLogos } from "./logoCache.js";
 import { PlaybackController } from "./playbackController.js";
 import { syncPlatform } from "./syncController.js";
@@ -217,6 +220,13 @@ function normaliseBaseUrl(input: string): string {
   return `${parsed.protocol}//${parsed.host}`;
 }
 
+/** Backup addresses as stored: normalised, without repeats, and without the main address itself. */
+function cleanBackups(urls: readonly string[], main: string): string {
+  const clean = new Set(urls.map((entry) => entry.trim()).filter((entry) => entry !== "").map(normaliseBaseUrl));
+  clean.delete(main);
+  return JSON.stringify([...clean]);
+}
+
 /** IPC calls that change data the account syncs; each schedules a (debounced) sync. */
 const SYNCED_MUTATIONS: ReadonlySet<string> = new Set([
   "channels.toggleFavourite",
@@ -244,14 +254,21 @@ const SYNCED_MUTATIONS: ReadonlySet<string> = new Set([
  * of channel-name string literals that could silently drift apart.
  */
 export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWindow): void {
-  const xtreamAdapter = createXtreamAdapter(getCredentials);
+  loadServersInUse(db);
+  // Every provider lookup (imports, streams, episode lists, the guide) goes through here, so a source whose main
+  // address is down is moved to a backup before it's used.
+  const credentialsFor: CredentialsLookup = async (sourceId) => {
+    await ensureServer(db, sourceId);
+    return getCredentials(sourceId);
+  };
+  const xtreamAdapter = createXtreamAdapter(credentialsFor);
   const m3uAdapter = createM3UAdapter();
 
   activeController?.dispose();
   activeSchedulerStop?.();
   // Assigned below once the SyncController exists; playback progress/recents call it lazily.
   let notifyLocalChange = (): void => undefined;
-  const playback = new PlaybackController(db, mainWindow, { xtream: xtreamAdapter, m3u: m3uAdapter }, getCredentials, () => notifyLocalChange());
+  const playback = new PlaybackController(db, mainWindow, { xtream: xtreamAdapter, m3u: m3uAdapter }, credentialsFor, () => notifyLocalChange());
   activeController = playback;
   mainWindow.on("closed", () => {
     if (activeController === playback) activeController = null;
@@ -323,7 +340,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       const adapter = row.kind === "xtream" ? xtreamAdapter : m3uAdapter;
 
       // Live channels, movies and series (the same import the Android apps run); only the guide is left to do here.
-      const catalogue = await importCatalogue(db, row, { xtreamAdapter, m3uAdapter, getCredentials }, {
+      const catalogue = await importCatalogue(db, row, { xtreamAdapter, m3uAdapter, getCredentials: credentialsFor }, {
         vod: (event) => emitTask({ type: "vod", sourceId, ...event }),
         series: (event) => emitTask({ type: "series", sourceId, ...event }),
       });
@@ -391,7 +408,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         const rows = db
           .prepare(
             `SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl,
-                    created_at as createdAt, last_refreshed_at as lastRefreshedAt,
+                    backup_urls as backupUrls, created_at as createdAt, last_refreshed_at as lastRefreshedAt,
                     refresh_interval_hours as refreshIntervalHours,
                     include_live as includeLive, include_movies as includeMovies, include_series as includeSeries
              FROM sources ORDER BY sort_order IS NULL, sort_order, created_at`,
@@ -406,6 +423,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           baseUrl: string | null;
           playlistUrl: string | null;
           epgUrl: string | null;
+          backupUrls: string | null;
           createdAt: number;
           lastRefreshedAt: number | null;
           refreshIntervalHours: number | null;
@@ -415,7 +433,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         // address the source's history is matched by.
         const servers = new Map(
           await Promise.all(
-            rows.filter((row) => row.kind === "xtream").map(async (row) => [row.id, (await getCredentials(row.id).catch(() => undefined))?.baseUrl ?? row.baseUrl] as const),
+            rows.filter((row) => row.kind === "xtream").map(async (row) => [row.id, (await getStoredCredentials(row.id).catch(() => undefined))?.baseUrl ?? row.baseUrl] as const),
           ),
         );
         return rows.map(
@@ -429,6 +447,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
               ...(refreshingSourceIds.has(row.id) ? { refreshing: true } : {}),
               ...(refreshErrors.has(row.id) ? { refreshError: refreshErrors.get(row.id)! } : {}),
               ...(row.kind === "xtream" ? { baseUrl: servers.get(row.id) ?? row.baseUrl! } : { playlistUrl: row.playlistUrl! }),
+              ...(row.kind === "xtream" && parseBackupUrls(row.backupUrls).length > 0 ? { backupUrls: parseBackupUrls(row.backupUrls) } : {}),
               ...(row.epgUrl !== null ? { epgUrl: row.epgUrl } : {}),
               ...(row.lastRefreshedAt !== null ? { lastRefreshedAt: row.lastRefreshedAt } : {}),
               ...(row.refreshIntervalHours !== null ? { refreshIntervalHours: row.refreshIntervalHours } : {}),
@@ -439,7 +458,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async login(sourceId) {
         const row = db.prepare(`SELECT kind FROM sources WHERE id = ?`).get(sourceId) as { kind: string } | undefined;
         if (row?.kind !== "xtream") return null;
-        const { username, password } = await getCredentials(sourceId);
+        const { username, password } = await getStoredCredentials(sourceId);
         return { username, password };
       },
 
@@ -461,14 +480,15 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
               })()
             : await verifySource(input.pastedUrl);
         const id = randomUUID();
+        const backups = verified.kind === "xtream" && input.via === "xtream" ? cleanBackups(input.backupUrls ?? [], verified.credentials.baseUrl) : null;
 
         if (verified.kind === "xtream") {
           await saveCredentials(id, verified.credentials);
           const remoteKey = await remoteKeyFor(verified.credentials.baseUrl, "source");
           db.prepare(
-            `INSERT INTO sources (id, kind, name, base_url, epg_url, refresh_interval_hours, created_at, remote_key, sync_updated_at)
-             VALUES (?, 'xtream', ?, ?, ?, ?, ?, ?, ?)`,
-          ).run(id, name, verified.credentials.baseUrl, epg !== "" ? epg : null, interval, Date.now(), remoteKey, Date.now());
+            `INSERT INTO sources (id, kind, name, base_url, epg_url, refresh_interval_hours, created_at, remote_key, sync_updated_at, backup_urls)
+             VALUES (?, 'xtream', ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ).run(id, name, verified.credentials.baseUrl, epg !== "" ? epg : null, interval, Date.now(), remoteKey, Date.now(), backups);
           if (input.content !== undefined) {
             db.prepare(`UPDATE sources SET include_live = ?, include_movies = ?, include_series = ? WHERE id = ?`).run(
               input.content.live ? 1 : 0,
@@ -574,7 +594,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           throw new Error("This is an Xtream source; it has no playlist URL to edit.");
         }
 
-        const current = await getCredentials(sourceId);
+        const current = await getStoredCredentials(sourceId);
         const nextBaseUrl = patch.xtream?.baseUrl?.trim() || current.baseUrl;
         const nextUsername = patch.xtream?.username?.trim() || current.username;
         // A blank (or omitted) password means "unchanged".
@@ -602,6 +622,11 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           Date.now(),
           sourceId,
         );
+        if (patch.xtream?.backupUrls !== undefined) {
+          db.prepare(`UPDATE sources SET backup_urls = ? WHERE id = ?`).run(cleanBackups(patch.xtream.backupUrls, credentials.baseUrl), sourceId);
+        }
+        // A changed login or backup list is tried again at the next use rather than waiting out the recheck delay.
+        recheckServer(sourceId);
 
         if (patch.content !== undefined) applyContentChange(sourceId, patch.content);
 
@@ -736,7 +761,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
             const target = getPlaybackTarget(db, channelId);
             if (target?.source.kind !== "xtream") return [];
             try {
-              const listings = await fetchShortEpg(target.source, target.variant.providerStreamId, getCredentials, 8);
+              const listings = await fetchShortEpg(target.source, target.variant.providerStreamId, credentialsFor, 8);
               return listings.map((l) => ({ channelId, title: l.title, startMs: l.start.getTime(), endMs: l.end.getTime() }));
             } catch {
               return [];
@@ -774,7 +799,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
       async details(movieId) {
         const target = getMoviePlaybackTargetOrThrow(movieId);
-        if (target.source.kind === "xtream") await ensureMovieDetails(db, target.source, movieId, getCredentials);
+        if (target.source.kind === "xtream") await ensureMovieDetails(db, target.source, movieId, credentialsFor);
         const row = getMovieById(db, movieId);
         if (!row) throw new Error(`Unknown movie: ${movieId}`);
         return row;
@@ -809,7 +834,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async episodes(seriesId) {
         const source = getSeriesSource(db, seriesId);
         if (!source) throw new Error(`Unknown series: ${seriesId}`);
-        if (source.kind === "xtream") await ensureSeriesEpisodes(db, source, seriesId, getCredentials);
+        if (source.kind === "xtream") await ensureSeriesEpisodes(db, source, seriesId, credentialsFor);
         const detail = getSeriesDetail(db, seriesId);
         if (!detail) throw new Error(`Unknown series: ${seriesId}`);
         return detail;

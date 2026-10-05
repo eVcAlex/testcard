@@ -11,7 +11,7 @@ import { OptionsSheet } from "./OptionsSheet";
 import { PinPad } from "./PinPad";
 
 const ARROW = Math.round(24 * uiScale);
-const MAX_PROFILES = 6;
+const MAX_PROFILES = 4;
 
 type Action = "rename" | "avatar" | "pin" | "unpin" | "delete";
 

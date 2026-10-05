@@ -44,6 +44,7 @@ export function SourceForm({
   const [pastedUrl, setPastedUrl] = useState(source?.kind === "m3u" ? source.playlistUrl : "");
   const [epgUrl, setEpgUrl] = useState(source?.epgUrl ?? "");
   const [xtreamBaseUrl, setXtreamBaseUrl] = useState(source?.kind === "xtream" ? source.baseUrl : "");
+  const [backupUrls, setBackupUrls] = useState(source?.backupUrls?.join(", ") ?? "");
   const [xtreamUsername, setXtreamUsername] = useState("");
   const [xtreamPassword, setXtreamPassword] = useState("");
   const [revealPassword, setRevealPassword] = useState(false);
@@ -76,6 +77,7 @@ export function SourceForm({
 
   const mutation = useMutation({
     mutationFn: () => {
+      const backups = backupUrls.split(/[\s,]+/).filter((entry) => entry !== "");
       const epg = epgUrl.trim();
       const interval = refreshInterval === "" ? undefined : Number(refreshInterval);
 
@@ -87,6 +89,7 @@ export function SourceForm({
             baseUrl: xtreamBaseUrl.trim(),
             username: xtreamUsername.trim(),
             password: xtreamPassword,
+            ...(backups.length > 0 ? { backupUrls: backups } : {}),
             content,
             ...(epg !== "" ? { epgUrl: epg } : {}),
             ...(interval !== undefined ? { refreshIntervalHours: interval } : {}),
@@ -131,6 +134,7 @@ export function SourceForm({
                 ...(baseUrl !== "" && baseUrl !== source.baseUrl ? { baseUrl } : {}),
                 ...(xtreamUsername.trim() !== "" ? { username: xtreamUsername.trim() } : {}),
                 ...(xtreamPassword !== "" ? { password: xtreamPassword } : {}),
+                backupUrls: backups,
               },
             }
           : {}),
@@ -143,6 +147,7 @@ export function SourceForm({
         setPastedUrl("");
         setEpgUrl("");
         setXtreamBaseUrl("");
+        setBackupUrls("");
         setXtreamUsername("");
         setXtreamPassword("");
         setRefreshInterval("");
@@ -218,6 +223,11 @@ export function SourceForm({
               The portal address, e.g. <code>http://line.example.com:8080</code>, without{" "}
               <code>/get.php</code>.
             </p>
+          </label>
+          <label className="field">
+            <span>Backup server URLs (optional)</span>
+            <input className="input" value={backupUrls} onChange={(e) => setBackupUrls(e.target.value)} spellCheck={false} />
+            <p className="msg msg--hint">Other addresses for the same login, separated by commas. Used when the main server can&rsquo;t be reached.</p>
           </label>
           <label className="field">
             <span>Username</span>

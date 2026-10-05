@@ -39,12 +39,28 @@ export async function saveCredentials(sourceId: string, credentials: XtreamCrede
   await writeStore(store);
 }
 
-export async function getCredentials(sourceId: string): Promise<XtreamCredentials> {
+/** The login as stored: its server is the source's main address. What sync sends, and what the source's form shows. */
+export async function getStoredCredentials(sourceId: string): Promise<XtreamCredentials> {
   const store = await readStore();
   const encoded = store[sourceId];
   if (encoded === undefined) throw new Error(`No stored credentials for source ${sourceId}`);
   const decrypted = safeStorage.decryptString(Buffer.from(encoded, "base64"));
   return JSON.parse(decrypted) as XtreamCredentials;
+}
+
+/** Another of the source's addresses to use instead of its main one, while that one is down (see hosts.ts). */
+const serverInUse = new Map<string, string>();
+export function setServerInUse(sourceId: string, baseUrl: string | null): void {
+  if (baseUrl === null) serverInUse.delete(sourceId);
+  else serverInUse.set(sourceId, baseUrl);
+}
+export const serverFor = (sourceId: string): string | undefined => serverInUse.get(sourceId);
+
+/** The login to talk to the provider with: on the backup server in use, if the main one is down. */
+export async function getCredentials(sourceId: string): Promise<XtreamCredentials> {
+  const stored = await getStoredCredentials(sourceId);
+  const server = serverInUse.get(sourceId);
+  return server !== undefined ? { ...stored, baseUrl: server } : stored;
 }
 
 export async function deleteCredentials(sourceId: string): Promise<void> {

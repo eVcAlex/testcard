@@ -1,5 +1,5 @@
 import type { SyncPlatform } from "@testcard/core";
-import { deleteCredentials, getCredentials, saveCredentials } from "./credentials.js";
+import { deleteCredentials, getStoredCredentials, saveCredentials } from "./credentials.js";
 import { clearAccountPassword, loadAccountPassword, saveAccountPassword } from "./accountSecret.js";
 
 /**
@@ -8,7 +8,7 @@ import { clearAccountPassword, loadAccountPassword, saveAccountPassword } from "
  */
 export const syncPlatform: SyncPlatform = {
   baseUrl: process.env.TESTCARD_SYNC_URL ?? "https://testcard-sync.evcalex.workers.dev",
-  getCredentials,
+  getCredentials: getStoredCredentials,
   saveCredentials,
   deleteCredentials,
   loadAccountPassword,

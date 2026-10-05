@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ConfirmDialog } from "../components/ConfirmDialog.js";
 import { Icon } from "../components/Icon.js";
+import { opensUp } from "../lib/menu.js";
 import { formatRelative } from "../lib/time.js";
 import { sourceHost, sourceInitial } from "../lib/source.js";
 import type { SourceListItem } from "../../../shared/ipc.js";
@@ -25,6 +27,7 @@ export function SourceCard({
 }) {
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuUp, setMenuUp] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -43,11 +46,6 @@ export function SourceCard({
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [menuOpen]);
-
-  // Closing the menu (e.g. picking "Edit") shouldn't leave a stale confirm state behind.
-  useEffect(() => {
-    if (!menuOpen) setConfirmingRemove(false);
   }, [menuOpen]);
 
   // Live import progress for THIS source, pushed from main during its refresh — channels/VOD/
@@ -162,12 +160,15 @@ export function SourceCard({
           className="btn btn--ghost btn--icon"
           aria-label={`${source.name} actions`}
           aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={(event) => {
+            setMenuUp(opensUp(event.currentTarget));
+            setMenuOpen((open) => !open);
+          }}
         >
           <Icon name="more" />
         </button>
         {menuOpen && (
-          <div className="pw-source-menu-pop" role="menu">
+          <div className={menuUp ? "pw-source-menu-pop pw-source-menu-pop--up" : "pw-source-menu-pop"} role="menu">
             <button
               type="button"
               role="menuitem"
@@ -233,19 +234,29 @@ export function SourceCard({
               className="pw-source-menu-danger"
               disabled={remove.isPending}
               onClick={() => {
-                if (!confirmingRemove) {
-                  setConfirmingRemove(true);
-                  return;
-                }
-                remove.mutate();
+                setMenuOpen(false);
+                setConfirmingRemove(true);
               }}
             >
               <Icon name="trash" />
-              {remove.isPending ? "Removing…" : confirmingRemove ? "Click again to confirm" : "Remove"}
+              {remove.isPending ? "Removing…" : "Remove"}
             </button>
           </div>
         )}
       </div>
+      {confirmingRemove && (
+        <ConfirmDialog
+          title={`Remove ${source.name}?`}
+          body="This removes the source and everything imported from it."
+          confirmLabel="Remove"
+          busy={remove.isPending}
+          onCancel={() => setConfirmingRemove(false)}
+          onConfirm={() => {
+            setConfirmingRemove(false);
+            remove.mutate();
+          }}
+        />
+      )}
     </li>
   );
 }

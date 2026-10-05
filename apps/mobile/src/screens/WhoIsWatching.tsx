@@ -11,7 +11,7 @@ import { ProfileSettings } from "../ui/ProfileSettings";
 import { Button } from "../ui/controls";
 
 /** As many as Settings allows. */
-const MAX_PROFILES = 6;
+const MAX_PROFILES = 4;
 
 /**
  * "Who's watching?": the profiles side by side, opened on launch when there is more than one, and from the profile

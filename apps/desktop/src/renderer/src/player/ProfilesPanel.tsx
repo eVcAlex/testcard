@@ -7,8 +7,8 @@ import { ProfileAvatar } from "./ProfileAvatar.js";
 import { ProfileRow } from "./ProfileRow.js";
 import { useProfiles } from "./useProfiles.js";
 
-/** As many as the panel offers room for. */
-const MAX_PROFILES = 6;
+/** An account carries at most this many profiles (same cap on mobile and TV). */
+const MAX_PROFILES = 4;
 
 type Naming = { profile?: Profile; text: string };
 
