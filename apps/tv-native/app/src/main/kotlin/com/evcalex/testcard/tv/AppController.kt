@@ -341,8 +341,8 @@ class AppController(context: Context) {
         while (!ready) delay(100)
         if (status.account != SyncAccount.SignedIn) try { signIn(email, password) } catch (_: Exception) { signUp(email, password) }
         if (sources.isEmpty()) {
-            saveSource(null, SourceDraft("xtream", "Panel", server, "u", "p"))
-            saveSource(null, SourceDraft("m3u", "Playlist", playlistUrl = "$server/main.m3u"))
+            saveSource(null, SourceDraft("xtream", "Panel", server, "u", "p", epgUrl = "$server/xmltv.php?username=u&password=p"))
+            saveSource(null, SourceDraft("m3u", "Playlist", playlistUrl = "$server/main.m3u", epgUrl = "$server/xmltv.php?username=u&password=p"))
         }
     }
 

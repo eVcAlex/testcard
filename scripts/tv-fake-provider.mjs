@@ -19,6 +19,10 @@ if (process.env.BIG_SERIES) {
   info.seasons = [1, 2, 3, 4].map((n) => ({ season_number: n, name: `Season ${n}` }));
   info.episodes = Object.fromEntries([1, 2, 3, 4].map((n) => [String(n), Array.from({ length: 30 }, (_, i) => ({ id: `8${n}${String(i + 1).padStart(3, "0")}`, episode_num: i + 1, title: `Drama Show 1 (2019) S${n}E${i + 1}`, container_extension: "mp4", season: n, info: { duration_secs: 2700, plot: `Episode ${i + 1}` } }))]));
 }
+// BIG_LIVE=2000 adds that many channels to the first live category, to check the guide's scrolling and paging on a big list.
+if (process.env.BIG_LIVE) {
+  world.xtream["get_live_streams|1"].push(...Array.from({ length: Number(process.env.BIG_LIVE) }, (_, i) => ({ stream_id: 50000 + i, name: `UK| Bulk Channel ${String(i + 1).padStart(4, "0")}`, category_id: "1", num: 1000 + i })));
+}
 const port = Number(process.argv[2] ?? 9999);
 // SAMPLE_FILE: a local video the provider serves itself at /sample.mp4 (with ranges, so seeking works), used when STREAM_URL is not set.
 const sampleFile = process.env.SAMPLE_FILE;
@@ -47,7 +51,12 @@ createServer((request, response) => {
     return send(body);
   }
   if (url.pathname === "/main.m3u") return send(world.playlist, "audio/x-mpegurl");
-  if (url.pathname === "/xmltv.php") return send(world.guide, "application/xml");
+  if (url.pathname === "/xmltv.php") {
+    // GUIDE_TODAY=1 moves the vectors' two guide days (2 and 3 Oct 2026) to today and tomorrow, so "now" has programmes.
+    if (!process.env.GUIDE_TODAY) return send(world.guide, "application/xml");
+    const day = (offset) => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10).replaceAll("-", "");
+    return send(world.guide.replaceAll('"20261002', `"${day(0)}`).replaceAll('"20261003', `"${day(1)}`), "application/xml");
+  }
   if (sampleFile && url.pathname === "/sample.mp4") {
     const size = statSync(sampleFile).size;
     const range = /bytes=(\d*)-(\d*)/.exec(request.headers.range ?? "");
