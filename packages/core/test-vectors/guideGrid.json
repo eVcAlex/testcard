@@ -1,0 +1,62 @@
+[
+  { "fn": "segmentsFor", "in": [null, 0, 100], "out": [{ "start": 0, "end": 100, "airing": null, "loading": true }] },
+  { "fn": "segmentsFor", "in": [[], 0, 100], "out": [{ "start": 0, "end": 100, "airing": null, "loading": false }] },
+  {
+    "fn": "segmentsFor",
+    "in": [[{ "title": "A", "start": -50, "end": 20 }, { "title": "B", "start": 40, "end": 70 }, { "title": "C", "start": 90, "end": 200 }], 0, 100],
+    "out": [
+      { "start": 0, "end": 20, "airing": { "title": "A", "start": -50, "end": 20 }, "loading": false },
+      { "start": 20, "end": 40, "airing": null, "loading": false },
+      { "start": 40, "end": 70, "airing": { "title": "B", "start": 40, "end": 70 }, "loading": false },
+      { "start": 70, "end": 90, "airing": null, "loading": false },
+      { "start": 90, "end": 100, "airing": { "title": "C", "start": 90, "end": 200 }, "loading": false }
+    ]
+  },
+  {
+    "fn": "segmentsFor",
+    "in": [[{ "title": "A", "start": 0, "end": 60 }, { "title": "B", "start": 30, "end": 90 }], 0, 100],
+    "out": [
+      { "start": 0, "end": 60, "airing": { "title": "A", "start": 0, "end": 60 }, "loading": false },
+      { "start": 60, "end": 90, "airing": { "title": "B", "start": 30, "end": 90 }, "loading": false },
+      { "start": 90, "end": 100, "airing": null, "loading": false }
+    ]
+  },
+  {
+    "fn": "railLists",
+    "in": [{
+      "sourceId": null,
+      "sources": [{ "id": "s1", "name": "Strong", "channels": 5 }, { "id": "s2", "name": "Mega", "channels": 3 }, { "id": "s3", "name": "Empty", "channels": 0 }],
+      "categories": {
+        "s1": [{ "id": "c1", "label": "UK Sports", "count": 3 }, { "id": "c2", "label": "UK News", "count": 2 }, { "id": "c3", "label": "Gone", "count": 0 }],
+        "s2": [{ "id": "c4", "label": "US Sports", "count": 3 }]
+      },
+      "favourites": 2,
+      "recents": 0
+    }],
+    "out": [
+      { "id": "favourites", "label": "Favourites", "count": 2 },
+      { "id": "recent", "label": "Recently watched", "count": 0 },
+      { "id": "all:s1", "label": "All channels", "count": 5, "section": "Strong" },
+      { "id": "c1", "label": "UK Sports", "count": 3, "section": "Strong" },
+      { "id": "c2", "label": "UK News", "count": 2, "section": "Strong" },
+      { "id": "all:s2", "label": "All channels", "count": 3, "section": "Mega" },
+      { "id": "c4", "label": "US Sports", "count": 3, "section": "Mega" }
+    ]
+  },
+  {
+    "fn": "railLists",
+    "in": [{
+      "sourceId": "s2",
+      "sources": [{ "id": "s1", "name": "Strong", "channels": 5 }, { "id": "s2", "name": "Mega", "channels": 3 }],
+      "categories": { "s2": [{ "id": "c4", "label": "US Sports", "count": 3 }, { "id": "c5", "label": "Gone", "count": 0 }] },
+      "favourites": 0,
+      "recents": 4
+    }],
+    "out": [
+      { "id": "favourites", "label": "Favourites", "count": 0 },
+      { "id": "recent", "label": "Recently watched", "count": 4 },
+      { "id": "c4", "label": "US Sports", "count": 3 },
+      { "id": "all", "label": "All channels", "count": 3 }
+    ]
+  }
+]

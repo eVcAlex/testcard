@@ -10,6 +10,7 @@ export * from "./source/xtream/detect.js";
 export * from "./source/xtream/client.js";
 export * from "./epg/parseXmltv.js";
 export * from "./epg/nowNext.js";
+export * from "./epg/guideGrid.js";
 export * from "./epg/importEpg.js";
 export * from "./db/schema.js";
 export * from "./db/migrations.js";
