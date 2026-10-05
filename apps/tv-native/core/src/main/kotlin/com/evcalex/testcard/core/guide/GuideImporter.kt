@@ -4,12 +4,14 @@ import com.evcalex.testcard.core.db.Db
 import com.evcalex.testcard.core.db.one
 import com.evcalex.testcard.core.db.query
 import com.evcalex.testcard.core.db.run
-import com.evcalex.testcard.core.epg.deleteProgrammesInSlices
 import com.evcalex.testcard.core.epg.importEpg
 import com.evcalex.testcard.core.epg.importGuideFile
 import com.evcalex.testcard.core.normalise.jsTrim
 import com.evcalex.testcard.core.nowMs
+import com.evcalex.testcard.core.importing.probePlaylistGuide
+import com.evcalex.testcard.core.sync.SourceLogins
 import com.evcalex.testcard.core.sync.await
+import com.evcalex.testcard.core.xtream.xmltvUrl
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
@@ -65,12 +67,20 @@ private const val HEADERS_TIMEOUT_S = 60L
 /** A shared file older than this is no better than reading the guide oneself. */
 private const val SHARED_MOST_AGE_MS = 48L * 60 * 60 * 1000
 
-private class GuideSource(val id: String, val name: String, val epgUrl: String?)
+private class GuideSource(val id: String, val name: String, val kind: String, val playlistUrl: String?, val epgUrl: String?)
+
+/** What a source with no address of its own is recorded under: its guide is the provider's, found when it is read. */
+private const val OWN_GUIDE = "own"
+
+/** The address set for the source, else the one `derived` finds for it (its provider's own guide); null when there is none. */
+internal suspend fun guideAddress(set: String?, derived: suspend () -> String?): String? =
+    set?.jsTrim()?.takeIf { it.isNotEmpty() } ?: derived()
 
 /**
  * The TV guide (XMLTV) for a source, loaded into the `programmes` table (`playback/guideImport.ts`), so Live TV, the player
  * and the guide grid have listings for playlists and for providers whose per-channel guide is empty. The address is the one
- * set for the source (on any device: it syncs); a source with none is left to its per-channel guide. Read in the
+ * set for the source (on any device: it syncs); a source with none reads its provider's own (Xtream's `xmltv.php`, a
+ * playlist's `url-tvg`), which is derived each time and never stored: the Xtream one carries the password. Read in the
  * background, one source at a time, never while a source is importing; nothing waits on it.
  */
 class GuideImporter(
@@ -86,6 +96,8 @@ class GuideImporter(
     private val onImported: () -> Unit = {},
     /** Where shared guide files are served from. */
     private val updateBaseUrl: String = UPDATE_BASE_URL,
+    /** For an Xtream source's own guide address; without it only playlists find theirs. */
+    private val logins: SourceLogins? = null,
 ) {
     private val http = http.newBuilder().readTimeout(HEADERS_TIMEOUT_S, TimeUnit.SECONDS).build()
     private val queue = Mutex()
@@ -105,13 +117,24 @@ class GuideImporter(
 
     private suspend fun guideSources(): List<GuideSource> = db.read {
         it.query(
-            """SELECT id, name, epg_url FROM sources
-               WHERE include_live = 1 AND TRIM(COALESCE(epg_url, '')) <> ''
-                 AND EXISTS (SELECT 1 FROM channels WHERE source_id = sources.id)""",
-        ) { r -> GuideSource(r.getText(0), r.getText(1), if (r.isNull(2)) null else r.getText(2)) }
+            """SELECT id, name, kind, playlist_url, epg_url FROM sources
+               WHERE include_live = 1 AND EXISTS (SELECT 1 FROM channels WHERE source_id = sources.id)""",
+        ) { r -> GuideSource(r.getText(0), r.getText(1), r.getText(2), if (r.isNull(3)) null else r.getText(3), if (r.isNull(4)) null else r.getText(4)) }
     }
 
-    private fun setAddress(source: GuideSource) = source.epgUrl?.jsTrim() ?: ""
+    /** What the last read is compared with: the address set, or [OWN_GUIDE]. */
+    private fun setAddress(source: GuideSource) = source.epgUrl?.jsTrim()?.takeIf { it.isNotEmpty() } ?: OWN_GUIDE
+
+    private suspend fun ownGuide(source: GuideSource): String? = try {
+        when {
+            source.kind == "xtream" && logins != null -> xmltvUrl(logins.current(source.id))
+            source.kind == "m3u" && source.playlistUrl != null -> probePlaylistGuide(http, source.playlistUrl)?.jsTrim()?.takeIf { it.isNotEmpty() }
+            else -> null
+        }
+    } catch (error: Exception) {
+        if (error is CancellationException) throw error
+        null
+    }
 
     /** Whether a source's guide is missing, old, or was read from another address than the one set now. */
     private suspend fun isStale(source: GuideSource): Boolean {
@@ -145,25 +168,26 @@ class GuideImporter(
     }
 
     private suspend fun importOne(source: GuideSource) {
-        val url = setAddress(source)
-        if (url == "") return record(source.id, url, nowMs())
+        val recorded = setAddress(source)
+        val url = guideAddress(source.epgUrl) { ownGuide(source) }
+        if (url == null) return record(source.id, recorded, nowMs())
         // Recorded only once it has worked (or failed cleanly): on a Fire Stick the read takes many minutes, and one the app
         // was closed in the middle of must be started again next time, not counted as done for 12 hours.
         try {
             val shared = sharedGuide(url)
             if (shared != null) {
                 importGuideFile(db, source.id, shared)
-                record(source.id, url, nowMs())
+                record(source.id, recorded, nowMs())
                 return
             }
             http.newCall(Request.Builder().url(url).header("User-Agent", "node").build()).await().use { response ->
                 if (!response.isSuccessful) throw IllegalStateException("The guide address responded with HTTP ${response.code}.")
                 importEpg(db, source.id, response.body.byteStream(), HORIZON_MS)
             }
-            record(source.id, url, nowMs())
+            record(source.id, recorded, nowMs())
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            record(source.id, url, nowMs() - STALE_MS + RETRY_AFTER_FAILURE_MS)
+            record(source.id, recorded, nowMs() - STALE_MS + RETRY_AFTER_FAILURE_MS)
             throw error
         }
     }
@@ -194,19 +218,5 @@ class GuideImporter(
                 }
             }
         }
-    }
-
-    /**
-     * Clears guides this device keeps no longer: sources with no guide address (0.1.60 and 0.1.61 read every source's), in
-     * slices. Once; the guides it reads from now on replace themselves.
-     */
-    suspend fun dropUnusedGuides() {
-        if (db.read { it.one("SELECT 1 FROM schema_meta WHERE key = 'guides_trimmed'") { r -> r.getLong(0) } } != null) return
-        val removed = deleteProgrammesInSlices(
-            db,
-            "SELECT p.rowid FROM programmes p JOIN channels c ON c.id = p.channel_id JOIN sources s ON s.id = c.source_id WHERE TRIM(COALESCE(s.epg_url, '')) = ''",
-        )
-        db.write { it.run("INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('guides_trimmed', '1')") }
-        if (removed > 0) guides.forget()
     }
 }

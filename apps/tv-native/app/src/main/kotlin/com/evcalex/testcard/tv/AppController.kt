@@ -199,7 +199,7 @@ class AppController(context: Context) {
         // An update in place from the React Native app brings its logins along before sync looks for them.
         runCatching { Adoption.adoptSecrets(appContext, db, secrets) }
         sync = SyncController(db, logins, secrets, syncScope, baseUrl = BuildConfig.SYNC_URL, http = client, onSourcesAdded = { ids -> ids.forEach { id -> scope.launch { refreshSource(id) } } }, profile = first)
-        guideImporter = GuideImporter(db, client, scope, { sync.registerGuide(it) }, guides, { importing }, { bump() }, "${BuildConfig.SYNC_URL}/app")
+        guideImporter = GuideImporter(db, client, scope, { sync.registerGuide(it) }, guides, { importing }, { bump() }, "${BuildConfig.SYNC_URL}/app", logins)
         reloadSources()
         sync.start()
         status = sync.status.value
@@ -226,7 +226,6 @@ class AppController(context: Context) {
         }
         scope.launch {
             delay(GUIDES_AFTER_LAUNCH_MS)
-            if (!importing) runCatching { guideImporter.dropUnusedGuides() }
             guideImporter.refresh()
         }
     }
@@ -342,7 +341,7 @@ class AppController(context: Context) {
         if (status.account != SyncAccount.SignedIn) try { signIn(email, password) } catch (_: Exception) { signUp(email, password) }
         if (sources.isEmpty()) {
             saveSource(null, SourceDraft("xtream", "Panel", server, "u", "p", epgUrl = "$server/xmltv.php?username=u&password=p"))
-            saveSource(null, SourceDraft("m3u", "Playlist", playlistUrl = "$server/main.m3u", epgUrl = "$server/xmltv.php?username=u&password=p"))
+            saveSource(null, SourceDraft("m3u", "Playlist", playlistUrl = "$server/main.m3u"))
         }
     }
 

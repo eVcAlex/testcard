@@ -8,6 +8,7 @@
 //   login: any username and password (u / p in the vectors)
 import { createServer } from "node:http";
 import { readFileSync, statSync, createReadStream } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -23,6 +24,17 @@ if (process.env.BIG_SERIES) {
 if (process.env.BIG_LIVE) {
   world.xtream["get_live_streams|1"].push(...Array.from({ length: Number(process.env.BIG_LIVE) }, (_, i) => ({ stream_id: 50000 + i, name: `UK| Bulk Channel ${String(i + 1).padStart(4, "0")}`, category_id: "1", num: 1000 + i })));
 }
+// EPG_FILE=path/to/guide.xml.gz serves that real guide at /epg.xml.gz, and the playlist gets 30 channels whose tvg-ids come from it
+// and a url-tvg header pointing at it, to check a playlist with no guide address set reads its own.
+if (process.env.EPG_FILE) {
+  const xml = gunzipSync(readFileSync(process.env.EPG_FILE)).toString("utf8");
+  const ids = [...new Set([...xml.matchAll(/<programme [^>]*channel="([^"]*)"/g)].map((m) => m[1]))].slice(0, 30);
+  const origin = `http://10.0.2.2:${process.argv[2] ?? 9999}`;
+  world.playlist = world.playlist.replace("#EXTM3U", `#EXTM3U url-tvg="${origin}/epg.xml.gz"`) +
+    ids.map((id, i) => `
+#EXTINF:-1 tvg-id="${id}" group-title="Guide test",Guide Test ${i + 1}
+http://host.example/u/p/9${i}.ts`).join("");
+}
 const port = Number(process.argv[2] ?? 9999);
 // SAMPLE_FILE: a local video the provider serves itself at /sample.mp4 (with ranges, so seeking works), used when STREAM_URL is not set.
 const sampleFile = process.env.SAMPLE_FILE;
@@ -35,7 +47,7 @@ createServer((request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
   const send = (body, type = "application/json") => {
     response.writeHead(200, { "content-type": type });
-    response.end(typeof body === "string" ? body : JSON.stringify(body));
+    response.end(typeof body === "string" || Buffer.isBuffer(body) ? body : JSON.stringify(body));
   };
   if (url.pathname === "/player_api.php") {
     const action = url.searchParams.get("action") ?? "";
@@ -50,6 +62,7 @@ createServer((request, response) => {
     }
     return send(body);
   }
+  if (process.env.EPG_FILE && url.pathname === "/epg.xml.gz") return send(readFileSync(process.env.EPG_FILE), "application/octet-stream");
   if (url.pathname === "/main.m3u") return send(world.playlist, "audio/x-mpegurl");
   if (url.pathname === "/xmltv.php") {
     // GUIDE_TODAY=1 moves the vectors' two guide days (2 and 3 Oct 2026) to today and tomorrow, so "now" has programmes.
