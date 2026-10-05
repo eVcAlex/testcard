@@ -90,7 +90,7 @@ internal fun SeriesBrowse(ctx: SectionContext, tick: Int) {
         val categories = app.memoByCatalogue("series-categories", sourceId) { it.listSeriesCategories(sourceId).browsable() }
         value = app.db.read { c ->
             val myList = c.listFavouriteSeries().filter { sourceId == null || it.sourceId == sourceId }
-            fun once(rows: List<SeriesRow>, limit: Int) = dedupeTitles(rows, { it.name }, limit)
+            fun once(rows: List<SeriesRow>, limit: Int) = dedupeTitles(rows, { it.name }, limit, undated = true)
             BrowseSource(
                 layout = "poster", noun = "series", single = "series",
                 pinning = c.pinningFor(app, CategoryKind.Series) { app.bump() },

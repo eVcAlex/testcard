@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import Database from "better-sqlite3";
 import { migrateDatabase } from "../db/migrateDatabase.js";
+import { listSeriesVersions } from "../db/seriesQueries.js";
 import { listMovieVersions } from "../db/vodQueries.js";
 import { dedupeTitles, titleKey } from "../normalise/titleKey.js";
 
@@ -17,7 +18,7 @@ describe("titleKey", () => {
 
 describe("dedupeTitles", () => {
   it("keeps the first copy of a dated title", () => {
-    const rows = [{ id: "a", name: "EN - Dune (2021)" }, { id: "b", name: "4K-EN - Dune  (2021)" }, { id: "c", name: "EN - Leo (2023)" }];
+    const rows = [{ id: "a", name: "EN - Dune (2021)" }, { id: "b", name: "TOP - Dune  (2021)" }, { id: "c", name: "EN - Leo (2023)" }];
     expect(dedupeTitles(rows).map((row) => row.id)).toEqual(["a", "c"]);
   });
 
@@ -26,9 +27,30 @@ describe("dedupeTitles", () => {
     expect(dedupeTitles(rows)).toHaveLength(2);
   });
 
+  it("shows the 4K copy of a title in place of the first copy", () => {
+    const rows = [{ id: "a", name: "EN - Dune (2021)" }, { id: "b", name: "EN - Leo (2023)" }, { id: "c", name: "4K-EN - Dune  (2021)" }];
+    expect(dedupeTitles(rows).map((row) => row.id)).toEqual(["c", "b"]);
+  });
+
+  it("merges undated names only when asked, as for series", () => {
+    const rows = [{ id: "a", name: "EN - Shameless US" }, { id: "b", name: "4K-EN - Shameless US" }, { id: "c", name: "EN - Shameless UK" }];
+    expect(dedupeTitles(rows, Infinity, { undated: true }).map((row) => row.id)).toEqual(["b", "c"]);
+  });
+
   it("stops at the limit", () => {
     const rows = [{ name: "A (2001)" }, { name: "B (2002)" }, { name: "C (2003)" }];
     expect(dedupeTitles(rows, 2)).toHaveLength(2);
+  });
+});
+
+describe("listSeriesVersions", () => {
+  it("finds an undated show's copies by its identical name, not a lookalike", () => {
+    const db = migrateDatabase(new Database(":memory:"));
+    db.prepare("INSERT INTO sources (id, kind, name, base_url, created_at) VALUES ('s', 'xtream', 'S', 'http://x', 1)").run();
+    db.prepare("INSERT INTO series_categories (id, source_id, provider_id, raw_name) VALUES ('sc', 's', '1', 'S')").run();
+    const add = db.prepare("INSERT INTO series (id, source_id, category_id, provider_series_id, name, first_seen_at, last_seen_at) VALUES (?, 's', 'sc', ?, ?, 1, 1)");
+    for (const [id, name] of [["a", "EN - Shameless US"], ["b", "4K-EN - Shameless US"], ["c", "EN - Shameless UK"]] as const) add.run(id, id, name);
+    expect(listSeriesVersions(db, "a").map((row) => row.id)).toEqual(["b"]);
   });
 });
 

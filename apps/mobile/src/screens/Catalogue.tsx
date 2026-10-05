@@ -94,7 +94,7 @@ function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
     const scope = sourceId !== null ? { sourceId } : {};
     const categories = seriesCategories(db, catalogue, sourceId ?? undefined);
     const myList = listFavouriteSeries(db).filter((show) => sourceId === null || show.source_id === sourceId);
-    const once = <T extends { name: string }>(rows: T[], limit: number) => dedupeTitles(rows, limit);
+    const once = <T extends { name: string }>(rows: T[], limit: number) => dedupeTitles(rows, limit, { undated: true });
     return {
       layout: "poster",
       pinning: makePinning(db, sync, "series", updateStatus),

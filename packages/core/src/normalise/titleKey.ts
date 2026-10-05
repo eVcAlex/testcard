@@ -20,17 +20,22 @@ export function isDatedTitle(name: string): boolean {
 }
 
 /**
- * The list with later copies of a dated title dropped (the first one met is kept, so the caller's order decides
- * which copy shows). Undated names are all kept. Stops at `limit` when given.
+ * The list with later copies of a dated title dropped. The first one met is kept, so the caller's order decides which
+ * copy shows, except that a 4K copy takes the place of one that is not. Undated names are all kept, unless `undated`
+ * is set, which is for series: a series' name is the show itself, not one of its episodes. Stops at `limit` when given.
  */
-export function dedupeTitles<T extends { readonly name: string }>(rows: readonly T[], limit = Infinity): T[] {
-  const seen = new Set<string>();
+export function dedupeTitles<T extends { readonly name: string }>(rows: readonly T[], limit = Infinity, { undated = false } = {}): T[] {
+  const kept = new Map<string, number>(); // key -> where its copy sits in `out`
   const out: T[] = [];
   for (const row of rows) {
-    if (isDatedTitle(row.name)) {
+    if (undated || isDatedTitle(row.name)) {
       const key = titleKey(row.name);
-      if (seen.has(key)) continue;
-      seen.add(key);
+      const at = kept.get(key);
+      if (at !== undefined) {
+        if (splitTitle(row.name).is4k && !splitTitle(out[at]!.name).is4k) out[at] = row;
+        continue;
+      }
+      kept.set(key, out.length);
     }
     out.push(row);
     if (out.length >= limit) break;

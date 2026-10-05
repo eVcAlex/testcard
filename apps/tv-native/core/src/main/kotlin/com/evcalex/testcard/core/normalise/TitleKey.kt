@@ -52,11 +52,23 @@ fun titleKey(name: String): String {
 
 fun isDatedTitle(name: String): Boolean = splitTitle(name).year != null
 
-fun <T> dedupeTitles(rows: List<T>, nameOf: (T) -> String, limit: Int = Int.MAX_VALUE): List<T> {
-    val seen = HashSet<String>()
+/**
+ * The list with later copies of a title dropped: the first met is kept, but a 4K copy takes the place of one that is
+ * not. Undated names are all kept unless [undated] is set, which is for series (a series' name is the show itself).
+ */
+fun <T> dedupeTitles(rows: List<T>, nameOf: (T) -> String, limit: Int = Int.MAX_VALUE, undated: Boolean = false): List<T> {
+    val kept = HashMap<String, Int>() // key -> where its copy sits in `out`
     val out = ArrayList<T>()
     for (row in rows) {
-        if (isDatedTitle(nameOf(row)) && !seen.add(titleKey(nameOf(row)))) continue
+        if (undated || isDatedTitle(nameOf(row))) {
+            val key = titleKey(nameOf(row))
+            val at = kept[key]
+            if (at != null) {
+                if (splitTitle(nameOf(row)).is4k && !splitTitle(nameOf(out[at])).is4k) out[at] = row
+                continue
+            }
+            kept[key] = out.size
+        }
         out += row
         if (out.size >= limit) break
     }

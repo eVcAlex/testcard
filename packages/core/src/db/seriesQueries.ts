@@ -3,7 +3,7 @@ import { categoryShown, titleShown } from "../sync/hidden.js";
 import type { Source } from "../source/types.js";
 import { clearPlaybackProgress } from "./progressQueries.js";
 import { shouldPromptResume } from "../playback/progressPolicy.js";
-import { isDatedTitle, titleKey } from "../normalise/titleKey.js";
+import { titleKey } from "../normalise/titleKey.js";
 import { splitTitle } from "../normalise/splitTitle.js";
 
 export interface SeriesRow {
@@ -456,18 +456,19 @@ export function clearSkipWindow(db: Database.Database, seriesId: string): void {
 }
 
 /**
- * The other copies of a series: the same dated title in another quality, category or source. Empty for an undated
- * name (too often a different show with the same words to match on).
+ * The other copies of a series: the same title (and year, when it has one) in another quality, category or source.
+ * An undated name matches only a copy with the identical name once tags are stripped, so "Shameless US" never
+ * picks up "Shameless UK".
  */
 export function listSeriesVersions(db: Database.Database, seriesId: string): SeriesRow[] {
   const show = db.prepare(`SELECT name FROM series WHERE id = ?`).get(seriesId) as { name: string } | undefined;
-  if (show === undefined || !isDatedTitle(show.name)) return [];
+  if (show === undefined) return [];
   const key = titleKey(show.name);
   const { title, year } = splitTitle(show.name);
   const words = title.replace(/^\d{1,3}\.\s+/, "").replace(/[%_\\]/g, (char) => `\\${char}`);
   return (
     db
       .prepare(`SELECT ${SERIES_COLUMNS} FROM series sr WHERE sr.id != ? AND sr.name LIKE ? ESCAPE '\\' AND sr.name LIKE ? ORDER BY sr.rowid LIMIT 40`)
-      .all(seriesId, `%${words}%`, `%(${year})%`) as SeriesRow[]
+      .all(seriesId, `%${words}%`, year === null ? "%" : `%(${year})%`) as SeriesRow[]
   ).filter((row) => titleKey(row.name) === key);
 }

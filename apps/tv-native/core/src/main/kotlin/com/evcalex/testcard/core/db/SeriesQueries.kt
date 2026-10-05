@@ -3,7 +3,6 @@ package com.evcalex.testcard.core.db
 import com.evcalex.testcard.core.nowMs
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteStatement
-import com.evcalex.testcard.core.normalise.isDatedTitle
 import com.evcalex.testcard.core.normalise.jsTrim
 import com.evcalex.testcard.core.normalise.splitTitle
 import com.evcalex.testcard.core.normalise.titleKey
@@ -297,14 +296,16 @@ fun SQLiteConnection.saveSkipWindow(seriesId: String, fromSecs: Double, toSecs: 
 
 fun SQLiteConnection.clearSkipWindow(seriesId: String) = run("DELETE FROM series_skip WHERE series_id = ?", seriesId)
 
-/** The other copies of a series: the same dated title in another quality, category or source. Empty for an undated name. */
+/**
+ * The other copies of a series: the same title (and year, when it has one) in another quality, category or source. An
+ * undated name matches only a copy with the identical name once tags are stripped ("Shameless US" is not "Shameless UK").
+ */
 fun SQLiteConnection.listSeriesVersions(seriesId: String): List<SeriesRow> {
     val name = one("SELECT name FROM series WHERE id = ?", seriesId) { it.getText(0) } ?: return emptyList()
-    if (!isDatedTitle(name)) return emptyList()
     val key = titleKey(name)
     val parts = splitTitle(name)
     return query(
         "SELECT $SERIES_COLUMNS FROM series sr WHERE sr.id != ? AND sr.name LIKE ? ESCAPE '\\' AND sr.name LIKE ? ORDER BY sr.rowid LIMIT 40",
-        seriesId, "%${likeWords(parts.title)}%", "%(${parts.year})%",
+        seriesId, "%${likeWords(parts.title)}%", if (parts.year == null) "%" else "%(${parts.year})%",
     ) { it.seriesRow() }.filter { titleKey(it.name) == key }
 }
