@@ -51,6 +51,7 @@ const api: TestcardApi = {
   epg: {
     nowNext: bind("epg.nowNext"),
     window: bind("epg.window"),
+    providerListings: bind("epg.providerListings"),
   },
   movies: {
     categoryList: bind("movies.categoryList"),
@@ -80,6 +81,8 @@ const api: TestcardApi = {
   },
   playback: {
     play: bind("playback.play"),
+    preview: bind("playback.preview"),
+    stopPreview: bind("playback.stopPreview"),
     playMovie: bind("playback.playMovie"),
     playEpisode: bind("playback.playEpisode"),
     stop: bind("playback.stop"),

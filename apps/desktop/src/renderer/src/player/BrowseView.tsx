@@ -11,12 +11,11 @@ import { MoviesView } from "./MoviesView.js";
 import { SeriesView } from "./SeriesView.js";
 import type { BrowseTab } from "./Sidebar.js";
 
-// "guide", "movies", "series", and "account" never actually reach this component —
+// "live", "movies", "series", and "account" never actually reach this component —
 // PlayerScreen branches to GuideView/MoviesView/SeriesView/AccountView first — but
 // BrowseTab is one shared union, so this stays total.
 const TITLES: Record<BrowseTab, string> = {
   live: "Live TV",
-  guide: "Guide",
   movies: "Movies",
   series: "Series",
   favourites: "Favourites",
@@ -27,7 +26,7 @@ const TITLES: Record<BrowseTab, string> = {
 export function BrowseView({
   sourceId,
   tab,
-  categoryId,
+  categoryId = null,
   activeChannelId,
   onPlay,
   onListChange,
@@ -35,7 +34,7 @@ export function BrowseView({
 }: {
   sourceId: string | null;
   tab: BrowseTab;
-  categoryId: string | null;
+  categoryId?: string | null;
   activeChannelId: string | null;
   onPlay: (channel: ChannelRow) => void;
   /** The ordered list currently shown — PlayerScreen uses it for prev/next channel stepping. */

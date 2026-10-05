@@ -288,6 +288,8 @@ export interface TestcardApi {
     nowNext(channelIds: readonly string[]): Promise<Record<string, NowNextLite>>;
     /** Every programme overlapping `[fromMs, toMs]` for the given channels — the guide grid. */
     window(channelIds: readonly string[], fromMs: number, toMs: number): Promise<readonly ProgrammeLite[]>;
+    /** What an Xtream provider says is on and next, for channels the imported guide has nothing for (a few at a time; others are skipped). */
+    providerListings(channelIds: readonly string[]): Promise<readonly ProgrammeLite[]>;
   };
   movies: {
     /** Every movie category that still has movies, for MoviesView's category tree. */
@@ -326,6 +328,10 @@ export interface TestcardApi {
   playback: {
     /** Starts playback of a channel's best (or explicitly chosen) variant inside the mpv window. */
     play(channelId: string, variantId?: string): Promise<void>;
+    /** The guide's preview frame: the channel plays muted in the video region, without joining Recently watched. */
+    preview(channelId: string): Promise<void>;
+    /** Ends a preview. Does nothing when a channel, movie or episode is being watched. */
+    stopPreview(): Promise<void>;
     /** Starts a movie, resolving container_extension (lazily, if missing) then building its URL. */
     playMovie(movieId: string, opts?: { resume?: boolean }): Promise<void>;
     /** Starts an episode. */

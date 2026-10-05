@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { Icon, type IconName } from "../components/Icon.js";
 import { useSyncStatus } from "./AccountView.js";
 import { ProfileSwitcher } from "./ProfileSwitcher.js";
@@ -6,11 +5,10 @@ import { useUpdateState } from "./UpdatePanel.js";
 import { useSources } from "./useSources.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "guide" | "movies" | "series" | "favourites" | "recent" | "account";
+export type BrowseTab = "live" | "movies" | "series" | "favourites" | "recent" | "account";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
   { id: "live", label: "Live TV", icon: "tv" },
-  { id: "guide", label: "Guide", icon: "grid" },
   { id: "movies", label: "Movies", icon: "film" },
   { id: "series", label: "Series", icon: "layers" },
   { id: "favourites", label: "Favourites", icon: "star" },
@@ -21,8 +19,6 @@ const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
 export function Sidebar({
   tab,
   onTab,
-  categoryId,
-  onCategory,
   sourceId,
   onSource,
   theme,
@@ -30,8 +26,6 @@ export function Sidebar({
 }: {
   tab: BrowseTab;
   onTab: (tab: BrowseTab) => void;
-  categoryId: string | null;
-  onCategory: (categoryId: string | null) => void;
   sourceId: string | null;
   onSource: (sourceId: string | null) => void;
   theme: Theme;
@@ -41,22 +35,6 @@ export function Sidebar({
   const update = useUpdateState();
   const updateWaiting = update?.status === "available" || update?.status === "downloading" || update?.status === "ready";
   const sourceCount = useSources();
-
-  // Live categories only mean something while browsing channels; on Movies/Series/Account they
-  // would just be a second, unrelated list beside the page's own filters.
-  const showCategories = tab === "live" || tab === "guide";
-
-  const categories = useQuery({
-    queryKey: ["categories", sourceId],
-    queryFn: () => window.testcard.channels.categoryList(sourceId ?? undefined),
-    staleTime: 60_000,
-  });
-
-  const pickCategory = (id: string | null) => {
-    onCategory(id);
-    // Stay in the guide if that's where the user is; otherwise show the channel grid.
-    if (tab !== "guide") onTab("live");
-  };
 
   return (
     <aside className="pw-sidebar">
@@ -91,11 +69,8 @@ export function Sidebar({
             key={t.id}
             type="button"
             className="pw-nav-item"
-            data-active={t.id === tab && (t.id !== "live" || categoryId === null)}
-            onClick={() => {
-              onTab(t.id);
-              if (t.id === "live") onCategory(null);
-            }}
+            data-active={t.id === tab}
+            onClick={() => onTab(t.id)}
           >
             <Icon name={t.icon} filled={t.id === "favourites" && tab === "favourites"} />
             {t.label}
@@ -103,37 +78,7 @@ export function Sidebar({
         ))}
       </nav>
 
-      {showCategories ? (
-        <>
-      <p className="pw-nav-group">Categories</p>
-      <div className="pw-cats">
-        <button
-          type="button"
-          className="pw-cat"
-          data-active={tab === "live" && categoryId === null}
-          onClick={() => pickCategory(null)}
-        >
-          <span className="pw-cat-name">All channels</span>
-        </button>
-        {categories.data?.map((category) => (
-          <button
-            key={category.id}
-            type="button"
-            className="pw-cat"
-            data-active={categoryId === category.id}
-            onClick={() => pickCategory(category.id)}
-            title={category.name}
-          >
-            {category.country && <span className="pw-cat-cc">{category.country}</span>}
-            <span className="pw-cat-name">{category.name}</span>
-            <span className="pw-cat-count">{category.channel_count}</span>
-          </button>
-        ))}
-      </div>
-        </>
-      ) : (
-        <div className="pw-sidebar-fill" />
-      )}
+      <div className="pw-sidebar-fill" />
 
       <div className="pw-sidebar-foot">
         <button

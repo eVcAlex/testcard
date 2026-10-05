@@ -20,12 +20,10 @@ export function PlayerScreen() {
   const { state, play, retry } = usePlaybackEvents();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<BrowseTab>("live");
-  const [categoryId, setCategoryId] = useState<string | null>(null);
   // Narrows Live TV, Guide, Movies and Series to one source. null = every source.
   const [sourceId, setSourceIdState] = useState<string | null>(() => localStorage.getItem("testcard.sourceFilter"));
   const setSourceId = useCallback((next: string | null) => {
     setSourceIdState(next);
-    setCategoryId(null); // categories belong to a source
     if (next === null) localStorage.removeItem("testcard.sourceFilter");
     else localStorage.setItem("testcard.sourceFilter", next);
   }, []);
@@ -142,19 +140,17 @@ export function PlayerScreen() {
       <Sidebar
         tab={tab}
         onTab={setTab}
-        categoryId={categoryId}
-        onCategory={setCategoryId}
         sourceId={sourceId}
         onSource={setSourceId}
         theme={theme}
         onToggleTheme={toggle}
       />
-      {tab === "guide" ? (
+      {tab === "live" ? (
         <GuideView
           key={sourceId ?? "all"}
           sourceId={sourceId}
-          categoryId={categoryId}
           activeChannelId={activeChannelId}
+          inPlayer={inPlayer}
           onPlay={onPlay}
           onListChange={setPlaylist}
         />
@@ -169,7 +165,6 @@ export function PlayerScreen() {
           key={sourceId ?? "all"}
           sourceId={sourceId}
           tab={tab}
-          categoryId={categoryId}
           activeChannelId={activeChannelId}
           onPlay={onPlay}
           onListChange={setPlaylist}

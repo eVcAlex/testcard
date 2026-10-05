@@ -57,6 +57,8 @@ import {
   toggleSeriesFavourite,
   writeActiveProfile,
   SyncController,
+  fetchShortEpg,
+  getPlaybackTarget,
   type Channel,
   type Profile,
   type ProgrammeRow,
@@ -728,6 +730,21 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async window(channelIds, fromMs, toMs) {
         return programmesInWindow(db, channelIds, fromMs, toMs).map(toProgrammeLite);
       },
+      async providerListings(channelIds) {
+        const lists = await Promise.all(
+          channelIds.slice(0, 20).map(async (channelId): Promise<ProgrammeLite[]> => {
+            const target = getPlaybackTarget(db, channelId);
+            if (target?.source.kind !== "xtream") return [];
+            try {
+              const listings = await fetchShortEpg(target.source, target.variant.providerStreamId, getCredentials, 8);
+              return listings.map((l) => ({ channelId, title: l.title, startMs: l.start.getTime(), endMs: l.end.getTime() }));
+            } catch {
+              return [];
+            }
+          }),
+        );
+        return lists.flat();
+      },
     },
 
     movies: {
@@ -811,6 +828,12 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
     playback: {
       async play(channelId, variantId) {
         await playback.play(channelId, variantId);
+      },
+      async preview(channelId) {
+        await playback.playPreview(channelId);
+      },
+      async stopPreview() {
+        await playback.stopPreview();
       },
       async playMovie(movieId, opts) {
         await playback.playMovie(movieId, opts ?? {});

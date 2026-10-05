@@ -73,6 +73,8 @@ export class PlaybackController {
   private status: PlaybackSnapshot["status"] = "idle";
   private tracks: PlaybackTrack[] = [];
   private paused = false;
+  /** The guide's preview frame: muted, no overlay, not added to Recently watched. A normal play() ends it. */
+  private preview = false;
   private volume: number;
   private aspect: AspectMode;
   private readonly conf = new Conf<{ volume: number; aspect: AspectMode }>();
@@ -108,7 +110,7 @@ export class PlaybackController {
    * (ADR 0002). Shown whenever a channel is tuning or playing.
    */
   private syncOverlay(): void {
-    const wanted = this.status === "playing" || this.status === "loading";
+    const wanted = !this.preview && (this.status === "playing" || this.status === "loading");
     if (wanted) {
       if (!this.overlay) {
         this.overlay = new OverlayWindow(this.mainWindow);
@@ -122,12 +124,27 @@ export class PlaybackController {
   }
 
   async play(channelId: string, variantId?: string): Promise<void> {
+    await this.startChannel(channelId, variantId, false);
+  }
+
+  /** Plays a channel muted in the video region for the guide's preview frame. */
+  async playPreview(channelId: string): Promise<void> {
+    await this.startChannel(channelId, undefined, true);
+  }
+
+  /** Ends a preview, and only a preview: leaving the guide must not stop a channel the user is watching. */
+  async stopPreview(): Promise<void> {
+    if (this.preview) await this.stop();
+  }
+
+  private async startChannel(channelId: string, variantId: string | undefined, preview: boolean): Promise<void> {
     const target = getPlaybackTarget(this.db, channelId, variantId);
     if (!target) throw new Error("That channel could not be found.");
 
     const adapter = target.source.kind === "xtream" ? this.adapters.xtream : this.adapters.m3u;
     const streamUrl = await adapter.buildStreamUrl(target.source, target.variant);
     this.current = { kind: "channel", target, streamUrl };
+    this.preview = preview;
     this.tracks = [];
     this.pendingResumeSecs = null;
     this.lastKnownPositionSecs = 0;
@@ -141,7 +158,7 @@ export class PlaybackController {
     this.status = "loading";
     this.syncOverlay();
     this.emit({ type: "loading", channelId, channelName: target.channelName, kind: "channel" });
-    await this.mpv!.setVolume(this.volume);
+    await this.mpv!.setVolume(preview ? 0 : this.volume);
     await this.mpv!.setPaused(false);
     await this.mpv!.setAspect(this.aspect);
     await this.mpv!.play(streamUrl);
@@ -174,6 +191,7 @@ export class PlaybackController {
 
     // Catalog value first: it's kept fresh by `importVod`/`ensureMovieDetails`, whereas the
     // progress row's duration is just whatever was last observed during a previous session.
+    this.preview = false;
     this.current = { kind: "movie", movieId, movieName: target.movieName, streamUrl, durationSecs: target.durationSecs ?? progress?.duration_secs ?? null };
     this.tracks = [];
     this.lastKnownPositionSecs = 0;
@@ -215,6 +233,7 @@ export class PlaybackController {
 
     // Catalog value first: it's kept fresh by `importSeries`/`ensureSeriesEpisodes`, whereas the
     // progress row's duration is just whatever was last observed during a previous session.
+    this.preview = false;
     this.current = {
       kind: "episode",
       episodeId,
@@ -244,6 +263,7 @@ export class PlaybackController {
       this.persistProgress(this.current, this.lastKnownPositionSecs);
     }
     this.current = null;
+    this.preview = false;
     this.tracks = [];
     this.status = "idle";
     this.syncOverlay();
@@ -432,7 +452,9 @@ export class PlaybackController {
       case "playing": {
         if (!current) return;
         this.status = "playing";
-        if (current.kind === "channel") recordRecent(this.db, current.target.channelId);
+        if (current.kind === "channel") {
+          if (!this.preview) recordRecent(this.db, current.target.channelId);
+        }
         else if (current.kind === "movie") recordMovieRecent(this.db, current.movieId);
         else recordSeriesRecent(this.db, current.seriesId);
         this.onLocalChange();
