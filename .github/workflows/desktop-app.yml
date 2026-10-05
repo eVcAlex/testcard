@@ -42,6 +42,19 @@ jobs:
       # sync-worker is pulled in too: release-desktop.mjs publishes through its wrangler.
       - run: pnpm install --frozen-lockfile --filter "@testcard/desktop..." --filter "@testcard/sync-worker..."
 
+      # mpv is not in the repo (scripts/fetch-mpv.md). The build bundles it, so CI fetches the one pinned release and refuses
+      # anything whose SHA256 differs: bump both together, from the release page, when mpv is updated.
+      - name: Fetch the pinned mpv
+        shell: pwsh
+        run: |
+          $url = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-x86_64-20260903-git-69e63f425a.7z"
+          $sha = "418dbfb5feb851cbed33d6c05d8481ba71802621bfd6efe8974522b28d42ac97"
+          Invoke-WebRequest $url -OutFile mpv.7z
+          if ((Get-FileHash mpv.7z -Algorithm SHA256).Hash.ToLower() -ne $sha) { throw "mpv archive does not match the pinned SHA256" }
+          New-Item -ItemType Directory -Force apps/desktop/resources/mpv | Out-Null
+          7z e mpv.7z -oapps/desktop/resources/mpv mpv.exe d3dcompiler_43.dll -y
+          if (-not (Test-Path apps/desktop/resources/mpv/mpv.exe)) { throw "mpv.exe not in the archive" }
+
       - run: pnpm --filter @testcard/desktop package
 
       - uses: actions/upload-artifact@v4
