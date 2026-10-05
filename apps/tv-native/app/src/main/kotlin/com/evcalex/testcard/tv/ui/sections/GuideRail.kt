@@ -42,7 +42,23 @@ import com.evcalex.testcard.tv.ui.theme.Palette
 import kotlinx.coroutines.delay
 
 /** One list the guide can show: "favourites", "recent", a category id, or "all". */
-internal class GuideList(val id: String, val label: String, val count: Int, val mark: RailMark)
+internal class GuideList(val id: String, val label: String, val count: Int, val mark: RailMark, /** The source it belongs to, when the rail is sectioned by source. */ val group: String? = null)
+
+/** Whether the list is a source's (or everything's) "All channels", which has no category to pin or hide. */
+internal fun GuideList.isAll() = id == "all" || id.startsWith("all:")
+
+/** Where a list is among the rail's items: the separator after "recent" and each source heading are items of their own. */
+internal fun railItemIndex(lists: List<GuideList>, id: String): Int {
+    var index = 0
+    var group: String? = null
+    for (item in lists) {
+        if (item.group != null && item.group != group) { group = item.group; index++ }
+        if (item.id == id) return index
+        index++
+        if (item.id == "recent") index++
+    }
+    return 0
+}
 
 /** What the collapsed rail draws for a list. */
 internal sealed interface RailMark {
@@ -82,7 +98,16 @@ internal fun GuideRail(
             Modifier.fillMaxSize().then(if (open) Modifier.trapFocus() else Modifier), state,
             contentPadding = PaddingValues(vertical = 20.dp, horizontal = 14.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
+            var group: String? = null
             for (item in lists) {
+                if (item.group != null && item.group != group) {
+                    group = item.group
+                    val name = item.group
+                    item("group:$name") {
+                        if (open) AppText(name, 18, Palette.faint, FontWeight.SemiBold, Modifier.padding(start = 14.dp, top = 14.dp, bottom = 4.dp), maxLines = 1)
+                        else Box(Modifier.padding(horizontal = 10.dp, vertical = 8.dp).fillMaxWidth().height(1.dp).background(Palette.border))
+                    }
+                }
                 item(item.id) {
                     if (open) OpenItem(item, item.id == current, onClose, onLongPress, requesters[item.id]) { pending = item.id }
                     else Box(Modifier.fillMaxWidth().height(RAIL_ITEM_H.dp), contentAlignment = Alignment.Center) {
@@ -120,7 +145,7 @@ private fun OpenItem(
         },
         RoundedCornerShape(10.dp),
         // "All" is not a category: there is nothing to pin or hide.
-        onLongClick = if (item.mark is RailMark.Letters && item.id != "all") ({ onLongPress(item) }) else null,
+        onLongClick = if (item.mark is RailMark.Letters && !item.isAll()) ({ onLongPress(item) }) else null,
         onFocusChange = { if (it) onFocused() }, focusRequester = requester,
         ring = false, background = Color.Transparent, focusedBackground = Palette.accent,
     ) { focused ->

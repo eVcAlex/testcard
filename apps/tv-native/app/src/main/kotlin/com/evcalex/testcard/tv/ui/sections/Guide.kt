@@ -133,14 +133,23 @@ fun GuideScreen(ctx: SectionContext) {
     var tick by remember { mutableIntStateOf(0) }
 
     // The lists to pick from, null until read: favourites, recents, every category, then all.
-    val lists by produceState<List<GuideList>?>(null, app.version, app.catalogue, sourceId, tick) {
-        val categories = app.memoByCatalogue("live-categories", sourceId) { it.listCategories(sourceId).browsable() }
+    val lists by produceState<List<GuideList>?>(null, app.version, app.catalogue, app.sources, sourceId, tick) {
+        // With several sources and none picked in the nav bar, each source is its own section of the rail: nothing is merged.
+        val bySource = if (sourceId == null) app.sources.filter { it.channels > 0 }.takeIf { it.size > 1 } else null
+        val categories = if (bySource != null) emptyList() else app.memoByCatalogue("live-categories", sourceId) { it.listCategories(sourceId).browsable() }
         val (favourites, recents) = app.db.read { c -> c.listFavouriteChannels().count(::own) to c.listRecentChannels(60).count(::own) }
         value = buildList {
             add(GuideList("favourites", "Favourites", favourites, RailMark.Icon(Glyph.Star)))
             add(GuideList("recent", "Recently watched", recents, RailMark.Icon(Glyph.Restart)))
-            for (c in categories.filter { it.count > 0 }) add(GuideList(c.id, c.label, c.count, RailMark.Letters(c.label.trim().take(2).replaceFirstChar { it.uppercase() })))
-            add(GuideList("all", "All channels", categories.sumOf { it.count }, RailMark.Letters("All")))
+            if (bySource != null) for (source in bySource) {
+                val own = app.memoByCatalogue("live-categories", source.id) { it.listCategories(source.id).browsable() }.filter { it.count > 0 }
+                if (own.isEmpty()) continue
+                add(GuideList("all:${source.id}", "All channels", own.sumOf { it.count }, RailMark.Letters("All"), source.name))
+                for (c in own) add(GuideList(c.id, c.label, c.count, RailMark.Letters(c.label.trim().take(2).replaceFirstChar { it.uppercase() }), source.name))
+            } else {
+                for (c in categories.filter { it.count > 0 }) add(GuideList(c.id, c.label, c.count, RailMark.Letters(c.label.trim().take(2).replaceFirstChar { it.uppercase() })))
+                add(GuideList("all", "All channels", categories.sumOf { it.count }, RailMark.Letters("All")))
+            }
         }
     }
     var listId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -148,7 +157,7 @@ fun GuideScreen(ctx: SectionContext) {
         listId?.takeIf { id -> all.any { it.id == id } }
             ?: all.firstOrNull { it.id == "favourites" && it.count > 0 }?.id
             ?: all.firstOrNull { it.id == "recent" && it.count > 0 }?.id
-            ?: "all"
+            ?: all.firstOrNull { it.isAll() }?.id ?: "all"
     }
     // The starting list is chosen once: adding a first favourite must not swap the grid under the remote.
     LaunchedEffect(shownList) { if (listId == null && shownList != null) listId = shownList }
@@ -161,7 +170,8 @@ fun GuideScreen(ctx: SectionContext) {
                 "favourites" -> c.listFavouriteChannels().filter(::own)
                 "recent" -> c.listRecentChannels(60).filter(::own)
                 "all" -> c.browseChannels(limit = ALL_CHANNELS_MOST, sourceId = sourceId)
-                else -> c.browseChannels(categoryId = id, limit = ALL_CHANNELS_MOST, sourceId = sourceId)
+                else -> if (id.startsWith("all:")) c.browseChannels(limit = ALL_CHANNELS_MOST, sourceId = id.removePrefix("all:"))
+                else c.browseChannels(categoryId = id, limit = ALL_CHANNELS_MOST, sourceId = sourceId)
             }
         }
         channelsFor = id
@@ -228,8 +238,7 @@ fun GuideScreen(ctx: SectionContext) {
         railOpen = true
         scope.launch {
             // The separator after "recent" is an item of its own.
-            val index = lists.orEmpty().indexOfFirst { it.id == current }.coerceAtLeast(0)
-            railState.scrollToItem(if (index > 1) index + 1 else index)
+            railState.scrollToItem(railItemIndex(lists.orEmpty(), current))
             androidx.compose.runtime.withFrameNanos { }
             runCatching { railRequesters[current]?.requestFocus() }
         }
