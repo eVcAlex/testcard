@@ -35,8 +35,8 @@ fun parseManifest(body: String, installed: Int, apkKey: String, baseUrl: String)
 }
 
 /** Reads the manifest from the release server. Throws a message to show when it cannot. */
-suspend fun checkForUpdate(http: OkHttpClient, baseUrl: String, installed: Int, apkKey: String): UpdateInfo? {
-    val request = Request.Builder().url("$baseUrl/latest.json").header("cache-control", "no-cache").build()
+suspend fun checkForUpdate(http: OkHttpClient, baseUrl: String, installed: Int, apkKey: String, manifest: String = "latest.json"): UpdateInfo? {
+    val request = Request.Builder().url("$baseUrl/$manifest").header("cache-control", "no-cache").build()
     val call = http.newBuilder().callTimeout(20, java.util.concurrent.TimeUnit.SECONDS).build().newCall(request)
     val response = try { call.await() } catch (error: java.io.InterruptedIOException) { throw IllegalStateException("The update server took too long to answer.", error) }
     return response.use { response ->

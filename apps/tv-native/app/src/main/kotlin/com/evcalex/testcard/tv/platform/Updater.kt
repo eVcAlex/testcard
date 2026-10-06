@@ -22,6 +22,7 @@ enum class UpdatePhase { Idle, Checking, Downloading, Installing, Permission, Er
 
 private const val AUTO_KEY = "update:auto"
 private const val SKIPPED_KEY = "update:skipped"
+private const val BETA_KEY = "update:beta"
 
 /** How often an app left open, or brought back, looks again. */
 private const val RECHECK_MS = 6 * 60 * 60 * 1000L
@@ -58,6 +59,10 @@ class Updater(context: Context, private val http: () -> OkHttpClient, private va
     var auto by mutableStateOf(true)
         private set
 
+    /** Whether to follow beta builds (published from a branch before they reach main) instead of only releases. */
+    var beta by mutableStateOf(false)
+        private set
+
     /** Whether the "new version" dialog is up. */
     var prompting by mutableStateOf(false)
         private set
@@ -69,6 +74,7 @@ class Updater(context: Context, private val http: () -> OkHttpClient, private va
     /** Reads the saved choices, then starts the automatic checks. Called once the database is open. */
     suspend fun start() {
         auto = readMeta(AUTO_KEY) != "0"
+        beta = readMeta(BETA_KEY) == "1"
         if (started) return
         started = true
         scope.launch {
@@ -90,7 +96,7 @@ class Updater(context: Context, private val http: () -> OkHttpClient, private va
         phase = UpdatePhase.Checking
         error = null
         try {
-            val info = checkForUpdate(http(), baseUrl, installedCode, BuildConfig.UPDATE_APK_KEY)
+            val info = checkForUpdate(http(), baseUrl, installedCode, BuildConfig.UPDATE_APK_KEY, if (beta) "beta-latest.json" else "latest.json")
             available = info
             checked = true
             phase = UpdatePhase.Idle
@@ -130,6 +136,17 @@ class Updater(context: Context, private val http: () -> OkHttpClient, private va
     fun changeAuto(on: Boolean) {
         auto = on
         scope.launch { writeMeta(AUTO_KEY, if (on) "1" else "0") }
+    }
+
+    /** Switches between releases and beta builds, and looks again at once. */
+    fun changeBeta(on: Boolean) {
+        beta = on
+        available = null
+        checked = false
+        scope.launch {
+            writeMeta(BETA_KEY, if (on) "1" else "0")
+            runCheck(offer = false)
+        }
     }
 
     /** Shows the dialog for the available version (from Settings). */

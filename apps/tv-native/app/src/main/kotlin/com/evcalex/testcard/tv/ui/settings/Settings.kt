@@ -165,6 +165,7 @@ internal fun AccountPane(app: AppController) {
             AppText("Testcard $version  ·  $line", 24, if (update.phase == UpdatePhase.Error) Palette.fault else Palette.muted, modifier = Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SmallButton("Check automatically: ${if (update.auto) "On" else "Off"}", { update.changeAuto(!update.auto) })
+                SmallButton("Beta builds: ${if (update.beta) "On" else "Off"}", { update.changeBeta(!update.beta) })
                 SmallButton(
                     if (update.available != null) "Update now" else "Check for updates", { if (update.available != null) update.showPrompt() else update.check() },
                     primary = update.available != null, enabled = update.phase != UpdatePhase.Downloading && update.phase != UpdatePhase.Checking && update.phase != UpdatePhase.Installing,
