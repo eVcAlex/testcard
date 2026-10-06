@@ -2531,6 +2531,12 @@
   background: var(--accent-soft);
 }
 
+/* The page body beside the Movies and Series rail (inside .lt), or inside the plain page when there is no rail. */
+.pw-main--pane {
+  flex: 1;
+  min-height: 0;
+}
+
 .lt-rail .pw-search {
   width: 100%;
   min-width: 0;
