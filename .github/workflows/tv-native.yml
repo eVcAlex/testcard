@@ -75,10 +75,11 @@ jobs:
           name: testcard-tv-native
           path: apps/tv-native/app/build/outputs/apk/release/*.apk
 
-      # Built from main, the APK goes to the update server: the APK first, then the manifest that points at it, so a device
-      # never sees a manifest for a file that is not there yet. It takes over the old app's entry (apks.firetv).
+      # Run by hand, the APK goes to the update server: the APK first, then the manifest that points at it, so a device
+      # never sees a manifest for a file that is not there yet. From main it is the release (it takes over the old app's
+      # entry, apks.firetv). From any other branch it is a beta, which only a stick with Settings > Beta builds on picks up.
       - name: Publish to the update server
-        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch'
         working-directory: .
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -86,11 +87,14 @@ jobs:
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "No CLOUDFLARE_API_TOKEN secret: not publishing."; exit 0; fi
           CODE=$((100000 + ${{ github.run_number }}))
-          echo "{\"versionCode\":$CODE,\"versionName\":\"0.2.${{ github.run_number }}\"}" > build.json
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then PREFIX=""; NAME="0.2.${{ github.run_number }}"; else PREFIX="beta-"; NAME="0.2.${{ github.run_number }}-beta"; fi
+          echo "{\"versionCode\":$CODE,\"versionName\":\"$NAME\"}" > build.json
           cp apps/tv-native/app/build/outputs/apk/release/app-release.apk testcard-firetv.apk
-          APK="testcard-firetv-$CODE.apk"
-          node scripts/release-manifest.mjs build.json "$APK" "$GITHUB_SHA" latest.json
+          APK="${PREFIX}testcard-firetv-$CODE.apk"
+          MANIFEST="${PREFIX}latest.json"
+          MANIFEST_NAME="$MANIFEST" node scripts/release-manifest.mjs build.json "$APK" "$GITHUB_SHA" "$MANIFEST"
           npx --yes wrangler@3 r2 object put "testcard-releases/$APK" --file testcard-firetv.apk --content-type application/vnd.android.package-archive
-          npx --yes wrangler@3 r2 object put testcard-releases/testcard-firetv.apk --file testcard-firetv.apk --content-type application/vnd.android.package-archive
-          npx --yes wrangler@3 r2 object put testcard-releases/latest.json --file latest.json --content-type application/json
-          echo "Published $(node -p "require('./build.json').versionName")"
+          # The fixed-name copy is what the release serves to a first install; a beta never replaces it.
+          if [ -z "$PREFIX" ]; then npx --yes wrangler@3 r2 object put testcard-releases/testcard-firetv.apk --file testcard-firetv.apk --content-type application/vnd.android.package-archive; fi
+          npx --yes wrangler@3 r2 object put "testcard-releases/$MANIFEST" --file "$MANIFEST" --content-type application/json
+          echo "Published $NAME"

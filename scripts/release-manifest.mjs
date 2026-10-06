@@ -5,7 +5,8 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 
-const MANIFEST_URL = "https://testcard-sync.evcalex.workers.dev/app/latest.json";
+// MANIFEST_NAME is "beta-latest.json" for a beta build, so its notes run from the last beta, not the last release.
+const MANIFEST_URL = `https://testcard-sync.evcalex.workers.dev/app/${process.env.MANIFEST_NAME ?? "latest.json"}`;
 const KEEP_BUILDS = 15;
 const MAX_LINES = 8;
 /** Commits that change nothing a viewer sees (docs, the build itself) are left out of what changed. */
