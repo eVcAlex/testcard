@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EpisodeRow } from "@testcard/core";
 // Deep import, not the "@testcard/core" barrel — see MoviesView.tsx's comment on the same import
 // for why a renderer-side value import from the barrel crashes (drags in better-sqlite3).
@@ -10,7 +10,8 @@ import { EmptyState } from "../components/EmptyState.js";
 import { formatDuration } from "../lib/time.js";
 import { logoSrc } from "../lib/logo.js";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { CategoryBar } from "./CategoryBar.js";
+import { CategoryRail } from "./CategoryRail.js";
+import { categoryRail } from "@testcard/core/src/normalise/categoryRail.js";
 import { GenreBar } from "./GenreBar.js";
 import { genreOptions } from "@testcard/core/src/normalise/genres.js";
 import { useSources } from "./useSources.js";
@@ -210,14 +211,45 @@ export function SeriesView({
   );
 
   const series = detail.data?.series;
-  const sources = useSources().data ?? [];
+  const sourcesQuery = useSources();
+  const sources = useMemo(() => sourcesQuery.data ?? [], [sourcesQuery.data]);
+
+  // The rail's categories: every source's own, and the ones across all of them. Same cache keys as `categories` above.
+  const railQueries = useQueries({
+    queries: ["", ...sources.map((source) => source.id)].map((key) => ({
+      queryKey: ["series", "categories", key === "" ? null : key],
+      queryFn: () => window.testcard.series.categoryList(key === "" ? undefined : key),
+      staleTime: 60_000,
+      enabled: scope === "browse",
+    })),
+  });
+  const railStamp = railQueries.map((query) => query.dataUpdatedAt).join();
+  const railLists = useMemo(
+    () =>
+      categoryRail({
+        sourceId,
+        sources,
+        categories: Object.fromEntries(
+          ["", ...sources.map((source) => source.id)].map((key, i) => [
+            key,
+            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: displayName(c.name), count: c.series_count })),
+          ]),
+        ),
+      }),
+    // railQueries is a new array every render; when its data last changed is what matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sourceId, sources, genre, railStamp],
+  );
+  const railed = scope === "browse";
   const sourceName = sources.length > 1 ? sources.find((source) => source.id === series?.source_id)?.name : undefined;
   const seriesTitle = series !== undefined ? splitTitle(series.name) : null;
   const rating = series?.rating && Number(series.rating) > 0 ? Number(series.rating).toFixed(1) : null;
   const seasonCount = detail.data?.seasons.length ?? 0;
 
   return (
-    <main className="pw-main">
+    <main className={railed ? "lt" : "pw-main"}>
+      {railed && <CategoryRail lists={railLists} value={categoryId ?? "home"} onPick={(id) => pickCategory(id === "home" ? null : id)} />}
+      <div className="pw-main pw-main--pane">
       <div className="pw-head">
         <h2>{heading}</h2>
         {headerExtra}
@@ -241,14 +273,6 @@ export function SeriesView({
             options={genreOptions((categories.data ?? []).map((c) => ({ genre: c.genre, count: c.series_count })))}
             value={genre}
             onChange={pickGenre}
-          />
-          <CategoryBar
-            allLabel="Home"
-            categories={(categories.data ?? [])
-              .filter((c) => genre === null || c.genre === genre)
-              .map((c) => ({ id: c.id, name: c.name, count: c.series_count }))}
-            value={categoryId}
-            onChange={pickCategory}
           />
         </>
       )}
@@ -369,6 +393,7 @@ export function SeriesView({
           )}
         </Drawer>
       )}
+      </div>
     </main>
   );
 }
