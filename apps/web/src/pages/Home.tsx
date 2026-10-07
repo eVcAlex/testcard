@@ -9,12 +9,12 @@ const pairs = [
 ] as const;
 
 const features = [
-  ["Your sources, one place", "Add Xtream Codes or M3U playlists. Live channels, films and series sit together and stay fast, even with tens of thousands of channels."],
-  ["A real TV guide", "A full guide grid with now and next. Catch up on shows from providers that keep an archive."],
-  ["Tidy names", "Channel and category names are cleaned up whatever the provider's style, so \"UK| ʙʙᴄ ᴏɴᴇ ᴴᴰ\" reads as \"BBC One HD\"."],
-  ["Picks up where you left off", "One account keeps your sources, favourites and progress in step across Windows and Fire TV."],
-  ["Streams that keep going", "If a live channel won't start, Testcard tries its other feeds and qualities for you."],
-  ["Made for the sofa", "A layout built for the remote, with Skip intro, a Next episode button and captions you can restyle."],
+  ["Bring any source", "Add Xtream Codes or M3U playlists. Live channels, films and series sit together."],
+  ["Fast at any size", "Stays quick with tens of thousands of channels."],
+  ["Catch up", "Watch shows back from providers that keep an archive."],
+  ["Made for the sofa", "A layout built for the remote, with Skip intro and a Next episode button on Fire TV."],
+  ["Captions your way", "Restyle subtitles on Fire TV so they read well from the couch."],
+  ["Keeps itself current", "Both apps update themselves when a new version is out."],
 ] as const;
 
 export function Home() {
@@ -37,13 +37,16 @@ export function Home() {
           ))}
         </ul>
       </section>
-      <section className="features">
+      <section className="extras">
+        <h2>Everything else</h2>
+        <div className="features">
         {features.map(([title, text]) => (
           <div className="card" key={title}>
-            <h2>{title}</h2>
+            <h3>{title}</h3>
             <p>{text}</p>
           </div>
         ))}
+      </div>
       </section>
       {SHOTS.length > 0 && (
         <section className="shots">

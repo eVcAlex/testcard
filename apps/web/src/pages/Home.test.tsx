@@ -29,7 +29,9 @@ describe("Home", () => {
     render(<Home />);
     const heading = screen.getByRole("heading", { name: /without the mess/i });
     const section = heading.closest("section")!;
-    expect(within(section).getAllByRole("listitem").length).toBeGreaterThanOrEqual(3);
+    const items = within(section).getAllByRole("listitem");
+    expect(items).toHaveLength(4);
+    items.forEach((li) => expect(li.children).toHaveLength(2));
   });
 
   it("hides the screenshots section when there are none", () => {
@@ -42,7 +44,16 @@ describe("Home", () => {
     shots.list = [{ src: "/shots/guide.png", alt: "The TV guide grid", caption: "Now and next", width: 1280, height: 720 }];
     render(<Home />);
     expect(screen.getByRole("heading", { name: /see it/i })).toBeInTheDocument();
+    expect(screen.getByRole("figure")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "The TV guide grid" })).toHaveAttribute("loading", "lazy");
     expect(screen.getByText("Now and next")).toBeInTheDocument();
+  });
+
+  it("has an Everything else section whose cards do not repeat the problem list", () => {
+    render(<Home />);
+    expect(screen.getByRole("heading", { level: 2, name: "Everything else" })).toBeInTheDocument();
+    const titles = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
+    expect(titles.length).toBe(6);
+    titles.forEach((t) => expect(t).not.toMatch(/tidy names|real tv guide|picks up where/i));
   });
 });
