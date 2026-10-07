@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { OverlayApp } from "./OverlayApp.js";
-import "../styles/tokens.css";
+import "@testcard/theme/tokens.css";
 import "../styles/base.css";
 import "./overlay.css";
 

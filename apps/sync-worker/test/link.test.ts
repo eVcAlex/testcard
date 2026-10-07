@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { env } from "cloudflare:test";
 import { Hono } from "hono";
-import { handleLinkApprove, handleLinkPage, handleLinkPoll, handleLinkSession, handleLinkStart } from "../src/routes/link.js";
+import { handleLinkApprove, handleLinkPoll, handleLinkSession, handleLinkStart } from "../src/routes/link.js";
 import type { Env } from "../src/index.js";
 
 function app() {
   const a = new Hono<{ Bindings: Env }>();
-  a.get("/link", handleLinkPage);
   a.post("/link/start", handleLinkStart);
   a.get("/link/session", handleLinkSession);
   a.post("/link/approve", handleLinkApprove);
@@ -87,16 +86,5 @@ describe("signing a TV in with a code", () => {
     expect((await get(a, "/link/session?lookup=%00")).status).toBe(400);
     const raw = await a.request("/link/start", { method: "POST", body: "{nope" }, env);
     expect(raw.status).toBe(400);
-  });
-
-  it("serves the page without letting it be cached or framed", async () => {
-    const res = await get(app(), "/link");
-    expect(res.status).toBe(200);
-    expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(res.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
-    const html = await res.text();
-    expect(html).toContain("Link your TV");
-    expect(html).toContain("/auth/sign-up/email"); // the page can create the account too
-    expect(html).not.toMatch(/https?:\/\//);
   });
 });

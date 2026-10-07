@@ -25,6 +25,7 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@testcard/theme": "workspace:*",
     "@electron-toolkit/tsconfig": "^2.0.0",
     "@electron/rebuild": "^4.0.1",
     "@types/better-sqlite3": "^7.6.13",

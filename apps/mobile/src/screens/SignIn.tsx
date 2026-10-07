@@ -139,7 +139,7 @@ export function SignInScreen() {
 }
 
 /** The address people open on a phone or computer, shown without the scheme. */
-const linkAddress = `${syncPlatform.baseUrl.replace("https://", "")}/link`;
+const linkAddress = "evicted.dev/link";
 
 /**
  * Sign in without typing: the TV shows a code and a QR, the person answers on a phone or computer, and this

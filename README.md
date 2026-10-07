@@ -2,12 +2,11 @@
 
 Website: [evicted.dev](https://evicted.dev) · made by Evicted.
 
-A dark, watermark-free IPTV player for Windows and Fire TV. Xtream Codes and M3U sources, live TV
+A fast, tidy IPTV player for Windows and Fire TV. Xtream Codes and M3U sources, live TV
 with a guide, films and series, and one account that keeps sources, favourites and where you left
 off in step across devices. SQLite-backed, so it stays fast at tens of thousands of channels.
 
-Built as a free alternative to the paywalled features (dark mode, no watermark, playlist
-auto-refresh) of commercial IPTV players. See [`CONTEXT.md`](CONTEXT.md) for the domain glossary and
+See [`CONTEXT.md`](CONTEXT.md) for the domain glossary and
 [`docs/adr/`](docs/adr) for the decisions behind non-obvious choices.
 
 ## What it does
@@ -57,6 +56,17 @@ pnpm dev           # launches the desktop app
 For real playback on the desktop, follow `scripts/fetch-mpv.md` first (a one-time manual download,
 not automated on purpose).
 
+## Website
+
+```sh
+pnpm --filter @testcard/web dev          # the site; proxies API calls to wrangler dev on 8787
+pnpm --filter @testcard/sync-worker dev  # run alongside, for the API
+```
+
+`pnpm --filter @testcard/sync-worker run deploy` builds the site and deploys the Worker (domains
+`evicted.dev`, `www.evicted.dev`, `sync.evicted.dev`). Use `run deploy`: plain `pnpm deploy` is a
+pnpm built-in and fails.
+
 ## Repo layout
 
 ```
@@ -64,12 +74,16 @@ packages/core/        pure TypeScript shared by both apps: source adapters (Xtre
                       normalisation, XMLTV parsing, the SQLite schema and imports, the sync client.
                       No Electron, React or Expo.
 packages/sync-schema/ the sync API's request and response shapes (zod), shared by apps and worker.
+packages/theme/       the shared palette: `src/colors.ts` is the source, `colors.css` is generated,
+                      `tokens.css` is the stylesheet used by the site, desktop and the Expo app.
 apps/desktop/         the Electron app: main process (SQLite, credentials, mpv, IPC), preload, renderer.
 apps/tv-native/       the Fire TV app (Kotlin): `:core` is the data layer, a port of packages/core checked against
                       its test vectors; `:app` is the UI and player.
 apps/mobile/          the previous Fire TV app (Expo); kept for rollback, no longer where Fire TV work happens.
-apps/sync-worker/     the Cloudflare Worker behind accounts, sync and the release bucket.
-apps/website/         the marketing site at evicted.dev (static HTML/CSS, deployed by Cloudflare).
+apps/web/             the website at evicted.dev: home, download, privacy, TV link page. React, Vite, TanStack,
+                      wretch; built to `apps/web/dist` and served by the Worker.
+apps/sync-worker/     the Cloudflare Worker behind accounts, sync and the release bucket; it also serves
+                      the site.
 docs/adr/             decisions worth recording.
 ```
 
@@ -111,15 +125,6 @@ pnpm android log           # the app's log from the device
 ```
 
 Slow page builds are logged under `[perf]`: `adb logcat -s ReactNativeJS | findstr perf`.
-
-## Website
-
-```sh
-pnpm --filter @testcard/website build     # writes apps/website/dist
-pnpm --filter @testcard/website preview   # serves it on http://localhost:4173
-```
-
-Deployed by Cloudflare (Workers static assets, `apps/website/wrangler.jsonc`) from `main`: root directory `apps/website`, build `node scripts/build.mjs`, deploy `npx wrangler deploy`, env `SKIP_DEPENDENCY_INSTALL=1`.
 
 ## Publishing a release
 

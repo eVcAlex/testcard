@@ -3,8 +3,7 @@
  * password, on a phone or computer; the page seals `{ email, password }` under a key made from the code and the TV
  * unseals it. The server only ever sees a lookup value and the sealed blob, so it cannot read the password.
  *
- * The web page (apps/sync-worker/src/pages/linkPage.ts) repeats these steps in plain browser JavaScript. The
- * constants here are the contract; a test holds the page to them.
+ * apps/web imports this module, so the web page and the TV share these steps and constants.
  */
 export const LINK_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const LINK_CODE_LENGTH = 8;

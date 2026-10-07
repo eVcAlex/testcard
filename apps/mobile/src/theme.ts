@@ -1,22 +1,8 @@
+import { tvColors } from "@testcard/theme";
 import { Dimensions, Platform, StyleSheet } from "react-native";
 
-/** Dark only, sized for a TV. Neutrals are the desktop "Mist" palette nudged warm; the accent is cream. */
-export const colors = {
-  background: "#0a0d11",
-  sunken: "#07090c",
-  raised: "#12161b",
-  card: "#171c22",
-  cardActive: "#232a32",
-  border: "#252c34",
-  foreground: "#f2eee7",
-  muted: "#a4a9af",
-  faint: "#737a82",
-  accent: "#e7d2ad",
-  accentInk: "#1d160a",
-  accentSoft: "#e7d2ad26",
-  fault: "#f0745c",
-  live: "#e8402a",
-} as const;
+/** Dark only, sized for a TV. The palette comes from `@testcard/theme`: desktop neutrals nudged darker, cream accent. */
+export const colors = tvColors;
 
 /** Text sizes are large on purpose: a Fire TV is read from a sofa. */
 export const type = { body: 22, small: 18, lead: 28, title: 40 } as const;

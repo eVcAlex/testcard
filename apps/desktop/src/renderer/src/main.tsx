@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "./App.js";
 import { ErrorBoundary } from "./ErrorBoundary.js";
-import "./styles/tokens.css";
+import "@testcard/theme/tokens.css";
 import "./styles/base.css";
 import "./styles/chrome.css";
 

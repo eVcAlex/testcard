@@ -3,6 +3,24 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Installed apps call https://testcard-sync.evcalex.workers.dev; with `routes` set, wrangler 4 would default workers_dev to false.
+workers_dev = true
+
+# Custom domain: wrangler creates the DNS record and certificate on deploy (zone evicted.dev is on this account).
+routes = [
+  { pattern = "evicted.dev", custom_domain = true },
+  { pattern = "www.evicted.dev", custom_domain = true },
+  { pattern = "sync.evicted.dev", custom_domain = true },
+]
+
+# The website (apps/web). API paths run the Worker first; everything else is a static file, with
+# index.html for client-side routes. `/app/*` must be listed: a browser navigating to a release file
+# would otherwise be handed the SPA shell.
+[assets]
+directory = "../web/dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/approve", "/link/poll", "/sync/*", "/guides/*"]
+
 # SYNC_AUTH_SECRET (better-auth signing/encryption secret) is deliberately NOT declared here: a [vars]
 # entry is deployed as a plain var and replaces the real secret. Deployed: `wrangler secret put
 # SYNC_AUTH_SECRET`. Local `wrangler dev`: .dev.vars (gitignored). Worker tests: vitest.config.ts.

@@ -1,0 +1,7 @@
+{
+  "name": "testcard-screenshots",
+  "private": true,
+  "description": "Not part of the pnpm workspace: tooling for the website screenshots (see README.md here). Run `npm install` in this folder once.",
+  "type": "module",
+  "devDependencies": { "playwright-core": "^1.55.0", "sharp": "0.33.5" }
+}
