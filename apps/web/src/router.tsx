@@ -1,4 +1,5 @@
 import { Link, Outlet, createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
+import { Footer } from "./Footer.tsx";
 import { Download } from "./pages/Download.tsx";
 import { Home } from "./pages/Home.tsx";
 import { LinkPage } from "./pages/LinkPage.tsx";
@@ -14,6 +15,7 @@ const root = createRootRoute({
         </nav>
       </header>
       <main><Outlet /></main>
+      <Footer />
     </>
   ),
 });
