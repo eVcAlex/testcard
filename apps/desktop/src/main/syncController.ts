@@ -7,7 +7,7 @@ import { clearAccountPassword, loadAccountPassword, saveAccountPassword } from "
  * Electron's keystore-backed credential and account-password storage.
  */
 export const syncPlatform: SyncPlatform = {
-  baseUrl: process.env.TESTCARD_SYNC_URL ?? "https://testcard-sync.evcalex.workers.dev",
+  baseUrl: process.env.TESTCARD_SYNC_URL ?? "https://sync.evicted.dev",
   getCredentials: getStoredCredentials,
   saveCredentials,
   deleteCredentials,

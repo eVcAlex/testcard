@@ -23,7 +23,7 @@ android {
         // The sync server; `-PsyncUrl=http://10.0.2.2:8787` points a build at a local `wrangler dev` from the emulator.
         // Which manifest entry the updater follows: `firetv`, the entry the old app followed.
         buildConfigField("String", "UPDATE_APK_KEY", "\"${findProperty("apkKey") ?: "firetv"}\"")
-        buildConfigField("String", "SYNC_URL", "\"${findProperty("syncUrl") ?: "https://testcard-sync.evcalex.workers.dev"}\"")
+        buildConfigField("String", "SYNC_URL", "\"${findProperty("syncUrl") ?: "https://sync.evicted.dev"}\"")
     }
 
     // Own signing key when the keystore file is given (the workflow decodes ANDROID_KEYSTORE_BASE64 into it). Otherwise the Expo debug

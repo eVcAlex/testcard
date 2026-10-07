@@ -32,7 +32,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 /** Where the updater and the shared guide files are served from (the sync worker's RELEASES bucket). */
-const val UPDATE_BASE_URL = "https://testcard-sync.evcalex.workers.dev/app"
+const val UPDATE_BASE_URL = "https://sync.evicted.dev/app"
 
 private const val MOST_URL_LENGTH = 500
 

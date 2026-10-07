@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# The public address: sign-in, the /link page the TV's QR code opens, sync and /app updates.
+# The workers.dev address stays on (the default) because builds already installed still use it.
+# `wrangler deploy` creates the DNS record, so evicted.dev must be a zone on this Cloudflare account.
+routes = [{ pattern = "sync.evicted.dev", custom_domain = true }]
+
 # SYNC_AUTH_SECRET (better-auth signing/encryption secret) is deliberately NOT declared here: a [vars]
 # entry is deployed as a plain var and replaces the real secret. Deployed: `wrangler secret put
 # SYNC_AUTH_SECRET`. Local `wrangler dev`: .dev.vars (gitignored). Worker tests: vitest.config.ts.

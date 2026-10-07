@@ -19,7 +19,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 
-const val SYNC_BASE_URL = "https://testcard-sync.evcalex.workers.dev"
+const val SYNC_BASE_URL = "https://sync.evicted.dev"
 
 /** Non-2xx from the Worker. `message` is the server's own words, as `serverMessage` in the TS controller reads them. */
 class ApiException(val status: Int, message: String) : IOException(message)
