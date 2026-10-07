@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { formatLinkCode, normaliseLinkCode } from "@testcard/core/src/sync/linkCrypto.ts";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { type Field, LinkError, type Mode, linkTv } from "../link/linkTv.ts";
 
 const pretty = (typed: string) => formatLinkCode(normaliseLinkCode(typed).slice(0, 8));
@@ -28,6 +28,10 @@ export function LinkPage() {
       if (failure.switchToSignin) setMode("signin");
     },
   });
+
+  useEffect(() => {
+    if (error?.field) document.getElementById(`link-${error.field}`)?.focus();
+  }, [error]);
 
   if (link.isSuccess) {
     return (
@@ -57,17 +61,17 @@ export function LinkPage() {
       </div>
       <form className="card" onSubmit={submit} noValidate autoComplete="on">
         <label>Code on your TV
-          <input value={code} onChange={(e) => setCode(pretty(e.target.value))} inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX" maxLength={9} aria-invalid={invalid("code")} />
+          <input id="link-code" value={code} onChange={(e) => setCode(pretty(e.target.value))} inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX" maxLength={9} aria-invalid={invalid("code")} />
         </label>
         <label>Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" inputMode="email" placeholder="you@example.com" aria-invalid={invalid("email")} />
+          <input id="link-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" inputMode="email" placeholder="you@example.com" aria-invalid={invalid("email")} />
         </label>
         <label>Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} />
+          <input id="link-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} />
         </label>
         {signup && (
           <label>Confirm password
-            <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} />
+            <input id="link-confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} />
           </label>
         )}
         <div className="error" role="alert" aria-live="polite">{error?.message}</div>

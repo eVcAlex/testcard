@@ -60,6 +60,24 @@ describe("LinkPage", () => {
     await userEvent.click(screen.getByRole("tab", { name: /create account/i }));
     await userEvent.click(screen.getByRole("button", { name: /create account and link tv/i }));
     await waitFor(() => expect(screen.getByRole("tab", { name: /sign in/i })).toHaveAttribute("aria-selected", "true"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("There is already an account.");
+  });
+
+  it("focuses the field the server complained about", async () => {
+    vi.mocked(linkTv).mockRejectedValue(new LinkError("That code was not found.", "code"));
+    show();
+    await userEvent.click(screen.getByRole("button", { name: /link this tv/i }));
+    await screen.findByText("That code was not found.");
+    expect(screen.getByLabelText(/code on your tv/i)).toHaveFocus();
+  });
+
+  it("marks the confirm field when the passwords do not match", async () => {
+    vi.mocked(linkTv).mockRejectedValue(new LinkError("Passwords do not match.", "confirm"));
+    show();
+    await userEvent.click(screen.getByRole("tab", { name: /create account/i }));
+    await userEvent.click(screen.getByRole("button", { name: /create account and link tv/i }));
+    await screen.findByText("Passwords do not match.");
+    expect(screen.getByLabelText(/confirm password/i)).toHaveAttribute("aria-invalid", "true");
   });
 
   it("shows the done view on success", async () => {
