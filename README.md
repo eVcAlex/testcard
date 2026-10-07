@@ -69,7 +69,7 @@ apps/tv-native/       the Fire TV app (Kotlin): `:core` is the data layer, a por
                       its test vectors; `:app` is the UI and player.
 apps/mobile/          the previous Fire TV app (Expo); kept for rollback, no longer where Fire TV work happens.
 apps/sync-worker/     the Cloudflare Worker behind accounts, sync and the release bucket.
-apps/website/         the marketing site at evicted.dev (static HTML/CSS, deployed by Cloudflare Pages).
+apps/website/         the marketing site at evicted.dev (static HTML/CSS, deployed by Cloudflare).
 docs/adr/             decisions worth recording.
 ```
 
@@ -119,7 +119,7 @@ pnpm --filter @testcard/website build     # writes apps/website/dist
 pnpm --filter @testcard/website preview   # serves it on http://localhost:4173
 ```
 
-Deployed by Cloudflare Pages from `main` (root directory `apps/website`, build `node scripts/build.mjs`, output `dist`, env `SKIP_DEPENDENCY_INSTALL=1`).
+Deployed by Cloudflare (Workers static assets, `apps/website/wrangler.jsonc`) from `main`: root directory `apps/website`, build `node scripts/build.mjs`, deploy `npx wrangler deploy`, env `SKIP_DEPENDENCY_INSTALL=1`.
 
 ## Publishing a release
 
