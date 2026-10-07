@@ -1,6 +1,6 @@
 import wretch, { type WretchError } from "wretch";
 
-const http = wretch().headers({ accept: "application/json" });
+const http = wretch().headers({ accept: "application/json" }).errorType("json");
 
 export const linkSession = (lookup: string) => http.url(`/link/session?lookup=${encodeURIComponent(lookup)}`).get().json<{ salt: string }>();
 export const linkApprove = (body: { lookup: string; blob: string; iv: string }) => http.url("/link/approve").post(body).json();
