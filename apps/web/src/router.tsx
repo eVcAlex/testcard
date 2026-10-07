@@ -1,5 +1,6 @@
 import { Link, Outlet, createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { Home } from "./pages/Home.tsx";
+import { LinkPage } from "./pages/LinkPage.tsx";
 
 const root = createRootRoute({
   component: () => (
@@ -20,7 +21,7 @@ const home = createRoute({ getParentRoute: () => root, path: "/", component: Hom
 
 // Placeholders so the nav links typecheck; Tasks 4 and 5 replace these with Download and LinkPage.
 const download = createRoute({ getParentRoute: () => root, path: "/download", component: () => null });
-const link = createRoute({ getParentRoute: () => root, path: "/link", component: () => null });
+const link = createRoute({ getParentRoute: () => root, path: "/link", component: LinkPage });
 
 export const router = createRouter({ routeTree: root.addChildren([home, download, link]) });
 
