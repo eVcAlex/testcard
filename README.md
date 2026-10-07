@@ -80,11 +80,10 @@ apps/desktop/         the Electron app: main process (SQLite, credentials, mpv, 
 apps/tv-native/       the Fire TV app (Kotlin): `:core` is the data layer, a port of packages/core checked against
                       its test vectors; `:app` is the UI and player.
 apps/mobile/          the previous Fire TV app (Expo); kept for rollback, no longer where Fire TV work happens.
-apps/web/             the website at evicted.dev: home, download, TV link page. React, Vite, TanStack,
+apps/web/             the website at evicted.dev: home, download, privacy, TV link page. React, Vite, TanStack,
                       wretch; built to `apps/web/dist` and served by the Worker.
 apps/sync-worker/     the Cloudflare Worker behind accounts, sync and the release bucket; it also serves
                       the site.
-apps/website/         the earlier static marketing site (HTML/CSS) at evicted.dev; superseded by apps/web, still to be retired.
 docs/adr/             decisions worth recording.
 ```
 
@@ -126,15 +125,6 @@ pnpm android log           # the app's log from the device
 ```
 
 Slow page builds are logged under `[perf]`: `adb logcat -s ReactNativeJS | findstr perf`.
-
-## Website
-
-```sh
-pnpm --filter @testcard/website build     # writes apps/website/dist
-pnpm --filter @testcard/website preview   # serves it on http://localhost:4173
-```
-
-Deployed by Cloudflare (Workers static assets, `apps/website/wrangler.jsonc`) from `main`: root directory `apps/website`, build `node scripts/build.mjs`, deploy `npx wrangler deploy`, env `SKIP_DEPENDENCY_INSTALL=1`.
 
 ## Publishing a release
 

@@ -1,3 +1,4 @@
+@font-face { font-family: "Inter Variable"; src: url("/fonts/InterVariable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--background); color: var(--foreground); font: var(--wght-regular) var(--t-lead)/var(--lh-body) var(--font-ui); }
 a { color: var(--accent); }
@@ -5,6 +6,7 @@ a { color: var(--accent); }
 .bar nav { display: flex; gap: var(--s-7); }
 .bar nav a { color: var(--muted-foreground); text-decoration: none; }
 .bar nav a:hover, .bar nav a[aria-current="page"] { color: var(--foreground); }
+.brand { display: inline-flex; align-items: center; gap: var(--s-3); }
 .brand { color: var(--foreground); text-decoration: none; font-weight: var(--wght-semibold); letter-spacing: var(--track-tight); font-size: var(--t-title); }
 .brand b { color: var(--accent); font-weight: inherit; }
 .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--s-5); }
@@ -37,3 +39,5 @@ figure { margin: 0 0 var(--s-7); }
 figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--r-2); }
 figcaption { color: var(--muted-foreground); font-size: var(--t-small); margin-top: var(--s-3); }
 .foot { display: flex; flex-wrap: wrap; gap: var(--s-5); align-items: center; justify-content: space-between; max-width: 960px; margin: 0 auto; padding: var(--s-7) var(--s-5); border-top: 1px solid var(--border); }
+.draft { color: var(--muted-foreground); font-size: var(--t-small); margin: 0 0 var(--s-6); }
+.foot .credit { flex-basis: 100%; color: var(--muted-foreground); font-size: var(--t-small); }
