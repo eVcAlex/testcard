@@ -11,6 +11,7 @@
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
     "@testcard/core": "workspace:*",
+    "@testcard/theme": "workspace:*",
     "@testcard/sync-schema": "workspace:*",
     "expo": "~57.0.24",
     "expo-application": "~57.0.3",

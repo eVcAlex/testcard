@@ -1,5 +1,5 @@
 /*
- * Testcard design tokens — the ONLY file allowed to name a raw colour.
+ * Testcard design tokens — colours live in colors.css (generated from src/colors.ts); this file holds the rest.
  *
  * "Mist" — a cool-neutral, restrained identity: a dense hairline-ruled channel list, one quiet
  * teal accent, muted-foreground hierarchy. Every neutral carries a slight blue-green bias
@@ -16,41 +16,19 @@
  * tokens. Style components through these tokens, never a raw colour or a value behind
  * [data-theme].
  */
+@import "./colors.css";
 :root {
   color-scheme: dark;
 
-  /* ---- semantic surfaces: a single elevation ramp ----------------------- */
-  --picture: #000000; /* the video hole ONLY — nothing else is true black */
-  --background: #14171a; /* app background / main pane */
-  --surface-sunken: #0f1214; /* inputs, wells, search pill */
-  --surface-raised: #1a1d21; /* sidebar, raised panels */
-  --card: #1c2024; /* cards, rows */
-  --card-hover: #232830; /* hover */
-  --card-active: #2b3138; /* pressed / active */
-  --scrim: #05080bcc; /* overlay bar over live video — dark in both themes */
 
-  /* ---- semantic lines ---------------------------------------------------- */
-  --border: #262c31;
-  --border-strong: #343c43;
-
-  /* ---- semantic foreground ------------------------------------------- */
-  --foreground: #f2eee7;
-  --muted-foreground: #949ca4;
-  --faint-foreground: #69727a; /* decorative / disabled only — never body copy */
-
-  /* ---- accent: edit --accent and --accent-foreground to reskin ------- */
-  --accent: #e7d2ad; /* cream: the same accent as the Fire TV app — legible as TEXT on the dark surfaces, not just a fill */
-  --accent-foreground: #1d160a; /* ink on a SOLID accent fill */
+  /* ---- derived from the colours in colors.css ---- */
   --accent-strong: color-mix(in oklab, var(--accent) 82%, white);
   --accent-soft: color-mix(in oklab, var(--accent) 15%, transparent);
   --accent-line: color-mix(in oklab, var(--accent) 55%, transparent);
   --ring: color-mix(in oklab, var(--accent) 60%, transparent);
 
   /* ---- status: reserved ------------------------------------------------ */
-  --live: #e8402a; /* on-air dot + NO SIGNAL headline — nowhere else. The one deliberately
-                       warm note in an otherwise cool system, unchanged across themes. */
   --live-halo: color-mix(in oklab, var(--live) 22%, transparent);
-  --fault: #f0745c; /* error text */
 
   /* ---- spacing ------------------------------------------------------- */
   --s-1: 2px;
@@ -126,25 +104,7 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --background: #f7f8f9;
-  --surface-sunken: #eceff1;
-  --surface-raised: #f0f2f4;
-  --card: #ffffff;
-  --card-hover: #f2f4f6;
-  --card-active: #e8ecef;
-
-  --border: #e3e7ea;
-  --border-strong: #cfd6db;
-
-  --foreground: #14181b;
-  --muted-foreground: #5b6670;
-  --faint-foreground: #8d99a2;
-
-  --accent: #7d5f22; /* the cream accent, darkened until it reads on white */
-  --accent-foreground: #ffffff;
   --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
-
-  --fault: #b4321c;
 
   --elev-1: 0 1px 2px rgb(15 23 30 / 0.08);
   --elev-2: 0 8px 22px -8px rgb(15 23 30 / 0.18);
