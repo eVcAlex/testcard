@@ -47,7 +47,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 
 /** The address people open on a phone or computer, shown without the scheme. */
-private val LINK_ADDRESS = "${BuildConfig.SYNC_URL.removePrefix("https://")}/link"
+private const val LINK_ADDRESS = "evicted.dev/link"
 
 @Composable
 private fun Brand() {
