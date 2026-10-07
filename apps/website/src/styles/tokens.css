@@ -1,5 +1,5 @@
 /* mirrors apps/desktop/src/renderer/src/styles/tokens.css — keep in sync */
-/* Dark theme only; the app's light theme is not used on the site. */
+/* Dark is the default, as in the app; light follows the visitor's system setting. */
 :root {
   color-scheme: dark;
 
@@ -66,6 +66,39 @@
   --dur-3: 240ms;
   --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* Light theme: the semantic overrides from the app's :root[data-theme="light"] block. */
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --background: #f7f8f9;
+    --surface-sunken: #eceff1;
+    --surface-raised: #f0f2f4;
+    --card: #ffffff;
+    --card-hover: #f2f4f6;
+    --card-active: #e8ecef;
+
+    --border: #e3e7ea;
+    --border-strong: #cfd6db;
+
+    --foreground: #14181b;
+    --muted-foreground: #5b6670;
+    --faint-foreground: #8d99a2;
+
+    --accent: #7d5f22; /* the cream accent, darkened until it reads on white */
+    --accent-foreground: #ffffff;
+    --accent-strong: color-mix(in oklab, var(--accent) 82%, black);
+    --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+
+    --fault: #b4321c;
+
+    --elev-1: 0 1px 2px rgb(15 23 30 / 0.08);
+    --elev-2: 0 8px 22px -8px rgb(15 23 30 / 0.18);
+    --elev-3: 0 18px 46px -14px rgb(15 23 30 / 0.28);
+    --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.5);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

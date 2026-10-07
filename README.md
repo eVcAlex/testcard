@@ -1,14 +1,19 @@
 # Testcard
 
-Website: [evicted.dev](https://evicted.dev) · made by Evicted.
+A fast, calm IPTV player for Windows and Fire TV, made by [Evicted](https://evicted.dev).
 
-A dark, watermark-free IPTV player for Windows and Fire TV. Xtream Codes and M3U sources, live TV
-with a guide, films and series, and one account that keeps sources, favourites and where you left
-off in step across devices. SQLite-backed, so it stays fast at tens of thousands of channels.
+Testcard plays the Xtream Codes and M3U sources you already have: live TV with a guide, films and
+series, and one account that keeps your sources, favourites and where you left off in step across
+devices. Everything is stored locally in SQLite, so it stays fast at tens of thousands of channels.
+It is a player only and ships no content (see [Content](#content)).
 
-Built as a free alternative to the paywalled features (dark mode, no watermark, playlist
-auto-refresh) of commercial IPTV players. See [`CONTEXT.md`](CONTEXT.md) for the domain glossary and
-[`docs/adr/`](docs/adr) for the decisions behind non-obvious choices.
+See [`CONTEXT.md`](CONTEXT.md) for the domain glossary and [`docs/adr/`](docs/adr) for the decisions
+behind non-obvious choices.
+
+## Status
+
+Private early access on Windows and Fire TV, free while it lasts. Phones are not supported: the Fire
+TV layout is drawn for a TV. Website and waitlist: [evicted.dev](https://evicted.dev).
 
 ## What it does
 
@@ -24,7 +29,8 @@ auto-refresh) of commercial IPTV players. See [`CONTEXT.md`](CONTEXT.md) for the
 - Updates itself from the release bucket ([ADR 0010](docs/adr/0010-in-app-updates.md)).
 
 **Fire TV** (`apps/tv-native`, Kotlin + Compose for TV + Media3, [ADR 0012](docs/adr/0012-native-android-tv.md); it replaces the Expo app in `apps/mobile`, [ADR 0009](docs/adr/0009-android-app-fire-tv-and-phone.md))
-- Sign in to the same account and your sources, favourites and progress arrive.
+- Sign in with a code: the TV shows a QR code and the address `sync.evicted.dev/link`, you approve it
+  from a phone or computer, and your sources, favourites and progress arrive.
 - Home, Movies, Series, Live TV and Search, laid out for a remote, with a TV guide grid on Live TV.
 - A live channel that won't start falls back to its other feeds and qualities (4K to HD) by itself.
 - Captions you can restyle, and the next episode offered with a short countdown when one ends.
@@ -36,6 +42,16 @@ auto-refresh) of commercial IPTV players. See [`CONTEXT.md`](CONTEXT.md) for the
 Testcard is a player only. It ships no channels, playlists, streams or provider recommendations, and
 works only with sources the user adds and is legally entitled to use. No playlist or credential data
 is ever committed to this repo.
+
+## How the parts fit
+
+- The Windows app (Electron) and the Fire TV app (Kotlin) each keep their own local SQLite database.
+  `packages/core` holds the shared TypeScript logic; the Kotlin `:core` module is a port of it, checked
+  against the same test vectors.
+- The sync worker (a Cloudflare Worker with a D1 database) holds the account and the encrypted sync
+  data, serves the `/link` page that the Fire TV's QR code opens, and serves releases from R2 at `/app`.
+  Its public address is `https://sync.evicted.dev`; the older `testcard-sync.evcalex.workers.dev`
+  address stays enabled because builds already installed still use it.
 
 ## Requirements
 

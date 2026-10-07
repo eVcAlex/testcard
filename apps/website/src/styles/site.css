@@ -72,6 +72,24 @@ a:hover {
   outline-offset: 2px;
 }
 
+.skip {
+  position: absolute;
+  left: var(--s-5);
+  top: -100px;
+  z-index: 20;
+  padding: var(--s-3) var(--s-5);
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-radius: var(--r-1);
+  font-weight: var(--wght-medium);
+  text-decoration: none;
+}
+
+.skip:focus {
+  top: var(--s-3);
+  color: var(--accent-foreground);
+}
+
 h1,
 h2,
 h3 {
@@ -95,14 +113,19 @@ p {
   margin: 0;
 }
 
+code {
+  padding: 1px 5px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  font-size: 0.9em;
+}
+
 .wrap {
   max-width: var(--wrap);
   margin: 0 auto;
   padding: 0 var(--s-6);
-}
-
-.muted {
-  color: var(--muted-foreground);
 }
 
 .eyebrow {
@@ -120,7 +143,7 @@ p {
   background: var(--bars);
 }
 
-/* ---- buttons and pills (ported from the app's chrome.css) ---------------- */
+/* ---- buttons (ported from the app's chrome.css) ---------------------------- */
 
 .btn {
   display: inline-flex;
@@ -183,37 +206,13 @@ p {
   padding: 0 var(--s-5);
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: 22px;
-  padding: 0 var(--s-3);
-  border-radius: var(--r-pill);
-  background: var(--card);
-  border: 1px solid var(--border);
-  font-size: var(--t-micro);
-  font-weight: var(--wght-semibold);
-  text-transform: uppercase;
-  letter-spacing: var(--track-wide);
-  color: var(--muted-foreground);
-  white-space: nowrap;
-}
-
-.pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3);
-  margin-top: var(--s-6);
-}
-
-/* ---- header ----------------------------------------------------------- */
+/* ---- header ----------------------------------------------------------------- */
 
 .site-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: color-mix(in oklab, var(--surface-raised) 90%, transparent);
+  background: color-mix(in oklab, var(--background) 90%, transparent);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -228,8 +227,8 @@ p {
 
 .brand {
   display: inline-flex;
-  align-items: center;
-  gap: var(--s-4);
+  align-items: baseline;
+  gap: var(--s-3);
   color: var(--foreground);
   font-weight: var(--wght-bold);
   font-size: 18px;
@@ -242,9 +241,17 @@ p {
 }
 
 .brand img {
-  width: 28px;
-  height: 28px;
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  margin-right: var(--s-2);
   display: block;
+}
+
+.brand .by {
+  font-size: 13px;
+  font-weight: var(--wght-regular);
+  color: var(--muted-foreground);
 }
 
 .nav {
@@ -264,7 +271,7 @@ p {
   color: var(--foreground);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .nav {
     display: none;
   }
@@ -273,53 +280,64 @@ p {
   }
 }
 
-/* ---- sections ----------------------------------------------------------- */
+@media (max-width: 400px) {
+  .brand .by {
+    display: none;
+  }
+}
+
+/* ---- sections -------------------------------------------------------------- */
 
 .section {
   padding: var(--s-10) 0;
   border-top: 1px solid var(--border);
 }
 
-.section--first {
-  border-top: 0;
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  gap: var(--s-9);
 }
 
-.section-head {
-  max-width: 640px;
-  margin-bottom: var(--s-9);
-}
-
-.section-head p {
+.split > :first-child > p {
   margin-top: var(--s-4);
   color: var(--muted-foreground);
+  font-size: 15px;
 }
 
-/* ---- hero --------------------------------------------------------------- */
+@media (max-width: 800px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-7);
+  }
+}
+
+/* ---- hero ------------------------------------------------------------------- */
 
 .hero {
   padding: var(--s-11) 0 var(--s-10);
-  overflow: hidden; /* the glow behind the art must not widen the page */
 }
 
 .hero .wrap {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   gap: var(--s-9);
   align-items: center;
 }
 
 .hero h1 {
-  font-size: clamp(36px, 6vw, 64px);
+  max-width: 11em;
+  font-size: clamp(38px, 5.4vw, 60px);
   font-weight: var(--wght-bold);
   letter-spacing: -0.03em;
 }
 
 .lead {
   margin-top: var(--s-6);
-  max-width: 34em;
-  font-size: clamp(18px, 2vw, 20px);
+  max-width: 32em;
+  font-size: clamp(17px, 1.8vw, 19px);
   color: var(--muted-foreground);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .actions {
@@ -335,186 +353,327 @@ p {
   color: var(--muted-foreground);
 }
 
-.hero-art {
-  position: relative;
-  display: grid;
-  place-items: center;
-  padding: var(--s-7);
-}
-
-.hero-art::before {
-  content: "";
-  position: absolute;
-  inset: -12%;
-  background: radial-gradient(closest-side, var(--accent-soft), transparent);
-  pointer-events: none;
-}
-
-.hero-frame {
-  position: relative;
-  width: 100%;
-  max-width: 420px;
-  padding: var(--s-7);
-  background: var(--card);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-3);
-  box-shadow: var(--elev-3), var(--edge-light);
-}
-
-.hero-frame img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: var(--r-2);
-}
-
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   .hero {
     padding: var(--s-10) 0 var(--s-9);
   }
   .hero .wrap {
     grid-template-columns: minmax(0, 1fr);
   }
-  .hero-art {
-    padding: var(--s-5) 0;
-  }
-  .hero-frame {
-    max-width: 320px;
-    padding: var(--s-5);
-  }
 }
 
-/* ---- cards and grids ----------------------------------------------------- */
+/* ---- illustrative guide mock (HTML and CSS only) ------------------------------ */
 
-.grid {
-  display: grid;
-  gap: var(--s-5);
-}
-
-.grid--3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.grid--2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (max-width: 900px) {
-  .grid--3 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .grid--3,
-  .grid--2 {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.card {
-  padding: var(--s-7);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-2);
-  box-shadow: var(--edge-light);
-}
-
-.card h3 {
-  margin-bottom: var(--s-3);
-}
-
-.card p {
-  color: var(--muted-foreground);
-  font-size: 15px;
-}
-
-.card--platform h3 {
-  font-size: 21px;
-}
-
-.footnote {
-  margin-top: var(--s-6);
-  font-size: 14px;
-  color: var(--muted-foreground);
-}
-
-/* ---- screenshots -------------------------------------------------------- */
-
-.shot {
+.mock {
   margin: 0;
 }
 
-.shot-frame {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: var(--surface-sunken);
+.mock-window {
+  background: var(--surface-raised);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-3);
-  box-shadow: var(--elev-2);
+  box-shadow: var(--elev-3), var(--edge-light);
+  overflow: hidden;
 }
 
-.shot-frame::before {
+.mock-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: var(--wght-semibold);
+  color: var(--muted-foreground);
+}
+
+.mock-bar .live {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--live);
+}
+
+.mock-bar .clock {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.guide {
+  display: grid;
+  grid-template-columns: 6.5rem repeat(6, minmax(0, 1fr));
+  gap: var(--s-2);
+  padding: var(--s-4);
+  font-size: 12px;
+}
+
+.g-time {
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+  padding: 0 var(--s-3) var(--s-2);
+}
+
+.g-time.span2 {
+  grid-column: span 2;
+}
+
+.g-ch {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 var(--s-3);
+  font-weight: var(--wght-semibold);
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.g-p {
+  position: relative;
+  min-width: 0;
+  padding: var(--s-4) var(--s-3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-1);
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.g-p.s1 { grid-column: span 1; }
+.g-p.s2 { grid-column: span 2; }
+.g-p.s3 { grid-column: span 3; }
+.g-p.s4 { grid-column: span 4; }
+
+.g-p.is-now {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--foreground);
+}
+
+.g-p.is-now::after {
   content: "";
   position: absolute;
-  top: 0;
   left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--bars);
-  opacity: 0.85;
+  bottom: 0;
+  height: 2px;
+  width: var(--prog, 50%);
+  background: var(--accent);
 }
 
-.shot-frame--desktop {
-  aspect-ratio: 16 / 10;
+.g-p.prog-35 { --prog: 35%; }
+.g-p.prog-60 { --prog: 60%; }
+.g-p.prog-80 { --prog: 80%; }
+
+.mock figcaption {
+  margin-top: var(--s-4);
+  font-size: 13px;
+  color: var(--faint-foreground);
 }
 
-.shot-frame--tv {
-  aspect-ratio: 16 / 9;
+@media (max-width: 560px) {
+  .guide {
+    grid-template-columns: 4.5rem repeat(6, minmax(0, 1fr));
+    padding: var(--s-3);
+    font-size: 11px;
+  }
+  .g-p {
+    padding: var(--s-3) var(--s-2);
+  }
+  .g-ch,
+  .g-time {
+    padding-left: var(--s-2);
+    padding-right: var(--s-2);
+  }
 }
 
-.shot-frame img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* ---- how it works ------------------------------------------------------------- */
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
 }
 
-.shot figcaption {
-  padding: var(--s-4);
-  text-align: center;
+.steps li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--s-5);
+  padding: var(--s-7) 0;
+  border-top: 1px solid var(--border);
+  counter-increment: step;
+}
+
+.steps li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.steps li::before {
+  content: counter(step);
+  font-size: 36px;
+  line-height: 1;
+  font-weight: var(--wght-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.steps h3 {
+  margin-bottom: var(--s-3);
+  font-size: 19px;
+}
+
+.steps p {
+  color: var(--muted-foreground);
+  max-width: 38em;
+}
+
+/* ---- feature rows ----------------------------------------------------------------- */
+
+.group + .group {
+  margin-top: var(--s-10);
+}
+
+.rows {
+  margin: 0;
+}
+
+.rows > div {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: var(--s-6);
+  padding: var(--s-5) 0;
+  border-top: 1px solid var(--border);
+}
+
+.rows > div:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.rows dt {
+  font-weight: var(--wght-semibold);
+}
+
+.rows dd {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 640px) {
+  .rows > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-2);
+  }
+}
+
+/* ---- platforms ---------------------------------------------------------------------- */
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-9);
+}
+
+.cols > div {
+  padding-top: var(--s-5);
+  border-top: 2px solid var(--foreground);
+}
+
+.cols h3 {
+  font-size: 21px;
+  margin-bottom: var(--s-4);
+}
+
+.cols p {
+  color: var(--muted-foreground);
+}
+
+.cols p + p {
+  margin-top: var(--s-4);
+}
+
+.footnote {
+  margin-top: var(--s-7);
   font-size: 14px;
   color: var(--muted-foreground);
 }
 
-.shot-frame figcaption {
-  padding: var(--s-6);
+@media (max-width: 720px) {
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-8);
+  }
 }
 
-/* ---- content notice ------------------------------------------------------ */
+/* ---- content notice ------------------------------------------------------------------- */
 
 .notice {
-  padding: var(--s-8);
-  background: var(--card);
-  border: 1px solid var(--border);
+  max-width: 46em;
+  padding-left: var(--s-7);
   border-left: 3px solid var(--accent-line);
-  border-radius: var(--r-2);
-  box-shadow: var(--elev-2), var(--edge-light);
 }
 
 .notice p {
   margin-top: var(--s-5);
-  max-width: 46em;
   color: var(--muted-foreground);
 }
 
-/* ---- early access --------------------------------------------------------- */
+/* ---- FAQ ---------------------------------------------------------------------------- */
+
+.faq {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq details {
+  border-top: 1px solid var(--border);
+}
+
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-5);
+  padding: var(--s-5) 0;
+  font-weight: var(--wght-semibold);
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary::after {
+  content: "+";
+  flex: none;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: var(--wght-regular);
+  color: var(--muted-foreground);
+}
+
+.faq details[open] summary::after {
+  content: "\2212";
+}
+
+.faq details p {
+  max-width: 42em;
+  padding-bottom: var(--s-6);
+  color: var(--muted-foreground);
+}
+
+/* ---- early access ---------------------------------------------------------------------- */
 
 .cta {
   max-width: 640px;
+}
+
+.cta h2 {
+  font-size: clamp(30px, 4vw, 44px);
+  letter-spacing: -0.025em;
 }
 
 .cta p {
@@ -526,10 +685,9 @@ p {
   margin-top: var(--s-7);
 }
 
-/* ---- footer --------------------------------------------------------------- */
+/* ---- footer ----------------------------------------------------------------------------- */
 
 .site-footer {
-  margin-top: var(--s-10);
   background: var(--surface-sunken);
   border-top: 1px solid var(--border);
   font-size: 14px;
@@ -562,12 +720,7 @@ p {
   font-size: 13px;
 }
 
-.section + .site-footer,
-main + .site-footer {
-  margin-top: 0;
-}
-
-/* ---- prose pages (terms, privacy) ------------------------------------------ */
+/* ---- prose pages (terms, privacy) --------------------------------------------------------- */
 
 .banner {
   padding: var(--s-4) var(--s-6);
@@ -619,7 +772,7 @@ main + .site-footer {
   font-weight: var(--wght-semibold);
 }
 
-/* ---- 404 ---------------------------------------------------------------- */
+/* ---- 404 ------------------------------------------------------------------------------------ */
 
 .nosignal {
   display: grid;

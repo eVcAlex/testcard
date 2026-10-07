@@ -1,7 +1,7 @@
 # Testcard — domain context
 
-A dark, watermark-free IPTV player for Windows. Talks to Xtream Codes and M3U providers,
-plays back through an embedded `mpv`, stores everything locally.
+An IPTV player for Windows and Fire TV. Talks to Xtream Codes and M3U providers, plays back on
+Windows through an embedded `mpv`, stores everything locally.
 
 ## Glossary
 
