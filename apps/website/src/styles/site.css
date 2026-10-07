@@ -1,0 +1,676 @@
+/* Testcard marketing site. Reads only tokens.css; no raw colours except the test-card bars. */
+
+@font-face {
+  font-family: "Inter Variable";
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bars: linear-gradient(
+    90deg,
+    #d0d4d8 0 14.285%,
+    #d9c86a 0 28.571%,
+    #4fb3a6 0 42.857%,
+    #6bbf6b 0 57.142%,
+    #b56bbf 0 71.428%,
+    #e8402a 0 85.714%,
+    #4a6fd0 0
+  );
+  --wrap: 1120px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.55;
+  letter-spacing: var(--track-tight);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--accent-strong);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: var(--wght-bold);
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  font-size: 17px;
+  font-weight: var(--wght-semibold);
+}
+
+p {
+  margin: 0;
+}
+
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 var(--s-6);
+}
+
+.muted {
+  color: var(--muted-foreground);
+}
+
+.eyebrow {
+  margin: 0 0 var(--s-5);
+  font-size: var(--t-small);
+  font-weight: var(--wght-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--accent);
+}
+
+.bars {
+  display: block;
+  height: 4px;
+  background: var(--bars);
+}
+
+/* ---- buttons and pills (ported from the app's chrome.css) ---------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  height: 42px;
+  padding: 0 var(--s-6);
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-1);
+  box-shadow: var(--edge-light);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: var(--wght-medium);
+  letter-spacing: var(--track-tight);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-2) var(--ease-spring);
+}
+
+.btn:hover {
+  background: var(--card-hover);
+  color: var(--foreground);
+}
+
+.btn:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.btn--primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--accent-foreground);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.btn--ghost:hover {
+  background: var(--card);
+}
+
+.btn--sm {
+  height: 34px;
+  padding: 0 var(--s-5);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 22px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: var(--t-micro);
+  font-weight: var(--wght-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+
+/* ---- header ----------------------------------------------------------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in oklab, var(--surface-raised) 90%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header .wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--s-7);
+  height: 60px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-4);
+  color: var(--foreground);
+  font-weight: var(--wght-bold);
+  font-size: 18px;
+  text-decoration: none;
+  margin-right: auto;
+}
+
+.brand:hover {
+  color: var(--foreground);
+}
+
+.brand img {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.nav {
+  display: flex;
+  gap: var(--s-7);
+}
+
+.nav a {
+  color: var(--muted-foreground);
+  font-weight: var(--wght-medium);
+  font-size: 14px;
+  text-decoration: none;
+  transition: color var(--dur-1) var(--ease-out);
+}
+
+.nav a:hover {
+  color: var(--foreground);
+}
+
+@media (max-width: 640px) {
+  .nav {
+    display: none;
+  }
+  .site-header .wrap {
+    gap: var(--s-5);
+  }
+}
+
+/* ---- sections ----------------------------------------------------------- */
+
+.section {
+  padding: var(--s-10) 0;
+  border-top: 1px solid var(--border);
+}
+
+.section--first {
+  border-top: 0;
+}
+
+.section-head {
+  max-width: 640px;
+  margin-bottom: var(--s-9);
+}
+
+.section-head p {
+  margin-top: var(--s-4);
+  color: var(--muted-foreground);
+}
+
+/* ---- hero --------------------------------------------------------------- */
+
+.hero {
+  padding: var(--s-11) 0 var(--s-10);
+  overflow: hidden; /* the glow behind the art must not widen the page */
+}
+
+.hero .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: var(--s-9);
+  align-items: center;
+}
+
+.hero h1 {
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: var(--wght-bold);
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  margin-top: var(--s-6);
+  max-width: 34em;
+  font-size: clamp(18px, 2vw, 20px);
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  margin-top: var(--s-8);
+}
+
+.fineprint {
+  margin-top: var(--s-5);
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.hero-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--s-7);
+}
+
+.hero-art::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  background: radial-gradient(closest-side, var(--accent-soft), transparent);
+  pointer-events: none;
+}
+
+.hero-frame {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: var(--s-7);
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-3);
+  box-shadow: var(--elev-3), var(--edge-light);
+}
+
+.hero-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-2);
+}
+
+@media (max-width: 860px) {
+  .hero {
+    padding: var(--s-10) 0 var(--s-9);
+  }
+  .hero .wrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero-art {
+    padding: var(--s-5) 0;
+  }
+  .hero-frame {
+    max-width: 320px;
+    padding: var(--s-5);
+  }
+}
+
+/* ---- cards and grids ----------------------------------------------------- */
+
+.grid {
+  display: grid;
+  gap: var(--s-5);
+}
+
+.grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .grid--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid--3,
+  .grid--2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card {
+  padding: var(--s-7);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-2);
+  box-shadow: var(--edge-light);
+}
+
+.card h3 {
+  margin-bottom: var(--s-3);
+}
+
+.card p {
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.card--platform h3 {
+  font-size: 21px;
+}
+
+.footnote {
+  margin-top: var(--s-6);
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+/* ---- screenshots -------------------------------------------------------- */
+
+.shot {
+  margin: 0;
+}
+
+.shot-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-3);
+  box-shadow: var(--elev-2);
+}
+
+.shot-frame::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--bars);
+  opacity: 0.85;
+}
+
+.shot-frame--desktop {
+  aspect-ratio: 16 / 10;
+}
+
+.shot-frame--tv {
+  aspect-ratio: 16 / 9;
+}
+
+.shot-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shot figcaption {
+  padding: var(--s-4);
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.shot-frame figcaption {
+  padding: var(--s-6);
+}
+
+/* ---- content notice ------------------------------------------------------ */
+
+.notice {
+  padding: var(--s-8);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-line);
+  border-radius: var(--r-2);
+  box-shadow: var(--elev-2), var(--edge-light);
+}
+
+.notice p {
+  margin-top: var(--s-5);
+  max-width: 46em;
+  color: var(--muted-foreground);
+}
+
+/* ---- early access --------------------------------------------------------- */
+
+.cta {
+  max-width: 640px;
+}
+
+.cta p {
+  margin-top: var(--s-4);
+  color: var(--muted-foreground);
+}
+
+.cta .actions {
+  margin-top: var(--s-7);
+}
+
+/* ---- footer --------------------------------------------------------------- */
+
+.site-footer {
+  margin-top: var(--s-10);
+  background: var(--surface-sunken);
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.site-footer .wrap {
+  padding-top: var(--s-8);
+  padding-bottom: var(--s-9);
+  display: grid;
+  gap: var(--s-4);
+}
+
+.site-footer .footer-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4) var(--s-7);
+  color: var(--foreground);
+}
+
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-6);
+}
+
+.site-footer small {
+  font-size: 13px;
+}
+
+.section + .site-footer,
+main + .site-footer {
+  margin-top: 0;
+}
+
+/* ---- prose pages (terms, privacy) ------------------------------------------ */
+
+.banner {
+  padding: var(--s-4) var(--s-6);
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--accent-line);
+  text-align: center;
+  font-size: 14px;
+  font-weight: var(--wght-medium);
+}
+
+.prose {
+  max-width: 720px;
+  padding: var(--s-10) 0 var(--s-9);
+}
+
+.prose h1 {
+  font-size: clamp(32px, 5vw, 44px);
+  font-weight: var(--wght-bold);
+  letter-spacing: -0.025em;
+}
+
+.prose .updated {
+  margin-top: var(--s-3);
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.prose h2 {
+  margin-top: var(--s-9);
+  font-size: 22px;
+}
+
+.prose p,
+.prose ul {
+  margin-top: var(--s-4);
+  color: var(--muted-foreground);
+}
+
+.prose ul {
+  padding-left: var(--s-7);
+}
+
+.prose li + li {
+  margin-top: var(--s-3);
+}
+
+.prose strong {
+  color: var(--foreground);
+  font-weight: var(--wght-semibold);
+}
+
+/* ---- 404 ---------------------------------------------------------------- */
+
+.nosignal {
+  display: grid;
+  place-items: center;
+  padding: var(--s-10) 0 var(--s-9);
+  text-align: center;
+}
+
+.nosignal-screen {
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-3);
+  box-shadow: var(--elev-3);
+}
+
+.nosignal-screen .bars-tall {
+  flex: 1;
+  background: var(--bars);
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.nosignal h1 {
+  margin-top: var(--s-8);
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: var(--wght-bold);
+  letter-spacing: -0.025em;
+}
+
+.nosignal h1 .dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: var(--s-4);
+  border-radius: var(--r-pill);
+  background: var(--live);
+  vertical-align: middle;
+}
+
+.nosignal p {
+  margin-top: var(--s-4);
+  color: var(--muted-foreground);
+}
+
+.nosignal .actions {
+  justify-content: center;
+}
