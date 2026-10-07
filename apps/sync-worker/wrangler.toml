@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Installed apps call https://testcard-sync.evcalex.workers.dev; with `routes` set, wrangler 4 would default workers_dev to false.
+workers_dev = true
+
 # Custom domain: wrangler creates the DNS record and certificate on deploy (zone evicted.dev is on this account).
 routes = [
   { pattern = "evicted.dev", custom_domain = true },

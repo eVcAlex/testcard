@@ -27,7 +27,7 @@ export function Home() {
           <Link to="/download" className="button">Download</Link>
           <Link to="/link" className="button ghost">Link your TV</Link>
         </div>
-        <p className="note">Free during early access. Testcard brings no channels: you add your own.</p>
+        <p className="note">Testcard brings no channels: you add your own.</p>
       </section>
       <section className="problem">
         <h2>IPTV, without the mess</h2>

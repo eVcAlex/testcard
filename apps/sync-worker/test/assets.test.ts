@@ -14,6 +14,17 @@ describe("the site and the API share one Worker", () => {
     const res = await SELF.fetch("https://example.com/link", { headers: { "sec-fetch-mode": "navigate", accept: "text/html" } });
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(res.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+    const home = await SELF.fetch("https://example.com/", { headers: { "sec-fetch-mode": "navigate", accept: "text/html" } });
+    expect(home.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+  });
+
+  it.each([
+    ["GET", "/sync/pull"], ["POST", "/sync/push"], ["GET", "/sync/salt"], ["POST", "/sync/salt"],
+    ["POST", "/guides/register"], ["GET", "/link/session"], ["GET", "/link/poll"], ["POST", "/link/start"],
+    ["POST", "/link/approve"], ["GET", "/auth/get-session"], ["GET", "/app/x.apk"],
+  ])("%s %s reaches the Worker, not the SPA shell", async (method, path) => {
+    const res = await SELF.fetch(`https://example.com${path}`, { method, headers: { "sec-fetch-mode": "navigate", accept: "text/html" } });
+    expect(await res.text()).not.toContain('<div id="root">');
   });
 
   it("a browser navigation to a release file reaches the Worker, not the SPA", async () => {
