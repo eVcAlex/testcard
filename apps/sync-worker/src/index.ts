@@ -1,6 +1,6 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { createAuth } from "./auth.js";
-import { handleLinkApprove, handleLinkPage, handleLinkPoll, handleLinkSession, handleLinkStart } from "./routes/link.js";
+import { handleLinkApprove, handleLinkPoll, handleLinkSession, handleLinkStart } from "./routes/link.js";
 import { handleRegisterGuide } from "./routes/guides.js";
 import { handlePull } from "./routes/pull.js";
 import { handlePush } from "./routes/push.js";
@@ -35,8 +35,7 @@ const requireSession: MiddlewareHandler<AppEnv> = async (c, next) => {
 
 app.get("/app/:file", handleRelease);
 
-// Signing a TV in with a code: the page, and the three calls behind it. No session: the TV has none yet.
-app.get("/link", handleLinkPage);
+// Signing a TV in with a code: the three calls behind it. No session: the TV has none yet.
 app.post("/link/start", handleLinkStart);
 app.get("/link/session", handleLinkSession);
 app.post("/link/approve", handleLinkApprove);

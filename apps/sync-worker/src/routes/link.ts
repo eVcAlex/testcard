@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { Context } from "hono";
-import { linkPageHtml } from "../pages/linkPage.js";
 import type { Env } from "../index.js";
 
 /**
@@ -81,14 +80,4 @@ export async function handleLinkPoll(c: LinkContext): Promise<Response> {
   if (row.blob === null || row.iv === null) return c.json({ status: "waiting" });
   await c.env.DB.prepare(`DELETE FROM link_sessions WHERE lookup = ?`).bind(lookup.data).run();
   return c.json({ status: "ready", blob: row.blob, iv: row.iv });
-}
-
-/** The page itself. Nothing on it may be cached or sent on to another site. */
-export function handleLinkPage(c: LinkContext): Response {
-  return c.html(linkPageHtml, 200, {
-    "cache-control": "no-store",
-    "referrer-policy": "no-referrer",
-    "x-content-type-options": "nosniff",
-    "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
-  });
 }
