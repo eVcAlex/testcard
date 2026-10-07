@@ -206,6 +206,8 @@ importers:
         specifier: ^3.99.0
         version: 3.114.17(@cloudflare/workers-types@4.20260702.1)
 
+  apps/website: {}
+
   packages/core:
     dependencies:
       '@testcard/sync-schema':

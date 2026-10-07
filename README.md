@@ -1,5 +1,7 @@
 # Testcard
 
+Website: [evicted.dev](https://evicted.dev) · made by Evicted.
+
 A dark, watermark-free IPTV player for Windows and Fire TV. Xtream Codes and M3U sources, live TV
 with a guide, films and series, and one account that keeps sources, favourites and where you left
 off in step across devices. SQLite-backed, so it stays fast at tens of thousands of channels.
@@ -25,9 +27,15 @@ auto-refresh) of commercial IPTV players. See [`CONTEXT.md`](CONTEXT.md) for the
 - Sign in to the same account and your sources, favourites and progress arrive.
 - Home, Movies, Series, Live TV and Search, laid out for a remote, with a TV guide grid on Live TV.
 - A live channel that won't start falls back to its other feeds and qualities (4K to HD) by itself.
-- Captions you can restyle, Skip intro, and a Next episode button at the credits.
+- Captions you can restyle, and the next episode offered with a short countdown when one ends.
 - Updates itself: a new release shows on the Settings gear and installs from there.
 - Phones are not supported for now: the layout is drawn for a TV.
+
+## Content
+
+Testcard is a player only. It ships no channels, playlists, streams or provider recommendations, and
+works only with sources the user adds and is legally entitled to use. No playlist or credential data
+is ever committed to this repo.
 
 ## Requirements
 
@@ -61,6 +69,7 @@ apps/tv-native/       the Fire TV app (Kotlin): `:core` is the data layer, a por
                       its test vectors; `:app` is the UI and player.
 apps/mobile/          the previous Fire TV app (Expo); kept for rollback, no longer where Fire TV work happens.
 apps/sync-worker/     the Cloudflare Worker behind accounts, sync and the release bucket.
+apps/website/         the marketing site at evicted.dev (static HTML/CSS, deployed by Cloudflare).
 docs/adr/             decisions worth recording.
 ```
 
@@ -102,6 +111,15 @@ pnpm android log           # the app's log from the device
 ```
 
 Slow page builds are logged under `[perf]`: `adb logcat -s ReactNativeJS | findstr perf`.
+
+## Website
+
+```sh
+pnpm --filter @testcard/website build     # writes apps/website/dist
+pnpm --filter @testcard/website preview   # serves it on http://localhost:4173
+```
+
+Deployed by Cloudflare (Workers static assets, `apps/website/wrangler.jsonc`) from `main`: root directory `apps/website`, build `node scripts/build.mjs`, deploy `npx wrangler deploy`, env `SKIP_DEPENDENCY_INSTALL=1`.
 
 ## Publishing a release
 
