@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Custom domain: wrangler creates the DNS record and certificate on deploy (zone evicted.dev is on this account).
+routes = [{ pattern = "sync.evicted.dev", custom_domain = true }]
+
 # SYNC_AUTH_SECRET (better-auth signing/encryption secret) is deliberately NOT declared here: a [vars]
 # entry is deployed as a plain var and replaces the real secret. Deployed: `wrangler secret put
 # SYNC_AUTH_SECRET`. Local `wrangler dev`: .dev.vars (gitignored). Worker tests: vitest.config.ts.
