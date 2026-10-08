@@ -58,7 +58,7 @@ describe("Faq", () => {
     expect(names).toEqual(["Does Testcard come with channels?", "Which source types work?", "Why is my guide empty or wrong?"]);
     for (const banned of FAQ.filter((q) => !q.structured)) expect(names).not.toContain(banned.question);
     const doc = faqPageLd(items)[0] as unknown as { mainEntity: unknown[] };
-    expect(doc.mainEntity).toHaveLength(4);
+    expect(doc.mainEntity).toHaveLength(3);
     const { container } = render(<Faq />);
     for (const q of items) expect(container.textContent).toContain(q.question);
   });
