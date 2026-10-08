@@ -11,7 +11,7 @@ const yml = () => new Response("version: 1.4.2\npath: Testcard-Setup-1.4.2.exe\n
 const renderPage = (retry: boolean | undefined) =>
   render(
     <QueryClientProvider client={new QueryClient(retry === false ? { defaultOptions: { queries: { retry: false } } } : {})}>
-      <Download />
+      <Download state="public" />
     </QueryClientProvider>,
   );
 
@@ -37,4 +37,14 @@ it("falls back quickly with default retry settings and no invalid-data error", a
   expect(await screen.findByText("Not available right now.", {}, { timeout: 1000 })).toBeTruthy();
   expect(screen.queryByText("Checking...")).toBeNull();
   expect(err.mock.calls.some((c) => String(c[0]).includes("Query data cannot be undefined"))).toBe(false);
+});
+
+it("in the waitlist state offers no download and does not ask for release manifests", () => {
+  const fetchSpy = vi.fn();
+  vi.stubGlobal("fetch", fetchSpy);
+  render(<Download state="waitlist" />);
+  expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /download for/i })).toBeNull();
+  expect(screen.getByRole("link", { name: "hello@evicted.dev" })).toHaveAttribute("href", "mailto:hello@evicted.dev");
+  expect(fetchSpy).not.toHaveBeenCalled();
 });

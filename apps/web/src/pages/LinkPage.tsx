@@ -6,6 +6,7 @@ import { type Field, LinkError, type Mode, linkTv } from "../link/linkTv.ts";
 const pretty = (typed: string) => formatLinkCode(normaliseLinkCode(typed).slice(0, 8));
 
 function codeFromHash(): string {
+  if (typeof location === "undefined") return "";
   const fromHash = normaliseLinkCode(location.hash.slice(1));
   if (fromHash === "") return "";
   history.replaceState(null, "", location.pathname);
@@ -14,7 +15,7 @@ function codeFromHash(): string {
 
 export function LinkPage() {
   const [mode, setMode] = useState<Mode>("signin");
-  const [code, setCode] = useState(codeFromHash);
+  const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -29,13 +30,19 @@ export function LinkPage() {
     },
   });
 
+  // Read after mount so the prerendered form and the first client render match.
+  useEffect(() => {
+    const fromHash = codeFromHash();
+    if (fromHash !== "") setCode(fromHash);
+  }, []);
+
   useEffect(() => {
     if (error?.field) document.getElementById(`link-${error.field}`)?.focus();
   }, [error]);
 
   if (link.isSuccess) {
     return (
-      <section>
+      <section className="wrap page">
         <h1>You're signed in on your TV</h1>
         <p className="lead">Your TV is loading your sources now. You can close this page.</p>
       </section>
@@ -52,7 +59,7 @@ export function LinkPage() {
   const signup = mode === "signup";
 
   return (
-    <section>
+    <section className="wrap page">
       <h1>Link your TV</h1>
       <p className="lead">Enter the code on your TV, then sign in or create your Testcard account. Your TV will sign in on its own.</p>
       <div className="tabs" role="tablist">

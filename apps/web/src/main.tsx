@@ -1,20 +1,23 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import "@testcard/theme/tokens.css";
 import "./styles.css";
-import { router } from "./router.tsx";
+import { createAppRouter } from "./router.tsx";
 
-// The theme's light palette is opt-in via data-theme; follow the viewer's system setting.
-document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+async function start() {
+  const container = document.getElementById("root")!;
+  const router = createAppRouter();
+  // Load the matched route (including lazy chunks) first, so the first client render equals the prerendered HTML.
+  await router.load();
+  const hydrating = container.firstElementChild !== null;
+  // Server markup is rendered without a <Suspense> around the matches; telling the router the page came from the
+  // server (as TanStack Start does) makes the client skip it too, so hydration lines up.
+  if (hydrating) router.ssr = { manifest: undefined };
+  const app = <StrictMode><RouterProvider router={router} /></StrictMode>;
+  // The dev server serves an empty shell; a built page has markup to hydrate.
+  if (hydrating) hydrateRoot(container, app);
+  else createRoot(container).render(app);
+}
 
-const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } } });
-
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  </StrictMode>,
-);
+void start();

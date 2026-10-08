@@ -1,10 +1,10 @@
 import { render, screen, within } from "@testing-library/react";
-import { Footer } from "../Footer.tsx";
+import { Footer } from "../components/Footer.tsx";
 import { Home } from "./Home.tsx";
 
 const shots = vi.hoisted(() => ({ list: [] as { src: string; alt: string; caption: string; width: number; height: number }[] }));
-vi.mock("../site.ts", () => ({
-  CONTACT_EMAIL: "hello@evicted.dev",
+vi.mock("../site.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../site.ts")>()),
   get SHOTS() { return shots.list; },
 }));
 vi.mock("@tanstack/react-router", () => ({ Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) => <a href={to} {...rest}>{children}</a> }));

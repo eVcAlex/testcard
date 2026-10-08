@@ -1,14 +1,8 @@
-import { useEffect } from "react";
 import { CONTACT_EMAIL } from "../site.ts";
 
 export function Privacy() {
-  useEffect(() => {
-    const prev = document.title;
-    document.title = "Privacy | Testcard";
-    return () => { document.title = prev; };
-  }, []);
   return (
-    <article>
+    <article className="wrap page prose">
       <h1>Privacy</h1>
       <p className="draft">Draft: this page is a placeholder and will be replaced before public launch.</p>
       <h2>Data on your device</h2>
