@@ -16,7 +16,9 @@ const Email = z
   .trim()
   .toLowerCase()
   .max(254)
-  .regex(/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/);
+  .regex(/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/)
+  // The regex is permissive on purpose; these catch the typos that would never get an invitation.
+  .refine((e) => !e.startsWith(".") && !e.includes("..") && !e.includes(".@") && /\.[a-z]{2,}$/.test(e));
 
 const Schema = z.object({
   email: Email,
@@ -35,6 +37,7 @@ function respond(c: WaitlistContext, body: Record<string, unknown>, status: 200 
 
 /** An IPv6 caller owns a whole /64, so key on that rather than on one address of it. */
 function network(ip: string): string {
+  if (ip.includes(".")) return ip.slice(ip.lastIndexOf(":") + 1); // IPv4, or an IPv4-mapped IPv6 literal
   if (!ip.includes(":")) return ip;
   const [head = "", tail = ""] = ip.split("::");
   const groups = head.split(":").filter(Boolean);

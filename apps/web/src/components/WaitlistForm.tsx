@@ -43,7 +43,7 @@ export function WaitlistForm() {
       {phase === "done" ? (
         <p ref={message} className="wl-msg" role="status" tabIndex={-1}>{WAITLIST_DONE}</p>
       ) : (
-        <form onSubmit={submit} aria-busy={phase === "sending"}>
+        <form method="post" action="/waitlist" onSubmit={submit} aria-busy={phase === "sending"}>
           <label className="wl-field" htmlFor={`${uid}-email`}>
             <span>Email address</span>
             <input id={`${uid}-email`} name="email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

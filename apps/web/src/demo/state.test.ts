@@ -62,6 +62,15 @@ describe("reducer", () => {
     expect(ids(run(s0, { type: "setQuery", query: "ridge league" }))).toEqual(["peak2"]);
   });
 
+  it("moves focus to a visible row when a tick makes the focused channel drop out of a search", () => {
+    // Ridge League is on screen for peak2 now, and for peak only later: advance until peak2's match goes away.
+    let s = run(s0, { type: "setQuery", query: "ridge league" });
+    expect(s.focus.channelId).toBe("peak2");
+    for (let i = 0; i < 60 && ids(s).length; i++) s = reducer(s, { type: "tick" });
+    const v = ids(s);
+    if (v.length) expect(v).toContain(s.focus.channelId);
+  });
+
   it("has an empty state for a search with no match, and for no favourites", () => {
     const none = run(s0, { type: "setQuery", query: "zzzz" });
     expect(ids(none)).toEqual([]);

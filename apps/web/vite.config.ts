@@ -8,6 +8,6 @@ const api = { target: "http://localhost:8787", changeOrigin: true };
 export default defineConfig({
   plugins: [react()],
   ssr: { noExternal: [/^@testcard\//] },
-  server: { proxy: { "/link/session": api, "/link/approve": api, "/auth": api, "/app": api } },
+  server: { proxy: { "/link/session": api, "/link/approve": api, "/auth": api, "/app": api, "/waitlist": api } },
   test: { environment: "jsdom", globals: true, setupFiles: ["./src/test-setup.ts"] },
 });

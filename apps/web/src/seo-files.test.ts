@@ -18,7 +18,7 @@ it("the sitemap lists every indexable route with a lastmod, and not /link or the
 });
 
 it("ships the OG image, the theme bootstrap and the subset font", () => {
-  for (const f of ["og.png", "theme-init.js", "fonts/InterVariable-latin.woff2", "fonts/OFL.txt"]) expect(existsSync(resolve(__dirname, "../public", f))).toBe(true);
+  for (const f of ["og.png", "theme-init.js", "fonts/InterVariable-latin.v1.woff2", "fonts/OFL.txt"]) expect(existsSync(resolve(__dirname, "../public", f))).toBe(true);
 });
 
 it("_headers carries the security set and keeps Cache-Control off the catch-all rule", () => {

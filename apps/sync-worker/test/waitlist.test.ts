@@ -40,6 +40,18 @@ describe("POST /waitlist", () => {
     expect((await send({ email: "v6y@example.com" }, { ip: "2001:db8:1:3::1" })).status).toBe(200);
   });
 
+  it("rejects addresses that could never receive an invitation", async () => {
+    for (const email of ["john..doe@gmail.com", ".a@example.com", "a.@example.com", "x@1.2", "a@example.c"]) {
+      expect((await send({ email })).status, email).toBe(400);
+    }
+  });
+
+  it("keys an IPv4-mapped IPv6 address on its IPv4 part, not on one shared bucket", async () => {
+    for (let i = 0; i < MAX_PER_IP_PER_DAY; i++) expect((await send({ email: `m${i}@example.com` }, { ip: "::ffff:198.51.100.7" })).status).toBe(200);
+    expect((await send({ email: "mx@example.com" }, { ip: "::ffff:198.51.100.7" })).status).toBe(429);
+    expect((await send({ email: "my@example.com" }, { ip: "::ffff:198.51.100.8" })).status).toBe(200);
+  });
+
   it("stores a valid signup, normalised, and never echoes the email", async () => {
     const res = await send({ email: "  Alice@Example.COM ", windows: true });
     expect(res.status).toBe(200);

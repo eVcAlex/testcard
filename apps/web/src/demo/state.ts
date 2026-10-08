@@ -145,7 +145,7 @@ export function reducer(s: DemoState, a: DemoAction): DemoState {
     case "setRaw":
       return a.value === s.showRawNames ? s : { ...s, showRawNames: a.value, announce: a.value ? "Showing names as the source sends them" : "Showing tidied names" };
     case "tick":
-      return { ...s, clock: s.clock >= CLOCK_END ? CLOCK_START : s.clock + 1 };
+      return settle({ ...s, clock: s.clock >= CLOCK_END ? CLOCK_START : s.clock + 1 }); // a search matches on-screen programmes, so the list can change as time moves
   }
 }
 

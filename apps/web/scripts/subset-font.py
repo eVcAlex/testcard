@@ -1,4 +1,4 @@
-"""Rebuild public/fonts/InterVariable-latin.woff2 from font-src/InterVariable.woff2.
+"""Rebuild public/fonts/InterVariable-latin.v1.woff2 from font-src/InterVariable.woff2.
 
 Pins opsz at 14 (text), keeps wght 100-900, Latin + Latin-1 + punctuation, arrows, box glyphs,
 and the tnum/ss01/cv11 features. Needs: pip install fonttools brotli.  Licence: public/fonts/OFL.txt.
@@ -26,4 +26,4 @@ s = subset.Subsetter(opts)
 s.populate(unicodes=uni)
 s.subset(font)
 font.flavor = "woff2"
-font.save(root / "public/fonts/InterVariable-latin.woff2")
+font.save(root / "public/fonts/InterVariable-latin.v1.woff2")

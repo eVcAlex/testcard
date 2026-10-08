@@ -1,4 +1,4 @@
-import { PRODUCT_NAME } from "./site.ts";
+import { PRODUCT_NAME, SIGNED } from "./site.ts";
 
 interface FaqItem {
   id: string;
@@ -43,7 +43,9 @@ export const FAQ: readonly FaqItem[] = [
     id: "windows-warning",
     question: "Why does Windows warn about the installer?",
     answer: [
-      "The Windows installer is not code-signed yet, so Windows SmartScreen shows a warning the first time you run it. Choose More info, then Run anyway.",
+      SIGNED
+        ? "The Windows installer is code-signed, so SmartScreen should not warn about it. If it does, a new release can take a little while to build reputation: choose More info, then Run anyway."
+        : "The Windows installer is not code-signed yet, so Windows SmartScreen shows a warning the first time you run it. Choose More info, then Run anyway.",
       "We publish a SHA-256 next to every build, so you can check the file you downloaded matches.",
     ],
     structured: false,
