@@ -1,0 +1,541 @@
+<!-- direction C: Spec sheet -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testcard: an IPTV player for Windows and Fire TV</title>
+<meta name="description" content="Testcard is an IPTV player for Windows and Fire TV. Xtream Codes and M3U sources, an XMLTV programme guide, built on mpv and SQLite. It ships no channels.">
+<meta name="color-scheme" content="dark light">
+<style>
+@font-face{font-family:"Inter";src:url("../public/fonts/InterVariable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+:root{
+  /* @testcard/theme dark (default) */
+  --picture:#000000;--background:#14171a;--surface-sunken:#0f1214;--surface-raised:#1a1d21;--card:#1c2024;--card-hover:#232830;--card-active:#2b3138;
+  --border:#262c31;--border-strong:#343c43;--foreground:#f2eee7;--muted-foreground:#949ca4;--faint-foreground:#69727a;
+  --accent:#e7d2ad;--accent-foreground:#1d160a;--live:#e8402a;--fault:#f0745c;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r-chip:6px;--r-btn:9px;--r-frame:13px;
+  color-scheme:dark light;
+}
+@media (prefers-color-scheme:light){:root{
+  --background:#f7f8f9;--surface-sunken:#eceff1;--surface-raised:#f0f2f4;--card:#ffffff;--card-hover:#f2f4f6;--card-active:#e8ecef;
+  --border:#e3e7ea;--border-strong:#cfd6db;--foreground:#14181b;--muted-foreground:#5b6670;--faint-foreground:#8d99a2;
+  --accent:#7d5f22;--accent-foreground:#ffffff;--fault:#b4321c}}
+/* tv palette: demo and screenshot frames are dark in both themes */
+.tv{--t-bg:#0a0d11;--t-sunken:#07090c;--t-raised:#12161b;--t-card:#171c22;--t-active:#232a32;--t-border:#252c34;--t-fg:#f2eee7;--t-muted:#949ca4;--t-ring:#e7d2ad;--t-live:#e8402a}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/1.55 var(--font);font-variant-numeric:tabular-nums;overflow-wrap:break-word}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit;text-decoration-color:var(--faint-foreground);text-underline-offset:3px}
+a:hover{text-decoration-color:currentColor}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+.tv :focus-visible{outline-color:var(--t-ring)}
+.skip{position:absolute;left:16px;top:-80px;background:var(--card);color:var(--foreground);padding:8px 14px;border:1px solid var(--border-strong);border-radius:var(--r-btn);z-index:20}
+.skip:focus{top:8px}
+.meta{font-size:12.5px;line-height:1.3;font-weight:560;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground)}
+.small{font-size:14px}
+.muted{color:var(--muted-foreground)}
+.ph{font-size:12.5px;color:var(--muted-foreground);border:1px dashed var(--border-strong);border-radius:var(--r-chip);padding:1px 7px;white-space:nowrap}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* header */
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+header.site{border-bottom:1px solid var(--border)}
+header.site .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-top:12px;padding-bottom:12px}
+.brand{font-size:20px;font-weight:640;letter-spacing:-.02em;text-decoration:none}
+.brand b{font-weight:640;color:var(--accent)}
+.ver{font-size:12.5px;color:var(--muted-foreground)}
+header nav{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;margin-left:auto;font-size:14px}
+header nav a{text-decoration:none;padding:6px 0}
+header nav a:hover{text-decoration:underline}
+.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:var(--r-btn);font-weight:600;font-size:15px;text-decoration:none;border:1px solid var(--border-strong);background:transparent;color:var(--foreground);transition:background-color .12s}
+.btn:hover{background:var(--card-hover)}
+.btn.sand{background:var(--accent);color:var(--accent-foreground);border-color:var(--accent)}
+.btn.sand:hover{background:var(--accent);filter:brightness(1.07)}
+header nav .btn{min-height:36px;padding:0 14px;font-size:14px}
+@media (max-width:560px){header nav{margin-left:0;width:100%}header nav .btn{margin-left:auto}.ver{margin-left:auto}}
+
+/* layout */
+.layout{display:block;padding-top:24px}
+@media (min-width:960px){.layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:56px;padding-top:40px}}
+.toc{margin-bottom:24px}
+.toc summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--r-btn);font-weight:600;font-size:15px;list-style:none}
+.toc summary::-webkit-details-marker{display:none}
+.toc summary::after{content:"+";margin-left:auto;color:var(--muted-foreground)}
+.toc[open] summary::after{content:"\2212"}
+.toc ol{list-style:none;margin:8px 0 0;padding:0;border-left:1px solid var(--border)}
+.toc li a{display:block;padding:7px 14px;margin-left:-1px;border-left:2px solid transparent;font-size:14px;text-decoration:none;color:var(--muted-foreground)}
+.toc li a:hover{color:var(--foreground)}
+.toc li a[aria-current=true]{color:var(--foreground);border-left-color:var(--foreground);font-weight:600}
+@media (min-width:960px){
+  .toc-col{position:sticky;top:24px;align-self:start}
+  .toc{margin:0}
+  .toc summary{border:0;padding:0 0 8px;min-height:0;pointer-events:none;color:var(--muted-foreground);font-size:12.5px;font-weight:560;text-transform:uppercase;letter-spacing:.06em}
+  .toc summary::after{display:none}
+  .toc ol{margin-top:0}
+}
+main{min-width:0}
+section{padding:40px 0;border-top:1px solid var(--border-strong)}
+section:first-child{border-top:0;padding-top:0}
+h1{font-size:clamp(36px,6.4vw,64px);line-height:1.04;font-weight:640;letter-spacing:-.025em;margin:16px 0 20px;max-width:18ch;text-wrap:balance}
+h2{font-size:clamp(28px,4vw,38px);line-height:1.1;font-weight:640;letter-spacing:-.02em;margin:0 0 8px}
+h3{font-size:17px;line-height:1.3;font-weight:620;margin:28px 0 6px}
+.sec-no{display:block;margin-bottom:6px}
+p{margin:0 0 14px;max-width:64ch}
+.lede{font-size:clamp(17px,2vw,20px);line-height:1.5;color:var(--muted-foreground);max-width:60ch}
+.bars{display:flex;height:4px;width:140px;border-radius:1px;overflow:hidden}
+.bars i{flex:1}
+.cta{display:grid;gap:18px;margin:28px 0 0;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));max-width:760px}
+.cta div{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.cta .small{color:var(--muted-foreground);line-height:1.4}
+
+/* spec table */
+.spec{width:100%;border-collapse:collapse;margin:24px 0 0;border-top:2px solid var(--foreground);border-bottom:1px solid var(--foreground)}
+.spec caption{text-align:left;padding:0 0 8px}
+.spec th,.spec td{text-align:left;vertical-align:top;padding:11px 0;border-top:1px solid var(--border-strong)}
+.spec tr:first-child th,.spec tr:first-child td{border-top:0}
+.spec th{width:9.5em;padding-right:16px;font-size:12.5px;font-weight:560;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground);padding-top:14px}
+.spec td{font-size:15px}
+@media (max-width:560px){.spec th,.spec td{display:block;width:auto}.spec th{padding-bottom:0}.spec td{border-top:0;padding-top:2px}.spec tr{display:block;border-top:1px solid var(--border-strong)}.spec tr:first-child{border-top:0}}
+
+/* annotated figure */
+figure{margin:0}
+.frame{border:1px solid var(--border-strong);border-radius:var(--r-frame);background:var(--t-sunken);overflow:hidden}
+.shot{position:relative}
+.shot img{width:100%}
+.mk{display:none;position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--accent-foreground);background:#0a0d11;color:#f2eee7;border:1.5px solid #f2eee7;font-size:12px;font-weight:700;align-items:center;justify-content:center;line-height:1}
+@media (min-width:720px){.mk{display:flex}}
+figcaption{margin-top:14px}
+.notes{margin:0;padding:0;list-style:none;counter-reset:n;display:grid;gap:0;border-top:1px solid var(--border-strong)}
+.notes li{counter-increment:n;display:grid;grid-template-columns:28px 1fr;padding:9px 0;border-bottom:1px solid var(--border);font-size:14.5px}
+.notes li::before{content:counter(n);width:22px;height:22px;border-radius:50%;border:1.5px solid var(--muted-foreground);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+@media (min-width:720px){.notes{grid-template-columns:1fr 1fr;column-gap:32px}}
+
+/* demo */
+.demo{margin-top:20px;background:var(--t-bg);color:var(--t-fg);padding:16px;border-radius:var(--r-frame);border:1px solid var(--border-strong);font-size:13px;line-height:1.4}
+.demo-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.demo .meta{color:var(--t-muted)}
+.keys{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0 0 14px;padding:10px 0;border-top:1px solid var(--t-border);border-bottom:1px solid var(--t-border);list-style:none;color:var(--t-muted)}
+kbd{font:600 12px var(--font);display:inline-block;min-width:22px;text-align:center;padding:2px 6px;border:1px solid #343c43;border-bottom-width:2px;border-radius:var(--r-chip);background:var(--t-raised);color:var(--t-fg);margin-right:4px}
+.srch{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.srch input{flex:1;min-width:0;height:36px;padding:0 10px;background:var(--t-raised);color:var(--t-fg);border:1px solid #343c43;border-radius:var(--r-chip);font:inherit;font-size:14px}
+.srch input::placeholder{color:var(--t-muted)}
+.stat{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;padding:10px;margin-bottom:12px;background:var(--t-raised);border:1px solid var(--t-border);border-radius:var(--r-btn);min-height:92px}
+.stat .big{width:72px;height:72px;border-radius:var(--r-chip);display:flex;align-items:flex-end;padding:5px;font-weight:700;font-size:13px;color:#fff;text-shadow:0 1px 2px #0008}
+.stat p{margin:0;max-width:none}
+.stat .t{font-size:16px;font-weight:620}
+.stat .pl{color:var(--t-muted)}
+.stat.on .pl{color:var(--t-fg)}
+.clock{font-weight:600;color:var(--t-fg)}
+.gw{position:relative}
+.ruler,.row{display:grid;grid-template-columns:var(--nc) 1fr}
+.demo{--nc:11.5rem}
+.ruler{height:26px;color:var(--t-muted);font-size:12px}
+.ruler .ticks{position:relative;border-left:1px solid var(--t-border)}
+.ruler span{position:absolute;top:4px;transform:translateX(4px)}
+.nowline{position:absolute;top:0;bottom:0;width:2px;background:var(--t-live);left:calc(var(--nc) + (100% - var(--nc)) * .48333);pointer-events:none;z-index:2}
+.nowline::before{content:"20:58";position:absolute;top:2px;left:-1px;transform:translateX(-50%);background:var(--t-live);color:#fff;font-size:11px;font-weight:700;padding:0 4px;border-radius:var(--r-chip);line-height:16px}
+[role=listbox]{margin:0;padding:0;list-style:none;border-top:1px solid var(--t-border)}
+.row{align-items:stretch;border-bottom:1px solid var(--t-border);min-height:46px;cursor:pointer;position:relative;background:transparent}
+.row[hidden]{display:none}
+.row:hover{background:var(--t-raised)}
+.row[aria-selected=true]{background:var(--t-raised)}
+.row:focus-visible{outline-offset:-2px;border-radius:0}
+.who{display:flex;align-items:center;gap:8px;padding:0 8px 0 0;min-width:0}
+.sw{width:8px;align-self:stretch;flex:none}
+.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:560}
+.star{margin-left:auto;font-size:14px;color:var(--t-fg);opacity:0}
+.row[data-fav=true] .star{opacity:1}
+.track{position:relative;border-left:1px solid var(--t-border)}
+.cell{position:absolute;top:4px;bottom:4px;padding:0 7px;background:var(--t-card);border:1px solid var(--t-border);border-radius:var(--r-chip);display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--t-fg);transition:background-color .12s}
+.cell span{overflow:hidden;text-overflow:ellipsis}
+.cell.cur{border-color:#4a535c}
+.row[aria-selected=true] .cell.sel{background:var(--t-active);border-color:var(--t-ring);outline:0}
+.nn{display:none}
+@media (max-width:719px){
+  .demo{--nc:1fr;padding:12px}
+  .ruler,.nowline,.track{display:none}
+  .row{display:block;padding:9px 0 9px 0}
+  .who{padding-bottom:4px}
+  .nn{display:block;padding-left:16px;color:var(--t-muted)}
+  .nn b{color:var(--t-fg);font-weight:560}
+  .prog{height:3px;background:var(--t-border);margin:6px 0 2px;border-radius:2px;overflow:hidden}
+  .prog i{display:block;height:100%;background:var(--t-muted)}
+  .row{padding-left:0}
+}
+.hint{margin:10px 0 0;color:var(--t-muted);font-size:12.5px;max-width:none}
+
+/* requirements / privacy / faq */
+.req{width:100%;border-collapse:collapse;border-top:2px solid var(--foreground);border-bottom:1px solid var(--foreground);margin-top:16px}
+.req th,.req td{text-align:left;padding:10px 12px 10px 0;border-top:1px solid var(--border-strong);vertical-align:top;font-size:15px}
+.req thead th{border-top:0;font-size:12.5px;font-weight:560;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground)}
+@media (max-width:560px){.req th,.req td{padding-right:8px;font-size:14px}}
+ul.plain{margin:0 0 14px;padding-left:1.2em;max-width:64ch}
+ul.plain li{margin:4px 0}
+.cl{border:1px dashed var(--border-strong);border-radius:var(--r-btn);padding:14px 16px;margin-top:16px;max-width:64ch}
+.cl h3{margin-top:0}
+.faq details{border-top:1px solid var(--border-strong)}
+.faq details:last-child{border-bottom:1px solid var(--border-strong)}
+.faq summary{cursor:pointer;min-height:48px;padding:12px 0;font-weight:600;list-style:none;display:flex;gap:12px;align-items:baseline}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";margin-left:auto;color:var(--muted-foreground);font-weight:400}
+.faq details[open] summary::after{content:"\2212"}
+.faq details p{margin:0 0 16px}
+.dl{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:20px;max-width:760px}
+.dl .box{border-top:2px solid var(--foreground);padding-top:12px}
+.dl .box h3{margin:0 0 4px}
+.dl .box .btn{margin:10px 0 8px}
+footer.site{border-top:1px solid var(--border-strong);margin-top:24px;padding:24px 0 48px;font-size:14px;color:var(--muted-foreground)}
+footer.site p{max-width:none}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+@media (prefers-contrast:more){.cell,.row{border-color:#8a949d}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="#overview" aria-label="testcard, top of page">test<b>card</b></a>
+    <span class="ver" title="Placeholder">v0.0.0 · date</span>
+    <nav aria-label="Primary">
+      <a href="#live-tv">Guide</a>
+      <a href="#sources">Setup</a>
+      <a href="#faq">FAQ</a>
+      <a href="#download">Download</a>
+      <a href="#link-tv" id="linktv">Link TV</a>
+      <a class="btn sand" href="#download">Download</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <div class="toc-col">
+    <nav aria-label="Contents">
+      <details class="toc" id="toc" open>
+        <summary>Contents</summary>
+        <ol>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#sources">Sources</a></li>
+          <li><a href="#live-tv">Live TV</a></li>
+          <li><a href="#playback">Playback</a></li>
+          <li><a href="#library">Library</a></li>
+          <li><a href="#sync">Sync</a></li>
+          <li><a href="#platforms">Platforms</a></li>
+          <li><a href="#privacy">Privacy</a></li>
+          <li><a href="#download">Download</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ol>
+      </details>
+    </nav>
+  </div>
+
+<main id="main" tabindex="-1">
+<section id="overview" aria-labelledby="h-overview">
+  <div class="bars" aria-hidden="true">
+    <i style="background:hsl(0 0% 74%)"></i><i style="background:hsl(52 28% 62%)"></i><i style="background:hsl(185 26% 56%)"></i><i style="background:hsl(120 22% 52%)"></i><i style="background:hsl(310 22% 54%)"></i><i style="background:hsl(2 30% 52%)"></i><i style="background:hsl(225 28% 54%)"></i>
+  </div>
+  <h1 id="h-overview">Testcard: an IPTV player for Windows and Fire TV.</h1>
+  <p class="lede">Xtream Codes and M3U. A programme guide that's the page, not a pop-up. Built on mpv and SQLite so a source with tens of thousands of channels still scrolls.</p>
+  <div class="cta">
+    <div>
+      <a class="btn sand" href="#download">Download for Windows (.exe)</a>
+      <span class="small">version · size · SHA-256: TBD (owner)</span>
+    </div>
+    <div>
+      <a class="btn sand" href="#download">Fire TV (.apk)</a>
+      <span class="small">version · size · SHA-256: TBD (owner)</span>
+    </div>
+  </div>
+
+  <table class="spec">
+    <caption class="meta">Specification (draft, facts to be confirmed by the owner)</caption>
+    <tbody>
+      <tr><th scope="row">Sources</th><td>Xtream Codes, M3U, XMLTV guide. Refresh: Off / 6h / 12h / 24h.</td></tr>
+      <tr><th scope="row">Playback</th><td>mpv embedded, HEVC and E-AC-3. Fire TV: Media3 with automatic feed fallback (4K to HD).</td></tr>
+      <tr><th scope="row">Library</th><td>Live, Films, Series, Catch-up (where the provider keeps it), Favourites, Recents, Continue watching.</td></tr>
+      <tr><th scope="row">Account</th><td>Up to 4 profiles, encrypted sync, TV sign-in by code.</td></tr>
+      <tr><th scope="row">Updates</th><td>In-app.</td></tr>
+      <tr><th scope="row">What it doesn't do</th><td>Phones, recording, shipping channels.</td></tr>
+    </tbody>
+  </table>
+
+  <figure style="margin-top:40px">
+    <div class="frame tv"><div class="shot">
+      <img src="../public/shots/desktop-live.webp" width="1600" height="900" alt="Testcard on Windows, Live TV: a category rail on the left, a preview and programme details at the top, and a programme guide grid with a red now-line below.">
+      <span class="mk" aria-hidden="true" style="left:26.5%;top:25%">1</span>
+      <span class="mk" aria-hidden="true" style="left:38.5%;top:12%">2</span>
+      <span class="mk" aria-hidden="true" style="left:72%;top:52%">3</span>
+      <span class="mk" aria-hidden="true" style="left:43.5%;top:26%">4</span>
+      <span class="mk" aria-hidden="true" style="left:13.5%;top:20%">5</span>
+    </div></div>
+    <figcaption class="meta">Fig. 1. Live TV on Windows. Screenshot from the app with invented channels.</figcaption>
+    <ol class="notes" style="margin-top:12px">
+      <li><span><b>Rail.</b> Categories with counts; Favourites and Recently watched sit on top.</span></li>
+      <li><span><b>Preview.</b> The selected channel, its programme and what is on next.</span></li>
+      <li><span><b>Guide.</b> A grid you scroll through, with channels in rows and time across.</span></li>
+      <li><span><b>Now-line.</b> The red line is the current time. Programmes either side are past or to come.</span></li>
+      <li><span><b>Favourites.</b> One keypress on a channel adds it here.</span></li>
+    </ol>
+  </figure>
+</section>
+
+<section id="sources" aria-labelledby="h-sources">
+  <span class="meta sec-no">01</span>
+  <h2 id="h-sources">Sources</h2>
+  <p>Testcard is a player. You bring the source. It reads Xtream Codes logins and M3U playlists, and takes an XMLTV URL for the programme guide when your provider gives you one.</p>
+  <h3>Adding a source</h3>
+  <ul class="plain">
+    <li><b>Xtream Codes:</b> server address, username and password from your provider.</li>
+    <li><b>M3U:</b> a playlist URL or file. Add an XMLTV URL if you want a guide.</li>
+    <li><b>Refresh:</b> Off, 6h, 12h or 24h. Large sources are stored in SQLite, so refreshing does not stall the interface.</li>
+  </ul>
+  <p class="small muted">Testcard ships no channels and does not recommend providers.</p>
+</section>
+
+<section id="live-tv" aria-labelledby="h-live">
+  <span class="meta sec-no">02</span>
+  <h2 id="h-live">Live TV</h2>
+  <p>Channels in rows, time across, one red line for now. Everything is reachable from the keyboard or a remote. Try it below.</p>
+
+  <div class="demo tv" id="demo" role="region" aria-labelledby="demo-t">
+    <div class="demo-h">
+      <h3 id="demo-t" style="margin:0;font-size:17px">Try the keyboard</h3>
+      <span class="meta">Demo · invented channels</span>
+    </div>
+    <ul class="keys" id="keymap" aria-label="Keyboard shortcuts">
+      <li><kbd>↑</kbd><kbd>↓</kbd>channel</li>
+      <li><kbd>←</kbd><kbd>→</kbd>programme</li>
+      <li><kbd>Enter</kbd>play</li>
+      <li><kbd>F</kbd>favourite</li>
+      <li><kbd>/</kbd>search</li>
+      <li><kbd>Esc</kbd>clear</li>
+    </ul>
+    <div class="srch">
+      <label class="vh" for="q">Search demo channels</label>
+      <input id="q" type="search" placeholder="Search channels  ( / )" autocomplete="off" spellcheck="false">
+      <span class="clock">20:58</span>
+    </div>
+    <div class="stat" id="stat" aria-live="polite" aria-atomic="true"></div>
+    <div class="gw">
+      <div class="ruler" aria-hidden="true"><div></div><div class="ticks" id="ticks"></div></div>
+      <div class="nowline" aria-hidden="true"></div>
+      <ul role="listbox" id="lb" aria-label="Channels, 6 invented channels" aria-describedby="keymap"></ul>
+    </div>
+    <p class="hint" id="empty" hidden>No signal. No channel matches that search. Press Esc to clear it.</p>
+    <p class="hint">The clock is fixed at 20:58. No video plays and nothing is requested; Enter only changes the status line.</p>
+  </div>
+</section>
+
+<section id="playback" aria-labelledby="h-play">
+  <span class="meta sec-no">03</span>
+  <h2 id="h-play">Playback</h2>
+  <p>On Windows, mpv is embedded, so HEVC and E-AC-3 play without codec packs. On Fire TV, playback uses Media3. If a feed stalls at 4K, Testcard falls back to the HD feed automatically.</p>
+  <p class="small muted">What plays still depends on what your provider sends.</p>
+</section>
+
+<section id="library" aria-labelledby="h-lib">
+  <span class="meta sec-no">04</span>
+  <h2 id="h-lib">Library</h2>
+  <p>Live, Films and Series, plus Catch-up where your provider keeps it. Favourites, Recents and Continue watching sit across all of them. Names are tidied for display; the provider's raw name is kept alongside.</p>
+</section>
+
+<section id="sync" aria-labelledby="h-sync">
+  <span class="meta sec-no">05</span>
+  <h2 id="h-sync">Sync</h2>
+  <p>Up to 4 profiles, each with its own favourites and history. Sync is encrypted. A TV signs in by code: show the code on the TV, enter it on a computer you are already signed in on.</p>
+  <p id="link-tv" class="small muted">Link TV: placeholder anchor for the code sign-in page in this prototype.</p>
+</section>
+
+<section id="platforms" aria-labelledby="h-plat">
+  <span class="meta sec-no">06</span>
+  <h2 id="h-plat">Platforms and requirements</h2>
+  <table class="req">
+    <thead><tr><th scope="col">Platform</th><th scope="col">Requirement</th><th scope="col">Package</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Windows</th><td>Windows 10/11 x64 <span class="ph">to confirm</span></td><td>.exe installer</td></tr>
+      <tr><th scope="row">Fire TV</th><td>Fire OS version <span class="ph">TBD (owner)</span></td><td>.apk, sideloaded</td></tr>
+      <tr><th scope="row">Phones</th><td>Not supported yet.</td><td>none</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="privacy" aria-labelledby="h-priv">
+  <span class="meta sec-no">07</span>
+  <h2 id="h-priv">Privacy</h2>
+  <ul class="plain">
+    <li>Your library lives in a SQLite database on your device.</li>
+    <li>Provider logins are kept in the operating system's secure store.</li>
+    <li>If you use sync, what leaves your device is encrypted first.</li>
+    <li>This website sets no cookies and has no analytics.</li>
+  </ul>
+  <p class="small muted">Draft wording; the full privacy page is to be written from the owner's confirmed facts.</p>
+</section>
+
+<section id="download" aria-labelledby="h-dl">
+  <span class="meta sec-no">08</span>
+  <h2 id="h-dl">Download</h2>
+  <p><span class="ph">Placeholder</span> v0.0.0 · date · size TBD · SHA-256 TBD</p>
+  <div class="dl">
+    <div class="box">
+      <h3>Windows</h3>
+      <a class="btn sand" href="#download">Download for Windows (.exe)</a>
+      <p class="small muted">v0.0.0 · date · size TBD · SHA-256 TBD<br>The installer is unsigned, so Windows will warn. Compare the SHA-256 before running it.</p>
+    </div>
+    <div class="box">
+      <h3>Fire TV</h3>
+      <a class="btn sand" href="#download">Fire TV (.apk)</a>
+      <p class="small muted">v0.0.0 · date · size TBD · SHA-256 TBD<br>Install with Downloader. Downloader code: TBD (owner).</p>
+    </div>
+  </div>
+  <div class="cl">
+    <h3>Changelog <span class="ph">placeholder</span></h3>
+    <p class="small" style="margin:0"><b>v0.0.0 · date</b>: not a real release. Changes will be listed here once there is one.</p>
+  </div>
+
+  <div class="faq" id="faq" style="margin-top:48px">
+    <span class="meta sec-no">09</span>
+    <h2>FAQ</h2>
+    <div style="margin-top:16px">
+    <details><summary>Does Testcard come with channels?</summary><p>No. Testcard is a player only; you add a source you are entitled to use. It ships no channels and does not recommend providers.</p></details>
+    <details><summary>Is using an IPTV player legal?</summary><p>A player is ordinary software. What matters is whether you are entitled to the content of the source you add. This is not legal advice; check the rules where you live.</p></details>
+    <details><summary>Which source types work?</summary><p>Xtream Codes logins and M3U playlists, with an optional XMLTV URL for the guide.</p></details>
+    <details><summary>Why is my guide empty or wrong?</summary><p>Usually one of: no XMLTV URL was added; the playlist's tvg-id does not match the channel id in the guide; the guide's time offset is off; or it has not refreshed yet. Check those in that order, then refresh the source.</p></details>
+    <details><summary>Why does Windows warn about the installer?</summary><p>The installer is not code-signed yet, so SmartScreen flags it. Compare its SHA-256 with the one on this page before you run it.</p></details>
+    <details><summary>How do I install on Fire TV?</summary><p>Install the Downloader app, allow it to install from unknown sources in the Fire TV settings, then enter the Downloader code (TBD, owner) to fetch the .apk.</p></details>
+    <details><summary>Does it work on phones?</summary><p>Not yet.</p></details>
+    <details><summary>What gets synced and is it encrypted?</summary><p>Profiles, favourites and watch progress, encrypted before they leave your device. <span class="ph">exact list TBD (owner)</span></p></details>
+    <details><summary>Can I use several profiles?</summary><p>Yes, up to 4.</p></details>
+    <details><summary>Does it record?</summary><p>No.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<footer class="site"><div class="wrap">
+  <p>Testcard IPTV player · made by Evicted · <a href="mailto:hello@evicted.dev">hello@evicted.dev</a> · <a href="#privacy">Privacy</a> · Ships no channels.</p>
+</div></footer>
+
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return(r||document).querySelector(s)};
+var toc=$("#toc"),links=[].slice.call(document.querySelectorAll(".toc a"));
+// ToC: open on wide screens, collapsed <details> on small
+var mq=window.matchMedia("(min-width:960px)");
+function tocMode(){toc.open=mq.matches}
+tocMode();mq.addEventListener("change",tocMode);
+links.forEach(function(a){a.addEventListener("click",function(){if(!mq.matches)toc.open=false})});
+// scroll-spy
+var ids=links.map(function(a){return a.getAttribute("href").slice(1)});
+var secs=ids.map(function(i){return document.getElementById(i)});
+function mark(){
+  var cur=0,lim=innerHeight*.3;
+  secs.forEach(function(s,i){if(s.getBoundingClientRect().top<=lim)cur=i});
+  if(innerHeight+scrollY>=document.documentElement.scrollHeight-4)cur=secs.length-1;
+  links.forEach(function(a,i){if(i===cur)a.setAttribute("aria-current","true");else a.removeAttribute("aria-current")});
+}
+if("IntersectionObserver"in window){
+  var io=new IntersectionObserver(mark,{rootMargin:"0px 0px -70% 0px",threshold:[0,1]});
+  secs.forEach(function(s){io.observe(s)});
+}
+mark();
+
+// demo
+var NOW=58,SPAN=120;
+function f(m){m=(20*60+m)%1440;return("0"+Math.floor(m/60)).slice(-2)+":"+("0"+m%60).slice(-2)}
+var CH=[
+ {n:"Harbour News",h:215,p:[[0,30,"Newsroom"],[30,60,"Business Tonight"],[60,90,"Weather Watch"],[90,150,"The Late Desk"]]},
+ {n:"Peak Sport",h:265,p:[[0,45,"The Sports Desk"],[45,105,"Cycling: Coast to Coast"],[105,150,"Rugby Night"]]},
+ {n:"Late Night Cinema",h:195,p:[[0,40,"Trailer Reel"],[40,150,"Glass Orchard"]]},
+ {n:"Ember Classics",h:12,p:[[0,55,"Matinee Double"],[55,90,"Golden Hour Cinema"],[90,150,"The Quiet Engine"]]},
+ {n:"Studio 9",h:130,p:[[0,20,"Fox Hollow"],[20,70,"Kitchen Table"],[70,100,"Market Day"],[100,150,"Night Shift Kitchen"]]},
+ {n:"Nova Science",h:285,p:[[0,60,"How Things Float"],[60,120,"Signal Fires"],[120,150,"Deep Field"]]}
+];
+var lb=$("#lb"),stat=$("#stat"),q=$("#q"),empty=$("#empty"),demo=$("#demo");
+var st={ch:0,t:30,play:false,favs:{},query:""};
+var rows=[];
+function pi(c,t){var p=CH[c].p;for(var i=0;i<p.length;i++)if(p[i][0]<=t&&t<p[i][1])return i;return p.length-1}
+var tk=$("#ticks");[0,30,60,90].forEach(function(m){var s=document.createElement("span");s.style.left=m/SPAN*100+"%";s.textContent=f(m);tk.appendChild(s)});
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+CH.forEach(function(c,ci){
+  var li=el("li","row");li.id="ch"+ci;li.setAttribute("role","option");
+  var who=el("div","who"),sw=el("span","sw");sw.style.background="hsl("+c.h+" 38% 46%)";
+  who.appendChild(sw);who.appendChild(el("span","nm",c.n));who.appendChild(el("span","star","★"));
+  var tr=el("div","track");tr.setAttribute("aria-hidden","true");
+  c.p.forEach(function(p,i){
+    var cell=el("div","cell"+(i===pi(ci,NOW)?" cur":""));cell.dataset.i=i;
+    var a=Math.max(p[0],0),b=Math.min(p[1],SPAN);cell.style.left="calc("+a/SPAN*100+"% + 1px)";cell.style.width="calc("+(b-a)/SPAN*100+"% - 2px)";
+    cell.appendChild(el("span",null,p[2]));tr.appendChild(cell)});
+  var n=pi(ci,NOW),cur=c.p[n],nx=c.p[n+1];
+  var nn=el("div","nn");nn.setAttribute("aria-hidden","true");
+  var b1=el("b",null,cur[2]);nn.appendChild(document.createTextNode("Now "));nn.appendChild(b1);nn.appendChild(document.createTextNode(" "+f(cur[0])+"–"+f(cur[1])));
+  var pr=el("div","prog"),bar=el("i");bar.style.width=Math.round((NOW-cur[0])/(cur[1]-cur[0])*100)+"%";pr.appendChild(bar);nn.appendChild(pr);
+  if(nx)nn.appendChild(document.createTextNode("Next "+nx[2]+" "+f(nx[0])));
+  li.appendChild(who);li.appendChild(tr);li.appendChild(nn);
+  li.addEventListener("click",function(){st.ch=ci;st.t=c.p[pi(ci,st.t)][0];render(true)});
+  lb.appendChild(li);rows.push(li);
+});
+function vis2(){return CH.map(function(c,i){return i}).filter(function(i){return!rows[i].hidden})}
+function render(focus){
+  var v=vis2();
+  if(v.length&&v.indexOf(st.ch)<0)st.ch=v[0];
+  CH.forEach(function(c,i){
+    var r=rows[i],sel=i===st.ch,n=pi(i,NOW),nx=c.p[n+1];
+    r.setAttribute("aria-selected",sel);r.tabIndex=sel?0:-1;r.dataset.fav=!!st.favs[i];
+    r.setAttribute("aria-label",c.n+", now: "+c.p[n][2]+" until "+f(c.p[n][1])+(nx?", next: "+nx[2]:"")+(st.favs[i]?", favourite":""));
+    var si=pi(i,st.t);[].forEach.call(r.querySelectorAll(".cell"),function(x){x.classList.toggle("sel",sel&&+x.dataset.i===si)});
+  });
+  empty.hidden=v.length>0;
+  var c=CH[st.ch],i=pi(st.ch,st.t),p=c.p[i];
+  stat.className="stat tv"+(st.play?" on":"");
+  stat.textContent="";
+  var big=el("div","big",c.n.split(" ").map(function(w){return w[0]}).join("").slice(0,2));big.style.background="hsl("+c.h+" 38% 40%)";big.setAttribute("aria-hidden","true");
+  var tx=el("div");
+  tx.appendChild(el("p","meta",(i===pi(st.ch,NOW)?"On now":i<pi(st.ch,NOW)?"Earlier":"Later")+" · "+c.n+(st.favs[st.ch]?" · Favourite":"")));
+  tx.appendChild(el("p","t",p[2]));
+  tx.appendChild(el("p","pl",st.play?"Playing (demo, no video) · "+f(p[0])+" to "+f(p[1]):f(p[0])+" to "+f(p[1])+" · press Enter to play"));
+  stat.appendChild(big);stat.appendChild(tx);
+  if(focus)rows[st.ch].focus();
+}
+function go(d){
+  var v=vis2();if(!v.length)return;
+  var k=v.indexOf(st.ch)+d;if(k<0||k>=v.length)return;
+  var t=CH[st.ch].p[pi(st.ch,st.t)][0];st.ch=v[k];st.t=CH[st.ch].p[pi(st.ch,t)][0];st.play=false;render(true);
+}
+function slot(d){
+  var p=CH[st.ch].p,i=pi(st.ch,st.t)+d;if(i<0||i>=p.length)return;st.t=p[i][0];st.play=false;render();
+}
+q.addEventListener("input",function(){
+  var s=q.value.trim().toLowerCase();
+  CH.forEach(function(c,i){rows[i].hidden=s&&c.n.toLowerCase().indexOf(s)<0});render();
+});
+demo.addEventListener("keydown",function(e){
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  var k=e.key,inQ=e.target===q;
+  if(k==="Escape"){
+    if(q.value){q.value="";q.dispatchEvent(new Event("input"));rows[st.ch].focus()}
+    else if(st.play){st.play=false;render()}
+    else if(inQ)rows[st.ch].focus();
+    else return;
+    e.preventDefault();return;
+  }
+  if(inQ){if(k==="ArrowDown"){e.preventDefault();rows[vis2()[0]]&&rows[vis2()[0]].focus()}return}
+  if(!e.target.closest||!e.target.closest("[role=listbox]"))return;
+  if(k==="ArrowDown")go(1);
+  else if(k==="ArrowUp")go(-1);
+  else if(k==="ArrowRight")slot(1);
+  else if(k==="ArrowLeft")slot(-1);
+  else if(k==="Enter"||k===" "){st.play=true;render()}
+  else if(k==="f"||k==="F"){st.favs[st.ch]=!st.favs[st.ch];render()}
+  else if(k==="/"){q.focus()}
+  else return;
+  e.preventDefault();
+});
+render();
+})();
+</script>
+</body>
+</html>
