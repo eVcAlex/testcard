@@ -4,6 +4,7 @@ import { handleLinkApprove, handleLinkPoll, handleLinkSession, handleLinkStart }
 import { handleRegisterGuide } from "./routes/guides.js";
 import { handlePull } from "./routes/pull.js";
 import { handlePush } from "./routes/push.js";
+import { handleWaitlist } from "./routes/waitlist.js";
 import { handleRelease } from "./routes/release.js";
 import { handleGetSalt, handleSetSalt } from "./routes/salt.js";
 
@@ -40,6 +41,8 @@ app.post("/link/start", handleLinkStart);
 app.get("/link/session", handleLinkSession);
 app.post("/link/approve", handleLinkApprove);
 app.get("/link/poll", handleLinkPoll);
+
+app.post("/waitlist", handleWaitlist);
 
 app.get("/sync/pull", requireSession, handlePull);
 app.post("/sync/push", requireSession, handlePush);

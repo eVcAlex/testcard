@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { errorMessage, errorStatus, signUp } from "./api.ts";
+import { errorMessage, errorStatus, joinWaitlist, signUp } from "./api.ts";
 
 const stub = (f: () => Promise<Response>) => vi.stubGlobal("fetch", vi.fn(f));
 const caught = (p: Promise<unknown>) => p.then(() => { throw new Error("expected rejection"); }, (e) => e);
@@ -25,5 +25,18 @@ describe("api errors (real wretch)", () => {
     stub(async () => { throw new TypeError("Failed to fetch"); });
     const e = await caught(signUp("a@b.co", "x"));
     expect(errorStatus(e)).toBeUndefined();
+  });
+});
+
+describe("joinWaitlist", () => {
+  it("POSTs the JSON body to /waitlist", async () => {
+    const f = vi.fn(async () => new Response('{"ok":true}', { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubGlobal("fetch", f);
+    const res = await joinWaitlist({ email: "a@b.co", windows: true });
+    expect(res.status).toBe(200);
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/waitlist");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({ email: "a@b.co", windows: true });
   });
 });
