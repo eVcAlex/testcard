@@ -6,7 +6,8 @@ import { RAW_NAMES_EVENT, RAW_NAMES_QUERY } from "../demo/events.ts";
 export function RawNamesLink({ children }: { children: string }) {
   const go = (e: MouseEvent<HTMLAnchorElement>) => {
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const guide = document.getElementById("guide")!;
+    const guide = document.getElementById("guide");
+    if (!guide) return; // no guide on this page: let the link navigate
     e.preventDefault();
     window.dispatchEvent(new Event(RAW_NAMES_EVENT));
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

@@ -1,4 +1,4 @@
-/* Waitlist form. Imported by WaitlistForm and by router.tsx (so the lazy /download chunk is styled on first paint). */
+/* Waitlist form. Imported by router.tsx only, so every prerendered page, /download included, is styled on first paint. */
 .wl { display: grid; gap: 16px; max-width: 28rem; }
 .wl form { display: grid; gap: 16px; justify-items: start; }
 .wl-field { width: 100%; margin: 0; color: var(--foreground); font-weight: var(--wght-medium); }
