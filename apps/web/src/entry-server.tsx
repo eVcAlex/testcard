@@ -1,5 +1,5 @@
 import { RouterProvider, createMemoryHistory } from "@tanstack/react-router";
-import { renderToString } from "react-dom/server";
+import { renderToString } from "preact-render-to-string";
 import { headToHtml } from "./head.ts";
 import { ROUTES, buildSitemap, metaFor } from "./routes-meta.ts";
 import { serverHeadModel } from "./routes-ld.ts";

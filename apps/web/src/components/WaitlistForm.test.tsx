@@ -57,7 +57,8 @@ describe("WaitlistForm", () => {
     const done = await screen.findByRole("status");
     expect(done).toHaveTextContent(WAITLIST_DONE);
     expect(WAITLIST_DONE).toBe("You're on the list. We'll email you when the beta opens. That's the only email we'll send.");
-    expect(done).toHaveFocus();
+    // Preact runs effects after paint, a moment after the DOM appears.
+    await waitFor(() => expect(done).toHaveFocus());
     expect(screen.queryByLabelText("Email address")).toBeNull();
     expect(screen.getByRole("link", { name: "privacy policy" })).toBeInTheDocument();
   });
@@ -81,7 +82,7 @@ describe("WaitlistForm", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Too many sign-ups from this network today. Try again tomorrow.");
     expect(WAITLIST_RATE_LIMITED).toBe("Too many sign-ups from this network today. Try again tomorrow.");
-    expect(alert).toHaveFocus();
+    await waitFor(() => expect(alert).toHaveFocus());
     expect(screen.getByLabelText("Email address")).toHaveValue("me@example.com");
   });
 

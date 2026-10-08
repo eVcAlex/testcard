@@ -6,7 +6,7 @@ describe("prerender render()", () => {
     const out = await render(path);
     expect(out.status).toBe(200);
     expect(out.html.match(/<h1[ >]/g)).toHaveLength(1);
-    expect(out.html).toContain('<a class="skip" href="#main">');
+    expect(out.html).toMatch(/<a [^>]*class="skip"[^>]*>Skip to content<\/a>/);
     expect(out.html).toContain("Ships no channels.");
     expect(out.head).toContain(`<title>`);
   });
