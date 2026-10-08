@@ -51,6 +51,16 @@ describe("routes-meta", () => {
     expect(headModel(metaFor("/download")).jsonLd).toHaveLength(0);
   });
 
+  it("puts FAQPage JSON-LD on /faq without legality, pricing or version-specific answers", () => {
+    const [raw] = headModel(metaFor("/faq")).jsonLd;
+    const doc = JSON.parse(raw ?? "{}") as { "@type": string; mainEntity: { name: string; acceptedAnswer: { text: string } }[] };
+    expect(doc["@type"]).toBe("FAQPage");
+    const names = doc.mainEntity.map((q) => q.name);
+    expect(names).toContain("Why is my guide empty or wrong?");
+    expect(names.join("|")).not.toMatch(/legal|free|price|windows warn|fire tv|phones|record|profiles/i);
+    for (const q of doc.mainEntity) expect(q.acceptedAnswer.text).not.toMatch(/\]\(|SmartScreen|Downloader|not legal advice/);
+  });
+
   it("builds FAQPage JSON-LD from question and answer pairs and escapes < in script content", () => {
     const doc = faqPageLd([{ question: "Q?", answer: "A </script> b" }])[0] as unknown as { "@type": string; mainEntity: unknown[] };
     expect(doc["@type"]).toBe("FAQPage");

@@ -166,20 +166,6 @@ figure { margin: 0 0 24px; }
 figure img { display: block; height: auto; border: 1px solid var(--border); border-radius: var(--radius-card); }
 figcaption { color: var(--muted-foreground); font-size: var(--site-small); margin-top: 8px; }
 
-/* Current Home page, until the new one lands. Delete with src/pages/Home.tsx. */
-.hero, .problem, .shots, .cta, .extras { max-width: 960px; margin-inline: auto; padding-inline: var(--site-gutter); }
-.hero { padding-top: 64px; }
-.hero .lead { margin: 16px 0 24px; }
-.problem, .shots, .cta, .extras { margin-top: 56px; }
-.problem h2, .shots h2, .cta h2, .extras > h2 { font-size: var(--site-h3); margin: 0 0 16px; }
-.cta { padding-bottom: 56px; }
-.pairs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.pairs li { display: grid; gap: 4px; border-top: 1px solid var(--border); padding-top: 12px; }
-.pairs span { color: var(--muted-foreground); }
-.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-.features h3 { font-size: var(--site-body); margin-bottom: 8px; }
-.features p { color: var(--muted-foreground); font-size: var(--site-small); }
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 }

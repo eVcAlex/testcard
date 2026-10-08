@@ -1,4 +1,7 @@
 import { type RouteComponent, type RouterHistory, Outlet, createRootRoute, createRoute, createRouter, lazyRouteComponent } from "@tanstack/react-router";
+// Styles used by the lazy /download chunk are imported here too, so a prerendered /download is styled before that chunk loads.
+import "./components/waitlist.css";
+import "./pages/content.css";
 import { Footer } from "./components/Footer.tsx";
 import { Head } from "./components/Head.tsx";
 import { Header } from "./components/Header.tsx";

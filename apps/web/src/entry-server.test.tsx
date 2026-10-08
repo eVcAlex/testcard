@@ -32,8 +32,15 @@ describe("prerender render()", () => {
     expect((await render("/")).head).toContain('"@type":"SoftwareApplication"');
   });
 
+  it("puts FAQPage JSON-LD on the /faq head", async () => {
+    const { head } = await render("/faq");
+    expect(head).toContain('"@type":"FAQPage"');
+    const ld = /<script type="application\/ld\+json">(.*?)<\/script>/s.exec(head)?.[1] ?? "";
+    expect(ld).not.toMatch(/legal|Is Testcard free/i);
+  });
+
   it("renders the lazy routes (Download, Link) into the prerendered HTML", async () => {
-    expect((await render("/download")).html).toContain("Download Testcard");
+    expect((await render("/download")).html).toContain("Join the Testcard beta");
     expect((await render("/link")).html).toContain("Link your TV");
   });
 });

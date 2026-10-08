@@ -1,0 +1,57 @@
+/* Shared by the content pages (download, setup, faq, privacy). Imported by those pages and by router.tsx. */
+.page.prose > * + * { margin-top: 16px; }
+.page.prose .block { margin-top: 48px; }
+.page.prose .block > * + * { margin-top: 16px; }
+.page.prose .block > h2 { margin-top: 0; }
+.page.prose h2 { margin-top: 48px; }
+.page.prose h3 { margin-top: 32px; }
+.page h2, .page h3 { scroll-margin-top: 80px; }
+.page ul, .page ol { padding-left: 1.25em; margin: 0; }
+.page li + li { margin-top: 6px; }
+.page code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 0.9em; padding: 1px 5px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-chip); overflow-wrap: anywhere; }
+.page code.sha { display: inline-block; font-size: 0.8em; }
+.tbc { display: inline-block; padding: 0 6px; font-size: var(--site-small); color: var(--muted-foreground); border: 1px dashed var(--border-strong); border-radius: var(--radius-chip); white-space: nowrap; }
+.confirm { padding: 12px 14px; font-size: var(--site-small); border: 1px dashed var(--border-strong); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.confirm b { font-weight: var(--wght-semibold); }
+
+/* spec / requirements table: hairlines, scrolls sideways on narrow screens rather than the page */
+.spec { width: 100%; border-collapse: collapse; font-size: var(--site-small); }
+.spec th, .spec td { text-align: left; vertical-align: top; padding: 12px 12px 12px 0; border-top: 1px solid var(--border); }
+.spec thead th { font-size: var(--site-meta); font-weight: var(--wght-medium); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); border-top: 0; border-bottom: 1px solid var(--border-strong); }
+.spec tbody th { font-weight: var(--wght-semibold); white-space: nowrap; }
+.spec tr:last-child > * { border-bottom: 1px solid var(--border); }
+@media (max-width: 36em) {
+  .spec thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .spec, .spec tbody, .spec tr, .spec th, .spec td { display: block; }
+  .spec tr { padding: 12px 0; border-top: 1px solid var(--border); }
+  .spec tr:last-child { border-bottom: 1px solid var(--border); }
+  .spec th, .spec td { padding: 2px 0; border: 0 !important; }
+}
+
+/* table of contents on guides */
+.toc { margin-top: 24px; padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--radius-card); font-size: var(--site-small); }
+.toc b { display: block; margin-bottom: 8px; font-size: var(--site-meta); font-weight: var(--wght-medium); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); }
+.toc ol { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.toc li + li { margin-top: 0; }
+.toc a { display: inline-block; padding: 8px 0; }
+
+/* FAQ: one hairline per question, whole summary row is the 44px target */
+.faq-group { margin-top: 48px; }
+.faq details { border-top: 1px solid var(--border); }
+.faq details:last-of-type { border-bottom: 1px solid var(--border); }
+.faq summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; min-height: 44px; padding: 14px 0; cursor: pointer; list-style: none; font-weight: var(--wght-semibold); font-size: 17px; line-height: 1.4; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; flex: none; width: 1.2em; text-align: center; color: var(--muted-foreground); font-weight: var(--wght-regular); font-size: 22px; line-height: 1.1; }
+.faq details[open] > summary::after { content: "\2212"; }
+.faq details > :not(summary) { padding-bottom: 4px; max-width: var(--site-measure); }
+.faq details > * + :not(summary) { margin-top: 12px; }
+.faq details > div { padding-bottom: 20px; }
+.faq details:target { background: var(--accent-soft); }
+.faq .q-link { font-weight: var(--wght-regular); }
+.faq h3 { font-size: inherit; margin: 0; font-weight: inherit; display: contents; }
+.faq-group > * + * { margin-top: 16px; }
+.faq-group > h2 { margin-top: 0; }
+.faq details > div > * + * { margin-top: 12px; }
+.faq .causes li + li { margin-top: 14px; }
+.raw { padding: 1px 6px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-chip); white-space: nowrap; }
+.raw { padding: 1px 6px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-chip); white-space: nowrap; }

@@ -16,4 +16,10 @@ describe("releases", () => {
     expect(parseAndroid(null)).toBeUndefined();
     expect(parseAndroid({ apks: { firetv: "../evil.apk" } })).toBeUndefined();
   });
+  it("reads an optional SHA-256 and ignores a malformed one", () => {
+    const hex = "a".repeat(64);
+    expect(parseDesktop(`version: 1.0.0\npath: a.exe\nsha256: ${hex.toUpperCase()}\n`)?.sha256).toBe(hex);
+    expect(parseDesktop("version: 1.0.0\npath: a.exe\nsha256: nope\n")).toEqual({ version: "1.0.0", file: "a.exe" });
+    expect(parseAndroid({ apks: { firetv: "a.apk" }, sha256: { firetv: hex } })?.sha256).toBe(hex);
+  });
 });

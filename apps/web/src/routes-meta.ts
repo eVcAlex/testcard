@@ -1,3 +1,4 @@
+import { faqLdItems } from "./faq-data.ts";
 import { CONTACT_EMAIL, ORG_NAME, PRODUCT_FULL_NAME, PRODUCT_NAME, SITE_URL } from "./site.ts";
 
 export interface RouteMeta {
@@ -78,8 +79,8 @@ export const ROUTES: readonly RouteMeta[] = [
     path: "/faq",
     title: `${PRODUCT_FULL_NAME} FAQ: EPG, sources, legality`,
     description: `Answers about ${PRODUCT_NAME}: where channels come from, adding Xtream and M3U sources, EPG and guide problems, whether an IPTV player is legal, and price.`,
-    // The FAQ content arrives with the FAQ page; it should return faqPageLd(items) for the timeless answers.
-    jsonLd: () => [],
+    // Timeless answers only; legality, pricing and version-specific ones are left out (see faq-data.ts).
+    jsonLd: () => faqPageLd(faqLdItems()),
   },
   {
     path: "/privacy",
