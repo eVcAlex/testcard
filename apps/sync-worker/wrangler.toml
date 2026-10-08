@@ -19,6 +19,7 @@ routes = [
 [assets]
 directory = "../web/dist"
 not_found_handling = "404-page"
+html_handling = "drop-trailing-slash" # canonical URLs have no trailing slash: /download is the page, /download/ redirects to it
 run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/approve", "/link/poll", "/sync/*", "/guides/*", "/waitlist"]
 
 # SYNC_AUTH_SECRET (better-auth signing/encryption secret) is deliberately NOT declared here: a [vars]

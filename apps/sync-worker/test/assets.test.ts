@@ -8,6 +8,17 @@ describe("the site and the API share one Worker", () => {
     expect(await res.text()).toContain('<div id="root">');
   });
 
+  it("serves each page at its canonical URL, without a trailing slash", async () => {
+    const nav = { "sec-fetch-mode": "navigate", accept: "text/html" };
+    for (const path of ["/download", "/setup", "/faq", "/privacy", "/link"]) {
+      const res = await SELF.fetch(`https://example.com${path}`, { redirect: "manual", headers: nav });
+      expect(res.status, path).toBe(200);
+      const slashed = await SELF.fetch(`https://example.com${path}/`, { redirect: "manual", headers: nav });
+      expect([307, 308], `${path}/`).toContain(slashed.status);
+      expect(slashed.headers.get("location")).toMatch(new RegExp(`${path}$`));
+    }
+  });
+
   it("answers an unknown path with a real 404, not the SPA shell", async () => {
     for (const path of ["/no-such-page", "/link-nope/deeper"]) {
       const res = await SELF.fetch(`https://example.com${path}`, { headers: { "sec-fetch-mode": "navigate", accept: "text/html" } });

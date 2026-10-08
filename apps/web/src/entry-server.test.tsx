@@ -35,7 +35,8 @@ describe("prerender render()", () => {
   it("puts FAQPage JSON-LD on the /faq head", async () => {
     const { head } = await render("/faq");
     expect(head).toContain('"@type":"FAQPage"');
-    const ld = /<script type="application\/ld\+json">(.*?)<\/script>/s.exec(head)?.[1] ?? "";
+    const ld = /<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/s.exec(head)?.[1] ?? "";
+    expect(ld).toContain("FAQPage");
     expect(ld).not.toMatch(/legal|Is Testcard free/i);
   });
 

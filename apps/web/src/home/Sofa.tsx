@@ -13,7 +13,7 @@ export function Sofa() {
           <div className="hm-copy">
             <h3>Sign in on the TV with a code</h3>
             <ol className="hm-steps">
-              <li><b>On the TV:</b> open Link TV and read the code.</li>
+              <li><b>On the TV:</b> choose Sign in and read the code.</li>
               <li><b>On your computer:</b> enter it on the Link TV page.</li>
               <li><b>Done:</b> the TV is signed in to the same account.</li>
             </ol>

@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS waitlist_rate (
   ip_hash TEXT NOT NULL,
   day     TEXT NOT NULL,
   count   INTEGER NOT NULL,
-  PRIMARY KEY (ip_hash, day)
+  PRIMARY KEY (day, ip_hash)
 );

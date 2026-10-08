@@ -9,6 +9,8 @@ export function Head() {
   const first = useRef(true);
 
   useEffect(() => {
+    // The prerendered head (JSON-LD included) is already right on first load; only the dev shell has none.
+    if (first.current && document.head.querySelector("[data-head]")) { first.current = false; return; }
     applyHead(document, headModel(metaFor(pathname)));
     if (first.current) { first.current = false; return; }
     const target = hash ? document.getElementById(hash) : null;

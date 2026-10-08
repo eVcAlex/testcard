@@ -16,9 +16,15 @@ export function DemoSlot() {
   const host = useRef<HTMLDivElement>(null);
   const [armed, setArmed] = useState(false);
   const [raw, setRaw] = useState({ initial: false, token: 0 });
+  const refocus = useRef("");
 
   useEffect(() => {
-    const arm = () => setArmed(true);
+    const arm = () => {
+      // Arming swaps the server-rendered guide for the live one, which replaces its DOM: remember where focus was.
+      const active = document.activeElement;
+      if (active && host.current?.contains(active)) refocus.current = active.id;
+      setArmed(true);
+    };
     if (new URLSearchParams(location.search).get(RAW_NAMES_QUERY) === "raw") {
       setRaw({ initial: true, token: 0 });
       arm();
@@ -40,6 +46,20 @@ export function DemoSlot() {
       io?.disconnect();
     };
   }, []);
+
+  // Put focus back on the same control once the live guide has mounted (the swap leaves it on <body>).
+  useEffect(() => {
+    if (!armed || !refocus.current) return;
+    let tries = 0;
+    let frame = 0;
+    const put = () => {
+      const el = document.getElementById(refocus.current);
+      if (el && host.current?.contains(el)) { if (document.activeElement === document.body) el.focus(); refocus.current = ""; }
+      else if (tries++ < 120) frame = requestAnimationFrame(put);
+    };
+    put();
+    return () => cancelAnimationFrame(frame);
+  }, [armed]);
 
   const fallback = <Guide state={initialState({ showRawNames: raw.initial })} expanded={false} />;
   return (

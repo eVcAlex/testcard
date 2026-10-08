@@ -20,9 +20,9 @@ const Email = z
 
 const Schema = z.object({
   email: Email,
-  windows: z.boolean().optional().default(false),
-  firetv: z.boolean().optional().default(false),
-  hp_note: z.string().max(1000).optional(),
+  windows: z.boolean().default(false),
+  firetv: z.boolean().default(false),
+  hp_note: z.unknown().optional(),
 });
 
 const hex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -33,16 +33,24 @@ function respond(c: WaitlistContext, body: Record<string, unknown>, status: 200 
   return c.json(body, status);
 }
 
+/** An IPv6 caller owns a whole /64, so key on that rather than on one address of it. */
+function network(ip: string): string {
+  if (!ip.includes(":")) return ip;
+  const [head = "", tail = ""] = ip.split("::");
+  const groups = head.split(":").filter(Boolean);
+  if (ip.includes("::")) groups.push(...Array(Math.max(0, 8 - groups.length - tail.split(":").filter(Boolean).length)).fill("0"));
+  return groups.slice(0, 4).join(":");
+}
+
 /** Counts this request against the caller's daily allowance; true when it is over the limit. */
 async function overLimit(c: WaitlistContext): Promise<boolean> {
   const day = new Date().toISOString().slice(0, 10);
-  const ip = c.req.header("cf-connecting-ip") ?? "unknown";
-  const salt = await sha256(`${c.env.SYNC_AUTH_SECRET}:waitlist:${day}`);
-  const ipHash = await sha256(`${ip}:${salt}`);
+  const ip = network(c.req.header("cf-connecting-ip") ?? "unknown");
+  const ipHash = await sha256(`${c.env.SYNC_AUTH_SECRET}:waitlist:${day}:${ip}`);
   const row = await c.env.DB
     .prepare(
       `INSERT INTO waitlist_rate (ip_hash, day, count) VALUES (?, ?, 1)
-       ON CONFLICT(ip_hash, day) DO UPDATE SET count = count + 1 RETURNING count`,
+       ON CONFLICT(day, ip_hash) DO UPDATE SET count = count + 1 RETURNING count`,
     )
     .bind(ipHash, day)
     .first<{ count: number }>();

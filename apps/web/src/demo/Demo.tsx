@@ -43,11 +43,8 @@ export default function Demo({ initialRaw = false, rawToken = 0 }: { initialRaw?
 
   useEffect(() => { if (rawToken) dispatch({ type: "setRaw", value: true }); }, [rawToken]);
 
-  // Narrow screens show the first rows only; keyboard focus past them opens the rest.
-  useEffect(() => {
-    const i = visibleChannels(state).findIndex((c) => c.id === state.focus.channelId);
-    if (i >= COLLAPSED_ROWS) setExpanded(true);
-  }, [state]);
+  // Narrow screens show the first rows only; focus past them opens the rest. Set during render so the row is visible before focus moves to it.
+  if (!expanded && visibleChannels(state).findIndex((c) => c.id === state.focus.channelId) >= COLLAPSED_ROWS) setExpanded(true);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
@@ -71,6 +68,7 @@ export default function Demo({ initialRaw = false, rawToken = 0 }: { initialRaw?
       return;
     }
     if (k === "/") {
+      if (state.mode === "tv") return; // the search box is hidden in TV mode
       e.preventDefault();
       const input = root.current?.querySelector<HTMLInputElement>(`#${SEARCH_ID}`);
       input?.focus();
@@ -79,7 +77,11 @@ export default function Demo({ initialRaw = false, rawToken = 0 }: { initialRaw?
     }
     const row = t.closest<HTMLElement>('[role="option"]');
     if (k === "t" || k === "T") { dispatch({ type: "toggleTv" }); return; }
-    if (k === "f" || k === "F") { dispatch({ type: "toggleFavourite", channelId: row?.dataset.id ?? state.focus.channelId }); return; }
+    if (k === "f" || k === "F") {
+      dispatch({ type: "toggleFavourite", channelId: row?.dataset.id ?? state.focus.channelId });
+      if (row) pendingFocus.current = "row"; // in Favourites the row is about to disappear
+      return;
+    }
 
     if (t.getAttribute("role") === "tab") {
       const ids = [...(root.current?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [])].map((el) => el.dataset.k!);

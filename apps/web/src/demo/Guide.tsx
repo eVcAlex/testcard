@@ -108,7 +108,7 @@ export function Guide({ state, dispatch, expanded, onExpand, rootRef, onKeyDown,
             onPlay={send && ((id) => send({ type: "play", channelId: id }))}
           />
           {empty && (
-            <div className="dm-empty" role="status">
+            <div className="dm-empty">
               <span className="dm-bars" aria-hidden="true">{Array.from({ length: 7 }, (_, i) => <i key={i} />)}</span>
               <p>{emptyMessage(state)}</p>
             </div>
