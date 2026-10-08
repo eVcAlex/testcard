@@ -29,3 +29,9 @@ it("_headers carries the security set and keeps Cache-Control off the catch-all 
   expect(headers).toMatch(/\/assets\/\*\n\s+Cache-Control: public, max-age=31536000, immutable/);
   expect(headers).toMatch(/\/link\n\s+Cache-Control: no-store/);
 });
+
+it("keeps the style fixes that QA found: the TV-frame button out-ranks .button.ghost, and prefers-contrast beats the light theme tokens", () => {
+  const css = (f: string) => readFileSync(resolve(__dirname, f), "utf8");
+  expect(css("home/home.css")).toMatch(/\.hm-fb \.button\.hm-fb-btn \{[^}]*color: var\(--tv-fg\)/);
+  expect(css("styles.css")).toMatch(/prefers-contrast: more\) \{[^}]*:root\[data-theme\]/);
+});

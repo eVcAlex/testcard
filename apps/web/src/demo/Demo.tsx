@@ -57,12 +57,16 @@ export default function Demo({ initialRaw = false, rawToken = 0 }: { initialRaw?
 
     if (k === "Escape") {
       e.preventDefault();
-      if (state.query) dispatch({ type: "setQuery", query: "" });
-      pendingFocus.current = "row";
+      // Only wait for a re-render when the list is about to change; otherwise a stale request would pull focus out of the search box on the next keystroke.
+      if (state.query) {
+        dispatch({ type: "setQuery", query: "" });
+        pendingFocus.current = "row";
+      }
       focusRow();
       return;
     }
     if (typing) {
+      pendingFocus.current = null;
       if (k === "ArrowDown") { e.preventDefault(); focusRow(); }
       return;
     }

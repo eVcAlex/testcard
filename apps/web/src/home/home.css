@@ -54,8 +54,9 @@
 .hm-fb-feeds li[data-state="failed"] { border-style: dashed; }
 .hm-fb-feeds li[data-state="failed"] b { text-decoration: line-through; }
 .hm-fb-status { color: var(--tv-muted); font-size: var(--site-small); min-height: 3em; }
-.hm-fb-btn { justify-self: start; color: var(--tv-fg); border-color: #343c43; }
-.hm-fb-btn:hover { background: #232830; }
+/* .button.ghost sets theme colours (dark text in the light theme); the frame is dark in both themes, so out-rank it. */
+.hm-fb .button.hm-fb-btn { justify-self: start; color: var(--tv-fg); border-color: #343c43; }
+.hm-fb .button.hm-fb-btn:hover { background: #232830; }
 @media (min-width: 36em) {
   .hm-fb { grid-template-columns: auto 40px minmax(0, 1fr); align-items: center; padding: 32px; }
   .hm-fb-link { display: block; height: 2px; background: #343c43; }

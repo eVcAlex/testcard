@@ -121,7 +121,7 @@ export const serialiseLd = (doc: object): string => JSON.stringify(doc).replace(
 export function headModel(route: RouteMeta): HeadModel {
   const url = `${SITE_URL}${route.path === "/" ? "/" : route.path}`;
   const image = `${SITE_URL}${OG_IMAGE.path}`;
-  const indexable = route !== NOT_FOUND_META;
+  const indexable = !route.noindex;
   const tags: HeadTag[] = [
     meta("name", "description", route.description),
     ...(route.noindex ? [meta("name", "robots", "noindex, nofollow")] : []),

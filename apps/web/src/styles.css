@@ -170,6 +170,7 @@ figcaption { color: var(--muted-foreground); font-size: var(--site-small); margi
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 }
 @media (prefers-contrast: more) {
-  :root { --border: var(--border-strong); }
+  /* :root[data-theme] out-ranks the light theme's :root[data-theme="light"] tokens; hairlines become clearly visible lines. */
+  :root[data-theme], :root:not([data-theme]) { --border: var(--muted-foreground); --border-strong: var(--muted-foreground); }
   a { text-decoration-color: currentColor; }
 }

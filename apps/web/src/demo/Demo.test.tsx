@@ -43,6 +43,15 @@ describe("Demo", () => {
     expect(option(/^Harbour News/)).toHaveFocus();
   });
 
+  it("keeps typing in the search box after Esc was pressed on a row with nothing to clear", async () => {
+    const user = userEvent.setup();
+    render(<Demo />);
+    option(/^Harbour News/).focus();
+    await user.keyboard("{Escape}/news");
+    expect(screen.getByRole("searchbox", { name: "Search channels" })).toHaveFocus();
+    expect(screen.getByRole("searchbox", { name: "Search channels" })).toHaveValue("news");
+  });
+
   it("left and right move between programmes in the row", async () => {
     const user = userEvent.setup();
     render(<Demo />);

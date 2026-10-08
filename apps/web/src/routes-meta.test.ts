@@ -35,8 +35,10 @@ describe("routes-meta", () => {
     expect(headModel(metaFor("/")).tags.find((t) => t.attrs.rel === "canonical")?.attrs.href).toBe("https://evicted.dev/");
   });
 
-  it("marks /link noindex and the 404 noindex without a canonical", () => {
+  it("marks /link and the 404 noindex without a canonical", () => {
     expect(tag(headModel(metaFor("/link")), "robots")?.content).toMatch(/noindex/);
+    expect(tag(headModel(metaFor("/link")), "canonical")).toBeUndefined();
+    expect(tag(headModel(metaFor("/link")), "og:url")).toBeUndefined();
     const nf = headModel(NOT_FOUND_META);
     expect(tag(nf, "robots")?.content).toMatch(/noindex/);
     expect(tag(nf, "canonical")).toBeUndefined();
