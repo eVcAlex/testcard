@@ -14,7 +14,7 @@ export function Head() {
     applyHead(document, headModel(metaFor(pathname)));
     if (first.current) { first.current = false; return; }
     const target = hash ? document.getElementById(hash) : null;
-    if (target) { target.scrollIntoView(); return; }
+    if (target) { target.scrollIntoView({ block: "nearest" }); return; }
     window.scrollTo(0, 0);
     document.getElementById("main")?.focus({ preventScroll: true });
   }, [pathname, hash]);

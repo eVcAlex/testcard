@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { Header } from "./Header.tsx";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, hash, children, ...rest }: { to: string; hash?: string; children: React.ReactNode }) => <a href={hash ? `${to}#${hash}` : to} {...rest}>{children}</a>,
+  useRouterState: () => false,
+  Link: ({ to, hash, hashScrollIntoView: _h, children, ...rest }: { to: string; hash?: string; hashScrollIntoView?: unknown; children: React.ReactNode }) => <a href={hash ? `${to}#${hash}` : to} {...rest}>{children}</a>,
 }));
 
 beforeEach(() => {

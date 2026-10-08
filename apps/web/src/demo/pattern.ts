@@ -4,7 +4,7 @@ import type { Channel } from "./data.ts";
 
 const W = 320;
 const H = 180;
-const BARS = ["#c9c9c4", "#c2bf84", "#84b8b8", "#84b88a", "#b484b1", "#b48484", "#8484b4"];
+const BARS = ["#c0c0c0", "#c0c000", "#00c0c0", "#00c000", "#c000c0", "#c00000", "#0000c0"];
 
 /** A small seeded generator, so the same channel and frame always draw the same static. */
 function mulberry32(seed: number) {

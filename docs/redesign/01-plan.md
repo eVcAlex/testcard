@@ -16,7 +16,7 @@ Baseline: build OK, 37 tests pass, typecheck OK, JS 324 kB (105 kB gz).
 
 ## 2. Design system ("Mist, broadcast edition")
 - **Type:** Inter Variable only, subset (~50 kB), preload. No mono face: `tabular-nums` for times and spec tables. Site scale: body 16/1.55, small 14, meta 12.5 uppercase +0.06em, H2 clamp(28-40), H1 clamp(40-72) wght 640 tracking -0.025em. App UI inside demos keeps the 13px app scale.
-- **Colour:** surfaces from `@testcard/theme`; hero/demo frames use the `tv` palette (#0a0d11). Sand accent at most once per viewport (primary CTA, "card" in wordmark, focus ring), never body links. Live red only for LIVE dot and guide now-line. Colour bars only as a 4px x 7-segment strip, desaturated ~25%.
+- **Colour:** surfaces from `@testcard/theme`; hero/demo frames use the `tv` palette (#0a0d11). Sand accent at most once per viewport (primary CTA, "card" in wordmark, focus ring), never body links. Live red only for LIVE dot and guide now-line. Colour bars only as a 4px x 7-segment strip.
 - **Grid:** 4px base, 12 col, 1200 max, prose 64ch. Sections separated by hairlines, not cards.
 - **Radius:** 6 chips/inputs, 9 buttons/cards, 13 screen frames. Pill only for the LIVE tag.
 - **Motion:** only what moves in the app: now-line creeps, preview cross-fades, focus slides. 120ms hover/focus, 200ms panels, 600ms one-time hero tune-in. No parallax/scroll-jacking. Reduced motion: no tune-in, no noise, instant now-line.
