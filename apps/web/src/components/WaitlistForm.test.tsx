@@ -31,7 +31,7 @@ describe("WaitlistForm", () => {
 
   it("hides the honeypot from assistive tech and the tab order", () => {
     const { container } = render(<WaitlistForm />);
-    const trap = container.querySelector<HTMLInputElement>('input[name="website"]')!;
+    const trap = container.querySelector<HTMLInputElement>('input[name="hp_note"]')!;
     expect(trap).toHaveAttribute("tabindex", "-1");
     expect(trap.closest("[aria-hidden='true']")).not.toBeNull();
     expect(trap.closest(".wl-hp")).not.toBeNull();
@@ -49,7 +49,7 @@ describe("WaitlistForm", () => {
     await fill(user, "  Me@Example.com ");
     await user.click(screen.getByRole("checkbox", { name: "Fire TV" }));
     await user.click(screen.getByRole("button", { name: "Join the beta waitlist" }));
-    expect(join).toHaveBeenCalledWith({ email: "Me@Example.com", windows: false, firetv: true, website: "" });
+    expect(join).toHaveBeenCalledWith({ email: "Me@Example.com", windows: false, firetv: true, hp_note: "" });
     const done = await screen.findByRole("status");
     expect(done).toHaveTextContent(WAITLIST_DONE);
     expect(WAITLIST_DONE).toBe("You're on the list. We'll email you when the beta opens. That's the only email we'll send.");
@@ -63,9 +63,9 @@ describe("WaitlistForm", () => {
     join.mockResolvedValue({} as Response);
     const { container } = render(<WaitlistForm />);
     await fill(user);
-    await user.type(container.querySelector<HTMLInputElement>('input[name="website"]')!, "spam.example");
+    await user.type(container.querySelector<HTMLInputElement>('input[name="hp_note"]')!, "spam.example");
     await user.click(screen.getByRole("button", { name: "Join the beta waitlist" }));
-    expect(join).toHaveBeenCalledWith(expect.objectContaining({ website: "spam.example" }));
+    expect(join).toHaveBeenCalledWith(expect.objectContaining({ hp_note: "spam.example" }));
   });
 
   it("says when there have been too many sign-ups (429) and keeps the form", async () => {

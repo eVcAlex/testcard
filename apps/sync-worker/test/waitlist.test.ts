@@ -54,7 +54,7 @@ describe("POST /waitlist", () => {
 
   it("returns 200 and stores nothing when the honeypot is filled", async () => {
     const before = await count();
-    const res = await send({ email: "bot@example.com", website: "http://spam.example" });
+    const res = await send({ email: "bot@example.com", hp_note: "http://spam.example" });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
     expect(await count()).toBe(before);
@@ -86,7 +86,7 @@ describe("POST /waitlist", () => {
 
   it("rejects an oversized body", async () => {
     const before = await count();
-    const res = await send({ email: "big@example.com", website: "x".repeat(5000) });
+    const res = await send({ email: "big@example.com", hp_note: "x".repeat(5000) });
     expect(res.status).toBe(413);
     expect(await count()).toBe(before);
   });
@@ -137,7 +137,7 @@ describe("POST /waitlist", () => {
     await send({ email: "private.person@example.com" }, { ip });
     await send({ email: "private.person@example.com" }, { ip });
     await send({ email: "not an email private.person" }, { ip });
-    await send({ email: "bot@example.com", website: "x" }, { ip });
+    await send({ email: "bot@example.com", hp_note: "x" }, { ip });
     const logged = JSON.stringify(spies.flatMap((s) => s.mock.calls));
     expect(logged).not.toContain(ip);
     expect(logged).not.toContain("private.person");

@@ -10,8 +10,8 @@ export function Band() {
         <h2 id="hm-join">Be there for the beta.</h2>
         <p className="lead">Testcard is not released yet. Join the waitlist and you will be invited to try it on Windows and Fire TV. It is free.</p>
         <div className="actions">
-          <WaitlistLink className="button hm-big" />
-          <Link to="/setup" className="button ghost hm-big">How setup works</Link>
+          <WaitlistLink className="button hm-big">Get on the waitlist</WaitlistLink>
+          <Link to="/setup" className="button ghost hm-big">Setup guide</Link>
         </div>
       </div>
     </section>

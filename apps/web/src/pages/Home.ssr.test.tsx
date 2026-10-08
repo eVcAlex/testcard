@@ -9,7 +9,7 @@ describe("Home, server-rendered", () => {
     expect(html).toContain('role="listbox"');
     expect(html.match(/role="option"/g)).toHaveLength(14);
     // the on-air programme at the fixed 20:58 demo clock, and what follows
-    expect(html).toContain("Harbour News, now:");
+    expect(html).toContain("Weather Front");
     expect(html).toContain("20:58");
     expect(html).toContain("Show all channels (14)");
     expect(html).toContain("Muted preview");

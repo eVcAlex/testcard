@@ -155,7 +155,7 @@ p { margin: 0; }
 .card h2 { font-size: var(--site-h3); margin: 0 0 8px; }
 label { display: block; color: var(--muted-foreground); font-size: var(--site-small); margin-bottom: 16px; }
 input { display: block; width: 100%; margin-top: 6px; min-height: 44px; padding: 0 12px; background: var(--surface-sunken); color: var(--foreground); border: 1px solid var(--border-strong); border-radius: var(--radius-chip); font: inherit; font-size: var(--site-body); }
-input::placeholder { color: var(--faint-foreground); }
+input::placeholder { color: var(--muted-foreground); opacity: 1; } /* faint-foreground is ~3.7:1; muted is >= 4.5:1 on the sunken input in both themes */
 input[aria-invalid="true"] { border-color: var(--fault); }
 .error { color: var(--fault); min-height: 1.5em; margin-bottom: 12px; }
 .tabs { display: flex; gap: 8px; margin-bottom: 20px; }

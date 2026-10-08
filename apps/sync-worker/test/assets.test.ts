@@ -12,7 +12,8 @@ describe("the site and the API share one Worker", () => {
     for (const path of ["/no-such-page", "/link-nope/deeper"]) {
       const res = await SELF.fetch(`https://example.com${path}`, { headers: { "sec-fetch-mode": "navigate", accept: "text/html" } });
       expect(res.status).toBe(404);
-      expect(await res.text()).not.toContain('<div id="root">');
+      // The real 404.html is a prerendered React page, so it has a root; what marks it is the standby copy.
+      expect(await res.text()).toContain("No signal");
     }
   });
 

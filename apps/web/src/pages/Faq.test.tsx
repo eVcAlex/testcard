@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FAQ, GUIDE_CAUSES, faqLdItems } from "../faq-data.ts";
-import { faqPageLd } from "../routes-meta.ts";
+import { faqPageLd } from "../routes-ld.ts";
 import { Faq } from "./Faq.tsx";
 
 vi.mock("@tanstack/react-router", () => ({

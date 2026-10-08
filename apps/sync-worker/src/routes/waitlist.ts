@@ -22,7 +22,7 @@ const Schema = z.object({
   email: Email,
   windows: z.boolean().optional().default(false),
   firetv: z.boolean().optional().default(false),
-  website: z.string().max(1000).optional(),
+  hp_note: z.string().max(1000).optional(),
 });
 
 const hex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -73,10 +73,10 @@ export async function handleWaitlist(c: WaitlistContext): Promise<Response> {
   }
   const parsed = Schema.safeParse(raw);
   if (!parsed.success) return respond(c, { error: "invalid request" }, 400);
-  const { email, windows, firetv, website } = parsed.data;
+  const { email, windows, firetv, hp_note } = parsed.data;
 
   // Honeypot: a bot filled the hidden field. Look successful, store nothing.
-  if (website !== undefined && website !== "") return respond(c, { ok: true }, 200);
+  if (hp_note !== undefined && hp_note !== "") return respond(c, { ok: true }, 200);
 
   await c.env.DB
     .prepare(`INSERT INTO waitlist (email, windows, firetv, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO NOTHING`)

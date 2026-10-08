@@ -1,6 +1,6 @@
 import { COLLAPSED_ROWS, SLOT_COUNT } from "./data.ts";
 import type { Channel, Programme } from "./data.ts";
-import { describe, displayName, fmtTime, nowNext, upcoming } from "./state.ts";
+import { displayName, fmtTime, nowNext, upcoming } from "./state.ts";
 
 const Star = () => (
   <svg className="dm-star" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" strokeLinejoin="round" /></svg>
@@ -17,7 +17,7 @@ export function NowNext({ channel, clock }: { channel: Channel; clock: number })
         <span className="dm-lbl">Now</span>
         <b>{now.title}</b>
         <span className="dm-t tnum">{times(now)}</span>
-        <progress className="dm-progress" value={elapsed} max={total} />
+        <progress className="dm-progress" value={elapsed} max={total} aria-hidden="true" />
       </span>
       <span className="dm-slot dm-s1">
         <span className="dm-lbl">Next</span>
@@ -42,7 +42,10 @@ export interface ChannelListProps {
   onPlay?: (channelId: string) => void;
 }
 
-/** A listbox of channels with a roving tabindex. Programme cells are decoration: each option carries its own label. */
+/**
+ * A listbox of channels with a roving tabindex. An option is named by its own content (logo letters, name, quality, Now,
+ * Next, the later programmes), so the accessible name always contains the visible text (WCAG 2.5.3 Label in Name).
+ */
 export function ChannelList({ id, channels, clock, favs, playing, focus, showRaw, collapsed, hidden, onPlay }: ChannelListProps) {
   // The focus can name a channel that is filtered out; then the first row is the tab stop.
   const stop = channels.some((c) => c.id === focus.channelId) ? focus.channelId : channels[0]?.id;
@@ -64,17 +67,16 @@ export function ChannelList({ id, channels, clock, favs, playing, focus, showRaw
               data-id={c.id}
               tabIndex={c.id === stop ? 0 : -1}
               aria-selected={playing === c.id}
-              aria-label={describe(c, clock) + (fav ? ", favourite" : "")}
               data-slot={c.id === stop ? focus.slotIndex : undefined}
               onClick={onPlay ? () => onPlay(c.id) : undefined}
             >
-              <span className="dm-chan" aria-hidden="true">
+              <span className="dm-chan">
                 <span className={`dm-logo dm-h${c.hue}`}>{c.initials}</span>
                 <span className="dm-name">{displayName(c, showRaw)}</span>
                 {!showRaw && <small className="dm-q">{c.quality}</small>}
-                {fav && <Star />}
+                {fav && <><Star /><span className="sr-only">, favourite</span></>}
               </span>
-              <span className="dm-cells" aria-hidden="true">
+              <span className="dm-cells">
                 <NowNext channel={c} clock={clock} />
                 {slots.slice(2).map((p, k) => (
                   <span key={k} className={`dm-slot dm-s${k + 2}`}>

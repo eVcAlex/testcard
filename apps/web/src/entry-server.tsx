@@ -1,7 +1,8 @@
 import { RouterProvider, createMemoryHistory } from "@tanstack/react-router";
 import { renderToString } from "react-dom/server";
 import { headToHtml } from "./head.ts";
-import { ROUTES, buildSitemap, headModel, metaFor } from "./routes-meta.ts";
+import { ROUTES, buildSitemap, metaFor } from "./routes-meta.ts";
+import { serverHeadModel } from "./routes-ld.ts";
 import { createAppRouter } from "./router.tsx";
 
 export interface Rendered { html: string; head: string; status: 200 | 404 }
@@ -12,7 +13,7 @@ export async function render(url: string): Promise<Rendered> {
   await router.load();
   const html = renderToString(<RouterProvider router={router} />);
   const route = metaFor(new URL(url, "http://localhost").pathname);
-  return { html, head: headToHtml(headModel(route)), status: ROUTES.includes(route) ? 200 : 404 };
+  return { html, head: headToHtml(serverHeadModel(route)), status: ROUTES.includes(route) ? 200 : 404 };
 }
 
 export { ROUTES, buildSitemap };

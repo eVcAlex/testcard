@@ -1,4 +1,5 @@
-import { NOT_FOUND_META, ROUTES, faqPageLd, headModel, homeLd, metaFor, serialiseLd } from "./routes-meta.ts";
+import { NOT_FOUND_META, ROUTES, headModel, metaFor } from "./routes-meta.ts";
+import { faqPageLd, homeLd, serialiseLd, serverHeadModel } from "./routes-ld.ts";
 
 const tag = (m: ReturnType<typeof headModel>, key: string) => m.tags.find((t) => t.attrs.name === key || t.attrs.property === key || t.attrs.rel === key)?.attrs;
 
@@ -35,6 +36,10 @@ describe("routes-meta", () => {
     expect(headModel(metaFor("/")).tags.find((t) => t.attrs.rel === "canonical")?.attrs.href).toBe("https://evicted.dev/");
   });
 
+  it("the client head model carries no JSON-LD (it is prerender-only)", () => {
+    for (const r of ROUTES) expect(headModel(r).jsonLd).toEqual([]);
+  });
+
   it("marks /link and the 404 noindex without a canonical", () => {
     expect(tag(headModel(metaFor("/link")), "robots")?.content).toMatch(/noindex/);
     expect(tag(headModel(metaFor("/link")), "canonical")).toBeUndefined();
@@ -49,12 +54,12 @@ describe("routes-meta", () => {
     expect(doc["@graph"].map((n) => n["@type"])).toEqual(["Organization", "WebSite", "SoftwareApplication"]);
     expect(doc["@graph"][2]?.offers?.price).toBe("0");
     expect(JSON.stringify(doc)).not.toMatch(/aggregateRating|review/i);
-    expect(headModel(metaFor("/")).jsonLd).toHaveLength(1);
-    expect(headModel(metaFor("/download")).jsonLd).toHaveLength(0);
+    expect(serverHeadModel(metaFor("/")).jsonLd).toHaveLength(1);
+    expect(serverHeadModel(metaFor("/download")).jsonLd).toHaveLength(0);
   });
 
   it("puts FAQPage JSON-LD on /faq without legality, pricing or version-specific answers", () => {
-    const [raw] = headModel(metaFor("/faq")).jsonLd;
+    const [raw] = serverHeadModel(metaFor("/faq")).jsonLd;
     const doc = JSON.parse(raw ?? "{}") as { "@type": string; mainEntity: { name: string; acceptedAnswer: { text: string } }[] };
     expect(doc["@type"]).toBe("FAQPage");
     const names = doc.mainEntity.map((q) => q.name);

@@ -27,6 +27,11 @@ it("_headers carries the security set and keeps Cache-Control off the catch-all 
   for (const h of ["Strict-Transport-Security", "Permissions-Policy", "Cross-Origin-Opener-Policy", "Cross-Origin-Resource-Policy", "upgrade-insecure-requests", "script-src 'self'; style-src 'self'"]) expect(headers).toContain(h);
   expect(headers.split(/^\S/m)[1]).not.toContain("Cache-Control");
   expect(headers).toMatch(/\/assets\/\*\n\s+Cache-Control: public, max-age=31536000, immutable/);
+  for (const path of ["/theme-init.js", "/og.png", "/favicon.svg", "/shots/*"]) {
+    expect(headers).toContain(`\n${path}\n  Cache-Control: public, max-age=3600\n`);
+  }
+  for (const path of ["/", "/download", "/setup", "/faq", "/privacy", "/404.html"]) expect(headers).toContain(`\n${path}\n  Cache-Control: no-cache\n`);
+  expect(headers).toMatch(/\/fonts\/\*\n\s+Cache-Control: public, max-age=31536000, immutable/);
   expect(headers).toMatch(/\/link\n\s+Cache-Control: no-store/);
 });
 

@@ -15,7 +15,7 @@ export function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [windows, setWindows] = useState(false);
   const [firetv, setFiretv] = useState(false);
-  const [website, setWebsite] = useState("");
+  const [hpNote, setHpNote] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
   const message = useRef<HTMLParagraphElement>(null);
@@ -30,7 +30,7 @@ export function WaitlistForm() {
     if (phase === "sending") return;
     setPhase("sending");
     try {
-      await joinWaitlist({ email: email.trim(), windows, firetv, website });
+      await joinWaitlist({ email: email.trim(), windows, firetv, hp_note: hpNote });
       setPhase("done");
     } catch (e) {
       setError(errorStatus(e) === 429 ? WAITLIST_RATE_LIMITED : WAITLIST_FAILED);
@@ -60,8 +60,8 @@ export function WaitlistForm() {
             </label>
           </fieldset>
           <div className="wl-hp" aria-hidden="true">
-            <label htmlFor={`${uid}-website`}>Leave this field empty</label>
-            <input id={`${uid}-website`} name="website" type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+            <label htmlFor={`${uid}-hp`}>Leave this field empty</label>
+            <input id={`${uid}-hp`} name="hp_note" type="text" tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore value={hpNote} onChange={(e) => setHpNote(e.target.value)} />
           </div>
           <button type="submit" className="button" disabled={phase === "sending"}>
             {phase === "sending" ? "Joining..." : "Join the beta waitlist"}

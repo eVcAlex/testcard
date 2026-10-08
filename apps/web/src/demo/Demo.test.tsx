@@ -18,35 +18,36 @@ describe("Demo", () => {
     const options = screen.getAllByRole("option");
     expect(options).toHaveLength(14);
     expect(options.filter((o) => o.tabIndex === 0)).toHaveLength(1);
-    expect(option(/^Harbour News, now:/)).toHaveAttribute("tabindex", "0");
+    expect(option(/^HN Harbour News HD Now Weather Front/)).toHaveAttribute("tabindex", "0");
     expect(list()).toBeInTheDocument();
   });
 
-  it("labels each option with now and next, and hides the programme cells from assistive tech", () => {
+  it("names each option from its visible content (label in name): logo letters, name, quality, Now, Next", () => {
     render(<Demo />);
-    const o = option(/^Peak Sport, now: .* until \d\d:\d\d, next: .*, favourite$/);
-    expect(o.querySelector(".dm-cells")).toHaveAttribute("aria-hidden", "true");
+    const o = option(/^PS Peak Sport 4K , favourite Now .* \d\d:\d\d–\d\d:\d\d Next /);
+    expect(o).not.toHaveAttribute("aria-label");
+    for (const shown of ["PS", "Peak Sport", "4K", "Now", "Next"]) expect(o).toHaveTextContent(shown);
   });
 
   it("arrows move focus between channels, Enter plays, and a live region announces it", async () => {
     const user = userEvent.setup();
     render(<Demo />);
-    option(/^Harbour News/).focus();
+    option(/^HN Harbour News/).focus();
     await user.keyboard("{ArrowDown}");
-    expect(option(/^Tidewater Weather/)).toHaveFocus();
-    expect(option(/^Tidewater Weather/)).toHaveAttribute("tabindex", "0");
-    expect(option(/^Harbour News/)).toHaveAttribute("tabindex", "-1");
+    expect(option(/^TW Tidewater Weather/)).toHaveFocus();
+    expect(option(/^TW Tidewater Weather/)).toHaveAttribute("tabindex", "0");
+    expect(option(/^HN Harbour News/)).toHaveAttribute("tabindex", "-1");
     await user.keyboard("{Enter}");
-    expect(option(/^Tidewater Weather/)).toHaveAttribute("aria-selected", "true");
+    expect(option(/^TW Tidewater Weather/)).toHaveAttribute("aria-selected", "true");
     expect(document.getElementById("dm-live")).toHaveTextContent(/^Selected: Tidewater Weather, now:/);
     await user.keyboard("{ArrowUp}{ArrowUp}");
-    expect(option(/^Harbour News/)).toHaveFocus();
+    expect(option(/^HN Harbour News/)).toHaveFocus();
   });
 
   it("keeps typing in the search box after Esc was pressed on a row with nothing to clear", async () => {
     const user = userEvent.setup();
     render(<Demo />);
-    option(/^Harbour News/).focus();
+    option(/^HN Harbour News/).focus();
     await user.keyboard("{Escape}/news");
     expect(screen.getByRole("searchbox", { name: "Search channels" })).toHaveFocus();
     expect(screen.getByRole("searchbox", { name: "Search channels" })).toHaveValue("news");
@@ -55,18 +56,18 @@ describe("Demo", () => {
   it("left and right move between programmes in the row", async () => {
     const user = userEvent.setup();
     render(<Demo />);
-    option(/^Harbour News/).focus();
+    option(/^HN Harbour News/).focus();
     await user.keyboard("{ArrowRight}");
-    expect(option(/^Harbour News/)).toHaveAttribute("data-slot", "1");
+    expect(option(/^HN Harbour News/)).toHaveAttribute("data-slot", "1");
     expect(document.getElementById("dm-live")).toHaveTextContent(/^Harbour News, \d\d:\d\d, /);
   });
 
   it("F toggles the favourite, / focuses the search, T toggles TV mode, Esc clears the search", async () => {
     const user = userEvent.setup();
     const { container } = render(<Demo />);
-    option(/^Harbour News/).focus();
+    option(/^HN Harbour News/).focus();
     await user.keyboard("f");
-    expect(option(/^Harbour News.*favourite$/)).toBeInTheDocument();
+    expect(option(/^HN Harbour News HD , favourite /)).toBeInTheDocument();
     await user.keyboard("t");
     expect(container.querySelector(".demo")).toHaveAttribute("data-mode", "tv");
     expect(screen.getByRole("button", { name: /^TV mode/ })).toHaveAttribute("aria-pressed", "true");

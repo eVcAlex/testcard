@@ -25,7 +25,7 @@ export function Sources() {
               <li>show them on a programme guide</li>
               <li>keep them in step across your screens</li>
             </ul>
-            <p><Link to="/setup">How setup works</Link></p>
+            <p><Link to="/setup">Read the setup guide</Link></p>
           </div>
         </div>
       </div>

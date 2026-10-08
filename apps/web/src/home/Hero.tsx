@@ -9,12 +9,12 @@ export function Hero() {
       <section className="hm-hero" aria-labelledby="hm-h1">
         <div className="wrap hm-hero-grid">
           <div>
-            <p className="eyebrow">IPTV player · Windows · Fire TV</p>
+            <p className="eyebrow">Testcard IPTV player · Windows · Fire TV</p>
             <h1 id="hm-h1">The guide is the page.</h1>
           </div>
           <div className="hm-hero-side">
             <p className="lead">
-              Testcard is an IPTV player for Windows and Fire TV. Add your Xtream or M3U source and your channels arrive tidied, grouped and on a proper programme guide. We don&rsquo;t sell channels.
+              Add your Xtream or M3U source and your channels arrive tidied, grouped and on a proper programme guide. We don&rsquo;t sell channels.
             </p>
             <div className="actions">
               <WaitlistLink className="button hm-big" />

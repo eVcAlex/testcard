@@ -6,7 +6,7 @@ export const linkSession = (lookup: string) => http.url(`/link/session?lookup=${
 export const linkApprove = (body: { lookup: string; blob: string; iv: string }) => http.url("/link/approve").post(body).json();
 export const signIn = (email: string, password: string) => http.url("/auth/sign-in/email").post({ email, password }).res();
 export const signUp = (email: string, password: string) => http.url("/auth/sign-up/email").post({ email, password, name: email }).res();
-export const joinWaitlist = (body: { email: string; windows?: boolean; firetv?: boolean; website?: string }) => http.url("/waitlist").post(body).res();
+export const joinWaitlist = (body: { email: string; windows?: boolean; firetv?: boolean; hp_note?: string }) => http.url("/waitlist").post(body).res();
 
 /** HTTP status when the server answered with an error; undefined for network failures. */
 export const errorStatus = (e: unknown): number | undefined => (e as Partial<WretchError>)?.status;

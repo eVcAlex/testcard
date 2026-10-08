@@ -5,11 +5,8 @@ import "./pages/content.css";
 import { Footer } from "./components/Footer.tsx";
 import { Head } from "./components/Head.tsx";
 import { Header } from "./components/Header.tsx";
-import { Faq } from "./pages/Faq.tsx";
 import { Home } from "./pages/Home.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
-import { Privacy } from "./pages/Privacy.tsx";
-import { Setup } from "./pages/Setup.tsx";
 
 const root = createRootRoute({
   component: () => (
@@ -25,11 +22,15 @@ const root = createRootRoute({
 
 const at = <P extends string>(path: P, component: RouteComponent) => createRoute({ getParentRoute: () => root, path, component });
 
-// React Query (and the Link TV crypto) load only with these two routes.
+// Everything but the home page loads on demand (the prerendered page is hydrated only once its chunk has loaded).
+// React Query and the Link TV crypto load only with /download and /link.
 const download = at("/download", lazyRouteComponent(() => import("./pages/DownloadRoute.tsx"), "DownloadRoute"));
+const setup = at("/setup", lazyRouteComponent(() => import("./pages/Setup.tsx"), "Setup"));
+const faq = at("/faq", lazyRouteComponent(() => import("./pages/Faq.tsx"), "Faq"));
+const privacy = at("/privacy", lazyRouteComponent(() => import("./pages/Privacy.tsx"), "Privacy"));
 const link = at("/link", lazyRouteComponent(() => import("./pages/LinkRoute.tsx"), "LinkRoute"));
 
-const routeTree = root.addChildren([at("/", Home), download, at("/setup", Setup), at("/faq", Faq), at("/privacy", Privacy), link]);
+const routeTree = root.addChildren([at("/", Home), download, setup, faq, privacy, link]);
 
 export const createAppRouter = (opts: { history?: RouterHistory; isServer?: boolean } = {}) =>
   createRouter({ routeTree, defaultNotFoundComponent: NotFound, defaultPreload: "intent", ...opts });
