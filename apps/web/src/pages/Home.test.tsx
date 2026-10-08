@@ -4,7 +4,8 @@ import { WAITLIST_HREF } from "../site.ts";
 import { Home } from "./Home.tsx";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, search, hash, children, ...rest }: { to: string; search?: Record<string, string>; hash?: string; children: React.ReactNode }) => (
+  useRouterState: () => false,
+  Link: ({ to, search, hash, hashScrollIntoView: _h, children, ...rest }: { to: string; search?: Record<string, string>; hash?: string; hashScrollIntoView?: unknown; children: React.ReactNode }) => (
     <a href={`${to}${search ? `?${new URLSearchParams(search)}` : ""}${hash ? `#${hash}` : ""}`} {...rest}>{children}</a>
   ),
 }));
