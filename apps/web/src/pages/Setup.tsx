@@ -44,7 +44,7 @@ export function Setup() {
           <li><b>Playlist URL</b>: the address of an M3U or M3U8 playlist. The form takes an address, not a file.</li>
           <li>Add an XMLTV address if you want a guide and the playlist doesn't name one (next section).</li>
         </ul>
-        <p>Your logins are kept in your device's secure store, not in the library database and never in logs.</p>
+        <p>Your logins are encrypted on the device: with Windows' own data protection on Windows, and the Android Keystore on Fire TV.</p>
       </section>
 
       <section id="load" aria-labelledby="load-h" className="block">

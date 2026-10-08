@@ -62,7 +62,7 @@ describe("Download in the waitlist state", () => {
       expect(screen.getByRole("heading", { level: 2, name: h })).toBeInTheDocument();
     }
     expect(screen.getByText(/The beta is free/)).toBeInTheDocument();
-    expect(screen.getByRole("table")).toHaveTextContent(/Windows 10 or 11, 64-bit \(x64\) to be confirmed/);
+    expect(screen.getByRole("table")).toHaveTextContent(/Windows 10 or 11, 64-bit \(x64\) only/);
     expect(screen.getByRole("table")).toHaveTextContent(/Fire OS 6 or later \(Android 7\+\) to be confirmed/);
     expect(screen.getByText(/shared with beta testers/)).toBeInTheDocument();
     expect(screen.getByText(/ships no channels/i)).toBeInTheDocument();
