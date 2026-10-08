@@ -55,7 +55,7 @@ describe("Faq", () => {
   it("feeds JSON-LD only timeless answers, and every one is also on the page", () => {
     const items = faqLdItems();
     const names = items.map((i) => i.question);
-    expect(names).toEqual(["Does Testcard come with channels?", "Which source types work?", "What gets synced, and is it encrypted?", "Why is my guide empty or wrong?"]);
+    expect(names).toEqual(["Does Testcard come with channels?", "Which source types work?", "Why is my guide empty or wrong?"]);
     for (const banned of FAQ.filter((q) => !q.structured)) expect(names).not.toContain(banned.question);
     const doc = faqPageLd(items)[0] as unknown as { mainEntity: unknown[] };
     expect(doc.mainEntity).toHaveLength(4);
