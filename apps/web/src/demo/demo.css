@@ -95,7 +95,7 @@
 .dm-row[aria-selected="true"] { background: var(--d-card); }
 .dm-row:focus-visible { outline-offset: -2px; }
 .dm-chan { display: flex; align-items: center; gap: 8px; min-width: 0; margin-bottom: 6px; }
-.dm-logo { flex: none; width: 30px; height: 22px; display: grid; place-items: center; border-radius: 4px; background: hsl(var(--h) 38% 32%); color: #f2eee7; font-size: 11px; font-weight: 700; }
+.dm-logo { flex: none; width: 30px; height: 22px; display: grid; place-items: center; border-radius: 4px; background: hsl(var(--h) 38% 28%); color: #f2eee7; font-size: 11px; font-weight: 700; }
 .dm-name { font-weight: 600; font-size: 15px; min-width: 0; overflow-wrap: anywhere; }
 .dm-q { flex: none; font-size: 11px; color: var(--d-muted); border: 1px solid var(--d-line2); border-radius: var(--radius-chip); padding: 0 5px; }
 .dm-cells { display: grid; gap: 2px; }
@@ -188,3 +188,4 @@
 
 @media (pointer: coarse) { .dm-btn, .dm-tab { min-height: 44px; } }
 @media (prefers-contrast: more) { .dm-row, .dm-slot { border-color: var(--d-line2); } }
+.dm-search input::-webkit-search-cancel-button { filter: invert(1) grayscale(1); }

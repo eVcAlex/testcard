@@ -87,3 +87,4 @@
 
 .hm-band .wrap { display: grid; gap: 20px; justify-items: start; }
 .hm-band .bars { width: 140px; }
+.hm-copy > .hm-steps { margin-top: 16px; }
