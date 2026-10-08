@@ -28,7 +28,7 @@ export function NowNext({ channel, clock }: { channel: Channel; clock: number })
   );
 }
 
-export interface ChannelListProps {
+interface ChannelListProps {
   id: string;
   channels: readonly Channel[];
   clock: number;

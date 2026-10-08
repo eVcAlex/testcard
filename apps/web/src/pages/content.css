@@ -11,8 +11,6 @@
 .page code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 0.9em; padding: 1px 5px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-chip); overflow-wrap: anywhere; }
 .page code.sha { display: inline-block; font-size: 0.8em; }
 .tbc { display: inline-block; padding: 0 6px; font-size: var(--site-small); color: var(--muted-foreground); border: 1px dashed var(--border-strong); border-radius: var(--radius-chip); white-space: nowrap; }
-.confirm { padding: 12px 14px; font-size: var(--site-small); border: 1px dashed var(--border-strong); border-radius: var(--radius-card); background: var(--surface-sunken); }
-.confirm b { font-weight: var(--wght-semibold); }
 
 /* spec / requirements table: hairlines, scrolls sideways on narrow screens rather than the page */
 .spec { width: 100%; border-collapse: collapse; font-size: var(--site-small); }

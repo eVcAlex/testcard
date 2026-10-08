@@ -18,18 +18,17 @@ describe("Privacy", () => {
     const section = container.querySelector("#waitlist")!;
     expect(section.textContent).toMatch(/your email address, which devices you ticked .* and the time you signed up/);
     expect(section.textContent).toMatch(/only to email you an invitation/);
-    expect(section.textContent).toMatch(/until the beta invitation has been sent, plus 30 days, or until you ask us to delete it/);
+    expect(section.textContent).toMatch(/until we have sent your invitation, or until you ask us to delete it/);
     expect(section.textContent).toMatch(/email hello@evicted\.dev/);
   });
 
-  it("covers the theme preference, sync encryption and the update check, and flags unconfirmed items", () => {
+  it("covers the theme preference, sync encryption and the update check, and has nothing left to confirm", () => {
     const { container } = render(<Privacy />);
     expect(container.textContent).toMatch(/no cookies and has no analytics/);
     expect(container.textContent).toMatch(/local storage under the name tc-theme/);
     expect(container.textContent).toMatch(/encrypted, with a key derived from your account password/);
     expect(container.textContent).toMatch(/check for new versions/);
-    expect(container.querySelectorAll(".confirm").length).toBeGreaterThanOrEqual(3);
-    expect(container.textContent).toMatch(/Owner to confirm:/);
+    expect(container.textContent).not.toMatch(/Owner to confirm|30 days/i);
     expect(container.textContent).not.toMatch(/placeholder|draft|not yet written/i);
   });
 });

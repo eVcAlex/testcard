@@ -1,6 +1,6 @@
 import { PRODUCT_NAME } from "./site.ts";
 
-export interface FaqItem {
+interface FaqItem {
   id: string;
   question: string;
   /** Paragraphs. `[text](/path#hash)` is an internal link; the same paragraphs, links flattened, feed the JSON-LD. */

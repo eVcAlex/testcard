@@ -10,7 +10,7 @@ export const LIST_ID = "dm-list";
 export const SEARCH_ID = "dm-q";
 const LABEL_ID = "dm-label";
 
-export interface GuideProps {
+interface GuideProps {
   state: DemoState;
   /** Absent on the server-rendered copy: the same markup, nothing wired. */
   dispatch?: (action: DemoAction) => void;

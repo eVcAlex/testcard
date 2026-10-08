@@ -35,7 +35,7 @@ const routeTree = root.addChildren([at("/", Home), download, setup, faq, privacy
 export const createAppRouter = (opts: { history?: RouterHistory; isServer?: boolean } = {}) =>
   createRouter({ routeTree, defaultNotFoundComponent: NotFound, defaultPreload: "intent", ...opts });
 
-export type AppRouter = ReturnType<typeof createAppRouter>;
+type AppRouter = ReturnType<typeof createAppRouter>;
 
 declare module "@tanstack/react-router" {
   interface Register { router: AppRouter }

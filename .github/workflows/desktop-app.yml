@@ -61,7 +61,13 @@ jobs:
           7z e mpv.7z -oapps/desktop/resources/mpv mpv.exe d3dcompiler_43.dll -y
           if (-not (Test-Path apps/desktop/resources/mpv/mpv.exe)) { throw "mpv.exe not in the archive" }
 
+      # Signs the installer when the repository has a Windows code-signing certificate (a base64 .pfx in WIN_CSC_LINK
+      # and its password in WIN_CSC_KEY_PASSWORD); without them electron-builder leaves it unsigned, as today. Once it
+      # is signed, set SIGNED = true in apps/web/src/site.ts so the website drops its SmartScreen note.
       - run: pnpm --filter @testcard/desktop package
+        env:
+          CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
       - uses: actions/upload-artifact@v4
         with:

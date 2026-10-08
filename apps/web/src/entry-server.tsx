@@ -5,7 +5,7 @@ import { ROUTES, buildSitemap, metaFor } from "./routes-meta.ts";
 import { serverHeadModel } from "./routes-ld.ts";
 import { createAppRouter } from "./router.tsx";
 
-export interface Rendered { html: string; head: string; status: 200 | 404 }
+interface Rendered { html: string; head: string; status: 200 | 404 }
 
 /** Render one URL to the app markup and its head tags. Unknown paths come back as the 404 page. */
 export async function render(url: string): Promise<Rendered> {

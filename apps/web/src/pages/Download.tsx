@@ -28,7 +28,7 @@ function Requirements() {
 }
 
 /** The SmartScreen note. Copy flips with SIGNED in site.ts. */
-export function WindowsNote({ signed = SIGNED }: { signed?: boolean }) {
+function WindowsNote({ signed = SIGNED }: { signed?: boolean }) {
   return signed ? (
     <p>The Windows installer is code-signed. We still publish a SHA-256 next to every build so you can check the file you downloaded.</p>
   ) : (
@@ -40,9 +40,15 @@ export function WindowsNote({ signed = SIGNED }: { signed?: boolean }) {
 
 function FireTvNote() {
   return (
-    <p>
-      On Fire TV you install the app with the free Downloader app, using a Downloader code. Downloader code: <b>shared with beta testers</b>. Open the app afterwards, choose Sign in, and enter the code it shows on <Link to="/link">evicted.dev/link</Link>.
-    </p>
+    <>
+      <p>On Fire TV you install the app with the free Downloader app and a Downloader code. Downloader code: <b>shared with beta testers</b>.</p>
+      <ol>
+        <li>Install <b>Downloader</b> from the Amazon Appstore on your Fire TV.</li>
+        <li>Allow it to install apps: in Settings, under My Fire TV, Developer options, choose <b>Install unknown apps</b> and switch Downloader on. The menu names vary a little between Fire OS versions.</li>
+        <li>Open Downloader, type the code into its address box, choose <b>Go</b>, then <b>Install</b>.</li>
+        <li>Open {PRODUCT_NAME}, choose Sign in, and enter the code it shows on <Link to="/link">evicted.dev/link</Link>.</li>
+      </ol>
+    </>
   );
 }
 

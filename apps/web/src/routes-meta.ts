@@ -9,7 +9,7 @@ export interface RouteMeta {
   noindex?: boolean;
 }
 
-export const OG_IMAGE = { path: "/og.png", width: 1200, height: 630, alt: `${PRODUCT_FULL_NAME} by ${ORG_NAME}: a colour-bar strip and a ruled test-card circle.` } as const;
+const OG_IMAGE = { path: "/og.png", width: 1200, height: 630, alt: `${PRODUCT_FULL_NAME} by ${ORG_NAME}: a colour-bar strip and a ruled test-card circle.` } as const;
 
 export const ROUTES: readonly RouteMeta[] = [
   {
@@ -52,7 +52,7 @@ export const NOT_FOUND_META: RouteMeta = {
   noindex: true,
 };
 
-export const normalisePath = (pathname: string): string => (pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname) || "/";
+const normalisePath = (pathname: string): string => (pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname) || "/";
 
 /** Meta for a pathname; anything unknown is the 404. */
 export function metaFor(pathname: string): RouteMeta {
@@ -60,7 +60,7 @@ export function metaFor(pathname: string): RouteMeta {
   return ROUTES.find((r) => r.path === path) ?? NOT_FOUND_META;
 }
 
-export interface HeadTag { tag: "meta" | "link"; attrs: Record<string, string> }
+interface HeadTag { tag: "meta" | "link"; attrs: Record<string, string> }
 export interface HeadModel { title: string; tags: HeadTag[]; jsonLd: string[] }
 
 const meta = (key: "name" | "property", name: string, content: string): HeadTag => ({ tag: "meta", attrs: { [key]: name, content } });

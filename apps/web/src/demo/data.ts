@@ -1,8 +1,8 @@
 /** Invented demo content. No real channel, programme or provider appears here. Minutes are minutes since midnight. */
 
 export type CategoryId = "all" | "fav" | "news" | "sport" | "films" | "ent";
-export type ContentCategory = Exclude<CategoryId, "all" | "fav">;
-export type SourceId = "a" | "b";
+type ContentCategory = Exclude<CategoryId, "all" | "fav">;
+type SourceId = "a" | "b";
 
 export interface Programme { start: number; end: number; title: string }
 export interface Channel {
