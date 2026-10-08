@@ -29,7 +29,7 @@ Read `01-plan.md` first. This file overrides it where they differ.
 - Tests: vitest for reducer, waitlist form, routes-meta, prerender output, worker route. Keep all 37 existing tests green (update, never delete without replacement).
 
 ## Waitlist backend (apps/sync-worker)
-- `POST /waitlist` JSON `{email, windows?, firetv?, website?}` (`website` is a honeypot: if non-empty, return 200 and store nothing). Validate with zod: trimmed, lower-cased, length <= 254, a conservative email regex. Store in D1 table `waitlist(id, email UNIQUE, windows, firetv, created_at)` via a new migration; duplicate email returns the same 200 (no enumeration). Rate limit per IP (hash the IP with a daily salt, keep in D1 or use a simple per-IP counter table; never store raw IPs). Same-origin only (check `Origin`), `Cache-Control: no-store`, no CORS headers. Add the path to `run_worker_first`. Tests in `apps/sync-worker/test`.
+- `POST /waitlist` JSON `{email, windows?, firetv?, hp_note?}` (`hp_note` is a honeypot, named so browsers do not autofill it: if non-empty, return 200 and store nothing). Validate with zod: trimmed, lower-cased, length <= 254, a conservative email regex. Store in D1 table `waitlist(id, email UNIQUE, windows, firetv, created_at)` via a new migration; duplicate email returns the same 200 (no enumeration). Rate limit per IP (hash the IP with a daily salt, keep in D1 or use a simple per-IP counter table; never store raw IPs). Same-origin only (check `Origin`), `Cache-Control: no-store`, no CORS headers. Add the path to `run_worker_first`. Tests in `apps/sync-worker/test`.
 - Do NOT deploy and do NOT run migrations against remote. Publishing needs the owner's go.
 
 ## Security

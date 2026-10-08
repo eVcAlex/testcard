@@ -39,7 +39,7 @@ function network(ip: string): string {
   const [head = "", tail = ""] = ip.split("::");
   const groups = head.split(":").filter(Boolean);
   if (ip.includes("::")) groups.push(...Array(Math.max(0, 8 - groups.length - tail.split(":").filter(Boolean).length)).fill("0"));
-  return groups.slice(0, 4).join(":");
+  return groups.slice(0, 4).map((g) => g.toLowerCase().replace(/^0+(?=.)/, "")).join(":");
 }
 
 /** Counts this request against the caller's daily allowance; true when it is over the limit. */

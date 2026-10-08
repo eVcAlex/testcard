@@ -70,7 +70,7 @@ export const FAQ: readonly FaqItem[] = [
       "If you sign in, your account keeps your sources, favourites, recently watched, progress, profiles and hidden items in step across devices.",
       "Provider logins are synced only encrypted with a key derived from your account password, so we can't read them. The flip side is that a forgotten password can't be recovered.",
     ],
-    structured: true,
+    structured: false,
   },
   {
     id: "profiles",

@@ -32,6 +32,14 @@ const count = async () => (await rows()).results.length;
 afterEach(() => vi.restoreAllMocks());
 
 describe("POST /waitlist", () => {
+  it("counts every address in an IPv6 /64 as one caller, however it is written", async () => {
+    const forms = ["2001:db8:1:2::1", "2001:db8:1:2:0:0:0:9", "2001:db8:1:2:aaaa:bbbb:cccc:dddd", "2001:db8:1:2::ffff", "2001:0db8:1:2::5"];
+    // db8 vs 0db8 is a different string but the same group; only the /64 prefix matters.
+    for (const [i, ip] of forms.slice(0, MAX_PER_IP_PER_DAY).entries()) expect((await send({ email: `v6${i}@example.com` }, { ip })).status).toBe(200);
+    expect((await send({ email: "v6x@example.com" }, { ip: "2001:db8:1:2::abcd" })).status).toBe(429);
+    expect((await send({ email: "v6y@example.com" }, { ip: "2001:db8:1:3::1" })).status).toBe(200);
+  });
+
   it("stores a valid signup, normalised, and never echoes the email", async () => {
     const res = await send({ email: "  Alice@Example.COM ", windows: true });
     expect(res.status).toBe(200);
