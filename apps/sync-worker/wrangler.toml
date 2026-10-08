@@ -13,13 +13,14 @@ routes = [
   { pattern = "sync.evicted.dev", custom_domain = true },
 ]
 
-# The website (apps/web). API paths run the Worker first; everything else is a static file, with
-# index.html for client-side routes. `/app/*` must be listed: a browser navigating to a release file
-# would otherwise be handed the SPA shell.
+# The website (apps/web). API paths run the Worker first; everything else is a static file, and an unknown
+# path gets the build's real dist/404.html with a 404 status (no SPA fallback). Every API path, `/app/*` and
+# `/waitlist` included, must be listed in run_worker_first so a browser navigation never reaches the 404 page.
 [assets]
 directory = "../web/dist"
-not_found_handling = "single-page-application"
-run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/approve", "/link/poll", "/sync/*", "/guides/*"]
+not_found_handling = "404-page"
+html_handling = "drop-trailing-slash" # canonical URLs have no trailing slash: /download is the page, /download/ redirects to it
+run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/approve", "/link/poll", "/sync/*", "/guides/*", "/waitlist"]
 
 # SYNC_AUTH_SECRET (better-auth signing/encryption secret) is deliberately NOT declared here: a [vars]
 # entry is deployed as a plain var and replaces the real secret. Deployed: `wrangler secret put

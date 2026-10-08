@@ -6,6 +6,7 @@ import { type Field, LinkError, type Mode, linkTv } from "../link/linkTv.ts";
 const pretty = (typed: string) => formatLinkCode(normaliseLinkCode(typed).slice(0, 8));
 
 function codeFromHash(): string {
+  if (typeof location === "undefined") return "";
   const fromHash = normaliseLinkCode(location.hash.slice(1));
   if (fromHash === "") return "";
   history.replaceState(null, "", location.pathname);
@@ -14,7 +15,7 @@ function codeFromHash(): string {
 
 export function LinkPage() {
   const [mode, setMode] = useState<Mode>("signin");
-  const [code, setCode] = useState(codeFromHash);
+  const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -29,13 +30,19 @@ export function LinkPage() {
     },
   });
 
+  // Read after mount so the prerendered form and the first client render match.
+  useEffect(() => {
+    const fromHash = codeFromHash();
+    if (fromHash !== "") setCode(fromHash);
+  }, []);
+
   useEffect(() => {
     if (error?.field) document.getElementById(`link-${error.field}`)?.focus();
   }, [error]);
 
   if (link.isSuccess) {
     return (
-      <section>
+      <section className="wrap page">
         <h1>You're signed in on your TV</h1>
         <p className="lead">Your TV is loading your sources now. You can close this page.</p>
       </section>
@@ -49,10 +56,11 @@ export function LinkPage() {
     link.mutate({ code, email, password, confirm, mode });
   };
   const invalid = (field: Field) => (error?.field === field ? true : undefined);
+  const describedBy = (field: Field) => (error?.field === field ? "link-error" : undefined);
   const signup = mode === "signup";
 
   return (
-    <section>
+    <section className="wrap page">
       <h1>Link your TV</h1>
       <p className="lead">Enter the code on your TV, then sign in or create your Testcard account. Your TV will sign in on its own.</p>
       <div className="tabs" role="tablist">
@@ -61,20 +69,20 @@ export function LinkPage() {
       </div>
       <form className="card" onSubmit={submit} noValidate autoComplete="on">
         <label>Code on your TV
-          <input id="link-code" value={code} onChange={(e) => setCode(pretty(e.target.value))} inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX" maxLength={9} aria-invalid={invalid("code")} />
+          <input id="link-code" value={code} onChange={(e) => setCode(pretty(e.target.value))} inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX" maxLength={9} aria-invalid={invalid("code")} aria-describedby={describedBy("code")} />
         </label>
         <label>Email
-          <input id="link-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" inputMode="email" placeholder="you@example.com" aria-invalid={invalid("email")} />
+          <input id="link-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" inputMode="email" placeholder="you@example.com" aria-invalid={invalid("email")} aria-describedby={describedBy("email")} />
         </label>
         <label>Password
-          <input id="link-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} />
+          <input id="link-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} aria-describedby={describedBy("password")} />
         </label>
         {signup && (
           <label>Confirm password
-            <input id="link-confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} />
+            <input id="link-confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} aria-describedby={describedBy("confirm")} />
           </label>
         )}
-        <div className="error" role="alert" aria-live="polite">{error?.message}</div>
+        <div id="link-error" className="error" role="alert">{error?.message}</div>
         <button className="button" type="submit" disabled={link.isPending}>
           {link.isPending ? "Linking..." : signup ? "Create account and link TV" : "Link this TV"}
         </button>

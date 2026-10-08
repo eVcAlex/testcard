@@ -1,0 +1,585 @@
+<!-- direction A: Now & Next -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testcard - IPTV player for Windows and Fire TV</title>
+<meta name="description" content="Testcard is an IPTV player for Windows and Fire TV. Add your Xtream or M3U source and get tidied, grouped channels on a proper programme guide. It ships no channels.">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+@font-face{font-family:"Inter";src:url("../public/fonts/InterVariable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+:root{
+  color-scheme:dark light;
+  --picture:#000;--background:#14171a;--surface-sunken:#0f1214;--surface-raised:#1a1d21;--card:#1c2024;--card-hover:#232830;--card-active:#2b3138;
+  --scrim:#05080bcc;--border:#262c31;--border-strong:#343c43;--foreground:#f2eee7;--muted-foreground:#949ca4;--faint-foreground:#69727a;
+  --accent:#e7d2ad;--accent-foreground:#1d160a;--live:#e8402a;--fault:#f0745c;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:light){
+  :root{--background:#f7f8f9;--surface-sunken:#eceff1;--surface-raised:#f0f2f4;--card:#fff;--card-hover:#f2f4f6;--card-active:#e8ecef;
+    --border:#e3e7ea;--border-strong:#cfd6db;--foreground:#14181b;--muted-foreground:#5b6670;--faint-foreground:#8d99a2;--accent:#7d5f22;--accent-foreground:#fff;--fault:#b4321c}
+}
+/* demo + screenshot frames: always the dark "tv" palette */
+.demo,.fig{
+  --background:#0a0d11;--surface-sunken:#07090c;--surface-raised:#12161b;--card:#171c22;--card-hover:#232830;--card-active:#232a32;--border:#252c34;--border-strong:#343c43;
+  --foreground:#f2eee7;--muted-foreground:#949ca4;--faint-foreground:#69727a;--accent:#e7d2ad;--accent-foreground:#1d160a;--live:#e8402a;
+  color:var(--foreground);background:var(--background)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/1.55 var(--font);overflow-x:hidden}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:12px;top:-60px;z-index:100;background:var(--accent);color:var(--accent-foreground);padding:10px 16px;border-radius:9px;font-weight:600}
+.skip:focus{top:12px}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:16px}
+@media(min-width:720px){.wrap{padding-inline:24px}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:9px;border:1px solid var(--border-strong);background:transparent;color:var(--foreground);font:600 15px/1 var(--font);text-decoration:none;cursor:pointer;transition:background-color .12s,border-color .12s}
+.btn:hover{background:var(--card-hover)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-foreground)}
+.btn.pri:hover{filter:brightness(1.06)}
+.btn.lg{min-height:52px;padding:0 24px;font-size:16px}
+.btn[aria-disabled=true]{cursor:not-allowed}
+/* header */
+.hd{border-bottom:1px solid var(--border)}
+.hdin{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 24px;padding-block:8px}
+.wm{font-weight:640;font-size:22px;letter-spacing:-.02em;text-decoration:none;min-height:44px;display:flex;align-items:center}
+.wm b{color:var(--accent);font-weight:640}
+.hd nav{display:flex;gap:4px 18px;flex-wrap:wrap;width:100%;order:3;padding-bottom:4px}
+.hd nav a{min-height:44px;display:inline-flex;align-items:center;color:var(--muted-foreground);text-decoration:none;font-size:15px}
+.hd nav a:hover{color:var(--foreground)}
+.hd .acts{display:none;gap:8px}
+.hd .linktv{display:inline-flex;min-height:44px;align-items:center;font-size:15px;color:var(--muted-foreground);text-decoration:none;margin-left:auto}
+@media(min-width:720px){
+  .hd nav{width:auto;order:0;padding:0;margin-left:16px;margin-right:auto}
+  .hd .acts{display:flex}
+  .hd .linktv{display:none}
+  .hdin{flex-wrap:nowrap}
+}
+/* hero */
+.hero{padding-block:clamp(32px,6vw,72px) clamp(40px,6vw,80px)}
+.herogrid{display:grid;gap:40px}
+.herogrid>*{min-width:0}
+.eyebrow{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground);margin:0 0 16px;font-weight:550}
+h1{font-size:clamp(40px,5.4vw,70px);line-height:1.02;font-weight:640;letter-spacing:-.025em;margin:0 0 24px;text-wrap:balance}
+.sub{font-size:clamp(16px,1.5vw,18px);color:var(--muted-foreground);max-width:46ch;margin:0 0 32px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.fine{font-size:14px;color:var(--muted-foreground);margin:20px 0 0}
+@media(min-width:1100px){.herogrid{grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:40px;align-items:center}}
+/* sections */
+.sec{border-top:1px solid var(--border);padding-block:clamp(48px,8vw,96px)}
+h2{font-size:clamp(28px,3.6vw,40px);line-height:1.1;font-weight:640;letter-spacing:-.02em;margin:0 0 16px;text-wrap:balance}
+h3{font-size:18px;margin:0 0 6px;font-weight:600}
+.prose{max-width:64ch;color:var(--muted-foreground)}
+.prose p{margin:0 0 16px}
+.prose strong{color:var(--foreground);font-weight:600}
+.two{display:grid;gap:32px}
+.two>*{min-width:0}
+@media(min-width:900px){.two{grid-template-columns:5fr 7fr;gap:56px;align-items:start}.two.rev{grid-template-columns:7fr 5fr}}
+.fig{margin:0;border:1px solid var(--border-strong);border-radius:13px;overflow:hidden}
+.fig figcaption{padding:10px 14px;font-size:12.5px;color:var(--muted-foreground);border-top:1px solid var(--border)}
+.cap{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground);margin:0 0 8px}
+/* ---------- demo ---------- */
+.demo{border:1px solid var(--border-strong);border-radius:13px;container-type:inline-size;font-size:13px;line-height:1.4;overflow:hidden}
+.dm{display:grid;gap:12px;padding:12px;--rh:44px;--cw:136px}
+.dm>*{min-width:0}
+.tb{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+.dlabel{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground);flex:1 1 100%;font-weight:550}
+.tb input{flex:1 1 140px;min-width:0;height:36px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--foreground);font:inherit;padding:0 10px}
+.tb input::placeholder{color:var(--muted-foreground)}
+.sm{height:36px;padding:0 10px;border-radius:6px;border:1px solid var(--border-strong);background:transparent;color:var(--muted-foreground);font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.sm:hover{background:var(--card-hover);color:var(--foreground)}
+.sm[aria-pressed=true]{background:var(--card-active);color:var(--foreground)}
+.clk{font-variant-numeric:tabular-nums;color:var(--muted-foreground);white-space:nowrap}
+.clk b{color:var(--foreground);font-weight:600}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 4px;margin:-2px -2px 0}
+.tab{flex:none;min-height:36px;padding:0 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted-foreground);font:inherit;cursor:pointer;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.tab:hover{background:var(--card-hover)}
+.tab[aria-selected=true]{background:var(--card-active);color:var(--foreground);border-color:var(--border-strong)}
+.tab .n{font-size:11.5px;font-variant-numeric:tabular-nums;opacity:.8}
+.srcs{display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);color:var(--muted-foreground);font-size:12px}
+.srcs p{margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;font-size:11.5px}
+.srcs ul{list-style:none;margin:0;padding:0}
+.srcs li{padding:3px 0}
+.srcs li span{display:block;color:var(--faint-foreground)}
+.pvrow{display:grid;gap:12px}
+.pv{position:relative;background:var(--picture);border-radius:6px;overflow:hidden;aspect-ratio:16/9;border:1px solid var(--border)}
+.pv canvas{width:100%;height:100%;display:block}
+.badge{position:absolute;left:8px;top:8px;background:var(--scrim);color:var(--foreground);font-size:11.5px;padding:2px 8px;border-radius:6px;border:1px solid var(--border-strong)}
+.info{min-width:0;display:flex;flex-direction:column;gap:2px;align-content:flex-start}
+.info .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground)}
+.info #iN{font-size:20px;font-weight:640;letter-spacing:-.01em;line-height:1.2}
+.info #iT{font-size:15px}
+.info #iM{color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.info .sm{align-self:flex-start;margin-top:8px}
+.sm svg,.ch svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;flex:none}
+.sm[aria-pressed=true] svg{fill:currentColor}
+.gs{position:relative;overflow:auto;max-height:440px;border:1px solid var(--border);border-radius:6px;background:var(--background);overscroll-behavior:contain}
+.gc{position:relative}
+.gh,.line{display:none}
+.row{display:block;position:relative;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;scroll-margin-top:30px}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--card-hover)}
+.row:focus-visible{outline-offset:-2px}
+.row[aria-selected=true]{background:var(--card)}
+.ch{display:flex;align-items:center;gap:8px;min-width:0}
+.cn{font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ch small{font-size:11px;color:var(--muted-foreground);border:1px solid var(--border-strong);border-radius:6px;padding:0 5px;flex:none}
+.ch svg{margin-left:auto;color:var(--accent);fill:currentColor;flex:none}
+.mg{flex:none;width:26px;height:20px;border-radius:4px;display:grid;place-items:center;font-size:10.5px;font-weight:700;color:#f2eee7}
+.track{display:none}
+.nn{display:block;margin-top:4px;color:var(--muted-foreground)}
+.nn b{display:block;color:var(--foreground);font-weight:550}
+.nn span{display:block;font-variant-numeric:tabular-nums}
+.pb{display:block;height:3px;background:var(--border-strong);border-radius:2px;margin:6px 0;overflow:hidden}
+.pb u{display:block;height:100%;background:var(--foreground);text-decoration:none}
+.empty{padding:28px 16px;text-align:center;color:var(--muted-foreground);border:1px solid var(--border);border-radius:6px}
+.empty p{margin:10px 0 0}
+.bars{display:flex;height:6px;max-width:140px;margin:0 auto}
+.bars i{flex:1}
+.legend{margin:0;color:var(--muted-foreground);font-size:12px;display:none;flex-wrap:wrap;gap:4px 14px}
+.legend span{white-space:nowrap}
+kbd{font:600 11px var(--font);border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--foreground);background:var(--surface-raised)}
+.demo noscript{display:block;padding:12px;color:var(--muted-foreground)}
+@container (min-width:640px){
+  .dm{grid-template-columns:112px minmax(0,1fr);gap:14px;padding:14px}
+  .tb{grid-column:1/-1}
+  .dlabel{flex:1 1 auto}
+  .tb input{flex:0 1 180px}
+  .tabs{flex-direction:column;overflow:visible;gap:2px}
+  .tab{border-color:transparent}
+  .srcs{display:block}
+  .main{display:grid;gap:12px;align-content:start}
+  .pvrow{grid-template-columns:220px minmax(0,1fr);align-items:start}
+  .gs{max-height:324px}
+  .gc{width:calc(var(--cw) + 1440px)}
+  .gh{display:block;position:sticky;top:0;z-index:5;height:28px;background:var(--surface-raised);border-bottom:1px solid var(--border)}
+  .gk{position:sticky;left:0;z-index:7;width:var(--cw);height:27px;background:var(--surface-raised);border-right:1px solid var(--border);color:var(--muted-foreground);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:5px 12px}
+  .gt{position:absolute;left:var(--cw);top:0;width:1440px;height:27px}
+  .gt span{position:absolute;top:0;height:27px;padding:5px 0 0 6px;border-left:1px solid var(--border);font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--muted-foreground)}
+  .line{display:block;position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--live);z-index:5;pointer-events:none}
+  .line span{position:absolute;top:5px;left:5px;background:var(--live);color:#0a0d11;font-size:11px;font-weight:700;padding:0 5px;border-radius:4px;font-variant-numeric:tabular-nums}
+  .row{display:flex;padding:0;height:var(--rh);width:calc(var(--cw) + 1440px)}
+  .ch{position:sticky;left:0;z-index:6;width:var(--cw);padding:0 10px;background:var(--surface-raised);border-right:1px solid var(--border)}
+  .row:hover .ch{background:var(--card-hover)}
+  .row[aria-selected=true] .ch{background:var(--card-active);box-shadow:inset 3px 0 0 var(--foreground)}
+  .track{display:block;position:relative;width:1440px;flex:none}
+  .c{font-style:normal;position:absolute;top:4px;bottom:4px;background:var(--card);border-radius:6px;padding:0 8px;display:flex;align-items:center;overflow:hidden;white-space:nowrap}
+  .c span{overflow:hidden;text-overflow:ellipsis}
+  .c.now{background:var(--card-active)}
+  .c.past{opacity:.5}
+  .row:focus .c.fs{outline:2px solid var(--accent);outline-offset:-2px}
+  .nn{display:none}
+  .mg{display:none}
+  .legend{display:flex}
+}
+.demo[data-mode=tv] .dm{--rh:60px;--cw:196px;font-size:16px}
+.demo[data-mode=tv] :focus-visible,.demo[data-mode=tv] .row:focus .c.fs{outline-width:3px}
+.demo[data-mode=tv] .srcs,.demo[data-mode=tv] .tb input{display:none}
+.demo[data-mode=tv] .info #iN{font-size:26px}
+.demo[data-mode=tv] .c{font-size:15px}
+@supports not (container-type:inline-size){.dm{display:block}}
+/* sticky download bar (mobile) */
+.dlbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px calc(8px + env(safe-area-inset-bottom));background:var(--surface-raised);border-top:1px solid var(--border-strong);font-size:14px;color:var(--muted-foreground)}
+.dlbar.off{display:none}
+body{padding-bottom:68px}
+@media(min-width:720px){.dlbar{display:none}body{padding-bottom:0}}
+/* names */
+.seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:9px;padding:3px;gap:3px;margin:0 0 20px}
+.seg button{min-height:40px;padding:0 16px;border:0;border-radius:6px;background:transparent;color:var(--muted-foreground);font:600 14px var(--font);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--foreground);color:var(--background)}
+.nlist{list-style:none;margin:0;padding:0;border-top:1px solid var(--border)}
+.nlist li{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 16px;padding:14px 0;border-bottom:1px solid var(--border)}
+.nlist .nm{font-size:clamp(18px,2.2vw,22px);font-weight:600;overflow-wrap:anywhere}
+.nlist .gp{font-size:14px;color:var(--muted-foreground)}
+.nlist.rawv .nm{font-weight:450;color:var(--muted-foreground)}
+/* fallback diagram */
+.fb{display:grid;gap:12px;border:1px solid var(--border-strong);border-radius:13px;padding:20px;background:var(--surface-sunken)}
+@media(min-width:560px){.fb{grid-template-columns:auto 36px 1fr;align-items:center}}
+.fbc{border:1px solid var(--border-strong);border-radius:9px;padding:14px 16px;background:var(--card);font-weight:600}
+.fbc small{display:block;font-weight:400;color:var(--muted-foreground);font-size:13px}
+.fbl{display:none}
+@media(min-width:560px){.fbl{display:block;height:2px;background:var(--border-strong)}}
+.fbv{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.fbv li{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--border);border-radius:6px;padding:10px 14px;background:var(--card);color:var(--muted-foreground);transition:border-color .2s,color .2s}
+.fbv li b{color:var(--foreground);font-weight:600;font-variant-numeric:tabular-nums}
+.fbv li.on{border-color:var(--foreground);color:var(--foreground)}
+.fbv li.bad b{text-decoration:line-through;color:var(--muted-foreground)}
+.fbv li.bad{border-style:dashed}
+.fbs{grid-column:1/-1;margin:4px 0 0;font-size:14px;color:var(--muted-foreground)}
+/* steps & lists */
+.steps{margin:0 0 16px;padding-left:20px;color:var(--muted-foreground);max-width:64ch}
+.steps li{margin-bottom:6px}
+.steps strong{color:var(--foreground)}
+.shots{display:grid;gap:16px}
+@media(min-width:720px){.shots{grid-template-columns:1fr 1fr}}
+.plain{margin:0 0 16px;padding-left:20px;color:var(--muted-foreground)}
+details{border-top:1px solid var(--border);padding:12px 0}
+details:last-of-type{border-bottom:1px solid var(--border)}
+summary{cursor:pointer;font-weight:600;min-height:28px}
+details p{margin:8px 0 0;color:var(--muted-foreground);max-width:64ch}
+/* download */
+.dls{display:grid;gap:16px;margin-top:24px}
+@media(min-width:720px){.dls{grid-template-columns:1fr 1fr}}
+.dl{border:1px solid var(--border-strong);border-radius:9px;padding:20px;background:var(--card)}
+.dl p{margin:0 0 16px;color:var(--muted-foreground);font-size:14px}
+.ph{display:inline-block;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;border:1px dashed var(--muted-foreground);border-radius:6px;padding:0 6px;margin-left:8px;vertical-align:middle;color:var(--muted-foreground)}
+.meta{font-variant-numeric:tabular-nums;color:var(--muted-foreground);font-size:14px;margin:16px 0 0}
+/* footer */
+.strip{display:flex;height:4px}
+.strip i{flex:1}
+.ft{padding-block:28px 36px;font-size:14px;color:var(--muted-foreground)}
+.ft p{margin:0}
+.ft a{color:var(--foreground)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+@media(prefers-contrast:more){.row,.c{border:1px solid var(--border-strong)}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="hd">
+  <div class="wrap hdin">
+    <a class="wm" href="#top" aria-label="testcard, back to top">test<b>card</b></a>
+    <nav aria-label="Main">
+      <a href="#guide">Guide</a><a href="#sources">Setup</a><a href="#faq">FAQ</a><a href="#download">Download</a>
+    </nav>
+    <a class="linktv" href="/link">Link TV</a>
+    <div class="acts"><a class="btn" href="/link">Link TV</a><a class="btn pri" href="#download">Download</a></div>
+  </div>
+</header>
+
+<main id="main">
+<section class="hero" id="top" aria-labelledby="h1">
+  <div class="wrap herogrid">
+    <div>
+      <p class="eyebrow">IPTV player · Windows · Fire TV</p>
+      <h1 id="h1">The guide is the page.</h1>
+      <p class="sub">Testcard is an IPTV player for Windows and Fire TV. Add your Xtream or M3U source and your channels arrive tidied, grouped and on a proper programme guide. We don't sell channels.</p>
+      <div class="cta"><a class="btn pri lg" href="#download">Download for Windows</a><a class="btn lg" href="#fire-tv">Fire TV setup →</a></div>
+      <p class="fine">Try the guide on the right. Every channel in it is invented.</p>
+    </div>
+
+    <section class="demo" id="guide" aria-labelledby="dlabel" data-mode="guide">
+      <div class="dm">
+        <div class="tb">
+          <p class="dlabel" id="dlabel">Demo · invented channels, no real streams</p>
+          <label class="sr" for="q">Search channels</label>
+          <input id="q" type="search" placeholder="Search channels  ( / )" autocomplete="off" spellcheck="false">
+          <button class="sm" id="bRaw" type="button" aria-pressed="false">Raw names</button>
+          <button class="sm" id="bTv" type="button" aria-pressed="false">TV mode <kbd>T</kbd></button>
+          <span class="clk" title="Fixed demo clock">Clock <b id="clk">20:58</b></span>
+        </div>
+        <div class="rail">
+          <div class="tabs" role="tablist" aria-label="Categories" aria-orientation="vertical" id="tabs"></div>
+          <div class="srcs"><p>Sources</p><ul id="srcs"></ul></div>
+        </div>
+        <div class="main">
+          <div class="pvrow">
+            <div class="pv"><canvas id="cv" width="320" height="180" role="img" aria-label="Test pattern standing in for the picture"></canvas><span class="badge">Muted preview</span></div>
+            <div class="info">
+              <span class="k">Playing</span>
+              <span id="iN"></span><span id="iT"></span><span id="iM"></span>
+              <button class="sm" id="iF" type="button" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" stroke-linejoin="round"/></svg>Favourite <kbd>F</kbd></button>
+            </div>
+          </div>
+          <div class="gs" id="gs">
+            <div class="gc" id="gc">
+              <div class="gh" aria-hidden="true"><div class="gk">Today</div><div class="gt" id="gt"></div></div>
+              <div class="line" id="ln" aria-hidden="true"><span id="lt">20:58</span></div>
+              <div id="lb" role="listbox" aria-label="Channels"></div>
+            </div>
+          </div>
+          <div class="empty" id="em" role="status" hidden><div class="bars" id="eb" aria-hidden="true"></div><p></p></div>
+          <p class="legend" aria-label="Keyboard shortcuts"><span><kbd>↑</kbd> <kbd>↓</kbd> channel</span><span><kbd>←</kbd> <kbd>→</kbd> programme</span><span><kbd>Enter</kbd> play</span><span><kbd>F</kbd> favourite</span><span><kbd>/</kbd> search</span><span><kbd>Esc</kbd> clear</span><span><kbd>T</kbd> TV mode</span></p>
+        </div>
+        <p class="sr" id="live" aria-live="polite"></p>
+      </div>
+      <noscript>The interactive guide needs JavaScript. Example: Harbour News, now Harbour Tonight 20:00–21:00, next The Round-up. Peak Sport, now Live: Ridge League 20:30–22:00.</noscript>
+    </section>
+  </div>
+</section>
+
+<section class="sec" id="names" aria-labelledby="h-names">
+  <div class="wrap two">
+    <div>
+      <h2 id="h-names">Names, tidied.</h2>
+      <div class="prose">
+        <p>Provider lists arrive with country prefixes, decorative characters and quality tags jammed into the name. Testcard cleans them up, keeps the quality as a small tag, and files each channel in a group.</p>
+        <p>Flip the switch. It is the same invented data as the guide above, shown the way a source might send it, and the way you see it.</p>
+      </div>
+    </div>
+    <div>
+      <div class="seg" role="group" aria-label="Name style">
+        <button type="button" id="nRaw" aria-pressed="false">As sent</button>
+        <button type="button" id="nTidy" aria-pressed="true">Tidied</button>
+      </div>
+      <ul class="nlist" id="nl"></ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="feeds" aria-labelledby="h-feeds">
+  <div class="wrap two rev">
+    <div>
+      <h2 id="h-feeds">One channel, every feed.</h2>
+      <div class="prose">
+        <p>Sources often list the same channel several times: 4K, FHD, HD. Testcard groups those variants under one channel in the guide, and if the feed you are watching fails it falls back to the next one automatically.</p>
+        <p>Diagram, not a recording. Press the button.</p>
+      </div>
+    </div>
+    <div>
+      <div class="fb" id="fb">
+        <div class="fbc">Peak Sport<small>one row in the guide</small></div>
+        <div class="fbl" aria-hidden="true"></div>
+        <ul class="fbv" aria-label="Feeds grouped under Peak Sport">
+          <li data-q="4K" class="on"><b>4K</b><span>playing</span></li>
+          <li data-q="FHD"><b>FHD</b><span>standby</span></li>
+          <li data-q="HD"><b>HD</b><span>standby</span></li>
+        </ul>
+        <p class="fbs" id="fbs" role="status">Playing the 4K feed.</p>
+        <button class="btn" type="button" id="fbB" aria-pressed="false">Drop the 4K feed</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="films" aria-labelledby="h-films">
+  <div class="wrap two">
+    <div>
+      <h2 id="h-films">Films, series and catch-up.</h2>
+      <div class="prose">
+        <p>Live TV is the front door, not the whole house. Browse films and series from your source in the same app, grouped by genre, and go back in time on channels where your source offers catch-up.</p>
+      </div>
+    </div>
+    <figure class="fig"><img src="../public/shots/desktop-movies.webp" width="1600" height="900" loading="lazy" alt="Testcard on Windows showing a Movies page with rows of invented film posters grouped as Thrillers and Comedies."><figcaption>Movies on Windows. Titles shown are invented.</figcaption></figure>
+  </div>
+</section>
+
+<section class="sec" id="sofa" aria-labelledby="h-sofa">
+  <div class="wrap">
+    <h2 id="h-sofa">On the sofa and at the desk.</h2>
+    <div class="prose">
+      <p>One account, two screens. The Fire TV app is built for a remote and a distance; the Windows app for a mouse and a keyboard. Sign in on the TV with a short code instead of typing a password with arrow keys.</p>
+    </div>
+    <ol class="steps"><li><strong>On the TV:</strong> open Link TV and read the code.</li><li><strong>On your computer:</strong> enter the code on the Link TV page.</li><li><strong>Done:</strong> the TV is signed in to the same account.</li></ol>
+    <div class="shots">
+      <figure class="fig"><img src="../public/shots/tv-guide.webp" width="1600" height="900" loading="lazy" alt="Testcard on Fire TV: a big-type programme guide with a preview, the selected programme highlighted, and a red line marking now."><figcaption>Fire TV: the guide, built for a remote.</figcaption></figure>
+      <figure class="fig"><img src="../public/shots/desktop-live.webp" width="1600" height="900" loading="lazy" alt="Testcard on Windows: category list, a preview with Watch and Add to Favourites buttons, and the programme guide with a red now-line."><figcaption>Windows: the same guide, for mouse and keyboard.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="sources" aria-labelledby="h-src">
+  <div class="wrap two">
+    <div>
+      <h2 id="h-src">Bring your own sources.</h2>
+      <div class="prose">
+        <p><strong>Testcard ships no channels.</strong> It is a player. We don't sell, host or recommend channels or providers, and there is nothing to subscribe to here.</p>
+        <p>If you already have a source you are entitled to watch, add it:</p>
+      </div>
+      <ul class="plain"><li>an <strong>Xtream</strong> login (server, username, password), or</li><li>an <strong>M3U</strong> playlist URL.</li></ul>
+      <p class="prose"><a href="#faq">Questions? See the FAQ ↓</a></p>
+    </div>
+    <div id="faq">
+      <h3>FAQ</h3>
+      <details><summary>Where do the channels come from?</summary><p>From you. Testcard has no channel list of its own. Without a source it is an empty guide.</p></details>
+      <details><summary>Will it work with my provider?</summary><p>If your provider gives you an Xtream login or an M3U playlist, it should. Provider quality varies, and we can't fix a stream your provider doesn't deliver.</p></details>
+      <details><summary>Is this legal?</summary><p>Testcard is a player, like a media player. What you watch with it is between you and your provider. Use sources you are entitled to use.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="download" aria-labelledby="h-dl">
+  <div class="wrap">
+    <h2 id="h-dl">Download</h2>
+    <div class="prose"><p>Placeholder block: release details are not final.</p></div>
+    <div class="dls">
+      <div class="dl"><h3>Windows<span class="ph">Placeholder</span></h3><p>Installer, .exe</p><a class="btn pri" href="#download" aria-disabled="true">Windows installer (.exe)</a></div>
+      <div class="dl" id="fire-tv"><h3>Fire TV<span class="ph">Placeholder</span></h3><p>Package, .apk. Setup steps to come.</p><a class="btn pri" href="#fire-tv" aria-disabled="true">Fire TV package (.apk)</a></div>
+    </div>
+    <p class="meta">v0.0.0 · date · size TBD · SHA-256 TBD</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="strip" aria-hidden="true"><i style="background:#b8b8b0"></i><i style="background:#b5b27a"></i><i style="background:#7aaeae"></i><i style="background:#7aae85"></i><i style="background:#a97aa6"></i><i style="background:#ae7a7a"></i><i style="background:#7a7aae"></i></div>
+  <div class="wrap ft"><p>Testcard IPTV player · made by Evicted · <a href="mailto:hello@evicted.dev">hello@evicted.dev</a> · <a href="/privacy">Privacy</a> · Ships no channels.</p></div>
+</footer>
+
+<div class="dlbar" id="dlbar"><span>Testcard for Windows</span><a class="btn pri" href="#download">Download</a></div>
+
+<script>
+(()=>{
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const T0=1080,PPM=4,SPAN=360,START=1258,END=1290;
+const f2=n=>String(n).padStart(2,'0'),fmt=m=>f2(Math.floor(m/60)%24)+':'+f2(m%60);
+const SC='ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢ';
+const sc=s=>[...s.toLowerCase()].map(c=>{const i=c.charCodeAt(0)-97;return i>=0&&i<26?SC[i]:c}).join('');
+const hash=s=>[...s].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
+const QS={HD:'ᴴᴰ',FHD:'ᶠᴴᴰ','4K':'⁴ᴷ'};
+const CAT={all:'All',fav:'Favourites',news:'News',sport:'Sport',films:'Films',ent:'Entertainment'};
+const SRC={a:'Harbour Xtream',b:'Weekend M3U'};
+const TT={
+news:['Harbour Tonight','The Round-up','Weather Front','Business Close','Regional Desk','Late Bulletin','Question Hour','Overnight Briefing'],
+sport:['Matchday Build-up','Live: Ridge League','Highlights Show','Pit Lane Weekly','Court Report','Late Kick-off'],
+films:['The Lighthouse Keeper','Night Train North','A Quiet Harvest','Seven Lanterns','Paper Boats','The Last Ferry','Marble Hill'],
+ent:['Studio Nine Live','Lantern Hill','Starfield Lab','The Jam Session','Coastline Walks','Rainy Day Hours','The Cellar Table','Local Legends','Night Garden']};
+const D=[60,30,30,60,90,30,60,30,120,60];
+const CH=[
+['harbour','Harbour News','news','HD','UK|','a'],['tide','Tidewater Weather','news','HD','UK|','a'],['summit','Summit Report','news','FHD','EU|','b'],
+['peak','Peak Sport','sport','4K','UK|','a'],['peak2','Peak Sport 2','sport','FHD','UK|','a'],
+['cinema','Late Night Cinema','films','FHD','VIP|','b'],['moon','Paper Moon Films','films','HD','VIP|','b'],['ember','Ember Classics','films','HD','UK|','a'],
+['s9','Studio 9','ent','HD','UK|','a'],['lantern','Lantern Drama','ent','FHD','EU|','b'],['nova','Nova Science','ent','HD','EU|','b'],
+['marm','Marmalade Kitchen','ent','HD','UK|','a'],['north','Northbound Travel','ent','FHD','EU|','b'],['quiet','Quiet Hours','ent','HD','UK|','a']
+].map(([id,name,cat,q,pre,src],i)=>{
+  const pool=TT[cat],pg=[];let t=0,k=i;
+  while(t<SPAN){const d=Math.min(D[(k*3+i)%D.length],SPAN-t);pg.push({s:t,e:t+d,t:pool[(k+i)%pool.length]});t+=d;k++}
+  return{id,name,cat,q,src,pg,raw:pre+' '+sc(name)+' '+QS[q],h:hash(id)%360,mg:name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}});
+const by=Object.fromEntries(CH.map(c=>[c.id,c]));
+const at=(c,m)=>{const i=c.pg.findIndex(p=>m>=p.s&&m<p.e);return i<0?c.pg.length-1:i};
+const lab=c=>{const i=at(c,S.clock-T0),p=c.pg[i],n=c.pg[i+1];return c.name+', now: '+p.t+' until '+fmt(T0+p.e)+', next: '+(n?n.t:'later')};
+
+let S={mode:'guide',cat:'all',q:'',fc:'harbour',fs:0,play:'harbour',favs:new Set(['peak','moon']),clock:START,raw:false};
+S.fs=at(by.harbour,START-T0);
+function red(s,a){const n={...s};switch(a.t){
+  case'cat':n.cat=a.v;break;
+  case'q':n.q=a.v;break;
+  case'foc':n.fc=a.id;n.fs=a.s!=null?a.s:at(by[a.id],s.clock-T0);break;
+  case'slot':n.fs=Math.max(0,Math.min(by[s.fc].pg.length-1,s.fs+a.v));break;
+  case'play':n.play=a.id;n.fc=a.id;n.fs=a.s!=null?a.s:at(by[a.id],s.clock-T0);break;
+  case'fav':n.favs=new Set(s.favs);n.favs.has(a.id)?n.favs.delete(a.id):n.favs.add(a.id);break;
+  case'tv':n.mode=s.mode=='tv'?'guide':'tv';break;
+  case'raw':n.raw=!s.raw;break;
+  case'tick':n.clock=s.clock>=END?START:s.clock+1;break}
+  return n}
+const vis=()=>{const q=S.q.trim().toLowerCase();return CH.filter(c=>(S.cat=='all'||(S.cat=='fav'?S.favs.has(c.id):c.cat==S.cat))&&(!q||(c.name+' '+c.raw+' '+CAT[c.cat]+' '+c.pg.map(p=>p.t).join(' ')).toLowerCase().includes(q)))};
+
+const demo=$('#guide'),lb=$('#lb'),gs=$('#gs'),q=$('#q'),tabs=$('#tabs'),live=$('#live'),cv=$('#cv'),em=$('#em');
+const star='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" stroke-linejoin="round"/></svg>';
+
+function go(a,f){
+  const p=S;S=red(p,a);
+  const v=vis();if(v.length&&!v.some(c=>c.id==S.fc)){S.fc=v[0].id;S.fs=at(v[0],S.clock-T0)}
+  if(S.cat!=p.cat||S.q!=p.q||S.favs!=p.favs||S.raw!=p.raw||S.mode!=p.mode)list(v);
+  if(S.play!=p.play)tune();
+  if(S.mode!=p.mode){demo.dataset.mode=S.mode;$('#bTv').setAttribute('aria-pressed',S.mode=='tv');live.textContent=S.mode=='tv'?'TV mode on':'TV mode off';if(S.mode=='tv')gs.scrollLeft=(S.clock-T0)*PPM-60}
+  $('#bRaw').setAttribute('aria-pressed',S.raw);
+  if(S.raw!=p.raw)names();
+  if(a.t=='fav'){live.textContent=by[a.id].name+(S.favs.has(a.id)?' added to':' removed from')+' favourites'}
+  if(a.t=='slot'){const c=by[S.fc],g=c.pg[S.fs];live.textContent=c.name+', '+fmt(T0+g.s)+', '+g.t}
+  paint();focusR(f)}
+
+function list(v){
+  const had=lb.contains(document.activeElement);
+  lb.hidden=!v.length;em.hidden=!!v.length;
+  if(!v.length)em.lastElementChild.textContent=S.q.trim()?'No signal on that one. Try "news".':'No favourites yet. Press F on a channel to add one.';
+  lb.innerHTML=v.map(c=>`<div class="row" role="option" id="o-${c.id}" data-id="${c.id}" tabindex="-1"><div class="ch"><span class="mg" style="background:hsl(${c.h} 38% 32%)">${c.mg}</span><span class="cn">${S.raw?c.raw:c.name}</span>${S.raw?'':`<small>${c.q}</small>`}${S.favs.has(c.id)?star:''}</div><div class="track" aria-hidden="true">${c.pg.map((p,i)=>`<i class="c" data-s="${i}" style="left:${p.s*PPM}px;width:${(p.e-p.s)*PPM-2}px"><span>${p.t}</span></i>`).join('')}</div><div class="nn" aria-hidden="true"></div></div>`).join('');
+  $$('.tab',tabs).forEach(t=>{const k=t.dataset.k;t.lastElementChild.textContent=k=='all'?CH.length:k=='fav'?S.favs.size:CH.filter(c=>c.cat==k).length});
+  if(had)requestAnimationFrame(()=>focusR(true));
+}
+function paint(){
+  const c=S.clock-T0;
+  $('#clk').textContent=$('#lt').textContent=fmt(S.clock);
+  $('#ln').style.left='calc(var(--cw) + '+c*PPM+'px)';
+  $$('.row',lb).forEach(r=>{const ch=by[r.dataset.id],i=at(ch,c),p=ch.pg[i],n=ch.pg[i+1];
+    $$('.c',r).forEach((e,j)=>{e.classList.toggle('now',j==i);e.classList.toggle('past',j<i)});
+    $('.nn',r).innerHTML=`<b>${p.t}</b><span>${fmt(T0+p.s)}–${fmt(T0+p.e)}</span><i class="pb"><u style="width:${Math.min(100,(c-p.s)/(p.e-p.s)*100)}%"></u></i><span>Next: ${n?n.t:'later'}</span>`;
+    r.setAttribute('aria-label',lab(ch)+(S.favs.has(ch.id)?', favourite':''));
+    r.setAttribute('aria-selected',S.play==ch.id)});
+  $$('.tab',tabs).forEach(t=>{const on=t.dataset.k==S.cat;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1});
+  const ch=by[S.play],p=ch.pg[at(ch,c)];
+  $('#iN').textContent=S.raw?ch.raw:ch.name;$('#iT').textContent=p.t;$('#iM').textContent=fmt(T0+p.s)+'–'+fmt(T0+p.e)+' · '+CAT[ch.cat];
+  $('#iF').setAttribute('aria-pressed',S.favs.has(ch.id));
+}
+function focusR(f){
+  $$('.row',lb).forEach(r=>{const on=r.dataset.id==S.fc;r.tabIndex=on?0:-1;
+    $$('.c.fs',r).forEach(e=>e.classList.remove('fs'));
+    if(on){const c=$$('.c',r)[S.fs];c&&c.classList.add('fs');if(f){r.focus({preventScroll:true});show(r,c)}}})}
+function show(r,c){
+  const H=$('.gh').offsetHeight,t=r.offsetTop;
+  if(t-H<gs.scrollTop)gs.scrollTop=t-H;else if(t+r.offsetHeight>gs.scrollTop+gs.clientHeight)gs.scrollTop=t+r.offsetHeight-gs.clientHeight;
+  if(c&&gs.scrollWidth>gs.clientWidth){const w=r.firstElementChild.offsetWidth,l=w+c.offsetLeft,rt=l+c.offsetWidth;
+    if(l<gs.scrollLeft+w)gs.scrollLeft=l-w;else if(rt>gs.scrollLeft+gs.clientWidth)gs.scrollLeft=Math.min(rt-gs.clientWidth,l-w)}}
+
+/* preview */
+const BARS=['#c9c9c4','#c2bf84','#84b8b8','#84b88a','#b484b1','#b48484','#8484b4'];
+function pat(ch){const x=cv.getContext('2d'),w=320,h=180,H=ch.h;
+  x.fillStyle=`hsl(${H} 28% 24%)`;x.fillRect(0,0,w,h);
+  x.strokeStyle=`hsl(${H} 25% 36%)`;x.lineWidth=1;x.beginPath();
+  for(let i=0;i<=w;i+=20){x.moveTo(i+.5,0);x.lineTo(i+.5,h)}for(let j=0;j<=h;j+=20){x.moveTo(0,j+.5);x.lineTo(w,j+.5)}x.stroke();
+  x.strokeStyle='#d8d4cc';x.lineWidth=2;x.beginPath();x.arc(160,76,58,0,7);x.moveTo(160,18);x.lineTo(160,134);x.moveTo(102,76);x.lineTo(218,76);x.stroke();
+  BARS.forEach((b,i)=>{x.fillStyle=b;x.fillRect(Math.round(i*w/7),140,Math.ceil(w/7),40)});
+  x.fillStyle='#0a0d11';x.fillRect(94,60,132,32);x.fillStyle='#f2eee7';x.font='600 14px Inter,system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(ch.name,160,76,120)}
+function noise(){const o=document.createElement('canvas');o.width=64;o.height=36;const g=o.getContext('2d'),d=g.createImageData(64,36);
+  for(let i=0;i<d.data.length;i+=4){const v=Math.random()*190|0;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}
+  g.putImageData(d,0,0);const x=cv.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(o,0,0,320,180)}
+let tid=0;
+function tune(){const ch=by[S.play],id=++tid;
+  if(RM)pat(ch);else{noise();setTimeout(()=>{if(id==tid)pat(ch)},300)}
+  live.textContent='Selected: '+lab(ch)}
+
+/* events */
+demo.addEventListener('click',e=>{
+  const t=e.target.closest('.tab,.row,#bRaw,#bTv,#iF');if(!t)return;
+  if(t.classList.contains('tab'))go({t:'cat',v:t.dataset.k});
+  else if(t.classList.contains('row')){const c=e.target.closest('.c');go({t:'play',id:t.dataset.id,s:c?+c.dataset.s:null},true)}
+  else if(t.id=='bRaw')go({t:'raw'});else if(t.id=='bTv')go({t:'tv'});else go({t:'fav',id:S.play});
+});
+q.addEventListener('input',()=>go({t:'q',v:q.value}));
+const focusList=()=>{const r=$('.row[tabindex="0"]',lb);r&&r.focus()};
+demo.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const t=e.target,k=e.key;
+  if(k=='Escape'){const had=S.q||t==q;if(S.q){q.value='';go({t:'q',v:''})}if(had||t.closest('.gs,.tabs'))focusList();e.preventDefault();return}
+  if(t==q){if(k=='ArrowDown'){e.preventDefault();focusList()}return}
+  if(t.matches('input,textarea'))return;
+  if(k=='/'){e.preventDefault();q.focus();q.select();return}
+  if(k=='t'||k=='T'){go({t:'tv'});return}
+  if(k=='f'||k=='F'){const r=t.closest('.row');go({t:'fav',id:r?r.dataset.id:S.fc});return}
+  if(t.matches('[role=tab]')){
+    const all=$$('.tab',tabs),i=all.indexOf(t);let n=-1;
+    if(k=='ArrowDown'||k=='ArrowRight')n=(i+1)%all.length;else if(k=='ArrowUp'||k=='ArrowLeft')n=(i-1+all.length)%all.length;else if(k=='Home')n=0;else if(k=='End')n=all.length-1;
+    if(n>=0){e.preventDefault();go({t:'cat',v:all[n].dataset.k});$$('.tab',tabs)[n].focus()}return}
+  if(t.matches('.row')){
+    const v=vis(),i=v.findIndex(c=>c.id==t.dataset.id);
+    if(k=='ArrowDown'||k=='ArrowUp'){e.preventDefault();const c=v[Math.max(0,Math.min(v.length-1,i+(k=='ArrowDown'?1:-1)))];go({t:'foc',id:c.id},true)}
+    else if(k=='ArrowRight'||k=='ArrowLeft'){e.preventDefault();go({t:'slot',v:k=='ArrowRight'?1:-1},true)}
+    else if(k=='Enter'||k==' '){e.preventDefault();go({t:'play',id:t.dataset.id,s:S.fs},true)}
+  }});
+
+/* init */
+$('#tabs').innerHTML=Object.keys(CAT).map(k=>`<button class="tab" role="tab" type="button" data-k="${k}" id="t-${k}" aria-controls="lb"><span>${CAT[k]}</span><span class="n"></span></button>`).join('');
+$('#srcs').innerHTML=Object.entries(SRC).map(([k,n])=>`<li>${n}<span>${k=='a'?'Xtream':'M3U'} · ${CH.filter(c=>c.src==k).length} channels</span></li>`).join('');
+$('#gt').innerHTML=Array.from({length:12},(_,i)=>`<span style="left:${i*120}px">${fmt(T0+i*30)}</span>`).join('');
+$('#eb').innerHTML=BARS.map(b=>`<i style="background:${b}"></i>`).join('');
+list(vis());paint();focusR(false);tune();
+gs.scrollLeft=(START-T0)*PPM-60;
+if(!RM)setInterval(()=>{if(!document.hidden)go({t:'tick'})},4000);
+
+/* names section */
+const NL=['harbour','summit','peak','cinema','lantern','marm'];
+function names(){
+  $('#nl').innerHTML=NL.map(id=>{const c=by[id];return`<li><span class="nm">${S.raw?c.raw:c.name+' '+c.q}</span><span class="gp">${CAT[c.cat]} · ${SRC[c.src]}</span></li>`}).join('');
+  $('#nl').classList.toggle('rawv',S.raw);$('#nRaw').setAttribute('aria-pressed',S.raw);$('#nTidy').setAttribute('aria-pressed',!S.raw)}
+$('#nRaw').onclick=()=>{if(!S.raw)go({t:'raw'})};$('#nTidy').onclick=()=>{if(S.raw)go({t:'raw'})};
+names();
+
+/* fallback diagram */
+$('#fbB').onclick=function(){
+  const d=this.getAttribute('aria-pressed')!='true';this.setAttribute('aria-pressed',d);
+  const [a,b]=$$('.fbv li');
+  a.className=d?'bad':'on';a.lastElementChild.textContent=d?'failed':'playing';
+  b.className=d?'on':'';b.lastElementChild.textContent=d?'playing':'standby';
+  this.textContent=d?'Bring the 4K feed back':'Drop the 4K feed';
+  $('#fbs').textContent=d?'4K feed dropped. Fell back to FHD automatically.':'Playing the 4K feed.'};
+
+/* mobile download bar */
+if('IntersectionObserver'in window)new IntersectionObserver(e=>$('#dlbar').classList.toggle('off',e[0].isIntersecting)).observe($('#download'));
+})();
+</script>
+</body>
+</html>

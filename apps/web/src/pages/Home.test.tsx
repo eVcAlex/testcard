@@ -1,59 +1,68 @@
 import { render, screen, within } from "@testing-library/react";
-import { Footer } from "../Footer.tsx";
+import { Footer } from "../components/Footer.tsx";
+import { WAITLIST_HREF } from "../site.ts";
 import { Home } from "./Home.tsx";
 
-const shots = vi.hoisted(() => ({ list: [] as { src: string; alt: string; caption: string; width: number; height: number }[] }));
-vi.mock("../site.ts", () => ({
-  CONTACT_EMAIL: "hello@evicted.dev",
-  get SHOTS() { return shots.list; },
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ to, search, hash, children, ...rest }: { to: string; search?: Record<string, string>; hash?: string; children: React.ReactNode }) => (
+    <a href={`${to}${search ? `?${new URLSearchParams(search)}` : ""}${hash ? `#${hash}` : ""}`} {...rest}>{children}</a>
+  ),
 }));
-vi.mock("@tanstack/react-router", () => ({ Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) => <a href={to} {...rest}>{children}</a> }));
-
-beforeEach(() => { shots.list = []; });
 
 describe("Home", () => {
-  it("leads with what you get, links to download and TV link, and does not pitch dark mode or watermarks", () => {
-    const { container } = render(<><Home /><Footer /></>);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/live tv, films and series/i);
-    expect(screen.getAllByRole("link", { name: /download/i })[0]).toHaveAttribute("href", "/download");
-    expect(screen.getAllByRole("link", { name: /link your tv/i })[0]).toHaveAttribute("href", "/link");
-    expect(container.textContent).not.toMatch(/dark mode|watermark/i);
+  it("leads with the guide, a waitlist call to action and the setup link", () => {
+    render(<><Home /><Footer /></>);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Testcard IPTV player · Windows · Fire TV The guide is the page.");
+    expect(screen.getAllByRole("link", { name: "Join the beta waitlist" })[0]).toHaveAttribute("href", WAITLIST_HREF);
+    expect(screen.getAllByRole("link", { name: "How setup works" })[0]).toHaveAttribute("href", "/setup");
+    expect(screen.getByText("Free. We don’t sell channels.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^download/i })).not.toBeInTheDocument();
   });
 
-  it("says plainly that it brings no channels", () => {
-    render(<Home />);
-    expect(screen.getByText(/brings no channels/i)).toBeInTheDocument();
+  it("has the demo at #guide, labelled as invented", () => {
+    const { container } = render(<Home />);
+    const guide = container.querySelector("#guide")!;
+    expect(guide).toHaveAccessibleName(/demo · invented channels, no real streams/i);
+    expect(within(guide as HTMLElement).getByRole("listbox", { name: "Channels" })).toBeInTheDocument();
   });
 
-  it("states the problem with a fix for each", () => {
+  it("has one section per idea, in order, ending with the waitlist band", () => {
     render(<Home />);
-    const heading = screen.getByRole("heading", { name: /without the mess/i });
-    const section = heading.closest("section")!;
-    const items = within(section).getAllByRole("listitem");
-    expect(items).toHaveLength(4);
-    items.forEach((li) => expect(li.children).toHaveLength(2));
+    const h2 = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(h2).toEqual(["Names, tidied.", "One channel, every feed.", "Films, series and catch-up.", "On the sofa and at the desk.", "Bring your own sources.", "Be there for the beta."]);
   });
 
-  it("hides the screenshots section when there are none", () => {
+  it("says plainly that it ships no channels and points to the FAQ", () => {
     render(<Home />);
-    expect(screen.queryByRole("heading", { name: /screenshots|see it/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.getByText(/ships no channels/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /read the faq/i })).toHaveAttribute("href", "/faq");
   });
 
-  it("renders a lazy image and caption for each screenshot", () => {
-    shots.list = [{ src: "/shots/guide.png", alt: "The TV guide grid", caption: "Now and next", width: 1280, height: 720 }];
+  it("shows names as sent beside the tidied ones, and links them to the raw-names demo state", () => {
     render(<Home />);
-    expect(screen.getByRole("heading", { name: /see it/i })).toBeInTheDocument();
-    expect(screen.getByRole("figure")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "The TV guide grid" })).toHaveAttribute("loading", "lazy");
-    expect(screen.getByText("Now and next")).toBeInTheDocument();
+    const section = screen.getByRole("heading", { name: "Names, tidied." }).closest("section")!;
+    expect(within(section).getAllByRole("listitem")).toHaveLength(6);
+    expect(within(section).getByText("UK| ᴘᴇᴀᴋ ꜱᴘᴏʀᴛ ⁴ᴷ")).toBeInTheDocument();
+    expect(within(section).getByRole("link", { name: /as sent/i })).toHaveAttribute("href", "/?names=raw#guide");
   });
 
-  it("has an Everything else section whose cards do not repeat the problem list", () => {
+  it("renders real screenshots with their alt text, width, height and lazy loading", () => {
     render(<Home />);
-    expect(screen.getByRole("heading", { level: 2, name: "Everything else" })).toBeInTheDocument();
-    const titles = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
-    expect(titles.length).toBe(6);
-    titles.forEach((t) => expect(t).not.toMatch(/tidy names|real tv guide|picks up where/i));
+    const movies = screen.getByRole("img", { name: /Movies: poster shelves/i });
+    expect(movies).toHaveAttribute("src", "/shots/desktop-movies.webp");
+    expect(movies).toHaveAttribute("loading", "lazy");
+    expect(movies).toHaveAttribute("width", "1600");
+    expect(movies).toHaveAttribute("height", "900");
+    expect(screen.getByRole("img", { name: /TV guide on a Fire TV/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /Live TV: a category list/i })).toBeInTheDocument();
+  });
+
+  it("drops a feed and falls back to the next", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<Home />);
+    expect(screen.getByText("Playing the 4K feed.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Drop the 4K feed" }));
+    expect(screen.getByText("4K dropped. Fell back to FHD automatically.")).toBeInTheDocument();
   });
 });

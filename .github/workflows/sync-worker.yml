@@ -1,6 +1,6 @@
 name: Sync worker
 
-# Deploys the sync worker (apps/sync-worker) to Cloudflare whenever main changes it or the schema it serves, after
+# Deploys the sync worker (apps/sync-worker) and the website it serves (apps/web) to Cloudflare whenever main changes them or the schema, after
 # applying any new D1 migrations. Older apps keep working against a newer worker, so the worker goes first.
 # Needs the repository secrets CLOUDFLARE_API_TOKEN (Workers Scripts, D1 and R2 edit) and CLOUDFLARE_ACCOUNT_ID.
 on:
@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths:
       - apps/sync-worker/**
+      - apps/web/**
+      - packages/theme/**
       - packages/sync-schema/**
       - .github/workflows/sync-worker.yml
   workflow_dispatch:
@@ -33,8 +35,9 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile --ignore-scripts --filter "@testcard/sync-worker..."
+      - run: pnpm install --frozen-lockfile --ignore-scripts --filter "@testcard/sync-worker..." --filter "@testcard/web..."
 
+      # `pnpm run test` builds the website first, so apps/web/dist is ready for the deploy below.
       - name: Check it before it goes out
         working-directory: apps/sync-worker
         run: |

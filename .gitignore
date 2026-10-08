@@ -52,3 +52,4 @@ packages/core/evals/.cache/
 apps/tv-native/**/build/
 apps/tv-native/local.properties
 perf-results/
+dist-ssr/

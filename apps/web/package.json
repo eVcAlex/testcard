@@ -5,20 +5,24 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "og": "node scripts/og.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.0",
     "@tanstack/react-router": "^1.130.0",
     "@testcard/core": "workspace:*",
     "@testcard/theme": "workspace:*",
+    "preact": "11.0.1",
+    "preact-render-to-string": "6.8.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "wretch": "^2.11.0"
   },
   "devDependencies": {
+    "@preact/preset-vite": "2.10.6",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.0",
