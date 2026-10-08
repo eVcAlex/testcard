@@ -1,4 +1,4 @@
-/** Seven desaturated bars, left to right: white, yellow, cyan, green, magenta, red, blue. Decorative. */
+/** Seven SMPTE bars (the same values as the desktop app), left to right: white, yellow, cyan, green, magenta, red, blue. Decorative. */
 export function ColourBars({ tall = false }: { tall?: boolean }) {
   return (
     <span className={tall ? "bars bars-tall" : "bars"} aria-hidden="true">

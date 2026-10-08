@@ -30,14 +30,14 @@
   --tv-fg: #f2eee7;
   --tv-muted: #949ca4;
   --tv-line: #262c31;
-  /* colour bars, desaturated: white yellow cyan green magenta red blue */
-  --bar-1: #d6d6d2;
-  --bar-2: #cdc58b;
-  --bar-3: #8bc2c6;
-  --bar-4: #8fbf94;
-  --bar-5: #bb94bd;
-  --bar-6: #c4938d;
-  --bar-7: #8e9ac4;
+  /* SMPTE colour bars, same literals as the desktop app (a broadcast spec, not theme colour): white yellow cyan green magenta red blue */
+  --bar-1: #c0c0c0;
+  --bar-2: #c0c000;
+  --bar-3: #00c0c0;
+  --bar-4: #00c000;
+  --bar-5: #c000c0;
+  --bar-6: #c00000;
+  --bar-7: #0000c0;
 }
 
 * { box-sizing: border-box; }

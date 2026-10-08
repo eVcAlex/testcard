@@ -60,10 +60,10 @@
 .dm-pv-ring { position: absolute; left: 32%; top: 8%; width: 36%; aspect-ratio: 1; border: 2px solid #d8d4cc; border-radius: 50%; }
 .dm-pv-name { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); max-width: 70%; padding: 4px 12px; background: #0a0d11; color: #f2eee7; font-weight: 600; font-size: 13px; text-align: center; }
 .dm-pv-bars { position: absolute; inset: auto 0 0; height: 22%; display: grid; grid-template-columns: repeat(7, 1fr); }
-.dm-pv-bars i:nth-child(1) { background: #c9c9c4; } .dm-pv-bars i:nth-child(2) { background: #c2bf84; }
-.dm-pv-bars i:nth-child(3) { background: #84b8b8; } .dm-pv-bars i:nth-child(4) { background: #84b88a; }
-.dm-pv-bars i:nth-child(5) { background: #b484b1; } .dm-pv-bars i:nth-child(6) { background: #b48484; }
-.dm-pv-bars i:nth-child(7) { background: #8484b4; }
+.dm-pv-bars i:nth-child(1) { background: #c0c0c0; } .dm-pv-bars i:nth-child(2) { background: #c0c000; }
+.dm-pv-bars i:nth-child(3) { background: #00c0c0; } .dm-pv-bars i:nth-child(4) { background: #00c000; }
+.dm-pv-bars i:nth-child(5) { background: #c000c0; } .dm-pv-bars i:nth-child(6) { background: #c00000; }
+.dm-pv-bars i:nth-child(7) { background: #0000c0; }
 .dm-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .dm-badge { position: absolute; left: 8px; top: 8px; padding: 2px 8px; border-radius: var(--radius-chip); border: 1px solid var(--d-line2); background: rgb(5 8 11 / 0.82); color: var(--d-fg); font-size: 12px; }
 .dm-info { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
