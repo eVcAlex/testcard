@@ -106,7 +106,7 @@ export const GUIDE_CAUSES: readonly { id: string; title: string; text: string }[
   {
     id: "needs-refresh",
     title: "It needs a refresh.",
-    text: `The guide is read when a source refreshes, in the background after the channels load, so a new source or a changed address shows no guide until it has. Refresh the source and give it a few minutes. A guide address that fails never stops the channels loading, so channels can look fine while the guide is still empty. Set Auto-refresh to keep it current.`,
+    text: `The guide is read when a source refreshes, in the background after the channels load, so a new source or a changed address shows no guide until it has. Refresh the source and give it a few minutes. A guide address that fails never stops the channels loading, so channels can look fine while the guide is still empty. On Windows, set Auto-refresh to keep it current.`,
   },
 ];
 

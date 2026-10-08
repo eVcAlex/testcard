@@ -20,7 +20,7 @@ function Requirements() {
       </thead>
       <tbody>
         <tr><th scope="row">Windows</th><td>Windows 10 or 11, 64-bit (x64) {TBC}</td><td>.exe installer</td></tr>
-        <tr><th scope="row">Fire TV</th><td>Fire OS version: {TBC}</td><td>.apk, installed with Downloader</td></tr>
+        <tr><th scope="row">Fire TV</th><td>Fire OS 6 or later (Android 7+) {TBC}</td><td>.apk, installed with Downloader</td></tr>
         <tr><th scope="row">Phones and tablets</th><td>Not supported for now</td><td>None</td></tr>
       </tbody>
     </table>

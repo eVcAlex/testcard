@@ -18,7 +18,7 @@ See [`CONTEXT.md`](CONTEXT.md) for the domain glossary and
 
 **Windows** (`apps/desktop`, Electron)
 - Embedded `mpv` playback (HEVC and E-AC-3 included, [ADR 0001](docs/adr/0001-mpv-playback-engine.md)).
-- Sources are added and edited here, refreshed by hand or on a schedule (Off / 6h / 12h / 24h), with
+- Sources are added and edited here, refreshed by hand or on a schedule (Off / 1h / 3h / 6h / 12h / 24h), with
   the XMLTV guide imported alongside.
 - Updates itself from the release bucket ([ADR 0010](docs/adr/0010-in-app-updates.md)).
 

@@ -13,7 +13,7 @@ export function Feeds() {
       <div className="wrap hm-two hm-rev">
         <div className="hm-copy">
           <h2 id="hm-feeds">One channel, every feed.</h2>
-          <p>Sources often list the same channel several times: 4K, FHD, HD. Testcard groups them under one channel in the guide, and when the feed you are watching fails it tries the next one for you.</p>
+          <p>Sources often list the same channel several times: 4K, FHD, HD. Testcard groups them under one channel in the guide. On Fire TV, when the feed you are watching fails it tries the next one for you.</p>
           <p className="note">A diagram, not a recording. Press the button.</p>
         </div>
         <div className="hm-fb frame tv">

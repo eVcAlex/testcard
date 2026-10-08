@@ -2,8 +2,8 @@ import { Shot } from "./shots.tsx";
 
 const FACTS = [
   ["Films", "Browse by category, with posters, titles and years."],
-  ["Series", "Seasons and episodes in the same app, and a Next episode button on Fire TV."],
-  ["Catch-up", "Go back in time on channels where your provider keeps an archive."],
+  ["Series", "Seasons and episodes in the same app, with the next episode offered when one ends."],
+  ["Catch-up", "On Fire TV, go back in time on channels where your provider keeps an archive."],
 ] as const;
 
 /** The one full-width section: the screenshot is the evidence, the three facts hang under it in a ruled row. */
