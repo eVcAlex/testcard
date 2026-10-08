@@ -13,7 +13,7 @@ describe("Home", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("The guide is the page.");
     expect(screen.getAllByRole("link", { name: "Join the beta waitlist" })[0]).toHaveAttribute("href", WAITLIST_HREF);
     expect(screen.getAllByRole("link", { name: "How setup works" })[0]).toHaveAttribute("href", "/setup");
-    expect(screen.getByText("Free. Windows and Fire TV.")).toBeInTheDocument();
+    expect(screen.getByText("Free. We don’t sell channels.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^download/i })).not.toBeInTheDocument();
     expect(container.textContent).not.toMatch(/dark mode|watermark/i);
   });

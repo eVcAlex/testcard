@@ -8,19 +8,17 @@ export function Hero() {
     <>
       <section className="hm-hero" aria-labelledby="hm-h1">
         <div className="wrap hm-hero-grid">
-          <div>
-            <p className="eyebrow">Testcard IPTV player · Windows · Fire TV</p>
-            <h1 id="hm-h1">The guide is the page.</h1>
-          </div>
+          <p className="eyebrow">Testcard IPTV player · Windows · Fire TV</p>
+          <h1 id="hm-h1">The guide is the page.</h1>
           <div className="hm-hero-side">
             <p className="lead">
-              Add your Xtream or M3U source and your channels arrive tidied, grouped and on a proper programme guide. We don&rsquo;t sell channels.
+              Add your Xtream or M3U source and your channels arrive tidied, grouped and on a proper programme guide.
             </p>
             <div className="actions">
               <WaitlistLink className="button hm-big" />
               <Link to="/setup" className="button ghost hm-big">How setup works</Link>
             </div>
-            <p className="note">Free. Windows and Fire TV.</p>
+            <p className="note">Free. We don&rsquo;t sell channels.</p>
           </div>
         </div>
       </section>

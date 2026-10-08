@@ -51,34 +51,38 @@ const NoChannels = () => <p className="note">{PRODUCT_NAME} is a player only. It
 /** Waitlist state: no download exists yet, so this page is the sign-up. */
 function ComingSoon({ signed }: { signed: boolean }) {
   return (
-    <article className="wrap page prose">
-      <h1>{`Join the ${PRODUCT_NAME} beta`}</h1>
-      <p className="lead">{PRODUCT_NAME} is in private beta for Windows and Fire TV and can't be downloaded yet. Join the waitlist and we'll email you when the beta opens.</p>
-      <section id="waitlist" aria-labelledby="waitlist-h" className="block">
+    <article className="wrap page prose dl">
+      <div className="dl-head">
+        <h1>{`Join the ${PRODUCT_NAME} beta`}</h1>
+        <p className="lead">{PRODUCT_NAME} is in private beta for Windows and Fire TV and can't be downloaded yet. Join the waitlist and we'll email you when the beta opens.</p>
+      </div>
+      <section id="waitlist" aria-labelledby="waitlist-h" className="block dl-form">
         <h2 id="waitlist-h">Join the waitlist</h2>
         <WaitlistForm />
       </section>
-      <section id="beta" aria-labelledby="beta-h" className="block">
-        <h2 id="beta-h">What the beta is</h2>
-        <p>The beta is free. It covers the Windows app and the Fire TV app. When it opens we'll email an invitation to everyone on the list, in batches. Windows testers download the installer from this site. Fire TV testers install the app with Downloader, using a code we share with beta testers.</p>
-      </section>
-      <section id="requirements" aria-labelledby="requirements-h" className="block">
-        <h2 id="requirements-h">Requirements</h2>
-        <Requirements />
-        <p className="note">Some values are still to be confirmed. We'll fill them in once we have tested on real hardware.</p>
-      </section>
-      <section id="windows" aria-labelledby="windows-h" className="block">
-        <h2 id="windows-h">Windows</h2>
-        <WindowsNote signed={signed} />
-      </section>
-      <section id="fire-tv" aria-labelledby="fire-tv-h" className="block">
-        <h2 id="fire-tv-h">Fire TV</h2>
-        <FireTvNote />
-      </section>
-      <section id="no-channels" aria-labelledby="no-channels-h" className="block">
-        <h2 id="no-channels-h">No channels shipped</h2>
-        <p>{PRODUCT_NAME} ships no channels. It doesn't include a playlist, a provider or a subscription, and we can't supply one. You bring a source you are entitled to use. See <a href="/setup">how to add one</a>.</p>
-      </section>
+      <div className="dl-rest">
+        <section id="beta" aria-labelledby="beta-h" className="block">
+          <h2 id="beta-h">What the beta is</h2>
+          <p>The beta is free. It covers the Windows app and the Fire TV app. When it opens we'll email an invitation to everyone on the list, in batches. Windows testers download the installer from this site. Fire TV testers install the app with Downloader, using a code we share with beta testers.</p>
+        </section>
+        <section id="requirements" aria-labelledby="requirements-h" className="block">
+          <h2 id="requirements-h">Requirements</h2>
+          <Requirements />
+          <p className="note">Some values are still to be confirmed. We'll fill them in once we have tested on real hardware.</p>
+        </section>
+        <section id="windows" aria-labelledby="windows-h" className="block">
+          <h2 id="windows-h">Windows</h2>
+          <WindowsNote signed={signed} />
+        </section>
+        <section id="fire-tv" aria-labelledby="fire-tv-h" className="block">
+          <h2 id="fire-tv-h">Fire TV</h2>
+          <FireTvNote />
+        </section>
+        <section id="no-channels" aria-labelledby="no-channels-h" className="block">
+          <h2 id="no-channels-h">No channels shipped</h2>
+          <p>{PRODUCT_NAME} ships no channels. It doesn't include a playlist, a provider or a subscription, and we can't supply one. You bring a source you are entitled to use. See <a href="/setup">how to add one</a>.</p>
+        </section>
+      </div>
     </article>
   );
 }

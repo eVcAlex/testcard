@@ -6,13 +6,28 @@ const Confirm = ({ children }: { children: string }) => (
   <p className="confirm"><b>Owner to confirm:</b> {children}</p>
 );
 
+const SECTIONS = [
+  ["device", "Data on your device"],
+  ["logins", "Provider logins"],
+  ["sync", "Account sync"],
+  ["updates", "Update checks"],
+  ["website", "This website"],
+  ["waitlist", "The beta waitlist"],
+  ["retention", "Keeping and deleting your data"],
+  ["contact", "Contact"],
+] as const;
+
 const Mail = () => <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
 
 export function Privacy() {
   return (
-    <article className="wrap page prose">
+    <article className="wrap page prose has-toc">
       <h1>Privacy</h1>
       <p className="lead">What {PRODUCT_NAME} and this website store, what stays on your device, and how to have it deleted. Plain English, no tracking.</p>
+      <nav className="toc" aria-label="On this page">
+        <b>On this page</b>
+        <ol>{SECTIONS.map(([id, label]) => <li key={id}><a href={`#${id}`}>{label}</a></li>)}</ol>
+      </nav>
       <p className="note">Boxes marked "Owner to confirm" are facts or legal choices that have not been checked yet. They will be settled before the public launch.</p>
 
       <section id="device" aria-labelledby="device-h" className="block">

@@ -1,13 +1,28 @@
 /* Home page sections. Hairlines between sections, not cards; the demo has its own file. */
 
 .hm-hero { padding-block: clamp(40px, 7vw, 88px) clamp(28px, 4vw, 48px); }
-.hm-hero-grid { display: grid; gap: 24px 64px; align-items: end; }
-.hm-hero h1 { font-size: clamp(44px, 7.2vw, 88px); line-height: 1; margin-top: 16px; }
+.hm-hero-grid { display: grid; gap: 16px 64px; align-items: end; }
+.hm-hero h1 { font-size: clamp(44px, 7.6vw, 104px); line-height: 1; margin-top: 0; }
 .hm-hero-side { display: grid; gap: 20px; justify-items: start; }
-.hm-hero-side .lead { max-width: 46ch; }
+.hm-hero-side .lead { max-width: 44ch; }
+.hm-hero-side .note { margin-top: -4px; }
 .hm-big { min-height: 52px; padding-inline: 24px; font-size: 16px; }
+@media (max-width: 29.99em) {
+  .hm-hero-side { justify-items: stretch; }
+  .hm-hero .actions { flex-direction: column; align-items: stretch; }
+}
+/* 768: the lede on the left, the two buttons stacked on the right, so nothing floats alone under a one-line headline */
+@media (min-width: 48em) and (max-width: 62.49em) {
+  .hm-hero-side { grid-template-columns: minmax(0, 1fr) auto; column-gap: 40px; align-items: start; }
+  .hm-hero-side .lead { grid-row: 1 / span 2; max-width: 40ch; }
+  .hm-hero-side .actions { flex-direction: column; align-items: stretch; }
+  .hm-hero-side .note { margin-top: 0; }
+}
+/* wide: eyebrow across the top, then headline and lede column sitting on one baseline (the note and the last headline line) */
 @media (min-width: 62.5em) {
   .hm-hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  .hm-hero-grid .eyebrow { grid-column: 1 / -1; }
+  .hm-hero-grid { align-items: last baseline; }
 }
 .hm-demo { padding-bottom: var(--site-section); }
 .hm-demo-note { margin-top: 12px; }
@@ -69,6 +84,16 @@
 .hm-shots { display: grid; gap: 24px; margin-top: 48px; }
 @media (min-width: 45em) { .hm-shots { grid-template-columns: 1fr 1fr; gap: 32px; } }
 
+.hm-films-head { display: grid; gap: 16px 64px; margin-bottom: 40px; align-items: end; }
+.hm-films-head p { color: var(--muted-foreground); max-width: var(--site-measure); }
+@media (min-width: 56.25em) { .hm-films-head { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
+.hm-shot-wide figcaption { margin-top: 12px; }
+/* three facts under the screenshot, ruled, side by side from tablet up */
+.hm-facts-row { margin-top: 8px; }
+@media (min-width: 48em) {
+  .hm-facts.hm-facts-row { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 32px; border-top: 0; }
+  .hm-facts.hm-facts-row > div { grid-template-columns: 1fr; border-top: 1px solid var(--border-strong); border-bottom: 0; padding: 16px 0 0; }
+}
 .hm-facts { margin: 24px 0 0; display: grid; border-top: 1px solid var(--border); }
 .hm-facts > div { display: grid; gap: 4px 24px; padding: 14px 0; border-bottom: 1px solid var(--border); }
 .hm-facts dt { font-weight: var(--wght-semibold); }
@@ -87,5 +112,10 @@
 .hm-is li b { color: var(--foreground); font-weight: var(--wght-semibold); }
 
 .hm-band .wrap { display: grid; gap: 20px; justify-items: start; }
-.hm-band .bars { width: 140px; }
+@media (min-width: 56.25em) {
+  .hm-band .wrap { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); grid-template-areas: "h a" "l a"; column-gap: 64px; row-gap: 16px; align-items: end; }
+  .hm-band h2 { grid-area: h; align-self: end; }
+  .hm-band .lead { grid-area: l; align-self: start; }
+  .hm-band .actions { grid-area: a; align-self: end; justify-self: start; }
+}
 .hm-copy > .hm-steps { margin-top: 16px; }

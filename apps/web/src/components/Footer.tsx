@@ -8,16 +8,21 @@ export function Footer() {
       <ColourBars />
       <div className="wrap foot-inner">
         <p className="foot-line">
-          <span>{PRODUCT_FULL_NAME}</span>
-          <span aria-hidden="true"> · </span>
-          <span>made by {ORG_NAME}</span>
-          <span aria-hidden="true"> · </span>
-          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-          <span aria-hidden="true"> · </span>
-          <Link to="/privacy">Privacy</Link>
-          <span aria-hidden="true"> · </span>
-          <span>Ships no channels.</span>
+          <span className="foot-name">{PRODUCT_FULL_NAME}</span>
+          <span className="foot-sub">
+            <span>made by {ORG_NAME}</span>
+            <span aria-hidden="true"> · </span>
+            <span>Ships no channels.</span>
+          </span>
         </p>
+        <nav className="foot-nav" aria-label="Footer">
+          <Link to="/setup">Setup</Link>
+          <Link to="/faq">FAQ</Link>
+          <Link to="/download">Beta waitlist</Link>
+          <Link to="/link">Link TV</Link>
+          <Link to="/privacy">Privacy</Link>
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+        </nav>
         <p className="foot-credit">
           Inter typeface by Rasmus Andersson, <a href="/fonts/OFL.txt">SIL Open Font License</a>.
         </p>

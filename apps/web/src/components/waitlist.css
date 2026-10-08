@@ -6,7 +6,7 @@
 .wl-devices { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
 .wl-devices legend { padding: 0; margin-bottom: 4px; color: var(--foreground); font-size: var(--site-small); font-weight: var(--wght-medium); }
 .wl-check { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin: 0; padding-right: 8px; color: var(--foreground); font-size: var(--site-body); cursor: pointer; }
-.wl-check input { display: inline-block; width: 22px; height: 22px; min-height: 0; margin: 0; padding: 0; accent-color: var(--accent); }
+.wl-check input { display: inline-block; width: 22px; height: 22px; min-height: 0; margin: 0; padding: 0; accent-color: var(--foreground); }
 .wl-msg { margin: 0; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-card); background: var(--surface-sunken); }
 .wl-msg:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
 .wl-error { border-color: var(--fault); color: var(--foreground); }

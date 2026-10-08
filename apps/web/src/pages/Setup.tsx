@@ -15,7 +15,7 @@ const SECTIONS = [
 
 export function Setup() {
   return (
-    <article className="wrap page prose">
+    <article className="wrap page prose has-toc">
       <h1>Add your first source</h1>
       <p className="lead">{PRODUCT_NAME} plays what you give it. This is how to give it an Xtream Codes login or an M3U playlist, load a TV guide, and sign in your TV.</p>
       <nav className="toc" aria-label="On this page">

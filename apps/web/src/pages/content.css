@@ -29,11 +29,29 @@
 }
 
 /* table of contents on guides */
-.toc { margin-top: 24px; padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--radius-card); font-size: var(--site-small); }
+.toc { margin-top: 24px; padding: 14px 0 6px; border-block: 1px solid var(--border); font-size: var(--site-small); }
 .toc b { display: block; margin-bottom: 8px; font-size: var(--site-meta); font-weight: var(--wght-medium); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); }
-.toc ol { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.toc ol { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0 20px; }
 .toc li + li { margin-top: 0; }
-.toc a { display: inline-block; padding: 8px 0; }
+.toc a { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* Setup: the table of contents rides beside the guide on wide screens */
+@media (min-width: 64em) {
+  .page.has-toc { display: grid; grid-template-columns: minmax(0, calc(var(--site-measure) + 8ch)) 14rem; column-gap: 80px; align-items: start; max-width: var(--site-max); }
+  .page.has-toc > * { grid-column: 1; }
+  .page.has-toc > .toc { grid-column: 2; grid-row: 1 / span 24; position: sticky; top: 96px; margin-top: 0; padding: 0 0 0 20px; border: 0; border-left: 1px solid var(--border); border-radius: 0; }
+  .toc ol { flex-direction: column; gap: 0; }
+  .toc a { display: block; }
+}
+
+/* Download (waitlist state): the form sits beside the explanation instead of under a lone heading */
+@media (min-width: 62em) {
+  .page.dl { display: grid; grid-template-columns: minmax(0, calc(var(--site-measure) + 8ch)) minmax(0, 24rem); grid-template-rows: auto 1fr; column-gap: 88px; align-items: start; max-width: var(--site-max); }
+  .dl-head { grid-column: 1; grid-row: 1; }
+  .dl-rest { grid-column: 1; grid-row: 2; }
+  .page.dl > .dl-form { grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 96px; margin-top: 0; padding-top: 24px; border-top: 1px solid var(--border-strong); }
+}
+.dl-head > * + * { margin-top: 16px; }
 
 /* FAQ: one hairline per question, whole summary row is the 44px target */
 .faq-group { margin-top: 48px; }
@@ -46,7 +64,7 @@
 .faq details > :not(summary) { padding-bottom: 4px; max-width: var(--site-measure); }
 .faq details > * + :not(summary) { margin-top: 12px; }
 .faq details > div { padding-bottom: 20px; }
-.faq details:target { background: var(--accent-soft); }
+.faq details:target { background: var(--card-hover); }
 .faq .q-link { font-weight: var(--wght-regular); }
 .faq h3 { font-size: inherit; margin: 0; font-weight: inherit; display: contents; }
 .faq-group > * + * { margin-top: 16px; }
