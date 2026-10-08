@@ -4,6 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Download } from "./Download.tsx";
 
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ to, hash, children, ...rest }: { to: string; hash?: string; children: React.ReactNode }) => <a href={hash ? `${to}#${hash}` : to} {...rest}>{children}</a>,
+}));
+
 vi.mock("../api.ts", async (importOriginal) => ({ ...(await importOriginal<typeof import("../api.ts")>()), joinWaitlist: vi.fn() }));
 
 afterEach(() => vi.restoreAllMocks());

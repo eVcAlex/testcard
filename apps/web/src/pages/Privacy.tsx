@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { CONTACT_EMAIL, PRODUCT_NAME } from "../site.ts";
-import "./content.css";
 
 const Confirm = ({ children }: { children: string }) => (
   <p className="confirm"><b>Owner to confirm:</b> {children}</p>

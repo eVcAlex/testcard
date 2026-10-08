@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { WaitlistLink } from "./WaitlistLink.tsx";
+import { WaitlistLink } from "../components/WaitlistLink.tsx";
 
 export function Band() {
   return (

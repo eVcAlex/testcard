@@ -1,8 +1,8 @@
-import { COLLAPSED_ROWS, SLOT_COUNT } from "./data.ts";
+import { COLLAPSED_ROWS } from "./data.ts";
 import type { Channel, Programme } from "./data.ts";
 import { displayName, fmtTime, nowNext, upcoming } from "./state.ts";
 
-const Star = () => (
+export const Star = () => (
   <svg className="dm-star" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" strokeLinejoin="round" /></svg>
 );
 
@@ -57,7 +57,7 @@ export function ChannelList({ id, channels, clock, favs, playing, focus, showRaw
       <div id={id} role="listbox" aria-label="Channels" data-collapsed={collapsed || undefined}>
         {channels.map((c, i) => {
           const fav = favs.includes(c.id);
-          const slots = upcoming(c, clock, SLOT_COUNT);
+          const slots = upcoming(c, clock);
           return (
             <div
               key={c.id}

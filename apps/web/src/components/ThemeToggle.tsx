@@ -12,7 +12,7 @@ const subscribe = (cb: () => void) => {
 export function ThemeToggle() {
   const pref = useSyncExternalStore(subscribe, () => readPref(), () => "auto" as const);
   return (
-    <button type="button" className="icon-btn theme-toggle" onClick={() => setPref(nextPref(pref))} aria-label={`Colour theme: ${LABEL[pref]}. Activate to switch to ${LABEL[nextPref(pref)]}.`}>
+    <button type="button" className="icon-btn" onClick={() => setPref(nextPref(pref))} aria-label={`Colour theme: ${LABEL[pref]}. Activate to switch to ${LABEL[nextPref(pref)]}.`}>
       <svg className="ti ti-auto" viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="2.5" y="3.5" width="15" height="10" rx="1.5" /><path d="M7 16.5h6M10 13.5v3" />
       </svg>

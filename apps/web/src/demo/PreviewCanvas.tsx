@@ -3,7 +3,7 @@ import type { Channel } from "./data.ts";
 import { drawNoise, drawPattern } from "./pattern.ts";
 
 /** Draws the channel's test pattern. Changing channel (and the first load) shows static first. Runs after mount only. */
-export function PreviewCanvas({ channel, firstTuneMs, tuneMs }: { channel: Channel; firstTuneMs: number; tuneMs: number }) {
+export function PreviewCanvas({ channel, name, firstTuneMs, tuneMs }: { channel: Channel; name: string; firstTuneMs: number; tuneMs: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const first = useRef(true);
   useEffect(() => {
@@ -12,7 +12,7 @@ export function PreviewCanvas({ channel, firstTuneMs, tuneMs }: { channel: Chann
     const ms = first.current ? firstTuneMs : tuneMs;
     first.current = false;
     if (ms <= 0) {
-      drawPattern(ctx, channel);
+      drawPattern(ctx, channel, name);
       return;
     }
     let frame = 0;
@@ -20,9 +20,9 @@ export function PreviewCanvas({ channel, firstTuneMs, tuneMs }: { channel: Chann
     const noise = setInterval(() => drawNoise(ctx, channel.id, frame++), 70);
     const done = setTimeout(() => {
       clearInterval(noise);
-      drawPattern(ctx, channel);
+      drawPattern(ctx, channel, name);
     }, ms);
     return () => { clearInterval(noise); clearTimeout(done); };
-  }, [channel, firstTuneMs, tuneMs]);
+  }, [channel, name, firstTuneMs, tuneMs]);
   return <canvas ref={ref} className="dm-canvas" width={640} height={360} role="img" aria-label="Test pattern standing in for the picture" />;
 }

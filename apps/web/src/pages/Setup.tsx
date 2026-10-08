@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { PRODUCT_NAME } from "../site.ts";
-import "./content.css";
 
 const SECTIONS = [
   ["need", "What you need"],

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Shot } from "./shots.tsx";
+import { DESKTOP_LIVE, Shot, TV_GUIDE } from "./shots.tsx";
 
 export function Sofa() {
   return (
@@ -21,8 +21,8 @@ export function Sofa() {
           </div>
         </div>
         <div className="hm-shots">
-          <Shot file="tv-guide.webp" />
-          <Shot file="desktop-live.webp" />
+          <Shot shot={TV_GUIDE} />
+          <Shot shot={DESKTOP_LIVE} />
         </div>
       </div>
     </section>

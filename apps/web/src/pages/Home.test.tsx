@@ -4,18 +4,19 @@ import { WAITLIST_HREF } from "../site.ts";
 import { Home } from "./Home.tsx";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, hash, children, ...rest }: { to: string; hash?: string; children: React.ReactNode }) => <a href={hash ? `${to}#${hash}` : to} {...rest}>{children}</a>,
+  Link: ({ to, search, hash, children, ...rest }: { to: string; search?: Record<string, string>; hash?: string; children: React.ReactNode }) => (
+    <a href={`${to}${search ? `?${new URLSearchParams(search)}` : ""}${hash ? `#${hash}` : ""}`} {...rest}>{children}</a>
+  ),
 }));
 
 describe("Home", () => {
   it("leads with the guide, a waitlist call to action and the setup link", () => {
-    const { container } = render(<><Home /><Footer /></>);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("The guide is the page.");
+    render(<><Home /><Footer /></>);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Testcard IPTV player · Windows · Fire TV The guide is the page.");
     expect(screen.getAllByRole("link", { name: "Join the beta waitlist" })[0]).toHaveAttribute("href", WAITLIST_HREF);
     expect(screen.getAllByRole("link", { name: "How setup works" })[0]).toHaveAttribute("href", "/setup");
     expect(screen.getByText("Free. We don’t sell channels.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^download/i })).not.toBeInTheDocument();
-    expect(container.textContent).not.toMatch(/dark mode|watermark/i);
   });
 
   it("has the demo at #guide, labelled as invented", () => {

@@ -1,7 +1,9 @@
+import { dark, light } from "@testcard/theme";
+
 export type ThemePref = "auto" | "light" | "dark";
 export const THEME_KEY = "tc-theme";
 export const THEME_EVENT = "tc-theme-change";
-export const THEME_ORDER: readonly ThemePref[] = ["auto", "light", "dark"];
+const THEME_ORDER: readonly ThemePref[] = ["auto", "light", "dark"];
 
 /** The stored preference as theme-init.js put it on <html>; "auto" on the server and when nothing is set. */
 export function readPref(doc: Document = document): ThemePref {
@@ -10,7 +12,7 @@ export function readPref(doc: Document = document): ThemePref {
 }
 
 /** Page backgrounds, as in index.html and @testcard/theme. The browser UI colour follows the chosen theme, not only the system's. */
-export const THEME_COLOURS = { light: "#f7f8f9", dark: "#14171a" } as const;
+export const THEME_COLOURS = { light: light.background!, dark: dark.background } as const;
 
 /** Explicit choice: every theme-color meta takes that colour. Auto: each goes back to the colour of its own media query. */
 export function paintThemeColour(doc: Document, pref: ThemePref): void {

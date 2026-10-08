@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { FAQ, GUIDE_CAUSES, GUIDE_QUESTION, LINK } from "../faq-data.ts";
 import { CONTACT_EMAIL, PRODUCT_NAME } from "../site.ts";
-import "./content.css";
 
 /** Answer paragraph with `[text](/path#hash)` links turned into router links. */
 function Para({ text }: { text: string }): ReactNode {

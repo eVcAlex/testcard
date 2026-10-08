@@ -121,7 +121,7 @@ plays back through an embedded `mpv`, stores everything locally.
   player view. Type is bundled Inter (self-hosted woff2). Channel cards show now/next + a
   progress bar from EPG; a timeline Guide tab shows the full grid. Tokens follow a shadcn-style
   semantic pair model (`--background`/`--foreground`, `--card`, `--border`,
-  `--accent`/`--accent-foreground`, `--ring`) in `renderer/src/styles/tokens.css`, plus a small
+  `--accent`/`--accent-foreground`, `--ring`) in `packages/theme/tokens.css`, plus a small
   motion-token layer (`--dur-1/2/3`, `--ease-spring`) for a few hand-ported micro-interactions
   (spring-press buttons, a gliding focus ring, a logo-loading shimmer). See
   `docs/adr/0006-theme-system.md`.

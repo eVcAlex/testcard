@@ -54,11 +54,12 @@ describe("reducer", () => {
     expect(categoryCount(s, "fav")).toBe(2);
   });
 
-  it("searches names, raw names, categories and programme titles, case-insensitively", () => {
+  it("searches names, raw names, categories and the programme titles on screen, case-insensitively", () => {
     expect(ids(run(s0, { type: "setQuery", query: "HARBOUR" }))).toContain("harbour");
     expect(ids(run(s0, { type: "setQuery", query: "multi-sub" }))).toEqual(["summit"]);
     expect(ids(run(s0, { type: "setQuery", query: "news" }))).toEqual(expect.arrayContaining(["harbour", "tide", "summit"]));
-    expect(ids(run(s0, { type: "setQuery", query: "ridge league" }))).toContain("peak");
+    // "Ridge League Live" is on screen for peak2 only; it is later in peak's schedule, so peak does not match
+    expect(ids(run(s0, { type: "setQuery", query: "ridge league" }))).toEqual(["peak2"]);
   });
 
   it("has an empty state for a search with no match, and for no favourites", () => {

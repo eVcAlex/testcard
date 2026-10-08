@@ -1,7 +1,7 @@
+import { Link } from "@tanstack/react-router";
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import { errorStatus, joinWaitlist } from "../api.ts";
 import { CONTACT_EMAIL } from "../site.ts";
-import "./waitlist.css";
 
 type Phase = "idle" | "sending" | "done" | "error";
 
@@ -9,7 +9,7 @@ export const WAITLIST_DONE = "You're on the list. We'll email you when the beta 
 export const WAITLIST_RATE_LIMITED = "Too many sign-ups from this network today. Try again tomorrow.";
 export const WAITLIST_FAILED = `Something went wrong and you're not on the list yet. Try again, or email ${CONTACT_EMAIL} and we'll add you by hand.`;
 
-/** Email plus optional device ticks. Plain anchor to /privacy (not router Link) so it also renders without a router. */
+/** Email plus optional device ticks. */
 export function WaitlistForm() {
   const uid = useId();
   const [email, setEmail] = useState("");
@@ -41,7 +41,7 @@ export function WaitlistForm() {
   return (
     <div className="wl">
       {phase === "done" ? (
-        <p ref={message} className="wl-msg wl-done" role="status" tabIndex={-1}>{WAITLIST_DONE}</p>
+        <p ref={message} className="wl-msg" role="status" tabIndex={-1}>{WAITLIST_DONE}</p>
       ) : (
         <form onSubmit={submit} aria-busy={phase === "sending"}>
           <label className="wl-field" htmlFor={`${uid}-email`}>
@@ -71,7 +71,7 @@ export function WaitlistForm() {
         </form>
       )}
       <p className="wl-data note">
-        We store your email, the devices you ticked and the time you signed up. We use them only to invite you to the beta. Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we'll delete them. More in the <a href="/privacy">privacy policy</a>.
+        We store your email, the devices you ticked and the time you signed up. We use them only to invite you to the beta. Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we'll delete them. More in the <Link to="/privacy">privacy policy</Link>.
       </p>
     </div>
   );

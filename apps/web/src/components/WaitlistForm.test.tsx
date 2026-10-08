@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { joinWaitlist } from "../api.ts";
 import { WAITLIST_DONE, WAITLIST_FAILED, WAITLIST_RATE_LIMITED, WaitlistForm } from "./WaitlistForm.tsx";
 
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ to, hash, children, ...rest }: { to: string; hash?: string; children: React.ReactNode }) => <a href={hash ? `${to}#${hash}` : to} {...rest}>{children}</a>,
+}));
+
 vi.mock("../api.ts", async (importOriginal) => ({ ...(await importOriginal<typeof import("../api.ts")>()), joinWaitlist: vi.fn() }));
 const join = vi.mocked(joinWaitlist);
 

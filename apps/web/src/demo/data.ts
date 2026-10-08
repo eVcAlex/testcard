@@ -80,7 +80,7 @@ const SEED: readonly (readonly [id: string, name: string, raw: string, category:
   ["quiet", "Quiet Hours", "UK| QUIET HOURS HD", "ent", "HD", "a"],
 ];
 
-const hueOf = (id: string) => [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % 12;
+export const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 
 export const CHANNELS: readonly Channel[] = SEED.map(([id, name, raw, category, quality, source], i) => ({
   id,
@@ -89,7 +89,7 @@ export const CHANNELS: readonly Channel[] = SEED.map(([id, name, raw, category, 
   category,
   quality,
   source,
-  hue: hueOf(id),
+  hue: hash(id) % 12,
   initials: name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
   schedule: scheduleFor(i, category),
 }));

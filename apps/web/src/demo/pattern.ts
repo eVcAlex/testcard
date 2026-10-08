@@ -1,10 +1,11 @@
+import { dark, tv } from "@testcard/theme";
+import { hash } from "./data.ts";
 import type { Channel } from "./data.ts";
 
 const W = 320;
 const H = 180;
 const BARS = ["#c9c9c4", "#c2bf84", "#84b8b8", "#84b88a", "#b484b1", "#b48484", "#8484b4"];
 
-const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 /** A small seeded generator, so the same channel and frame always draw the same static. */
 function mulberry32(seed: number) {
   let a = seed >>> 0;
@@ -17,7 +18,7 @@ function mulberry32(seed: number) {
   };
 }
 
-export function drawPattern(x: CanvasRenderingContext2D, ch: Channel) {
+export function drawPattern(x: CanvasRenderingContext2D, ch: Channel, name: string) {
   const hue = ch.hue * 30;
   x.setTransform(2, 0, 0, 2, 0, 0);
   x.fillStyle = `hsl(${hue} 28% 24%)`;
@@ -36,13 +37,13 @@ export function drawPattern(x: CanvasRenderingContext2D, ch: Channel) {
   x.moveTo(102, 76); x.lineTo(218, 76);
   x.stroke();
   BARS.forEach((b, i) => { x.fillStyle = b; x.fillRect(Math.round((i * W) / 7), 140, Math.ceil(W / 7), 40); });
-  x.fillStyle = "#0a0d11";
+  x.fillStyle = tv.background!;
   x.fillRect(84, 60, 152, 32);
-  x.fillStyle = "#f2eee7";
+  x.fillStyle = dark.foreground;
   x.font = "600 14px 'Inter Variable', system-ui, sans-serif";
   x.textAlign = "center";
   x.textBaseline = "middle";
-  x.fillText(ch.name, 160, 76, 140);
+  x.fillText(name, 160, 76, 140);
 }
 
 export function drawNoise(x: CanvasRenderingContext2D, seed: string, frame: number) {

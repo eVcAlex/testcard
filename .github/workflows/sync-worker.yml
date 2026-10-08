@@ -37,6 +37,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter "@testcard/sync-worker..." --filter "@testcard/web..."
 
+      # `pnpm run test` builds the website first, so apps/web/dist is ready for the deploy below.
       - name: Check it before it goes out
         working-directory: apps/sync-worker
         run: |
@@ -46,9 +47,6 @@ jobs:
       - name: Apply new D1 migrations
         working-directory: apps/sync-worker
         run: pnpm exec wrangler d1 migrations apply testcard-sync --remote
-
-      - name: Build the website the worker serves
-        run: pnpm --filter @testcard/web build
 
       - name: Deploy the worker
         working-directory: apps/sync-worker

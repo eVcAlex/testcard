@@ -1,7 +1,7 @@
 import type { KeyboardEventHandler, ReactNode, Ref } from "react";
 import "./demo.css";
 import { CATEGORIES, CHANNELS, COLLAPSED_ROWS, SOURCES, categoryLabel, channelById } from "./data.ts";
-import { ChannelList } from "./ChannelList.tsx";
+import { ChannelList, Star } from "./ChannelList.tsx";
 import { Preview } from "./Preview.tsx";
 import { categoryCount, displayName, emptyMessage, fmtTime, nowNext, visibleChannels } from "./state.ts";
 import type { DemoAction, DemoState } from "./state.ts";
@@ -22,22 +22,16 @@ export interface GuideProps {
   canvas?: ReactNode;
 }
 
-const StarIcon = () => (
-  <svg className="dm-star" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" strokeLinejoin="round" /></svg>
-);
-
 /**
  * The guide as a view of DemoState. The server renders it from the initial state (a usable now/next list without
  * JavaScript); the interactive Demo renders the same thing with handlers. Nothing here reads the time or a random number.
  */
-export function Guide({ state, dispatch, expanded, onExpand, rootRef, onKeyDown, canvas }: GuideProps) {
-  const send = dispatch;
+export function Guide({ state, dispatch: send, expanded, onExpand, rootRef, onKeyDown, canvas }: GuideProps) {
   const visible = visibleChannels(state);
   const empty = visible.length === 0;
   const playing = channelById(state.playing);
   const { now } = nowNext(playing, state.clock);
   const isFav = state.favs.includes(playing.id);
-  const tabStop = state.category;
 
   return (
     <div className="demo" data-mode={state.mode} ref={rootRef} onKeyDown={onKeyDown}>
@@ -57,7 +51,7 @@ export function Guide({ state, dispatch, expanded, onExpand, rootRef, onKeyDown,
             <span className="dm-ititle">{now.title}</span>
             <span className="dm-imeta tnum">{fmtTime(now.start)}–{fmtTime(now.end)} · {categoryLabel(playing.category)}</span>
             <button type="button" className="dm-btn" aria-pressed={isFav} onClick={send && (() => send({ type: "toggleFavourite", channelId: playing.id }))}>
-              <StarIcon />Favourite <kbd>F</kbd>
+              <Star />Favourite <kbd>F</kbd>
             </button>
           </div>
         </div>
@@ -85,8 +79,7 @@ export function Guide({ state, dispatch, expanded, onExpand, rootRef, onKeyDown,
               data-k={c.id}
               className="dm-tab"
               aria-selected={state.category === c.id}
-              aria-controls={LIST_ID}
-              tabIndex={tabStop === c.id ? 0 : -1}
+              tabIndex={state.category === c.id ? 0 : -1}
               onClick={send && (() => send({ type: "setCategory", category: c.id }))}
             >
               <span>{c.label}</span><span className="dm-n tnum">{categoryCount(state, c.id)}</span>
@@ -137,7 +130,7 @@ export function Guide({ state, dispatch, expanded, onExpand, rootRef, onKeyDown,
           </ul>
         </div>
 
-        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true" id="dm-live">{state.announce}</p>
+        <p className="sr-only" role="status" id="dm-live">{state.announce}</p>
       </div>
     </div>
   );

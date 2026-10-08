@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import wretch from "wretch";
 import { WaitlistForm } from "../components/WaitlistForm.tsx";
 import { parseAndroid, parseDesktop } from "../releases.ts";
 import { PRODUCT_NAME, RELEASE_STATE, type ReleaseState, SIGNED } from "../site.ts";
-import "./content.css";
 
 // null, not undefined: TanStack Query v5 treats undefined data as an error (and retries).
 const desktop = () => wretch("/app/latest.yml").get().text().then((t) => parseDesktop(t) ?? null).catch(() => null);
@@ -41,7 +41,7 @@ export function WindowsNote({ signed = SIGNED }: { signed?: boolean }) {
 function FireTvNote() {
   return (
     <p>
-      On Fire TV you install the app with the free Downloader app, using a Downloader code. Downloader code: <b>shared with beta testers</b>. Open the app afterwards, choose Sign in, and enter the code it shows on <a href="/link">evicted.dev/link</a>.
+      On Fire TV you install the app with the free Downloader app, using a Downloader code. Downloader code: <b>shared with beta testers</b>. Open the app afterwards, choose Sign in, and enter the code it shows on <Link to="/link">evicted.dev/link</Link>.
     </p>
   );
 }
@@ -80,7 +80,7 @@ function ComingSoon({ signed }: { signed: boolean }) {
         </section>
         <section id="no-channels" aria-labelledby="no-channels-h" className="block">
           <h2 id="no-channels-h">No channels shipped</h2>
-          <p>{PRODUCT_NAME} ships no channels. It doesn't include a playlist, a provider or a subscription, and we can't supply one. You bring a source you are entitled to use. See <a href="/setup">how to add one</a>.</p>
+          <p>{PRODUCT_NAME} ships no channels. It doesn't include a playlist, a provider or a subscription, and we can't supply one. You bring a source you are entitled to use. See <Link to="/setup">how to add one</Link>.</p>
         </section>
       </div>
     </article>
@@ -125,7 +125,6 @@ function Releases({ signed }: { signed: boolean }) {
         ) : (
           <p className="note">{tv.isPending ? "Checking..." : "Not available right now."}</p>
         )}
-        {/* Plain anchor (not router Link) so the page renders without a router in tests. */}
         <FireTvNote />
       </div>
       <section aria-labelledby="requirements-h" className="block">

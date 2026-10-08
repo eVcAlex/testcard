@@ -1,5 +1,5 @@
 // Turns the raw PNGs in scripts/screenshots/raw into the site's images: at most 1600px wide, WebP, in apps/web/public/shots.
-//   node scripts/screenshots/compress.mjs        prints the width and height to put in SHOTS (apps/web/src/site.ts)
+//   node scripts/screenshots/compress.mjs        prints the width and height to put in apps/web/src/home/shots.tsx
 import { readdirSync, mkdirSync } from "node:fs";
 import { dirname, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";

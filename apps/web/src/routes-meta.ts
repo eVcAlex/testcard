@@ -67,7 +67,7 @@ const meta = (key: "name" | "property", name: string, content: string): HeadTag 
 
 /** Client-safe head: title and meta only. JSON-LD is prerender-only (routes-ld.ts) and passed in by the server. */
 export function headModel(route: RouteMeta, jsonLd: string[] = []): HeadModel {
-  const url = `${SITE_URL}${route.path === "/" ? "/" : route.path}`;
+  const url = `${SITE_URL}${route.path}`;
   const image = `${SITE_URL}${OG_IMAGE.path}`;
   const indexable = !route.noindex;
   const tags: HeadTag[] = [
@@ -98,6 +98,6 @@ const xml = (s: string) => s.replace(/[&<>"]/g, (c) => XML_ESCAPES[c] ?? c);
 export function buildSitemap(lastmod: string, routes: readonly RouteMeta[] = ROUTES): string {
   const urls = routes
     .filter((r) => !r.noindex)
-    .map((r) => `  <url><loc>${xml(SITE_URL + (r.path === "/" ? "/" : r.path))}</loc><lastmod>${lastmod}</lastmod></url>`);
+    .map((r) => `  <url><loc>${xml(SITE_URL + r.path)}</loc><lastmod>${lastmod}</lastmod></url>`);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }

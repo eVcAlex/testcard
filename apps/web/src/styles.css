@@ -68,7 +68,7 @@ h1 { font-size: var(--site-h1); line-height: 1.04; font-weight: 640; letter-spac
 h2 { font-size: var(--site-h2); line-height: 1.12; font-weight: 620; letter-spacing: -0.02em; }
 h3 { font-size: var(--site-h3); line-height: 1.3; font-weight: var(--wght-semibold); letter-spacing: -0.011em; }
 p { margin: 0; }
-.lead, .lede { font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; color: var(--muted-foreground); max-width: var(--site-measure); }
+.lead { font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; color: var(--muted-foreground); max-width: var(--site-measure); }
 .note { color: var(--muted-foreground); font-size: var(--site-small); }
 .eyebrow { font-size: var(--site-meta); font-weight: var(--wght-medium); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); }
 
@@ -81,7 +81,7 @@ p { margin: 0; }
 .page h1 { font-size: clamp(32px, 4.6vw, 52px); margin-bottom: 8px; }
 .page h2 { font-size: clamp(22px, 2.4vw, 26px); margin-top: 40px; }
 .prose p, .prose li { max-width: var(--site-measure); }
-.hairline, .section + .section { border-top: 1px solid var(--border); }
+.section + .section { border-top: 1px solid var(--border); }
 .section { padding-block: var(--site-section); }
 
 /* skip link */
@@ -179,7 +179,6 @@ input[aria-invalid="true"] { border-color: var(--fault); }
 .tabs button { flex: 1; min-height: 44px; background: var(--surface-sunken); color: var(--muted-foreground); border: 1px solid var(--border); border-radius: var(--radius-chip); font: inherit; cursor: pointer; }
 .tabs button[aria-selected="true"] { background: var(--card-active); color: var(--foreground); border-color: var(--muted-foreground); }
 .page .tabs, .page form.card { max-width: 30rem; }
-.draft { color: var(--muted-foreground); font-size: var(--site-small); }
 figure { margin: 0 0 24px; }
 figure img { display: block; height: auto; border: 1px solid var(--border); border-radius: var(--radius-card); }
 figcaption { color: var(--muted-foreground); font-size: var(--site-small); margin-top: 8px; }

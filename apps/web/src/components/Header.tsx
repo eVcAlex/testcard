@@ -1,9 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { PRODUCT_NAME, WAITLIST_HREF } from "../site.ts";
+import { PRODUCT_NAME } from "../site.ts";
 import { ThemeToggle } from "./ThemeToggle.tsx";
-
-const WAITLIST = WAITLIST_HREF.split("#") as [string, string];
+import { WaitlistLink } from "./WaitlistLink.tsx";
 
 function NavLinks() {
   return (
@@ -11,13 +10,13 @@ function NavLinks() {
       <Link to="/" hash="guide" activeOptions={{ includeHash: true }}>Guide</Link>
       <Link to="/setup">Setup</Link>
       <Link to="/faq">FAQ</Link>
-      <Link to="/download">Download</Link>
+      <Link to="/download">Beta</Link>
     </>
   );
 }
 
 const JoinLink = ({ className }: { className?: string }) => (
-  <Link to={WAITLIST[0]} hash={WAITLIST[1]} className={`button${className ? ` ${className}` : ""}`}>Join the beta</Link>
+  <WaitlistLink className={`button${className ? ` ${className}` : ""}`}>Join the beta</WaitlistLink>
 );
 
 export function Header() {
@@ -27,15 +26,13 @@ export function Header() {
   const show = () => {
     const d = dialog.current;
     if (!d || d.open) return;
-    if (typeof d.showModal === "function") d.showModal();
-    else d.setAttribute("open", "");
+    d.showModal();
     setOpen(true);
   };
   const hide = () => {
     const d = dialog.current;
     if (!d?.open) return;
-    if (typeof d.close === "function") d.close();
-    else d.removeAttribute("open");
+    d.close();
     setOpen(false);
   };
 

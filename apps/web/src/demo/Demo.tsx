@@ -1,9 +1,10 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { COLLAPSED_ROWS, channelById } from "./data.ts";
+import { CATEGORIES, COLLAPSED_ROWS, channelById } from "./data.ts";
+import type { CategoryId } from "./data.ts";
 import { Guide, LIST_ID, SEARCH_ID } from "./Guide.tsx";
 import { PreviewCanvas } from "./PreviewCanvas.tsx";
-import { initialState, reducer, visibleChannels } from "./state.ts";
+import { displayName, initialState, reducer, visibleChannels } from "./state.ts";
 
 export const TICK_MS = 4000;
 const prefersReducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -14,24 +15,18 @@ export default function Demo({ initialRaw = false, rawToken = 0 }: { initialRaw?
   const [expanded, setExpanded] = useState(false);
   const [reduced] = useState(prefersReducedMotion);
   const root = useRef<HTMLDivElement>(null);
-  const pendingFocus = useRef<"row" | `tab:${string}` | null>(null);
+  const pendingFocus = useRef(false);
 
   const focusRow = () => {
     const row = root.current?.querySelector<HTMLElement>(`#${LIST_ID} [role="option"][tabindex="0"]`);
     row?.focus();
     return !!row;
   };
-  const focusTab = (id: string) => {
-    const tab = root.current?.querySelector<HTMLElement>(`#dm-tab-${id}`);
-    tab?.focus();
-    return !!tab;
-  };
+  const focusTab = (id: string) => root.current?.querySelector<HTMLElement>(`#dm-tab-${id}`)?.focus();
 
   // Move DOM focus after the render that changed the roving tab stop.
   useEffect(() => {
-    const p = pendingFocus.current;
-    if (!p) return;
-    if (p === "row" ? focusRow() : focusTab(p.slice(4))) pendingFocus.current = null;
+    if (pendingFocus.current && focusRow()) pendingFocus.current = false;
   });
 
   // The fake clock. Paused under reduced motion and while the tab is hidden.
@@ -57,13 +52,13 @@ export default function Demo({ initialRaw = false, rawToken = 0 }: { initialRaw?
       // Only wait for a re-render when the list is about to change; otherwise a stale request would pull focus out of the search box on the next keystroke.
       if (state.query) {
         dispatch({ type: "setQuery", query: "" });
-        pendingFocus.current = "row";
+        pendingFocus.current = true;
       }
       focusRow();
       return;
     }
     if (typing) {
-      pendingFocus.current = null;
+      pendingFocus.current = false;
       if (k === "ArrowDown") { e.preventDefault(); focusRow(); }
       return;
     }
@@ -79,26 +74,25 @@ export default function Demo({ initialRaw = false, rawToken = 0 }: { initialRaw?
     if (k === "t" || k === "T") { dispatch({ type: "toggleTv" }); return; }
     if (k === "f" || k === "F") {
       dispatch({ type: "toggleFavourite", channelId: row?.dataset.id ?? state.focus.channelId });
-      if (row) pendingFocus.current = "row"; // in Favourites the row is about to disappear
+      if (row) pendingFocus.current = true; // in Favourites the row is about to disappear
       return;
     }
 
     if (t.getAttribute("role") === "tab") {
-      const ids = [...(root.current?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [])].map((el) => el.dataset.k!);
-      const i = ids.indexOf(t.dataset.k!);
+      const ids = CATEGORIES.map((c) => c.id);
+      const i = ids.indexOf(t.dataset.k as CategoryId);
       const n = k === "ArrowDown" || k === "ArrowRight" ? (i + 1) % ids.length : k === "ArrowUp" || k === "ArrowLeft" ? (i - 1 + ids.length) % ids.length : k === "Home" ? 0 : k === "End" ? ids.length - 1 : -1;
       if (n >= 0) {
         e.preventDefault();
         const id = ids[n]!;
-        dispatch({ type: "setCategory", category: id as never });
-        pendingFocus.current = `tab:${id}`;
+        dispatch({ type: "setCategory", category: id });
         focusTab(id);
       }
       return;
     }
     if (row) {
-      if (k === "ArrowDown" || k === "ArrowUp") { e.preventDefault(); dispatch({ type: "moveFocus", delta: k === "ArrowDown" ? 1 : -1 }); pendingFocus.current = "row"; }
-      else if (k === "Home" || k === "End") { e.preventDefault(); dispatch({ type: "focusEdge", edge: k === "Home" ? "first" : "last" }); pendingFocus.current = "row"; }
+      if (k === "ArrowDown" || k === "ArrowUp") { e.preventDefault(); dispatch({ type: "moveFocus", delta: k === "ArrowDown" ? 1 : -1 }); pendingFocus.current = true; }
+      else if (k === "Home" || k === "End") { e.preventDefault(); dispatch({ type: "focusEdge", edge: k === "Home" ? "first" : "last" }); pendingFocus.current = true; }
       else if (k === "ArrowRight" || k === "ArrowLeft") { e.preventDefault(); dispatch({ type: "moveSlot", delta: k === "ArrowRight" ? 1 : -1 }); }
       else if (k === "Enter" || k === " ") { e.preventDefault(); dispatch({ type: "play", channelId: row.dataset.id! }); }
     }
@@ -112,7 +106,7 @@ export default function Demo({ initialRaw = false, rawToken = 0 }: { initialRaw?
       onExpand={() => setExpanded(true)}
       rootRef={root}
       onKeyDown={onKeyDown}
-      canvas={<PreviewCanvas channel={channelById(state.playing)} firstTuneMs={reduced ? 0 : 600} tuneMs={reduced ? 0 : 300} />}
+      canvas={<PreviewCanvas channel={channelById(state.playing)} name={displayName(channelById(state.playing), state.showRawNames)} firstTuneMs={reduced ? 0 : 600} tuneMs={reduced ? 0 : 300} />}
     />
   );
 }

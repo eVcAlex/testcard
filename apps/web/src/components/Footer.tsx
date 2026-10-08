@@ -18,7 +18,7 @@ export function Footer() {
         <nav className="foot-nav" aria-label="Footer">
           <Link to="/setup">Setup</Link>
           <Link to="/faq">FAQ</Link>
-          <Link to="/download">Beta waitlist</Link>
+          <Link to="/download">Beta</Link>
           <Link to="/link">Link TV</Link>
           <Link to="/privacy">Privacy</Link>
           <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>

@@ -14,7 +14,7 @@ describe("Header", () => {
   it("has the wordmark, the four nav links, Link TV, the join button and the theme toggle", () => {
     render(<Header />);
     const main = screen.getByRole("navigation", { name: "Main" });
-    expect(Array.from(main.querySelectorAll("a")).map((a) => a.textContent)).toEqual(["Guide", "Setup", "FAQ", "Download"]);
+    expect(Array.from(main.querySelectorAll("a")).map((a) => a.textContent)).toEqual(["Guide", "Setup", "FAQ", "Beta"]);
     expect(screen.getByRole("link", { name: "Testcard home" }).querySelector("b")).toHaveTextContent("card");
     expect(screen.getAllByRole("link", { name: "Join the beta" })[0]).toHaveAttribute("href", "/download#waitlist");
     expect(screen.getAllByRole("link", { name: "Link TV" })[0]).toHaveAttribute("href", "/link");

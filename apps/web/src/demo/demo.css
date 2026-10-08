@@ -188,6 +188,5 @@
   .demo[data-mode="tv"] .dm-tab { min-height: 48px; }
 }
 
-@media (pointer: coarse) { .dm-btn, .dm-tab { min-height: 44px; } }
 @media (prefers-contrast: more) { .dm-row, .dm-slot { border-color: var(--d-line2); } }
 .dm-search input::-webkit-search-cancel-button { filter: invert(1) grayscale(1); }

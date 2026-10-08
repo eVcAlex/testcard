@@ -26,4 +26,4 @@ One-time: `cd scripts/screenshots && npm install` (playwright-core; this folder 
 6. `adb -s emulator-5554 exec-out screencap -p > scripts/screenshots/raw/tv-home.png` (and `tv-guide.png`, Live TV, All channels under the Panel source).
 
 ## Then
-`node scripts/screenshots/compress.mjs` and put the printed sizes into `SHOTS` in `apps/web/src/site.ts`.
+`node scripts/screenshots/compress.mjs` and put the printed sizes into `apps/web/src/home/shots.tsx`.

@@ -56,6 +56,7 @@ export function LinkPage() {
     link.mutate({ code, email, password, confirm, mode });
   };
   const invalid = (field: Field) => (error?.field === field ? true : undefined);
+  const describedBy = (field: Field) => (error?.field === field ? "link-error" : undefined);
   const signup = mode === "signup";
 
   return (
@@ -68,20 +69,20 @@ export function LinkPage() {
       </div>
       <form className="card" onSubmit={submit} noValidate autoComplete="on">
         <label>Code on your TV
-          <input id="link-code" value={code} onChange={(e) => setCode(pretty(e.target.value))} inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX" maxLength={9} aria-invalid={invalid("code")} />
+          <input id="link-code" value={code} onChange={(e) => setCode(pretty(e.target.value))} inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX" maxLength={9} aria-invalid={invalid("code")} aria-describedby={describedBy("code")} />
         </label>
         <label>Email
-          <input id="link-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" inputMode="email" placeholder="you@example.com" aria-invalid={invalid("email")} />
+          <input id="link-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" inputMode="email" placeholder="you@example.com" aria-invalid={invalid("email")} aria-describedby={describedBy("email")} />
         </label>
         <label>Password
-          <input id="link-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} />
+          <input id="link-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} aria-describedby={describedBy("password")} />
         </label>
         {signup && (
           <label>Confirm password
-            <input id="link-confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} />
+            <input id="link-confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} aria-describedby={describedBy("confirm")} />
           </label>
         )}
-        <div className="error" role="alert" aria-live="polite">{error?.message}</div>
+        <div id="link-error" className="error" role="alert">{error?.message}</div>
         <button className="button" type="submit" disabled={link.isPending}>
           {link.isPending ? "Linking..." : signup ? "Create account and link TV" : "Link this TV"}
         </button>

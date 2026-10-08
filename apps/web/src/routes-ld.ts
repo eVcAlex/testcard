@@ -7,7 +7,7 @@ const ORG_ID = `${SITE_URL}/#org`;
 const SITE_ID = `${SITE_URL}/#website`;
 const APP_ID = `${SITE_URL}/#app`;
 
-export const organizationLd = () => ({
+const organizationLd = () => ({
   "@type": "Organization",
   "@id": ORG_ID,
   name: ORG_NAME,
@@ -15,7 +15,7 @@ export const organizationLd = () => ({
   email: CONTACT_EMAIL,
 });
 
-export const websiteLd = () => ({
+const websiteLd = () => ({
   "@type": "WebSite",
   "@id": SITE_ID,
   url: `${SITE_URL}/`,
@@ -23,7 +23,7 @@ export const websiteLd = () => ({
   publisher: { "@id": ORG_ID },
 });
 
-export const softwareApplicationLd = () => ({
+const softwareApplicationLd = () => ({
   "@type": "SoftwareApplication",
   "@id": APP_ID,
   name: PRODUCT_FULL_NAME,
@@ -52,7 +52,7 @@ export const faqPageLd = (items: readonly { question: string; answer: string }[]
 export const serialiseLd = (doc: object): string => JSON.stringify(doc).replace(/</g, "\\u003c");
 
 /** JSON-LD documents for a route's path; empty for most. Timeless FAQ answers only (see faq-data.ts). */
-export const ldFor = (path: string): object[] => (path === "/" ? homeLd() : path === "/faq" ? faqPageLd(faqLdItems()) : []);
+const ldFor = (path: string): object[] => (path === "/" ? homeLd() : path === "/faq" ? faqPageLd(faqLdItems()) : []);
 
 /** The head the prerenderer writes: the client-safe model plus this route's JSON-LD. */
 export const serverHeadModel = (route: RouteMeta): HeadModel => headModel(route, ldFor(route.path).map(serialiseLd));

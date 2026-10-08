@@ -71,7 +71,7 @@ export async function handleWaitlist(c: WaitlistContext): Promise<Response> {
   const text = await c.req.text();
   if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) return respond(c, { error: "too large" }, 413);
 
-  if (await overLimit(c)) return respond(c, { error: "Too many sign-ups from this network today. Please try again tomorrow." }, 429);
+  if (await overLimit(c)) return respond(c, { error: "rate limited" }, 429);
 
   let raw: unknown;
   try {

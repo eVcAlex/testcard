@@ -49,12 +49,12 @@ export const initialState = (opts: { showRawNames?: boolean } = {}): DemoState =
 
 export const displayName = (c: Channel, raw: boolean) => (raw ? c.raw : c.name);
 
-export function visibleChannels(s: Pick<DemoState, "category" | "query" | "favs">): Channel[] {
+export function visibleChannels(s: Pick<DemoState, "category" | "query" | "favs" | "clock">): Channel[] {
   const q = s.query.trim().toLowerCase();
   return CHANNELS.filter((c) => {
     if (s.category === "fav" ? !s.favs.includes(c.id) : s.category !== "all" && c.category !== s.category) return false;
     if (!q) return true;
-    const hay = `${c.name} ${c.raw} ${categoryLabel(c.category)} ${c.schedule.map((p) => p.title).join(" ")}`.toLowerCase();
+    const hay = `${c.name} ${c.raw} ${categoryLabel(c.category)} ${upcoming(c, s.clock).map((p) => p?.title).join(" ")}`.toLowerCase();
     return hay.includes(q);
   });
 }
@@ -73,9 +73,9 @@ export function nowNext(c: Channel, clock: number): NowNext {
 }
 
 /** The on-air programme and the ones after it, for the wide guide's columns. */
-export function upcoming(c: Channel, clock: number, count = SLOT_COUNT): (Programme | undefined)[] {
+export function upcoming(c: Channel, clock: number): (Programme | undefined)[] {
   const i = programmeIndexAt(c, clock);
-  return Array.from({ length: count }, (_, k) => c.schedule[i + k]);
+  return Array.from({ length: SLOT_COUNT }, (_, k) => c.schedule[i + k]);
 }
 
 export function describe(c: Channel, clock: number): string {
@@ -110,7 +110,7 @@ export function reducer(s: DemoState, a: DemoAction): DemoState {
     case "setQuery": {
       const next = settle({ ...s, query: a.query });
       const n = visibleChannels(next).length;
-      return { ...next, announce: a.query.trim() ? (n ? `${count(n)} match` : "No channels match") : `${count(n)}` };
+      return { ...next, announce: a.query.trim() ? (n ? `${count(n)} match` : "No channels match") : count(n) };
     }
     case "moveFocus": {
       const v = visibleChannels(s);

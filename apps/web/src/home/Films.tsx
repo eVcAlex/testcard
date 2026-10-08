@@ -1,4 +1,4 @@
-import { Shot } from "./shots.tsx";
+import { DESKTOP_MOVIES, Shot } from "./shots.tsx";
 
 const FACTS = [
   ["Films", "Browse by category, with posters, titles and years."],
@@ -15,7 +15,7 @@ export function Films() {
           <h2 id="hm-films">Films, series and catch-up.</h2>
           <p>Live TV is the front door, not the whole house. Everything your source offers sits in one place.</p>
         </div>
-        <Shot file="desktop-movies.webp" className="hm-shot-wide" />
+        <Shot shot={DESKTOP_MOVIES} className="hm-shot-wide" />
         <dl className="hm-facts hm-facts-row">
           {FACTS.map(([t, d]) => (<div key={t}><dt>{t}</dt><dd>{d}</dd></div>))}
         </dl>

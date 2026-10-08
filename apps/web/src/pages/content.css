@@ -65,7 +65,6 @@
 .faq details > * + :not(summary) { margin-top: 12px; }
 .faq details > div { padding-bottom: 20px; }
 .faq details:target { background: var(--card-hover); }
-.faq .q-link { font-weight: var(--wght-regular); }
 .faq h3 { font-size: inherit; margin: 0; font-weight: inherit; display: contents; }
 .faq-group > * + * { margin-top: 16px; }
 .faq-group > h2 { margin-top: 0; }
