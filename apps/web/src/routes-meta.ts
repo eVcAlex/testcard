@@ -15,12 +15,17 @@ export const ROUTES: readonly RouteMeta[] = [
   {
     path: "/",
     title: `${PRODUCT_FULL_NAME} for Windows & Fire TV | by ${ORG_NAME}`,
-    description: `${PRODUCT_NAME} is a free IPTV player for Windows and Fire TV with a real TV guide, tidy channel names and your own Xtream or M3U sources. Join the beta waitlist.`,
+    description: `${PRODUCT_NAME} is an IPTV player for Windows and Fire TV with a real TV guide, tidy channel names and your own Xtream or M3U sources. Join the free beta waitlist.`,
+  },
+  {
+    path: "/features",
+    title: `What ${PRODUCT_NAME} does: guide, tidy names, one account | ${PRODUCT_NAME}`,
+    description: `What ${PRODUCT_NAME} does for Windows and Fire TV: a TV guide with now and next, tidy channel names, films and series on shelves, and one account for your PC and TV.`,
   },
   {
     path: "/download",
     title: `${PRODUCT_FULL_NAME}: beta for Windows & Fire TV`,
-    description: `${PRODUCT_NAME} is in private beta. Join the waitlist for the free IPTV player for Windows and Fire TV, and see what it needs and how it installs.`,
+    description: `${PRODUCT_NAME} is in private beta. Join the waitlist for the free beta of the IPTV player for Windows and Fire TV, and see what it needs and how it installs.`,
   },
   {
     path: "/setup",
@@ -36,6 +41,11 @@ export const ROUTES: readonly RouteMeta[] = [
     path: "/privacy",
     title: `Privacy | ${PRODUCT_NAME}`,
     description: `What ${PRODUCT_NAME} and this website store, what stays on your device, and how to ask for your data to be deleted.`,
+  },
+  {
+    path: "/terms",
+    title: `Terms | ${PRODUCT_NAME}`,
+    description: `The rules for using ${PRODUCT_NAME} and this website: your own content, the free beta, accounts and fair use.`,
   },
   {
     path: "/link",

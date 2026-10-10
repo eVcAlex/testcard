@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { BackChip } from "../ui/parts.tsx";
 import { PRODUCT_NAME } from "../site.ts";
 
 const SECTIONS = [
@@ -14,9 +15,10 @@ const SECTIONS = [
 
 export function Setup() {
   return (
-    <article className="wrap page prose has-toc">
-      <h1>Add your first source</h1>
-      <p className="lead">{PRODUCT_NAME} plays what you give it. This is how to give it an Xtream Codes login or an M3U playlist, load a TV guide, and sign in your TV.</p>
+    <article className="page-in wrap prose has-toc">
+      <BackChip />
+      <h1 className="case-title split" tabIndex={-1}>Add your first source</h1>
+      <p className="case-lede" data-rise>{PRODUCT_NAME} plays what you give it. This is how to give it an Xtream Codes login or an M3U playlist, load a TV guide, and sign in your TV.</p>
       <nav className="toc" aria-label="On this page">
         <b>On this page</b>
         <ol>{SECTIONS.map(([id, label]) => <li key={id}><a href={`#${id}`}>{label}</a></li>)}</ol>

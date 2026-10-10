@@ -49,10 +49,10 @@ describe("routes-meta", () => {
     expect(tag(nf, "canonical")).toBeUndefined();
   });
 
-  it("puts Organization, WebSite and SoftwareApplication JSON-LD on / only, free and with no ratings", () => {
+  it("puts Organization, WebSite and SoftwareApplication JSON-LD on / only, with no price and no ratings", () => {
     const doc = homeLd()[0] as unknown as { "@graph": { "@type": string; offers?: { price: string } }[] };
     expect(doc["@graph"].map((n) => n["@type"])).toEqual(["Organization", "WebSite", "SoftwareApplication"]);
-    expect(doc["@graph"][2]?.offers?.price).toBe("0");
+    expect(doc["@graph"][2]).not.toHaveProperty("offers");
     expect(JSON.stringify(doc)).not.toMatch(/aggregateRating|review/i);
     expect(serverHeadModel(metaFor("/")).jsonLd).toHaveLength(1);
     expect(serverHeadModel(metaFor("/download")).jsonLd).toHaveLength(0);

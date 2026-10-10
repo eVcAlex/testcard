@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { BackChip } from "../ui/parts.tsx";
 import { FAQ, GUIDE_CAUSES, GUIDE_QUESTION, LINK } from "../faq-data.ts";
 import { CONTACT_EMAIL, PRODUCT_NAME } from "../site.ts";
 
@@ -19,9 +20,10 @@ function Para({ text }: { text: string }): ReactNode {
 
 export function Faq() {
   return (
-    <article className="wrap page prose faq">
-      <h1>{PRODUCT_NAME} IPTV player FAQ</h1>
-      <p className="lead">Plain answers about sources, the guide, installing and what {PRODUCT_NAME} does and doesn't do.</p>
+    <article className="page-in wrap prose faq">
+      <BackChip />
+      <h1 className="case-title split" tabIndex={-1}>{PRODUCT_NAME} IPTV player FAQ</h1>
+      <p className="case-lede" data-rise>Plain answers about sources, the guide, installing and what {PRODUCT_NAME} does and doesn't do.</p>
       <h2 id="questions">Questions</h2>
       {FAQ.map((item) => (
         <details key={item.id} id={item.id}>

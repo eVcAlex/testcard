@@ -15,7 +15,7 @@ describe("prerender render()", () => {
     const out = await render("/nope");
     expect(out.status).toBe(404);
     expect(out.html).toContain("No signal");
-    expect(out.html).toContain('class="bars bars-tall"');
+    expect(out.html).toContain('class="lost-sq"');
     expect(out.head).toContain("noindex");
   });
 

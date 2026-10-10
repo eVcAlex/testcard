@@ -10,6 +10,8 @@
 # Cloudflare joins Cache-Control values from every matching rule, so nothing broad is set above: HTML is listed route by route.
 /
   Cache-Control: no-cache
+/features
+  Cache-Control: no-cache
 /download
   Cache-Control: no-cache
 /setup
@@ -18,11 +20,13 @@
   Cache-Control: no-cache
 /privacy
   Cache-Control: no-cache
+/terms
+  Cache-Control: no-cache
 /404.html
   Cache-Control: no-cache
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
-# The font file is versioned by name (InterVariable-latin.v1.woff2): bump the name when it is re-subset.
+# The font file is versioned by name (PlusJakartaSans-latin.v1.woff2): bump the name when it is re-subset.
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
 /theme-init.js

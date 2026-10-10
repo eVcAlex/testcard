@@ -32,15 +32,15 @@ describe("theme", () => {
   });
 
   it("keeps the theme-color metas in step with the chosen theme and restores the media variants on auto", () => {
-    document.head.insertAdjacentHTML("beforeend", '<meta name="theme-color" content="#f7f8f9" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#14171a" media="(prefers-color-scheme: dark)">');
+    document.head.insertAdjacentHTML("beforeend", '<meta name="theme-color" content="#efe8d6" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#11100d" media="(prefers-color-scheme: dark)">');
     const metas = () => [...document.querySelectorAll('meta[name="theme-color"]')].map((m) => m.getAttribute("content"));
     media(false);
     setPref("light");
-    expect(metas()).toEqual(["#f7f8f9", "#f7f8f9"]);
+    expect(metas()).toEqual(["#efe8d6", "#efe8d6"]);
     setPref("dark");
-    expect(metas()).toEqual(["#14171a", "#14171a"]);
+    expect(metas()).toEqual(["#11100d", "#11100d"]);
     paintThemeColour(document, "auto");
-    expect(metas()).toEqual(["#f7f8f9", "#14171a"]);
+    expect(metas()).toEqual(["#efe8d6", "#11100d"]);
     document.head.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove());
   });
 });

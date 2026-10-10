@@ -1,15 +1,18 @@
 # Website screenshots
 
-Everything on screen is invented: `fake-provider.mjs` is an Xtream-style server with made-up channels, guide, films and
-series, and generated test-pattern artwork (sharp). No real provider, channel, logo or playlist is involved.
+What is on screen comes from a demo source, `fake-provider.mjs`: an Xtream-style server whose "channels" are themed after open
+movies (Blender Foundation, Creative Commons Attribution) and public-domain films. The posters (`art.mjs`, downloaded once from
+Wikimedia Commons into `raw/art`) double as channel logos, the guide is made up from the film titles, and streams redirect to public
+open-movie test streams. No real provider, channel, logo or playlist is involved. Credit line for the site: see CREDITS in `art.mjs`
+(it is also in the site footer).
 
 One-time: `cd scripts/screenshots && npm install` (playwright-core; this folder is outside the pnpm workspace).
 
 ## Desktop (Windows)
 1. `pnpm --filter @testcard/desktop build`
-2. `node scripts/screenshots/desktop.mjs` (if `ELECTRON_RUN_AS_NODE` is set in your shell it is dropped for the app).
+2. `node scripts/screenshots/desktop.mjs` (needs network the first time, for the posters; if `ELECTRON_RUN_AS_NODE` is set in your shell it is dropped for the app).
    It uses a throwaway profile, adds the source through the app's own add call and writes `raw/desktop-live.png`
-   and `raw/desktop-movies.png` at 1600x900. The video box in Live TV stays black: the demo streams are not real.
+   and `raw/desktop-movies.png` at 1600x900. The video box in Live TV stays black: mpv draws it in its own window, which a page screenshot cannot see.
 
 ## Fire TV (Android emulator, adb on PATH, only ever `-s emulator-5554`)
 1. Create a TV AVD from an installed image: `avdmanager create avd -n shots_tv -k "system-images;android-36;android-tv;x86_64" -d tv_1080p`
@@ -23,7 +26,9 @@ One-time: `cd scripts/screenshots && npm install` (playwright-core; this folder 
    for a build without the debug performance overlay (the emulator is x86_64; CI's release APK is armeabi-v7a only and will not install).
 5. Seed (debug build only): `adb -s emulator-5554 shell "am start -n com.evcalex.testcard/.tv.MainActivity --es seed 'demo@example.test|demo-password-1|http://10.0.2.2:9998'"`.
    Then install the release build and sign in with the same email and password; the sources arrive by sync.
-6. `adb -s emulator-5554 exec-out screencap -p > scripts/screenshots/raw/tv-home.png` (and `tv-guide.png`, Live TV, All channels under the Panel source).
+6. `adb -s emulator-5554 exec-out screencap -p > scripts/screenshots/raw/tv-movies.png` (the Movies grid) and `tv-guide.png` (Live TV, All channels). The Home screen's "Top 10 this year" row needs titles from the current year, which real films do not have, so the Movies grid stands in.
+
+   Adding the source by hand on the emulator (after signing up on the local sync server): Settings, Sources, Add source. Text fields take `adb shell input text` once focused with DPAD centre.
 
 ## Then
 `node scripts/screenshots/compress.mjs` and put the printed sizes into `apps/web/src/home/shots.tsx`.

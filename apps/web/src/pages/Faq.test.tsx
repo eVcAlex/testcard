@@ -29,12 +29,13 @@ describe("Faq", () => {
     expect(d.open).toBe(true);
   });
 
-  it("answers legality plainly without legal advice, price as free, Windows and Fire TV honestly", () => {
+  it("answers legality plainly without legal advice, the beta as free without promising a price, Windows and Fire TV honestly", () => {
     const { container } = render(<Faq />);
     const text = (id: string) => container.querySelector(`#${id}`)!.textContent ?? "";
     expect(text("legal")).toMatch(/entitled to the content/);
     expect(text("legal")).toMatch(/not legal advice/);
-    expect(text("price")).toMatch(/Yes\. Testcard is free/);
+    expect(text("price")).toMatch(/The beta is free/);
+    expect(text("price")).toMatch(/after the beta/);
     expect(text("windows-warning")).toMatch(/More info.*Run anyway/);
     expect(text("windows-warning")).toMatch(/SHA-256/);
     expect(text("fire-tv")).toMatch(/Downloader code/);
