@@ -31,9 +31,9 @@ const FEATURES: readonly Feature[] = [
       </div>
     ),
   },
-  { title: "Made for the remote", tag: "Fire TV", body: "Big, clear screens for the TV remote, with Skip intro and Next episode buttons when you need them.", shot: TV_MOVIES },
+  { title: "Made for the remote", tag: "Android TV", body: "Big, clear screens for the TV remote, with Skip intro and Next episode buttons when you need them.", shot: TV_MOVIES },
   {
-    title: "Captions your way", tag: "Fire TV",
+    title: "Captions your way", tag: "Android TV",
     body: "Change how captions look, so they are easy to read from the sofa.",
     panel: <div className="pn pn-cap"><small>Example</small><p>Captions, the size and colour you like.</p></div>,
   },

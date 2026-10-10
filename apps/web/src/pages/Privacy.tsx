@@ -33,7 +33,7 @@ export function Privacy() {
 
       <section id="logins" aria-labelledby="logins-h" className="block">
         <h2 id="logins-h">Provider logins</h2>
-        <p>Your provider logins are held in your device's secure store (Windows DPAPI on Windows, the Android keystore on Fire TV). They are never kept in the database and never written to logs.</p>
+        <p>Your provider logins are held in your device's secure store (Windows DPAPI on Windows, the Android keystore on Android TV). They are never kept in the database and never written to logs.</p>
       </section>
 
       <section id="sync" aria-labelledby="sync-h" className="block">
@@ -46,7 +46,7 @@ export function Privacy() {
 
       <section id="updates" aria-labelledby="updates-h" className="block">
         <h2 id="updates-h">Update checks</h2>
-        <p>The apps check for new versions by contacting our release server (evicted.dev). The request is a plain download of a small version file. The Fire TV app checks shortly after it starts and every six hours, and you can switch that off in its settings. The server answers requests like any web server, so it sees the address they came from. We don't keep our own access logs of these requests. Cloudflare, which serves them, processes request details such as the address to deliver and protect the service, under its own privacy policy.</p>
+        <p>The apps check for new versions by contacting our release server (evicted.dev). The request is a plain download of a small version file. The Android TV app checks shortly after it starts and every six hours, and you can switch that off in its settings. The server answers requests like any web server, so it sees the address they came from. We don't keep our own access logs of these requests. Cloudflare, which serves them, processes request details such as the address to deliver and protect the service, under its own privacy policy.</p>
       </section>
 
       <section id="website" aria-labelledby="website-h" className="block">
@@ -58,7 +58,7 @@ export function Privacy() {
 
       <section id="waitlist" aria-labelledby="waitlist-h" className="block">
         <h2 id="waitlist-h">The beta waitlist</h2>
-        <p>When you join the waitlist we store three things: your email address, which devices you ticked (Windows, Fire TV, either or neither), and the time you signed up.</p>
+        <p>When you join the waitlist we store three things: your email address, which devices you ticked (Windows, Android TV, either or neither), and the time you signed up.</p>
         <ul>
           <li><b>Why:</b> only to email you an invitation when the beta opens. We don't use it for anything else, we don't send newsletters, and we don't share or sell it. There is no confirmation email.</li>
           <li><b>How long:</b> until we have sent your invitation, or until you ask us to delete it, whichever comes first. We don't keep the list after the beta opens to everyone.</li>

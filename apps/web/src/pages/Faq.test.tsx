@@ -29,7 +29,7 @@ describe("Faq", () => {
     expect(d.open).toBe(true);
   });
 
-  it("answers legality plainly without legal advice, the beta as free without promising a price, Windows and Fire TV honestly", () => {
+  it("answers legality plainly without legal advice, the beta as free without promising a price, Windows and Android TV honestly", () => {
     const { container } = render(<Faq />);
     const text = (id: string) => container.querySelector(`#${id}`)!.textContent ?? "";
     expect(text("legal")).toMatch(/entitled to the content/);
@@ -39,7 +39,7 @@ describe("Faq", () => {
     expect(text("windows-warning")).toMatch(/More info.*Run anyway/);
     expect(text("windows-warning")).toMatch(/SHA-256/);
     expect(text("fire-tv")).toMatch(/Downloader code/);
-    expect(text("fire-tv")).toMatch(/shared with beta testers/);
+    expect(text("fire-tv")).toMatch(/1624205/);
   });
 
   it("lists the concrete causes of an empty or wrong guide", () => {

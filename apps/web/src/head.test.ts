@@ -5,7 +5,7 @@ import { serverHeadModel } from "./routes-ld.ts";
 describe("head", () => {
   it("renders tags as escaped HTML with the data-head marker", () => {
     const html = headToHtml(serverHeadModel(metaFor("/")));
-    expect(html).toContain("<title>Testcard IPTV player for Windows &amp; Fire TV | by Evicted</title>");
+    expect(html).toContain("<title>Testcard IPTV player for Windows &amp; Android TV | by Evicted</title>");
     expect(html).toContain('<link rel="canonical" href="https://evicted.dev/" data-head>');
     expect(html).toContain('<script type="application/ld+json" data-head>');
     expect(html).not.toMatch(/\sstyle=|\son\w+=/);

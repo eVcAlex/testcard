@@ -17,7 +17,7 @@ describe("Header (the pill)", () => {
     const nav = screen.getByRole("navigation", { name: "Main" });
     const links = within(nav).getAllByRole("link");
     expect(links.map((a) => a.textContent)).toEqual(["Home", "Features", "Setup", "FAQ", "Link your TV", "Join the beta"]);
-    expect(within(nav).getByRole("link", { name: "Join the beta" })).toHaveAttribute("href", "/download#waitlist");
+    expect(within(nav).getByRole("link", { name: "Join the beta" })).toHaveAttribute("href", "/download");
     expect(within(nav).getByRole("link", { name: "Link your TV" })).toHaveAttribute("href", "/link");
   });
 

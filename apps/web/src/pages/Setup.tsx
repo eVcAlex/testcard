@@ -27,7 +27,7 @@ export function Setup() {
       <section id="need" aria-labelledby="need-h" className="block">
         <h2 id="need-h">What you need</h2>
         <p>A source you are entitled to use: an Xtream Codes login, or an M3U playlist address, from a provider you have the right to watch. {PRODUCT_NAME} ships no channels, playlists or streams and doesn't recommend providers, so this part is yours to bring.</p>
-        <p>On Windows you add and edit sources in the <b>Sources</b> screen. You can also add and edit them on the Fire TV app.</p>
+        <p>On Windows you add and edit sources in the <b>Sources</b> screen. You can also add and edit them on the Android TV app.</p>
       </section>
 
       <section id="add" aria-labelledby="add-h" className="block">
@@ -45,7 +45,7 @@ export function Setup() {
           <li><b>Playlist URL</b>: the address of an M3U or M3U8 playlist. The form takes an address, not a file.</li>
           <li>Add an XMLTV address if you want a guide and the playlist doesn't name one (next section).</li>
         </ul>
-        <p>Your logins are encrypted on the device: with Windows' own data protection on Windows, and the Android Keystore on Fire TV.</p>
+        <p>Your logins are encrypted on the device: with Windows' own data protection on Windows, and the Android Keystore on Android TV.</p>
       </section>
 
       <section id="load" aria-labelledby="load-h" className="block">
@@ -61,7 +61,7 @@ export function Setup() {
 
       <section id="refresh" aria-labelledby="refresh-h" className="block">
         <h2 id="refresh-h">Refresh</h2>
-        <p>Refreshing re-fetches the source's channels, films and series, then its guide. It is manual by default (<b>Off (manual only)</b>). On Windows, set <b>Auto-refresh</b> to every hour, 3, 6, 12 or 24 hours and {PRODUCT_NAME} does it in the background while it is open. On Fire TV, refresh a source by hand from Settings.</p>
+        <p>Refreshing re-fetches the source's channels, films and series, then its guide. It is manual by default (<b>Off (manual only)</b>). On Windows, set <b>Auto-refresh</b> to every hour, 3, 6, 12 or 24 hours and {PRODUCT_NAME} does it in the background while it is open. On Android TV, refresh a source by hand from Settings.</p>
         <p>A refresh merges into what you have rather than starting over, so your favourites and recently watched survive it, even when a provider renumbers or renames channels.</p>
       </section>
 
@@ -74,7 +74,7 @@ export function Setup() {
         <h2 id="link-tv-h">Sign in a TV with a code</h2>
         <p>Typing a password with a remote is slow, so the TV shows a code instead.</p>
         <ol>
-          <li>In the Fire TV app, choose Sign in. It shows a code.</li>
+          <li>In the Android TV app, choose Sign in. It shows a code.</li>
           <li>On a phone or computer, open <Link to="/link">evicted.dev/link</Link> and enter the code.</li>
           <li>Sign in, or create your {PRODUCT_NAME} account. Your TV signs in on its own, and your sources, favourites and progress arrive.</li>
         </ol>
@@ -86,7 +86,7 @@ export function Setup() {
         <p>An account can have up to 4 profiles. Each has its own Continue watching, favourites, recently watched and progress, and they follow you to every device you sign in on.</p>
       </section>
 
-      <p className="note">Not in the beta yet? <Link to="/download" hash="waitlist">Join the waitlist</Link>.</p>
+      <p className="note">Not in the beta yet? <Link to="/download">Join the waitlist</Link>.</p>
     </article>
   );
 }

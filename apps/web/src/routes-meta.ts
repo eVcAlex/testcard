@@ -14,23 +14,23 @@ const OG_IMAGE = { path: "/og.png", width: 1200, height: 630, alt: `${PRODUCT_FU
 export const ROUTES: readonly RouteMeta[] = [
   {
     path: "/",
-    title: `${PRODUCT_FULL_NAME} for Windows & Fire TV | by ${ORG_NAME}`,
-    description: `${PRODUCT_NAME} is an IPTV player for Windows and Fire TV with a real TV guide, tidy channel names and your own Xtream or M3U sources. Join the free beta waitlist.`,
+    title: `${PRODUCT_FULL_NAME} for Windows & Android TV | by ${ORG_NAME}`,
+    description: `${PRODUCT_NAME} is an IPTV player for Windows and Android TV with a real TV guide, tidy channel names and your own Xtream or M3U sources. Join the free beta waitlist.`,
   },
   {
     path: "/features",
     title: `What ${PRODUCT_NAME} does: guide, tidy names, one account | ${PRODUCT_NAME}`,
-    description: `What ${PRODUCT_NAME} does for Windows and Fire TV: a TV guide with now and next, tidy channel names, films and series on shelves, and one account for your PC and TV.`,
+    description: `What ${PRODUCT_NAME} does for Windows and Android TV: a TV guide with now and next, tidy channel names, films and series on shelves, and one account for your PC and TV.`,
   },
   {
     path: "/download",
-    title: `${PRODUCT_FULL_NAME}: beta for Windows & Fire TV`,
-    description: `${PRODUCT_NAME} is in private beta. Join the waitlist for the free beta of the IPTV player for Windows and Fire TV, and see what it needs and how it installs.`,
+    title: `${PRODUCT_FULL_NAME}: beta for Windows & Android TV`,
+    description: `${PRODUCT_NAME} is in private beta. Join the waitlist for the free beta of the IPTV player for Windows and Android TV, and see what it needs and how it installs.`,
   },
   {
     path: "/setup",
     title: `Add Xtream or M3U sources to ${PRODUCT_NAME}: setup guide`,
-    description: `How to add an Xtream Codes login or an M3U playlist to ${PRODUCT_NAME}, load an XMLTV guide, refresh your sources and link your Fire TV.`,
+    description: `How to add an Xtream Codes login or an M3U playlist to ${PRODUCT_NAME}, load an XMLTV guide, refresh your sources and link your TV.`,
   },
   {
     path: "/faq",
@@ -46,6 +46,11 @@ export const ROUTES: readonly RouteMeta[] = [
     path: "/terms",
     title: `Terms | ${PRODUCT_NAME}`,
     description: `The rules for using ${PRODUCT_NAME} and this website: your own content, the free beta, accounts and fair use.`,
+  },
+  {
+    path: "/changelog",
+    title: `What's new | ${PRODUCT_NAME}`,
+    description: `Changes to ${PRODUCT_NAME}, newest first: what each beta release added or fixed.`,
   },
   {
     path: "/link",

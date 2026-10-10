@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
@@ -17,6 +18,13 @@ async function start() {
   // The dev server serves an empty shell; a built page has markup to hydrate.
   if (hydrating) hydrateRoot(container, app);
   else createRoot(container).render(app);
+}
+
+// Dev only: try a token from the address bar, e.g. /?--accent=ece6d8 or /?--ink=e6e0d0 (a bare hex gets its #). Gone in a build.
+if (import.meta.env.DEV) {
+  new URLSearchParams(location.search).forEach((v, k) => {
+    if (k.startsWith("--")) document.documentElement.style.setProperty(k, /^[0-9a-f]{6}$/i.test(v) ? `#${v}` : v);
+  });
 }
 
 void start();

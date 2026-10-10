@@ -30,7 +30,7 @@ const softwareApplicationLd = () => ({
   applicationCategory: "MultimediaApplication",
   operatingSystem: "Windows, Fire OS",
   url: `${SITE_URL}/`,
-  description: "A tidy IPTV player for Windows and Fire TV. You add your own Xtream or M3U sources; it ships no channels.",
+  description: "A tidy IPTV player for Windows and Android TV. You add your own Xtream or M3U sources; it ships no channels.",
   publisher: { "@id": ORG_ID },
 });
 

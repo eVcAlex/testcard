@@ -27,7 +27,7 @@ describe("WaitlistForm", () => {
     expect(email).toHaveAttribute("autocomplete", "email");
     expect(email).toBeRequired();
     expect(screen.getByRole("checkbox", { name: "Windows" })).not.toBeRequired();
-    expect(screen.getByRole("checkbox", { name: "Fire TV" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Android TV" })).not.toBeChecked();
     expect(screen.getByRole("link", { name: "privacy policy" })).toHaveAttribute("href", "/privacy");
     expect(screen.getByText(/we store your email, the devices you ticked and the time/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "hello@evicted.dev" })).toHaveAttribute("href", "mailto:hello@evicted.dev");
@@ -51,7 +51,7 @@ describe("WaitlistForm", () => {
     join.mockResolvedValue({} as Response);
     render(<WaitlistForm />);
     await fill(user, "  Me@Example.com ");
-    await user.click(screen.getByRole("checkbox", { name: "Fire TV" }));
+    await user.click(screen.getByRole("checkbox", { name: "Android TV" }));
     await user.click(screen.getByRole("button", { name: "Join the beta waitlist" }));
     expect(join).toHaveBeenCalledWith({ email: "Me@Example.com", windows: false, firetv: true, hp_note: "" });
     const done = await screen.findByRole("status");
