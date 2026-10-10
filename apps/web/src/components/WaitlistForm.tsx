@@ -41,7 +41,10 @@ export function WaitlistForm() {
   return (
     <div className="wl">
       {phase === "done" ? (
-        <p ref={message} className="wl-msg" role="status" tabIndex={-1}>{WAITLIST_DONE}</p>
+        <>
+          <p ref={message} className="wl-msg" role="status" tabIndex={-1}>{WAITLIST_DONE}</p>
+          <p>While you wait: <Link to="/setup">see how to add a source</Link>.</p>
+        </>
       ) : (
         <form method="post" action="/waitlist" onSubmit={submit} aria-busy={phase === "sending"}>
           <label className="wl-field" htmlFor={`${uid}-email`}>
@@ -56,7 +59,7 @@ export function WaitlistForm() {
             </label>
             <label className="wl-check">
               <input type="checkbox" name="firetv" checked={firetv} onChange={(e) => setFiretv(e.target.checked)} />
-              <span>Fire TV</span>
+              <span>Android TV</span>
             </label>
           </fieldset>
           <div className="wl-hp" aria-hidden="true">
@@ -66,6 +69,7 @@ export function WaitlistForm() {
           <button type="submit" className="btn" disabled={phase === "sending"}>
             {phase === "sending" ? "Joining..." : "Join the beta waitlist"}
           </button>
+          <p className="wl-promise">One email when the beta opens. That is all we send.</p>
           {phase === "error" && <p ref={message} className="wl-msg wl-error" role="alert" tabIndex={-1}>{error}</p>}
           {phase === "sending" && <p className="sr-only" role="status">Joining the waitlist</p>}
         </form>

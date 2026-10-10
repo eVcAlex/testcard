@@ -26,7 +26,7 @@ export function OnScreen() {
         <h2 className="giant split" id="os-h">On screen.</h2>
         <Br>The real apps</Br>
       </div>
-      <p className="os-note wrap">Real screenshots of the Windows and Fire TV apps. The films shown are open movies and public-domain classics, loaded from a demo source.</p>
+      <p className="os-note wrap">Real screenshots of the Windows and Android TV apps. The films shown are open movies and public-domain classics, loaded from a demo source.</p>
       <div className="os-grid wrap">
         <div className="os-col">
           <div className="os-frame">

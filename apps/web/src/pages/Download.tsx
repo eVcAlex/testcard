@@ -4,7 +4,7 @@ import wretch from "wretch";
 import { WaitlistForm } from "../components/WaitlistForm.tsx";
 import { BackChip, Meta } from "../ui/parts.tsx";
 import { parseAndroid, parseDesktop } from "../releases.ts";
-import { PRODUCT_NAME, RELEASE_STATE, type ReleaseState, SIGNED } from "../site.ts";
+import { DOWNLOADER_CODE, PRODUCT_NAME, RELEASE_STATE, type ReleaseState, SIGNED } from "../site.ts";
 
 // null, not undefined: TanStack Query v5 treats undefined data as an error (and retries).
 const desktop = () => wretch("/app/latest.yml").get().text().then((t) => parseDesktop(t) ?? null).catch(() => null);
@@ -21,7 +21,7 @@ function Requirements() {
       </thead>
       <tbody>
         <tr><th scope="row">Windows</th><td>Windows 10 or 11, 64-bit (x64) only</td><td>.exe installer</td></tr>
-        <tr><th scope="row">Fire TV</th><td>Fire OS 6 or later (Android 7+) {TBC}</td><td>.apk, installed with Downloader</td></tr>
+        <tr><th scope="row">Android TV and Fire TV</th><td>Android 7 or later, or Fire OS 6 or later {TBC}</td><td>.apk, installed with Downloader</td></tr>
         <tr><th scope="row">Phones and tablets</th><td>Not supported for now</td><td>None</td></tr>
       </tbody>
     </table>
@@ -42,10 +42,10 @@ function WindowsNote({ signed = SIGNED }: { signed?: boolean }) {
 function FireTvNote() {
   return (
     <>
-      <p>On Fire TV you install the app with the free Downloader app and a Downloader code. Downloader code: <b>shared with beta testers</b>.</p>
+      <p>On an Android TV or Fire TV you install the app with the free Downloader app. Downloader code: <b className="dcode">{DOWNLOADER_CODE}</b>.</p>
       <ol>
-        <li>Install <b>Downloader</b> from the Amazon Appstore on your Fire TV.</li>
-        <li>Allow it to install apps: in Settings, under My Fire TV, Developer options, choose <b>Install unknown apps</b> and switch Downloader on. The menu names vary a little between Fire OS versions.</li>
+        <li>Install <b>Downloader</b> from the Amazon Appstore (Fire TV) or Google Play (Android TV).</li>
+        <li>Allow it to install apps. On Fire TV: Settings, My Fire TV, Developer options, <b>Install unknown apps</b>, switch Downloader on. On Android TV you are asked the first time. The menu names vary a little between versions.</li>
         <li>Open Downloader, type the code into its address box, choose <b>Go</b>, then <b>Install</b>.</li>
         <li>Open {PRODUCT_NAME}, choose Sign in, and enter the code it shows on <Link to="/link">evicted.dev/link</Link>.</li>
       </ol>
@@ -62,9 +62,9 @@ function ComingSoon({ signed }: { signed: boolean }) {
       <BackChip />
       <div className="dl-head">
         <h1 className="case-title split" tabIndex={-1}>{`Join the ${PRODUCT_NAME} beta`}</h1>
-        <p className="case-lede" data-rise>{PRODUCT_NAME} is in private beta for Windows and Fire TV and can't be downloaded yet. Join the waitlist and we'll email you when the beta opens.</p>
+        <p className="case-lede" data-rise>{PRODUCT_NAME} is in private beta. The Windows app can't be downloaded yet: join the waitlist and we'll email you when it opens. On Android TV or Fire TV you can install the beta now with the Downloader code below.</p>
       </div>
-      <Meta items={[["Works on", "Windows · Fire TV"], ["The beta", "Free"], ["You bring", "Your own source"], ["Updates", "Automatic"]]} />
+      <Meta items={[["Works on", "Windows · Android TV"], ["The beta", "Free"], ["You bring", "Your own source"], ["Updates", "Automatic"]]} />
       <div className="dl-grid">
         <section id="waitlist" aria-labelledby="waitlist-h" className="dl-form lform" data-rise>
           <h2 id="waitlist-h">Join the waitlist</h2>
@@ -73,7 +73,7 @@ function ComingSoon({ signed }: { signed: boolean }) {
         <div className="dl-info">
           <section id="beta" aria-labelledby="beta-h" className="block">
             <h2 id="beta-h">What the beta is</h2>
-            <p>The beta is free. It covers the Windows app and the Fire TV app. When it opens we'll email an invitation to everyone on the list, in batches. Windows testers download the installer from this site. Fire TV testers install the app with Downloader, using a code we share with beta testers.</p>
+            <p>The beta is free. It covers the Windows app and the Android TV and Fire TV app. When the Windows beta opens we'll email an invitation to everyone on the list, in batches, and testers download the installer from this site. The TV app can be installed now with Downloader, using the code in the Android TV and Fire TV section below.</p>
           </section>
           <section id="requirements" aria-labelledby="requirements-h" className="block">
             <h2 id="requirements-h">Requirements</h2>
@@ -85,7 +85,7 @@ function ComingSoon({ signed }: { signed: boolean }) {
             <WindowsNote signed={signed} />
           </section>
           <section id="fire-tv" aria-labelledby="fire-tv-h" className="block">
-            <h2 id="fire-tv-h">Fire TV</h2>
+            <h2 id="fire-tv-h">Android TV and Fire TV</h2>
             <FireTvNote />
           </section>
           <section id="no-channels" aria-labelledby="no-channels-h" className="block">
@@ -127,10 +127,10 @@ function Releases({ signed }: { signed: boolean }) {
         <WindowsNote signed={signed} />
       </div>
       <div className="card">
-        <h2>Fire TV</h2>
+        <h2>Android TV and Fire TV</h2>
         {tv.data ? (
           <>
-            <a className="button" href={`/app/${tv.data.file}`}>Download for Fire TV</a>
+            <a className="button" href={`/app/${tv.data.file}`}>Download for Android TV</a>
             <p className="note">File <code>{tv.data.file}</code></p>
             <Sha value={tv.data.sha256} />
           </>

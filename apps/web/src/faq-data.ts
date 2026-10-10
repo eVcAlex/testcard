@@ -1,4 +1,4 @@
-import { PRODUCT_NAME, SIGNED } from "./site.ts";
+import { DOWNLOADER_CODE, PRODUCT_NAME, SIGNED } from "./site.ts";
 
 interface FaqItem {
   id: string;
@@ -52,17 +52,17 @@ export const FAQ: readonly FaqItem[] = [
   },
   {
     id: "fire-tv",
-    question: "How do I install it on Fire TV?",
+    question: "How do I install it on Android TV or Fire TV?",
     answer: [
-      "Install the free Downloader app on your Fire TV, then use it to fetch the app with a Downloader code. The code is shared with beta testers. You may need to allow Downloader to install apps from unknown sources in the Fire TV settings.",
-      "[Join the waitlist](/download#waitlist) and we'll send it when the beta opens.",
+      `Install the free Downloader app on your TV (from the Amazon Appstore on Fire TV, or Google Play on Android TV), open it, type the Downloader code ${DOWNLOADER_CODE} into its address box and choose Go, then Install. You may need to allow Downloader to install apps from unknown sources in your TV's settings.`,
+      "[Step by step on the download page](/download).",
     ],
     structured: false,
   },
   {
     id: "phones",
     question: "Does it work on phones?",
-    answer: ["Not for now. The apps are for Windows and Fire TV. The Fire TV layout is drawn for a TV and a remote."],
+    answer: ["Not for now. The apps are for Windows and Android TV (Fire TV included). The TV layout is drawn for a TV and a remote."],
     structured: false,
   },
   {

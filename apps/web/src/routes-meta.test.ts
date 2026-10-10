@@ -5,8 +5,8 @@ const tag = (m: ReturnType<typeof headModel>, key: string) => m.tags.find((t) =>
 
 describe("routes-meta", () => {
   it("uses the spec titles", () => {
-    expect(metaFor("/").title).toBe("Testcard IPTV player for Windows & Fire TV | by Evicted");
-    expect(metaFor("/download").title).toBe("Testcard IPTV player: beta for Windows & Fire TV");
+    expect(metaFor("/").title).toBe("Testcard IPTV player for Windows & Android TV | by Evicted");
+    expect(metaFor("/download").title).toBe("Testcard IPTV player: beta for Windows & Android TV");
     expect(metaFor("/setup").title).toBe("Add Xtream or M3U sources to Testcard: setup guide");
     expect(metaFor("/faq").title).toBe("Testcard IPTV player FAQ: EPG, sources, legality");
   });

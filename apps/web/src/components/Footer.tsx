@@ -10,6 +10,7 @@ const SITE = [
   ["/setup", "Setup"],
   ["/faq", "FAQ"],
   ["/download", RELEASE_STATE === "waitlist" ? "Beta" : "Download"],
+  ["/changelog", "What's new"],
   ["/link", "Link your TV"],
   ["/privacy", "Privacy"],
   ["/terms", "Terms"],
@@ -31,10 +32,6 @@ export function Footer() {
           <p className="ftr-k">Site</p>
           <ul>{SITE.map(([to, label]) => <li key={to}><Link to={to} className="ftr-a">{label}</Link></li>)}</ul>
         </nav>
-        <div className="glows" aria-hidden="true">
-          <p className="glow">Channels are yours</p>
-          <p className="glow">The tidying is ours</p>
-        </div>
       </div>
       <div className="ftr-bot">
         <p className="ftr-line">

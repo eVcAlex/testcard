@@ -29,7 +29,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
   <g stroke="${sand}" stroke-width="3"><line x1="${cx - 36}" y1="${cy}" x2="${cx + 36}" y2="${cy}"/><line x1="${cx}" y1="${cy - 36}" x2="${cx}" y2="${cy + 36}"/></g>
   <text x="72" y="268" font-family="Plus Jakarta Sans, Inter, sans-serif" font-weight="600" font-size="112" letter-spacing="-3" fill="${fg}">test<tspan fill="${sand}">card</tspan></text>
   <text x="76" y="352" font-family="Plus Jakarta Sans, Inter, sans-serif" font-weight="500" font-size="44" letter-spacing="-0.5" fill="${fg}">IPTV player</text>
-  <text x="76" y="412" font-family="Plus Jakarta Sans, Inter, sans-serif" font-weight="400" font-size="30" fill="${muted}">for Windows and Fire TV, by Evicted</text>
+  <text x="76" y="412" font-family="Plus Jakarta Sans, Inter, sans-serif" font-weight="400" font-size="30" fill="${muted}">for Windows and Android TV, by Evicted</text>
   ${bars.map((c, i) => `<rect x="${i * barW}" y="${H - 72}" width="${barW + 1}" height="72" fill="${c}"/>`).join("")}
 </svg>`;
 

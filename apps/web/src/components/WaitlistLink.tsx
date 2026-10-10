@@ -1,11 +1,8 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { WAITLIST_HREF } from "../site.ts";
 
-const [path, hash] = WAITLIST_HREF.split("#") as [string, string];
-
-/** Every "Join the beta waitlist" button on the page points at the waitlist form. On the page that holds the form, it scrolls only if the form is off screen, so repeat clicks don't nudge the page. */
+/** Every "Join the beta waitlist" button on the page points at the page that holds the form, which sits just under its heading. */
 export function WaitlistLink({ children = "Join the beta waitlist", className = "button" }: { children?: ReactNode; className?: string }) {
-  const here = useRouterState({ select: (s) => s.location.pathname === path });
-  return <Link to={path} hash={hash} hashScrollIntoView={here ? { block: "nearest" } : true} className={className}>{children}</Link>;
+  return <Link to={WAITLIST_HREF} className={className}>{children}</Link>;
 }

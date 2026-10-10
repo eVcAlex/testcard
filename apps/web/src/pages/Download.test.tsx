@@ -33,7 +33,7 @@ it("shows the Windows link and degrades the Fire TV card when one manifest fails
 it("shows the Fire TV link when latest.json has an apk", async () => {
   stub(yml(), new Response(JSON.stringify({ apks: { firetv: "testcard-firetv.apk" } }), { status: 200 }));
   renderPage(false);
-  const link = await screen.findByRole("link", { name: "Download for Fire TV" });
+  const link = await screen.findByRole("link", { name: "Download for Android TV" });
   expect(link.getAttribute("href")).toBe("/app/testcard-firetv.apk");
 });
 
@@ -62,15 +62,14 @@ describe("Download in the waitlist state", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/beta/i);
     const waitlist = container.querySelector("#waitlist")!;
     expect(within(waitlist as HTMLElement).getByLabelText("Email address")).toBeInTheDocument();
-    for (const h of ["Join the waitlist", "What the beta is", "Requirements", "Windows", "Fire TV", "No channels shipped"]) {
+    for (const h of ["Join the waitlist", "What the beta is", "Requirements", "Windows", "Android TV and Fire TV", "No channels shipped"]) {
       expect(screen.getByRole("heading", { level: 2, name: h })).toBeInTheDocument();
     }
     expect(screen.getByText(/The beta is free/)).toBeInTheDocument();
     expect(screen.getByRole("table")).toHaveTextContent(/Windows 10 or 11, 64-bit \(x64\) only/);
-    expect(screen.getByRole("table")).toHaveTextContent(/Fire OS 6 or later \(Android 7\+\) to be confirmed/);
-    expect(screen.getByText(/shared with beta testers/)).toBeInTheDocument();
+    expect(screen.getByRole("table")).toHaveTextContent(/Android 7 or later, or Fire OS 6 or later to be confirmed/);
+    expect(container.querySelector(".dcode")).toHaveTextContent("1624205");
     expect(screen.getByText(/ships no channels/i)).toBeInTheDocument();
-    expect(container.textContent).not.toMatch(/\b[A-Z0-9]{6,7}\b.*downloader code: \d{4,}/i);
   });
 
   it("explains the SmartScreen warning while the installer is unsigned, and not when it is signed", () => {

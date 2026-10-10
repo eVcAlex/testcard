@@ -14,6 +14,7 @@ it("the sitemap lists every indexable route with a lastmod, and not /link or the
   for (const r of ROUTES.filter((r) => !r.noindex)) expect(map).toContain(`<loc>https://evicted.dev${r.path}</loc><lastmod>2026-01-31</lastmod>`);
   expect(map).toContain("https://evicted.dev/privacy");
   expect(map).toContain("https://evicted.dev/terms");
+  expect(map).toContain("https://evicted.dev/changelog");
   expect(map).not.toContain("/link");
   expect(map).not.toContain("404");
 });
@@ -30,7 +31,7 @@ it("_headers carries the security set and keeps Cache-Control off the catch-all 
   for (const path of ["/theme-init.js", "/og.png", "/favicon.svg", "/shots/*"]) {
     expect(headers).toContain(`\n${path}\n  Cache-Control: public, max-age=3600\n`);
   }
-  for (const path of ["/", "/features", "/download", "/setup", "/faq", "/privacy", "/terms", "/404.html"]) expect(headers).toContain(`\n${path}\n  Cache-Control: no-cache\n`);
+  for (const path of ["/", "/features", "/download", "/setup", "/faq", "/privacy", "/terms", "/changelog", "/404.html"]) expect(headers).toContain(`\n${path}\n  Cache-Control: no-cache\n`);
   expect(headers).toMatch(/\/fonts\/\*\n\s+Cache-Control: public, max-age=31536000, immutable/);
   expect(headers).toMatch(/\/link\n\s+Cache-Control: no-store/);
 });

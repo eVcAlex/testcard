@@ -28,7 +28,7 @@ export function Terms() {
 
       <section id="what" aria-labelledby="what-h" className="block">
         <h2 id="what-h">What this is</h2>
-        <p>{PRODUCT_NAME} is an IPTV player for Windows and Fire TV, made by {ORG_NAME}. {ORG_NAME} is a name we trade under, not a registered company. By installing the apps, creating an account or using this website you agree to these terms. If you don't agree, please don't use them.</p>
+        <p>{PRODUCT_NAME} is an IPTV player for Windows and Android TV, made by {ORG_NAME}. {ORG_NAME} is a name we trade under, not a registered company. By installing the apps, creating an account or using this website you agree to these terms. If you don't agree, please don't use them.</p>
       </section>
 
       <section id="content" aria-labelledby="content-h" className="block">
