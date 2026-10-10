@@ -59,6 +59,26 @@ async function signUp(email: string): Promise<string> {
 }
 
 describe("real Worker app: auth -> salt -> encrypted push -> pull -> decrypt", () => {
+  it("answers with the security headers the static site gets from _headers", async () => {
+    const res = await request("/sync/pull?since=0");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(res.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(res.headers.get("strict-transport-security")).toContain("max-age=");
+    expect(res.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("slows down repeated wrong-password sign-ins from one network", async () => {
+    const attempt = () =>
+      request("/auth/sign-in/email", {
+        method: "POST",
+        headers: { "content-type": "application/json", "cf-connecting-ip": "198.51.100.77" },
+        body: JSON.stringify({ email: "nobody@example.com", password: "wrong-password-1" }),
+      });
+    const statuses: number[] = [];
+    for (let i = 0; i < 8; i++) statuses.push((await attempt()).status);
+    expect(statuses).toContain(429);
+  });
+
   it("rejects /sync/* with no bearer token", async () => {
     const res = await request("/sync/pull?since=0");
     expect(res.status).toBe(401);

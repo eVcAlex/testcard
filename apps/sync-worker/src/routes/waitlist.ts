@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Context } from "hono";
 import type { Env } from "../index.js";
+import { overDailyLimit } from "../rateLimit.js";
 
 /**
  * Website waitlist. Same-origin only (no CORS headers are ever sent), JSON only, small bodies. The email is never
@@ -27,39 +28,9 @@ const Schema = z.object({
   hp_note: z.unknown().optional(),
 });
 
-const hex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-const sha256 = async (text: string) => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
-
 function respond(c: WaitlistContext, body: Record<string, unknown>, status: 200 | 400 | 403 | 413 | 415 | 429) {
   c.header("Cache-Control", "no-store");
   return c.json(body, status);
-}
-
-/** An IPv6 caller owns a whole /64, so key on that rather than on one address of it. */
-function network(ip: string): string {
-  if (ip.includes(".")) return ip.slice(ip.lastIndexOf(":") + 1); // IPv4, or an IPv4-mapped IPv6 literal
-  if (!ip.includes(":")) return ip;
-  const [head = "", tail = ""] = ip.split("::");
-  const groups = head.split(":").filter(Boolean);
-  if (ip.includes("::")) groups.push(...Array(Math.max(0, 8 - groups.length - tail.split(":").filter(Boolean).length)).fill("0"));
-  return groups.slice(0, 4).map((g) => g.toLowerCase().replace(/^0+(?=.)/, "")).join(":");
-}
-
-/** Counts this request against the caller's daily allowance; true when it is over the limit. */
-async function overLimit(c: WaitlistContext): Promise<boolean> {
-  const day = new Date().toISOString().slice(0, 10);
-  const ip = network(c.req.header("cf-connecting-ip") ?? "unknown");
-  const ipHash = await sha256(`${c.env.SYNC_AUTH_SECRET}:waitlist:${day}:${ip}`);
-  const row = await c.env.DB
-    .prepare(
-      `INSERT INTO waitlist_rate (ip_hash, day, count) VALUES (?, ?, 1)
-       ON CONFLICT(day, ip_hash) DO UPDATE SET count = count + 1 RETURNING count`,
-    )
-    .bind(ipHash, day)
-    .first<{ count: number }>();
-  // A first hit of the day for this caller is a cheap moment to drop every earlier day.
-  if (row?.count === 1) await c.env.DB.prepare(`DELETE FROM waitlist_rate WHERE day < ?`).bind(day).run();
-  return (row?.count ?? 0) > MAX_PER_IP_PER_DAY;
 }
 
 export async function handleWaitlist(c: WaitlistContext): Promise<Response> {
@@ -74,7 +45,7 @@ export async function handleWaitlist(c: WaitlistContext): Promise<Response> {
   const text = await c.req.text();
   if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) return respond(c, { error: "too large" }, 413);
 
-  if (await overLimit(c)) return respond(c, { error: "rate limited" }, 429);
+  if (await overDailyLimit(c, "waitlist", MAX_PER_IP_PER_DAY)) return respond(c, { error: "rate limited" }, 429);
 
   let raw: unknown;
   try {

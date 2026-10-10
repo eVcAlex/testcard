@@ -1,12 +1,16 @@
 import { z } from "zod";
 import type { Context } from "hono";
 import type { Env } from "../index.js";
+import { overDailyLimit } from "../rateLimit.js";
 
 /**
  * Signing a TV in with a code. None of these routes is behind a session: the TV has none yet, and the person
  * on the page proves who they are inside the sealed payload. Bodies, codes and blobs are never logged.
  */
 type LinkContext = Context<{ Bindings: Env }>;
+
+/** Each sign-in attempt starts one code, so this is generous; it only stops someone filling the table. */
+export const MAX_STARTS_PER_NETWORK_PER_DAY = 200;
 
 const SESSION_LIFETIME_MS = 10 * 60 * 1000;
 
@@ -33,6 +37,7 @@ async function body<T>(c: LinkContext, schema: z.ZodType<T, z.ZodTypeDef, unknow
 
 /** The TV registers a code it just made. */
 export async function handleLinkStart(c: LinkContext): Promise<Response> {
+  if (await overDailyLimit(c, "link-start", MAX_STARTS_PER_NETWORK_PER_DAY)) return c.json({ error: "rate limited" }, 429);
   const data = await body(c, StartSchema);
   if (data === undefined) return bad(c);
   const now = Date.now();

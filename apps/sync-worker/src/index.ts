@@ -20,6 +20,16 @@ type AppEnv = { Bindings: Env; Variables: { userId: string } };
 
 const app = new Hono<AppEnv>();
 
+// apps/web/public/_headers covers the static site only; answers the Worker writes itself (API, installers) need these too.
+app.use("*", async (c, next) => {
+  await next();
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("Referrer-Policy", "no-referrer");
+  c.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  c.header("Cross-Origin-Resource-Policy", "same-origin");
+  if (!c.res.headers.has("Cache-Control")) c.header("Cache-Control", "no-store");
+});
+
 /** better-auth's `baseURL` taken from the request rather than its own inference (which its docs flag as "not recommended"). */
 function authFor(c: { env: Env; req: { url: string } }) {
   return createAuth(c.env.DB, c.env.SYNC_AUTH_SECRET, new URL(c.req.url).origin);
