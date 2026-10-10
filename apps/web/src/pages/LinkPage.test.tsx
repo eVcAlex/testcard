@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@tanstack/react-router", () => ({ Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) => <a href={to} {...rest}>{children}</a> }));
 vi.mock("../link/linkTv.ts", async () => {
   class LinkError extends Error {
     constructor(message: string, readonly field?: string, readonly accountCreated = false, readonly switchToSignin = false) { super(message); }

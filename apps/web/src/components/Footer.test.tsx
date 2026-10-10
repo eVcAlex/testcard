@@ -1,7 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { Footer } from "./Footer.tsx";
 
-vi.mock("@tanstack/react-router", () => ({ Link: ({ to, children }: { to: string; children: React.ReactNode }) => <a href={to}>{children}</a> }));
+vi.mock("@tanstack/react-router", () => ({
+  useRouterState: () => false,
+  Link: ({ to, hash, hashScrollIntoView: _h, children, ...rest }: { to: string; hash?: string; hashScrollIntoView?: unknown; children: React.ReactNode }) => <a href={hash ? `${to}#${hash}` : to} {...rest}>{children}</a>,
+}));
 
 describe("Footer", () => {
   it("shows the contact email as a mailto link and the no-channels line", () => {
@@ -11,16 +14,16 @@ describe("Footer", () => {
     expect(screen.getByText(/made by evicted/i)).toBeInTheDocument();
   });
 
-  it("links to the privacy page and the font licence", () => {
+  it("links every page, the waitlist, and the font licence", () => {
     render(<Footer />);
-    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
-    expect(screen.getByRole("link", { name: /open font license/i })).toHaveAttribute("href", "/fonts/OFL.txt");
+    const nav = screen.getByRole("navigation", { name: "Footer" });
+    expect(within(nav).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/", "/features", "/setup", "/faq", "/download", "/link", "/privacy", "/terms"]);
+    expect(screen.getByRole("link", { name: "Join the beta waitlist" })).toHaveAttribute("href", "/download#waitlist");
+    expect(screen.getByRole("link", { name: /open font license/i })).toHaveAttribute("href", "/fonts/OFL-PlusJakartaSans.txt");
   });
 
-  it("draws the seven bars as decoration only", () => {
-    const { container } = render(<Footer />);
-    const bars = container.querySelector(".bars");
-    expect(bars).toHaveAttribute("aria-hidden", "true");
-    expect(bars?.children).toHaveLength(7);
+  it("has the colour theme toggle", () => {
+    render(<Footer />);
+    expect(screen.getByRole("button", { name: /colour theme/i })).toBeInTheDocument();
   });
 });

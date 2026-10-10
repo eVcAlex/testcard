@@ -1,21 +1,16 @@
-import { Band } from "../home/Band.tsx";
-import { Feeds } from "../home/Feeds.tsx";
-import { Films } from "../home/Films.tsx";
+import "../home/home.css";
 import { Hero } from "../home/Hero.tsx";
-import { Names } from "../home/Names.tsx";
-import { Sofa } from "../home/Sofa.tsx";
-import { Sources } from "../home/Sources.tsx";
+import { OnScreen } from "../home/OnScreen.tsx";
+import { Stack } from "../home/Stack.tsx";
+import { Statement } from "../home/Statement.tsx";
 
 export function Home() {
   return (
     <>
       <Hero />
-      <Names />
-      <Feeds />
-      <Films />
-      <Sofa />
-      <Sources />
-      <Band />
+      <Statement />
+      <OnScreen />
+      <Stack />
     </>
   );
 }

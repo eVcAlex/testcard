@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { BackChip } from "../ui/parts.tsx";
 import { CONTACT_EMAIL, PRODUCT_NAME } from "../site.ts";
 
 const SECTIONS = [
@@ -16,9 +17,10 @@ const Mail = () => <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
 
 export function Privacy() {
   return (
-    <article className="wrap page prose has-toc">
-      <h1>Privacy</h1>
-      <p className="lead">What {PRODUCT_NAME} and this website store, what stays on your device, and how to have it deleted. Plain English, no tracking.</p>
+    <article className="page-in wrap prose has-toc">
+      <BackChip />
+      <h1 className="case-title split" tabIndex={-1}>Privacy</h1>
+      <p className="case-lede" data-rise>What {PRODUCT_NAME} and this website store, what stays on your device, and how to have it deleted. Plain English, no tracking.</p>
       <nav className="toc" aria-label="On this page">
         <b>On this page</b>
         <ol>{SECTIONS.map(([id, label]) => <li key={id}><a href={`#${id}`}>{label}</a></li>)}</ol>
@@ -50,7 +52,7 @@ export function Privacy() {
       <section id="website" aria-labelledby="website-h" className="block">
         <h2 id="website-h">This website</h2>
         <p>This website sets no cookies and has no analytics. It loads its own fonts and files from its own address only, with nothing from third parties.</p>
-        <p>The light, dark or automatic theme button remembers your choice in your browser's local storage under the name <code>tc-theme</code>. It stays in your browser, is never sent to us, and the site works without it. Clear your site data to remove it.</p>
+        <p>The light, dark or automatic theme button remembers your choice in your browser's local storage under the name <code>tc-theme</code>. It stays in your browser, is never sent to us, and the site works without it. Clear your site data to remove it. The opening animation notes that it has played in your tab's session storage under <code>tc-intro</code>, so it only runs once per visit; that is gone when you close the tab.</p>
         <p>The site is served by Cloudflare. As with the update checks, we keep no logs of our own, and Cloudflare handles request details under its own privacy policy.</p>
       </section>
 

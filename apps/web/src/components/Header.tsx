@@ -1,86 +1,67 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { PRODUCT_NAME } from "../site.ts";
-import { ThemeToggle } from "./ThemeToggle.tsx";
+import { CONTACT_EMAIL, PRODUCT_NAME, RELEASE_STATE } from "../site.ts";
+import { Magnet } from "../ui/Magnet.tsx";
+import { Disc, Mark } from "../ui/parts.tsx";
 import { WaitlistLink } from "./WaitlistLink.tsx";
 
-function NavLinks() {
+/** Wordmark top left and the contact address top right. They scroll away with the page; the pill below is the navigation. */
+export function TopBar() {
   return (
-    <>
-      <Link to="/" hash="guide" activeOptions={{ includeHash: true }}>Guide</Link>
-      <Link to="/setup">Setup</Link>
-      <Link to="/faq">FAQ</Link>
-      <Link to="/download">Beta</Link>
-    </>
+    <header className="topbar wrap">
+      <Link to="/" className="brand" aria-label={`${PRODUCT_NAME} home`}><Mark /></Link>
+      <a className="mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+    </header>
   );
 }
 
-const JoinLink = ({ className }: { className?: string }) => (
-  <WaitlistLink className={`button${className ? ` ${className}` : ""}`}>Join the beta</WaitlistLink>
-);
+const LINKS = [
+  { to: "/", label: "Home", exact: true },
+  { to: "/features", label: "Features" },
+  { to: "/setup", label: "Setup" },
+  { to: "/faq", label: "FAQ" },
+  { to: "/link", label: "Link your TV" },
+] as const;
 
+/** The one navigation: a pill fixed to the bottom of the screen. On a phone it folds to a Menu button and the main action. */
 export function Header() {
-  const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
+  const box = useRef<HTMLElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const path = useRouterState({ select: (s) => s.location.pathname });
 
-  const show = () => {
-    const d = dialog.current;
-    if (!d || d.open) return;
-    d.showModal();
-    setOpen(true);
-  };
-  const hide = () => {
-    const d = dialog.current;
-    if (!d?.open) return;
-    d.close();
-    setOpen(false);
-  };
+  // A page change closes the menu (the link click itself may be intercepted by the page-change animation).
+  useEffect(() => setOpen(false), [path]);
 
-  // The sheet is for narrow screens only: close it if the window grows past the breakpoint.
   useEffect(() => {
-    const wide = window.matchMedia("(min-width: 48em)");
-    const onChange = () => { if (wide.matches) hide(); };
-    wide.addEventListener("change", onChange);
-    return () => wide.removeEventListener("change", onChange);
-  }, []);
+    if (!open) return;
+    box.current?.querySelector<HTMLElement>(".pill-links a")?.focus();
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); button.current?.focus(); } };
+    const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    addEventListener("keydown", key);
+    addEventListener("pointerdown", away);
+    return () => { removeEventListener("keydown", key); removeEventListener("pointerdown", away); };
+  }, [open]);
 
   return (
-    <header className="bar">
-      <div className="wrap bar-inner">
-        <Link to="/" className="brand" aria-label={`${PRODUCT_NAME} home`}>test<b>card</b></Link>
-        <nav className="nav-main" aria-label="Main">
-          <NavLinks />
-        </nav>
-        <div className="bar-actions">
-          <Link to="/link" className="nav-link-tv">Link TV</Link>
-          <ThemeToggle />
-          <span className="join-desktop"><JoinLink /></span>
-          <button type="button" className="icon-btn menu-btn" aria-haspopup="dialog" aria-expanded={open} onClick={show}>
-            <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14" /></svg>
-            <span className="sr-only">Menu</span>
-          </button>
-        </div>
-      </div>
-      <dialog
-        ref={dialog}
-        className="menu"
-        aria-label="Menu"
-        onClose={() => setOpen(false)}
-        onClick={(e) => { if (e.target === e.currentTarget || (e.target as Element).closest("a")) hide(); }}
-      >
-        <div className="menu-head">
-          <span className="brand" aria-hidden="true">test<b>card</b></span>
-          <button type="button" className="icon-btn" onClick={hide} autoFocus>
-            <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true"><path d="M4.5 4.5l11 11M15.5 4.5l-11 11" /></svg>
-            <span className="sr-only">Close menu</span>
-          </button>
-        </div>
-        <nav className="menu-nav" aria-label="Menu">
-          <NavLinks />
-          <Link to="/link">Link TV</Link>
-          <JoinLink className="menu-join" />
-        </nav>
-      </dialog>
-    </header>
+    <nav className="pill" aria-label="Main" ref={box}>
+      <button type="button" className="pill-menu" ref={button} aria-expanded={open} aria-controls="pill-links" onClick={() => setOpen((o) => !o)}>
+        {open ? "Close" : "Menu"}
+      </button>
+      <ul className={`pill-links${open ? " open" : ""}`} id="pill-links" onClick={() => setOpen(false)}>
+        {LINKS.map((l) => (
+          <li key={l.to}>
+            <Link to={l.to} activeOptions={{ exact: "exact" in l }}>{l.label}</Link>
+          </li>
+        ))}
+      </ul>
+      <Magnet className="pill-mag">
+        {RELEASE_STATE === "waitlist" ? (
+          <WaitlistLink className="pill-cta"><Disc />Join the beta</WaitlistLink>
+        ) : (
+          <Link to="/download" className="pill-cta"><Disc />Download</Link>
+        )}
+      </Magnet>
+    </nav>
   );
 }

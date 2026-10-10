@@ -63,7 +63,7 @@ export function WaitlistForm() {
             <label htmlFor={`${uid}-hp`}>Leave this field empty</label>
             <input id={`${uid}-hp`} name="hp_note" type="text" tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore value={hpNote} onChange={(e) => setHpNote(e.target.value)} />
           </div>
-          <button type="submit" className="button" disabled={phase === "sending"}>
+          <button type="submit" className="btn" disabled={phase === "sending"}>
             {phase === "sending" ? "Joining..." : "Join the beta waitlist"}
           </button>
           {phase === "error" && <p ref={message} className="wl-msg wl-error" role="alert" tabIndex={-1}>{error}</p>}

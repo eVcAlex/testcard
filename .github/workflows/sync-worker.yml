@@ -11,6 +11,7 @@ on:
       - apps/web/**
       - packages/theme/**
       - packages/sync-schema/**
+      - packages/core/src/sync/**
       - .github/workflows/sync-worker.yml
   workflow_dispatch:
 
@@ -36,6 +37,12 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter "@testcard/sync-worker..." --filter "@testcard/web..."
+
+      - name: Check the site before it goes out
+        working-directory: apps/web
+        run: |
+          pnpm run typecheck
+          pnpm run test
 
       # `pnpm run test` builds the website first, so apps/web/dist is ready for the deploy below.
       - name: Check it before it goes out

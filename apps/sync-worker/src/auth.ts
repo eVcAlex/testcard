@@ -31,8 +31,17 @@ export function createAuth(db: D1Database, secret: string, baseUrl: string) {
      * better-auth's expectations, the integration test in `test/auth-sync.integration.test.ts` is
      * what catches it.
      */
-    advanced: { database: { validateSchema: false } },
+    advanced: {
+      database: { validateSchema: false },
+      // Cloudflare puts the real client address in cf-connecting-ip; x-forwarded-for is not trusted.
+      ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
+    },
     emailAndPassword: { enabled: true },
+    /**
+     * Brute-force protection for sign-in and sign-up. better-auth only switches its limiter on when NODE_ENV is
+     * "production", which a Worker never sets, so it is enabled here explicitly. Counters live in D1 (migration 0007).
+     */
+    rateLimit: { enabled: true, storage: "database" },
     session: { expiresIn: 60 * 60 * 24 * 30 }, // 30 days
     /**
      * Turns an `Authorization: Bearer <session token>` header into a resolvable session.

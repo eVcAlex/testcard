@@ -1,7 +1,6 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
-import "@testcard/theme/tokens.css";
 import "./styles.css";
 import { createAppRouter } from "./router.tsx";
 

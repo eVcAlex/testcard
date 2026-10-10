@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { env } from "cloudflare:test";
 import { Hono } from "hono";
-import { handleLinkApprove, handleLinkPoll, handleLinkSession, handleLinkStart } from "../src/routes/link.js";
+import { handleLinkApprove, handleLinkPoll, handleLinkSession, handleLinkStart, MAX_STARTS_PER_NETWORK_PER_DAY } from "../src/routes/link.js";
 import type { Env } from "../src/index.js";
 
 function app() {
@@ -26,6 +26,14 @@ const get = (a: ReturnType<typeof app>, path: string) => a.request(path, {}, env
 const q = (lookup: string) => `?lookup=${encodeURIComponent(lookup)}`;
 
 describe("signing a TV in with a code", () => {
+  it("stops one network registering codes without end", async () => {
+    const a = app();
+    let n = 0;
+    const start = () => a.request("/link/start", { method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.200" }, body: JSON.stringify({ lookup: btoa(`limit-${String(n++).padStart(24, "0")}`), salt: SALT }) }, env);
+    for (let i = 0; i < MAX_STARTS_PER_NETWORK_PER_DAY; i++) expect((await start()).status).toBe(200);
+    expect((await start()).status).toBe(429);
+  });
+
   it("registers, hands out the salt, takes the sealed sign-in and gives it to the TV once", async () => {
     const a = app();
     const lookup = freshLookup();

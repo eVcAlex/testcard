@@ -1,0 +1,33 @@
+name: Website
+
+# Checks the website (apps/web) and the Worker that serves it on every pull request. Deploys are in sync-worker.yml, on main.
+on:
+  pull_request:
+    paths:
+      - apps/web/**
+      - apps/sync-worker/**
+      - packages/core/src/sync/**
+      - packages/sync-schema/**
+      - .github/workflows/web.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts --filter "@testcard/sync-worker..." --filter "@testcard/web..."
+      - name: Site typecheck and tests
+        working-directory: apps/web
+        run: |
+          pnpm run typecheck
+          pnpm run test
+      - name: Worker typecheck and tests (builds the site first)
+        working-directory: apps/sync-worker
+        run: |
+          pnpm run typecheck
+          pnpm run test

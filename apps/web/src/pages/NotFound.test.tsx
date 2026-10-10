@@ -6,5 +6,5 @@ vi.mock("@tanstack/react-router", () => ({ Link: ({ to, children }: { to: string
 it("says no signal and links home", () => {
   render(<NotFound />);
   expect(screen.getByRole("heading", { level: 1, name: "No signal" })).toBeInTheDocument();
-  expect(screen.getByRole("link")).toHaveAttribute("href", "/");
+  expect(screen.getAllByRole("link")[0]).toHaveAttribute("href", "/");
 });

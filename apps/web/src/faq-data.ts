@@ -30,7 +30,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     id: "price",
     question: `Is ${PRODUCT_NAME} free?`,
-    answer: [`Yes. ${PRODUCT_NAME} is free, including the beta. Your source is separate: we don't sell one, and you pay your provider, if it charges, not us.`],
+    answer: [`The beta is free. We haven't set what ${PRODUCT_NAME} will cost after the beta, and we'll say so here before anything is charged for. Your source is separate: we don't sell one, and you pay your provider, if it charges, not us.`],
     structured: false,
   },
   {
