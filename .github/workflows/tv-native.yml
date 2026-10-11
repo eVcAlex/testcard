@@ -60,8 +60,12 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # Android installs an update only if it is signed with the key of the installed app. The apps on the Sticks are signed with
+          # the Expo debug key (the build that has the keystore secrets empty), so that key is used until a deliberate move to the
+          # keystore: set the repository variable ANDROID_SIGN_WITH_KEYSTORE to true, and every Stick reinstalls once.
+          SIGN_WITH_KEYSTORE: ${{ vars.ANDROID_SIGN_WITH_KEYSTORE }}
         run: |
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+          if [ "$SIGN_WITH_KEYSTORE" = "true" ] && [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
             echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
           fi
