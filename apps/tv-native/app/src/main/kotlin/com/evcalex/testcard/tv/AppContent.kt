@@ -9,6 +9,7 @@ import com.evcalex.testcard.tv.ui.components.AppText
 import com.evcalex.testcard.core.playback.PlayItem
 import com.evcalex.testcard.core.playback.PlayKind
 import com.evcalex.testcard.tv.ui.detail.MovieDetailScreen
+import com.evcalex.testcard.tv.ui.player.MultiViewScreen
 import com.evcalex.testcard.tv.ui.player.PlayerScreen
 import com.evcalex.testcard.tv.ui.detail.SeriesDetailScreen
 import com.evcalex.testcard.tv.ui.search.SearchScreen
@@ -56,6 +57,7 @@ fun appContent(app: AppController) = ShellContent(
                 onExit = { setRoute(route.returnTo) },
                 sourceForm = { id, close -> SourceFormDialog(controller, id, close) },
             )
+            Route.Multi -> MultiViewScreen(controller, onExit = { controller.multiQueue.clear(); setRoute(Route.Shell) }, onFullScreen = { item, channels -> setRoute(Route.Play(item, null, channels, false, Route.Multi)) })
             else -> {}
         }
     },

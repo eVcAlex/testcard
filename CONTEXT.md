@@ -44,6 +44,11 @@ plays back through an embedded `mpv`, stores everything locally.
   A Channel has one or more Variants. Providers routinely ship the same channel as five or
   more separate playlist entries differing only by variant; grouping them is a normalisation
   step, not a provider feature.
+- **Multi view** — several live channels on one screen, on the TV app (ADR 0014). The pick is made one channel at a time from the Live
+  TV guide's channel sheet. How many pictures play is `planTiles`: the device's cap (memory and hardware decoder), and per source the
+  streams its account has free; each picture plays the Variant that fits its size, and one with sound (the others are muted with
+  their audio track off). A picture that keeps stalling is lowered, then stopped, by `TileGovernor`. **Layouts** (`MultiLayout`) are
+  the screen variants; the choice is kept on the device.
 - **Channel feed** — one way to play a Channel when its first Variant won't: its other Variants,
   then the same channel listed elsewhere in the same Country ("BBC One 4K" → "BBC One HD"),
   matched on the Display name less its quality words (`listChannelFeeds`). Worked out when

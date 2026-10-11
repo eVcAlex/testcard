@@ -2,6 +2,7 @@ package com.evcalex.testcard.tv.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -64,12 +66,15 @@ internal enum class Pane(val label: String) { Sources("Sources"), Hidden("Hidden
  * The Settings tab: a short menu down the left and the chosen pane beside it. The pane follows the remote as it moves down the
  * menu, as the category lists do; Right goes into it (`Sources.tsx`).
  */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun SettingsScreen(app: AppController) {
     var pane by remember { mutableStateOf(Pane.Sources) }
-    Row(Modifier.fillMaxSize().padding(start = 44.dp, top = 112.dp), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+    val rows = remember { Pane.entries.associateWith { FocusRequester() } }
+    // Down from the nav bar goes to the menu on the left (the open pane's row), not to whichever control of the pane is nearest.
+    Row(Modifier.fillMaxSize().padding(start = 44.dp, top = 112.dp).focusProperties { enter = { rows.getValue(pane) } }.focusGroup(), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
         Column(Modifier.width(380.dp).padding(top = 40.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            for (entry in Pane.entries) MenuRow(entry.label, { pane = entry }, active = pane == entry, onFocusChange = { if (it) pane = entry })
+            for (entry in Pane.entries) MenuRow(entry.label, { pane = entry }, active = pane == entry, onFocusChange = { if (it) pane = entry }, focusRequester = rows.getValue(entry))
         }
         Box(Modifier.weight(1f).fillMaxHeight()) {
             when (pane) {
@@ -90,9 +95,9 @@ internal fun PaneColumn(content: @Composable () -> Unit) {
 
 /** A lower-key button for a row of controls that isn't the page's main action: smaller than the standard button. */
 @Composable
-internal fun SmallButton(label: String, onClick: () -> Unit, primary: Boolean = false, muted: Boolean = false, enabled: Boolean = true) {
+internal fun SmallButton(label: String, onClick: () -> Unit, primary: Boolean = false, muted: Boolean = false, enabled: Boolean = true, dimmed: Boolean = false) {
     Focusable(
-        onClick, Modifier.alpha(if (enabled) 1f else 0.5f), CircleShape, enabled = enabled, ring = !muted,
+        onClick, Modifier.alpha(if (enabled && !dimmed) 1f else 0.5f), CircleShape, enabled = enabled, ring = !muted,
         background = if (primary) Palette.accent else if (muted) Color.Transparent else Palette.card,
         focusedBackground = if (muted) Color(0x1AF0745C) else if (primary) Palette.accent else Palette.card,
     ) { focused ->
@@ -168,7 +173,9 @@ internal fun AccountPane(app: AppController) {
                 SmallButton("Beta builds: ${if (update.beta) "On" else "Off"}", { update.changeBeta(!update.beta) })
                 SmallButton(
                     if (update.available != null) "Update now" else "Check for updates", { if (update.available != null) update.showPrompt() else update.check() },
-                    primary = update.available != null, enabled = update.phase != UpdatePhase.Downloading && update.phase != UpdatePhase.Checking && update.phase != UpdatePhase.Installing,
+                    // Dimmed while busy, not disabled: a disabled button gives up the remote's focus, which then jumped to the nav bar's search.
+                    // The updater ignores a press while it is already working.
+                    primary = update.available != null, dimmed = update.phase == UpdatePhase.Downloading || update.phase == UpdatePhase.Checking || update.phase == UpdatePhase.Installing,
                 )
             }
         }

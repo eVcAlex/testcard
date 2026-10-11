@@ -120,6 +120,10 @@ private const val GENRES_ID = "genres"
 
 /** The category each section had open, so coming back from a film or the player lands where you were. */
 private val remembered = HashMap<String, Pair<String, Selection>>()
+
+/** Makes the next Browse of [noun] ("movies", "series") open on this category, for a "Go to category" from a pinned row. */
+fun openCategoryNext(noun: String, categoryId: String) { remembered[noun] = "c:$categoryId" to Selection("category", categoryId) }
+
 private const val PAGE = 60
 private const val MAX_ITEMS = 600
 

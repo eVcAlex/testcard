@@ -122,9 +122,12 @@ class Updater(context: Context, private val http: () -> OkHttpClient, private va
             try {
                 val file = downloadUpdate(http(), context.cacheDir, info) { progress = it }
                 phase = UpdatePhase.Installing
-                // Android's question is on screen; the app is replaced if the viewer says yes. If they say no, the dialog is back as it was.
+                // Android's question is on screen; the app is replaced and reopened if the viewer says yes. If they say no, the dialog
+                // is back as it was once the app is at the front again (onForeground).
                 installer.install(file)
-                phase = UpdatePhase.Idle
+                // If Android's installer never took the screen, do not sit on "Updating..." for ever.
+                delay(30_000)
+                if (phase == UpdatePhase.Installing) phase = UpdatePhase.Idle
             } catch (cause: Exception) {
                 if (cause is kotlinx.coroutines.CancellationException) throw cause
                 error = cause.message?.takeIf { it.isNotEmpty() } ?: "The update failed."
@@ -166,6 +169,8 @@ class Updater(context: Context, private val http: () -> OkHttpClient, private va
 
     /** Back at the front: carry on a waiting update if installs are now allowed, or look again if it has been a while. */
     fun onForeground() {
+        // Back from Android's installer (cancelled, or it showed its own error): the dialog offers the update again.
+        if (phase == UpdatePhase.Installing) phase = UpdatePhase.Idle
         if (phase == UpdatePhase.Permission && installer.canInstall()) { install(); return }
         if (auto && nowMs() - lastCheck > RECHECK_MS) scope.launch { runCheck(offer = true) }
     }

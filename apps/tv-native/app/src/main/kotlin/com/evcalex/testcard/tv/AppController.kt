@@ -161,6 +161,18 @@ class AppController(context: Context) {
     var sourcePick by mutableStateOf<String?>(null)
         private set
 
+    /** The channels picked for Multi view, in the order picked (the first is the main picture). Kept while the app runs; not synced. */
+    val multiQueue = androidx.compose.runtime.mutableStateListOf<com.evcalex.testcard.core.playback.PlayItem>()
+
+    /** Adds a channel to Multi view, or takes it out when it is already there. True when it is in the view afterwards. */
+    fun toggleMulti(item: com.evcalex.testcard.core.playback.PlayItem): Boolean {
+        val at = multiQueue.indexOfFirst { it.id == item.id }
+        if (at >= 0) { multiQueue.removeAt(at); return false }
+        if (multiQueue.size >= com.evcalex.testcard.core.playback.MAX_TILES) return false
+        multiQueue.add(item)
+        return true
+    }
+
     /** The "getting ready" screen: shown while a signed-in device waits for its first sync and while anything imports. */
     val setup: SetupProgress?
         get() {

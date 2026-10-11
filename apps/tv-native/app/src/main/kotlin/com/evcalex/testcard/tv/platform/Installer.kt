@@ -1,19 +1,21 @@
 package com.evcalex.testcard.tv.platform
 
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageInstaller
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.core.content.FileProvider
 import java.io.File
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import java.security.MessageDigest
 
-/** Hands a downloaded APK to Android's package installer (from `apps/mobile/modules/testcard-installer`, Expo wrapper removed). */
+/**
+ * Hands a downloaded APK to Android's own installer, the way a file manager or Downloader does, so Android shows its prompt and its
+ * own errors. (A package-installer session was tried first; on Fire OS it dropped the viewer back in the app with no reason.)
+ */
 class Installer(private val context: Context) {
     /** Whether Android lets Testcard install its updates. */
     fun canInstall() = Build.VERSION.SDK_INT < Build.VERSION_CODES.O || context.packageManager.canRequestPackageInstalls()
@@ -31,81 +33,43 @@ class Installer(private val context: Context) {
         }
     }
 
-    /** Resolves once Android's confirmation is on screen; throws why, when Android says no. A successful install replaces the app. */
-    suspend fun install(file: File) = withContext(Dispatchers.IO) {
+    @Suppress("DEPRECATION") private fun legacySignatures(info: PackageInfo) = info.signatures
+    @Suppress("DEPRECATION") private fun legacyFlag() = PackageManager.GET_SIGNATURES
+
+    /** SHA-256 of each certificate that signs [info] (its history too, so a rotated key still matches), shortened for display. */
+    private fun signers(info: PackageInfo?): Set<String> {
+        if (info == null) return emptySet()
+        val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.signingInfo?.let { if (it.hasMultipleSigners()) it.apkContentsSigners else it.signingCertificateHistory } else legacySignatures(info)
+        return signatures?.map { MessageDigest.getInstance("SHA-256").digest(it.toByteArray()).joinToString("") { b -> "%02x".format(b) }.take(8) }?.toSet() ?: emptySet()
+    }
+
+    /** Android only installs an update signed by the key of the installed app, and its own refusal is easy to miss; say it plainly here. */
+    private fun refuseIfSignedDifferently(file: File) {
+        val pm = context.packageManager
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES else legacyFlag()
+        val update = try { signers(pm.getPackageArchiveInfo(file.path, flags)) } catch (_: Exception) { emptySet() }
+        val installed = try { signers(pm.getPackageInfo(context.packageName, flags)) } catch (_: Exception) { emptySet() }
+        if (update.isEmpty() || installed.isEmpty() || update.any { it in installed }) return
+        throw IllegalStateException("This update is signed with a different key (${update.first()}) from the app on this device (${installed.first()}), so Android will refuse it. Uninstall Testcard once and install the beta again with Downloader; updates work from then on.")
+    }
+
+    /** Opens Android's installer on the APK. Returns once it is open: the app is replaced if the viewer says yes, and [UpdatedReceiver] reopens it. */
+    fun install(file: File) {
         if (!file.exists()) throw IllegalStateException("The downloaded update is missing. Try again to download it again.")
-        val installer = context.packageManager.packageInstaller
-        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) setAppPackageName(context.packageName)
-            setSize(file.length())
-        }
-        val sessionId = installer.createSession(params)
-        val answer = CompletableDeferred<Unit>()
-        try {
-            installer.openSession(sessionId).use { session ->
-                file.inputStream().use { input ->
-                    session.openWrite("update.apk", 0, file.length()).use { output ->
-                        input.copyTo(output, 1 shl 16)
-                        session.fsync(output)
-                    }
-                }
-                InstallResultReceiver.pending = answer
-                val intent = Intent(context, InstallResultReceiver::class.java).setPackage(context.packageName)
-                val flags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0)
-                session.commit(PendingIntent.getBroadcast(context, sessionId, intent, flags).intentSender)
-            }
-        } catch (error: Exception) {
-            InstallResultReceiver.pending = null
-            try { installer.abandonSession(sessionId) } catch (_: Exception) { }
-            throw IllegalStateException("Android would not start the install: ${error.message}", error)
-        }
-        answer.await()
+        refuseIfSignedDifferently(file)
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.updates", file)
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        try { context.startActivity(intent) } catch (error: Exception) { throw IllegalStateException("Android's installer did not open: ${error.message}", error) }
     }
 }
 
-/**
- * Android's answer to an install session. First it asks for the viewer's confirmation, which this opens; then, if the install
- * fails, why. A successful install replaces the app, so success is never heard here.
- */
-class InstallResultReceiver : BroadcastReceiver() {
-    companion object {
-        @Volatile var pending: CompletableDeferred<Unit>? = null
-    }
-
+/** Runs when an update has replaced the app: opens it again, as the viewer would expect after saying yes to the installer. */
+class UpdatedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
-        when (status) {
-            PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                val confirm: Intent? =
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
-                    else @Suppress("DEPRECATION") intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
-                if (confirm == null) { settle(IllegalStateException("Android did not ask to confirm the update.")); return }
-                confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                try { context.startActivity(confirm); settle(null) } catch (error: Exception) { settle(IllegalStateException("Android's installer did not open: ${error.message}", error)) }
-            }
-            PackageInstaller.STATUS_SUCCESS -> settle(null)
-            else -> {
-                val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-                settle(
-                    IllegalStateException(
-                        when (status) {
-                            PackageInstaller.STATUS_FAILURE_ABORTED -> "The update was cancelled."
-                            PackageInstaller.STATUS_FAILURE_BLOCKED -> "Android blocked the update. Allow Testcard to install unknown apps in Settings."
-                            PackageInstaller.STATUS_FAILURE_CONFLICT -> "The update is signed differently from the installed app, so Android refused it."
-                            PackageInstaller.STATUS_FAILURE_INCOMPATIBLE -> "This update does not fit this device."
-                            PackageInstaller.STATUS_FAILURE_INVALID -> "The downloaded update is damaged. Try again."
-                            PackageInstaller.STATUS_FAILURE_STORAGE -> "There is not enough space on this device for the update."
-                            else -> "The update did not install${if (message != null) " ($message)" else ""}."
-                        },
-                    ),
-                )
-            }
-        }
-    }
-
-    private fun settle(error: Exception?) {
-        val answer = pending ?: return
-        pending = null
-        if (error == null) answer.complete(Unit) else answer.completeExceptionally(error)
+        if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
+        val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
+        try { context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { }
     }
 }

@@ -62,6 +62,13 @@ import com.evcalex.testcard.core.guide.nowAndNext
 import com.evcalex.testcard.core.guide.segmentsFor
 import com.evcalex.testcard.core.nowMs
 import com.evcalex.testcard.core.playback.clock24
+import com.evcalex.testcard.core.sync.pinCategory
+import com.evcalex.testcard.core.sync.pinnedCategoryIds
+import com.evcalex.testcard.core.sync.unpinCategory
+import com.evcalex.testcard.core.text.plainTitle
+import com.evcalex.testcard.core.playback.MAX_TILES
+import com.evcalex.testcard.core.playback.PlayItem
+import com.evcalex.testcard.core.playback.PlayKind
 import com.evcalex.testcard.tv.ui.browse.Pinning
 import com.evcalex.testcard.tv.ui.components.ActionGlyph
 import com.evcalex.testcard.tv.ui.components.AppText
@@ -138,16 +145,19 @@ fun GuideScreen(ctx: SectionContext) {
         val bySource = if (sourceId == null) app.sources.filter { it.channels > 0 }.takeIf { it.size > 1 } else null
         val categories = if (bySource != null) emptyList() else app.memoByCatalogue("live-categories", sourceId) { it.listCategories(sourceId).browsable() }
         val (favourites, recents) = app.db.read { c -> c.listFavouriteChannels().count(::own) to c.listRecentChannels(60).count(::own) }
+        // Categories pinned to Home come first in the rail (in the order they were pinned), then the rest as the provider lists them.
+        val pinOrder = app.db.read { c -> c.pinnedCategoryIds(CategoryKind.Live).toList() }
+        fun <T> pinnedFirst(items: List<T>, idOf: (T) -> String): List<T> = items.sortedBy { item -> pinOrder.indexOf(idOf(item)).let { if (it < 0) Int.MAX_VALUE else it } }
         value = buildList {
             add(GuideList("favourites", "Favourites", favourites, RailMark.Icon(Glyph.Star)))
             add(GuideList("recent", "Recently watched", recents, RailMark.Icon(Glyph.Restart)))
             if (bySource != null) for (source in bySource) {
-                val own = app.memoByCatalogue("live-categories", source.id) { it.listCategories(source.id).browsable() }.filter { it.count > 0 }
+                val own = pinnedFirst(app.memoByCatalogue("live-categories", source.id) { it.listCategories(source.id).browsable() }.filter { it.count > 0 }) { it.id }
                 if (own.isEmpty()) continue
                 add(GuideList("all:${source.id}", "All channels", own.sumOf { it.count }, RailMark.Letters("All"), source.name))
                 for (c in own) add(GuideList(c.id, c.label, c.count, RailMark.Letters(c.label.trim().take(2).replaceFirstChar { it.uppercase() }), source.name))
             } else {
-                for (c in categories.filter { it.count > 0 }) add(GuideList(c.id, c.label, c.count, RailMark.Letters(c.label.trim().take(2).replaceFirstChar { it.uppercase() })))
+                for (c in pinnedFirst(categories.filter { it.count > 0 }) { it.id }) add(GuideList(c.id, c.label, c.count, RailMark.Letters(c.label.trim().take(2).replaceFirstChar { it.uppercase() })))
                 add(GuideList("all", "All channels", categories.sumOf { it.count }, RailMark.Letters("All")))
             }
         }
@@ -257,6 +267,13 @@ fun GuideScreen(ctx: SectionContext) {
         }
     }
     BackTo(railOpen) { closeRail(shownList ?: "all") }
+    // Asked for from a pinned row on Home ("Go to category"): that list opens with its first channel under the remote.
+    LaunchedEffect(ctx.goToCategory, lists) {
+        val target = ctx.goToCategory ?: return@LaunchedEffect
+        val all = lists ?: return@LaunchedEffect
+        ctx.consumeGoTo()
+        if (all.any { it.id == target }) { railOpen = false; closeRail(target) }
+    }
     // Pinning or hiding a category drops the focused rail item (or the sheet's focus owner): put the remote back on the rail.
     var railRefocus by remember { mutableStateOf(0) }
     LaunchedEffect(railRefocus, lists) {
@@ -291,6 +308,16 @@ fun GuideScreen(ctx: SectionContext) {
         val refresh: () -> Unit = { tick++ }
         value = buildList {
             add(DetailAction("watch", "Watch live", ActionGlyph.Restart) { play(channel) })
+            // Multi view: pick channels one at a time, then open them together.
+            val picked = PlayItem(PlayKind.Channel, channel.id, channel.normalisedName)
+            val inMulti = app.multiQueue.any { it.id == channel.id }
+            val others = app.multiQueue.count { it.id != channel.id }
+            if (inMulti) add(DetailAction("multiOff", "Remove from Multi view", ActionGlyph.Cross) { app.toggleMulti(picked) })
+            else if (app.multiQueue.size < MAX_TILES) add(DetailAction("multiOn", if (others == 0) "Add to Multi view" else "Add to Multi view ($others picked)", ActionGlyph.Plus) { app.toggleMulti(picked) })
+            if (others >= 1) add(DetailAction("multiOpen", if (inMulti) "Open Multi view" else "Add and open Multi view", ActionGlyph.Restart) {
+                if (!inMulti) app.toggleMulti(picked)
+                ctx.actions.openMulti()
+            })
             add(DetailAction("favourite", if (channel.isFavourite) "Remove from Favourites" else "Add to Favourites", ActionGlyph.Plus) {
                 app.scope.launch { app.db.write { it.toggleFavourite(channel.id) }; app.sync.notifyLocalChange(); refresh() }
             })
@@ -385,9 +412,14 @@ fun GuideScreen(ctx: SectionContext) {
     val pins = pinning
     if (category != null && pins != null) OptionsSheet(
         category.label,
-        listOf(SheetOption("pin", if (category.id in pins.pinned) "Pinned to Home. Press to remove" else "Pin to Home"), SheetOption("hide", "Hide category")),
+        listOf(SheetOption("pin", if (category.id in pins.pinned) "Pinned to Home and the top of this list. Press to remove" else "Pin to Home and the top of this list"), SheetOption("hide", "Hide category")),
         onChoose = { key ->
-            if (key == "pin") pins.toggle(category.id, category.label)
+            if (key == "pin") app.scope.launch {
+                app.db.write { c -> if (category.id in c.pinnedCategoryIds(CategoryKind.Live)) c.unpinCategory(CategoryKind.Live, category.id) else c.pinCategory(CategoryKind.Live, category.id, category.label) }
+                app.sync.notifyLocalChange()
+                // Read the rail again: a pinned category moves to the top of it.
+                tick++
+            }
             else {
                 pins.hide(category.id, category.label)
                 if (shownList == category.id) listId = null
@@ -412,18 +444,18 @@ private fun LiveHeader(focused: Focused?, listings: Map<String, List<Airing>>, n
     var extra: String? = null
     if (airings != null) {
         if (airing != null && !(airing.start <= now && now < airing.end)) {
-            title = airing.title
+            title = plainTitle(airing.title)
             time = "${dayLabel(airing.start, now).let { if (it == "Today") "" else "$it " }}${clock24(airing.start)} to ${clock24(airing.end)}"
-            guide?.now?.let { extra = "On now: ${it.title}" }
+            guide?.now?.let { extra = "On now: ${plainTitle(it.title)}" }
         } else {
             val current = guide?.now
             if (current == null) title = "No listings for this time"
             else {
-                title = current.title
+                title = plainTitle(current.title)
                 time = "${clock24(current.start)} to ${clock24(current.end)} · ${Math.max(1, Math.round((current.end - now) / MINUTE.toDouble()))} min left"
                 fraction = ((now - current.start).toFloat() / (current.end - current.start)).coerceIn(0f, 1f)
             }
-            guide?.next?.let { extra = "Next: ${clock24(it.start)} ${it.title}" }
+            guide?.next?.let { extra = "Next: ${clock24(it.start)} ${plainTitle(it.title)}" }
         }
     }
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
@@ -517,7 +549,7 @@ private fun GuideCell(
             verticalArrangement = Arrangement.Center,
         ) {
             if (!segment.loading) AppText(
-                if (airing != null) "${if (clipped) "‹ " else ""}${airing.title}" else "No listings",
+                if (airing != null) "${if (clipped) "‹ " else ""}${plainTitle(airing.title)}" else "No listings",
                 22, if (isFocused) Palette.accentInk else Palette.foreground, FontWeight.Medium, maxLines = 1,
             )
             if (airing != null) AppText("${clock24(airing.start)} to ${clock24(airing.end)}", 18, if (isFocused) Palette.accentInk else Palette.faint, maxLines = 1)
