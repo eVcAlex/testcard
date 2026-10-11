@@ -41,6 +41,13 @@ export function LinkPage() {
     if (error?.field) document.getElementById(`link-${error.field}`)?.focus();
   }, [error]);
 
+  // The confirmation replaces a long form; without this the phone stays scrolled to where the button was.
+  useEffect(() => {
+    if (!link.isSuccess) return;
+    window.scrollTo(0, 0);
+    document.querySelector<HTMLElement>(".ok-h")?.focus({ preventScroll: true });
+  }, [link.isSuccess]);
+
   if (link.isSuccess) {
     return (
       <section className="page-in wrap" key="done">
