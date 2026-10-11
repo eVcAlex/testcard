@@ -140,7 +140,7 @@ private fun Picture(model: MultiViewModel, onExit: () -> Unit, onFullScreen: (Pl
             onChoose = { id ->
                 when (id) {
                     "retry" -> model.restart(picked)
-                    "sound" -> model.setAudio(picked)
+                    "sound" -> model.giveSound(picked)
                     "main" -> model.makeMain(picked)
                     "full" -> onFullScreen(picked.item, model.tiles.map { it.item })
                     "layout" -> layouts = true

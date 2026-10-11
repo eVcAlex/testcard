@@ -299,7 +299,7 @@ class MultiViewModel(private val app: AppController, private val context: Contex
     fun select(tile: MultiTile) {
         if (tile.state == TileState.Stopped || tile.state == TileState.Failed) { restart(tile); return }
         if (tile === audio) return
-        setAudio(tile)
+        giveSound(tile)
         if (layout.hasMain) makeMain(tile)
     }
 
@@ -310,7 +310,7 @@ class MultiViewModel(private val app: AppController, private val context: Contex
         load(tile, fresh = true)
     }
 
-    fun setAudio(tile: MultiTile) {
+    fun giveSound(tile: MultiTile) {
         val before = audio
         audio = tile
         tiles.forEachIndexed { slot, t -> if (t === before || t === tile) t.player?.let { Media3Player.applyTileLook(it, t !== tile, targetHeight(layout.slots[slot].h)) } }
@@ -330,7 +330,7 @@ class MultiViewModel(private val app: AppController, private val context: Contex
         tile.player?.release()
         tiles.remove(tile)
         app.multiQueue.removeAll { it.id == tile.item.id }
-        if (audio === tile) setAudio(tiles.first())
+        if (audio === tile) giveSound(tiles.first())
         if (layout.slots.size > tiles.size) layout = startLayout(tiles.size, cap, null)
         retargetAll()
     }
