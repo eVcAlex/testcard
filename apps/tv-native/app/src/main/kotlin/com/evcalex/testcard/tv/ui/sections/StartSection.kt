@@ -97,6 +97,7 @@ internal fun StartPage(ctx: SectionContext, built: StartRows, refresh: () -> Uni
             val pin = app.db.read { c -> c.listHomePins().firstOrNull { "pin:${it.sourceId}:${it.kind}:${it.key}" == rowKey } }
             val categoryId = pin?.categoryId
             if (pin != null && categoryId != null) {
+                extra += DetailAction("go-category", "Go to category", ActionGlyph.Later) { actions.openCategory(pin.kind, categoryId) }
                 extra += DetailAction("unpin", "Remove this row from Home", ActionGlyph.Cross) {
                     app.scope.launch { app.db.write { it.unpinCategory(com.evcalex.testcard.core.db.CategoryKind.of(pin.kind), categoryId) }; changed() }
                 }

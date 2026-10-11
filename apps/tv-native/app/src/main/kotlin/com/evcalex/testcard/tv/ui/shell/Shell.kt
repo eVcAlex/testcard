@@ -27,7 +27,10 @@ import com.evcalex.testcard.core.playback.PlayItem
 import com.evcalex.testcard.core.playback.PlayKind
 import com.evcalex.testcard.core.sync.SyncAccount
 import com.evcalex.testcard.tv.AppController
+import com.evcalex.testcard.core.db.CategoryKind
+import com.evcalex.testcard.tv.ui.browse.openCategoryNext
 import com.evcalex.testcard.tv.ui.components.AppText
+import com.evcalex.testcard.tv.ui.sections.BROWSE
 import com.evcalex.testcard.tv.ui.components.AvatarDisc
 import com.evcalex.testcard.tv.ui.components.Glyph
 import com.evcalex.testcard.tv.ui.components.NavTab
@@ -61,6 +64,8 @@ class ShellActions(
     val playChannel: (channelId: String, title: String, zap: List<Pair<String, String>>) -> Unit,
     /** Opens Multi view on the channels picked for it. */
     val openMulti: () -> Unit,
+    /** Opens a category's own list: [kind] is the pin's kind ("live", "movies", "series"), [categoryId] the local category id. */
+    val openCategory: (kind: String, categoryId: String) -> Unit,
 )
 
 /** Everything a section needs from the shell: the source it is scoped to, whether it is the one showing, and the actions. */
@@ -79,6 +84,9 @@ class SectionContext(
     val openKeyboard: Int = 0,
     /** Puts the remote on the open section's tab in the nav bar (Up from a page's top edge). */
     val focusNav: () -> Unit = {},
+    /** A category the viewer asked to be taken to (Live TV opens its list); [consumeGoTo] says it has been done. */
+    val goToCategory: String? = null,
+    val consumeGoTo: () -> Unit = {},
 )
 
 /** Movies, Series and Live open on a landing page of rows; "Browse all" swaps it for the full category list. */
@@ -111,6 +119,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     var backToTop by remember { mutableIntStateOf(0) }
     var searchPing by remember { mutableIntStateOf(0) }
     var exitHint by remember { mutableStateOf(false) }
+    var goTo by remember { mutableStateOf<String?>(null) }
     var lastBack by remember { mutableStateOf(0L) }
     // "Who's watching?": on launch when there is more than one profile, and from the profile button in the nav bar.
     var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else null) }
@@ -163,6 +172,13 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
             playEpisode = { episodeId, title, resume, seriesId -> route = Route.Play(PlayItem(PlayKind.Episode, episodeId, title), seriesId, null, resume, Route.Shell) },
             playChannel = { id, title, zap -> route = Route.Play(PlayItem(PlayKind.Channel, id, title), null, zap.map { PlayItem(PlayKind.Channel, it.first, it.second) }, false, Route.Shell) },
             openMulti = { route = Route.Multi },
+            openCategory = { kind, categoryId ->
+                when (kind) {
+                    CategoryKind.Live.wire -> { goTo = categoryId; section = Section.Live; browsing = null }
+                    CategoryKind.Movies.wire -> { openCategoryNext("movies", categoryId); section = Section.Movies; browsing = BROWSE }
+                    CategoryKind.Series.wire -> { openCategoryNext("series", categoryId); section = Section.Series; browsing = BROWSE }
+                }
+            },
         )
     }
 
@@ -172,7 +188,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
         Box(Modifier.fillMaxSize().then(if (covered) Modifier.focusProperties { canFocus = false } else Modifier)) {
             Box(Modifier.fillMaxSize()) {
                 holder.SaveableStateProvider(section.name) {
-                    content.section(section, SectionContext(app, sourceId, !covered, backToTop, actions, sourceNames, Browsing(browsing) { browsing = it }, searchPing, focusNav = { runCatching { tabFocus.getValue(section).requestFocus() } }))
+                    content.section(section, SectionContext(app, sourceId, !covered, backToTop, actions, sourceNames, Browsing(browsing) { browsing = it }, searchPing, focusNav = { runCatching { tabFocus.getValue(section).requestFocus() } }, goToCategory = goTo, consumeGoTo = { goTo = null }))
                 }
             }
             // The nav bar floats over the page so the Movies and Series art can run behind it.
