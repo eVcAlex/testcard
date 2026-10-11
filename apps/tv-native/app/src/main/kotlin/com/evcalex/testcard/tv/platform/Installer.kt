@@ -31,7 +31,7 @@ class Installer(private val context: Context) {
         }
     }
 
-    /** Resolves once Android's confirmation is on screen; throws why, when Android says no. A successful install replaces the app. */
+    /** Resolves when Android has finished with the install; throws why, when Android says no (cancelled, signed differently, not enough space). A successful install replaces the app, so this does not return then. */
     suspend fun install(file: File) = withContext(Dispatchers.IO) {
         if (!file.exists()) throw IllegalStateException("The downloaded update is missing. Try again to download it again.")
         val installer = context.packageManager.packageInstaller
@@ -81,7 +81,9 @@ class InstallResultReceiver : BroadcastReceiver() {
                     else @Suppress("DEPRECATION") intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
                 if (confirm == null) { settle(IllegalStateException("Android did not ask to confirm the update.")); return }
                 confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                try { context.startActivity(confirm); settle(null) } catch (error: Exception) { settle(IllegalStateException("Android's installer did not open: ${error.message}", error)) }
+                // Not settled here: Android reports again when the viewer has answered (cancelled, conflict, success). Settling now
+                // meant a failed install was never heard, and the app just carried on as if nothing had happened.
+                try { context.startActivity(confirm) } catch (error: Exception) { settle(IllegalStateException("Android's installer did not open: ${error.message}", error)) }
             }
             PackageInstaller.STATUS_SUCCESS -> settle(null)
             else -> {

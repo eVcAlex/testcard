@@ -166,6 +166,9 @@ class Updater(context: Context, private val http: () -> OkHttpClient, private va
 
     /** Back at the front: carry on a waiting update if installs are now allowed, or look again if it has been a while. */
     fun onForeground() {
+        // Back from Android's installer without an answer yet: the screen stops saying it is opening. If the install failed or was
+        // cancelled, Android's report arrives next and says why.
+        if (phase == UpdatePhase.Installing) phase = UpdatePhase.Idle
         if (phase == UpdatePhase.Permission && installer.canInstall()) { install(); return }
         if (auto && nowMs() - lastCheck > RECHECK_MS) scope.launch { runCheck(offer = true) }
     }
