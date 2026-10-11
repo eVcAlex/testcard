@@ -66,6 +66,7 @@ internal enum class Pane(val label: String) { Sources("Sources"), Hidden("Hidden
  * The Settings tab: a short menu down the left and the chosen pane beside it. The pane follows the remote as it moves down the
  * menu, as the category lists do; Right goes into it (`Sources.tsx`).
  */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun SettingsScreen(app: AppController) {
     var pane by remember { mutableStateOf(Pane.Sources) }
