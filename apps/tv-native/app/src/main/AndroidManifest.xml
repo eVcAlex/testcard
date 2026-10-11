@@ -16,7 +16,20 @@
         android:theme="@style/Theme.Testcard"
         android:usesCleartextTraffic="true">
 
-        <receiver android:name=".platform.InstallResultReceiver" android:exported="false" />
+        <receiver android:name=".platform.UpdatedReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Lets Android's installer read the downloaded update from the cache. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths" />
+        </provider>
 
         <!-- The crash screen: its own process, so it can open after the app's has died. -->
         <activity
