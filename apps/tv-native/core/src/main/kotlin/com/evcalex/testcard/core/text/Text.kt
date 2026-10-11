@@ -13,6 +13,11 @@ fun serverGone(message: String) = Regex("UnknownHost|resolve host|ENOTFOUND|No a
 fun goneHost(message: String): String? =
     Regex("host[$WS]+\"([^\"]+)\"", RegexOption.IGNORE_CASE).find(message)?.groupValues?.get(1) ?: Regex("ENOTFOUND[$WS]+([^$WS]+)").find(message)?.groupValues?.get(1)
 
+private val PICTOGRAMS = Regex("[\\x{1F000}-\\x{1FAFF}\\x{2190}-\\x{21FF}\\x{2300}-\\x{23FF}\\x{2600}-\\x{27BF}\\x{2B00}-\\x{2BFF}\\x{FE0F}\\x{200D}\\x{20E3}]")
+
+/** A programme title as the screen shows it: no emoji or pictograms (providers decorate divider rows with arrows and stars), spaces tidied. */
+fun plainTitle(text: String): String = text.replace(PICTOGRAMS, " ").replace(Regex("[$WS]{2,}"), " ").trim()
+
 private fun capitalised(text: String) = if (text.isEmpty()) text else text[0].uppercase() + text.substring(1)
 
 private val NETWORK = Regex("Network request failed|unreachable|ECONNREFUSED|ConnectException", RegexOption.IGNORE_CASE)

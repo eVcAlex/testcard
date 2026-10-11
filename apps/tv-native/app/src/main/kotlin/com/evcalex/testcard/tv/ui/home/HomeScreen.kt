@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.evcalex.testcard.core.guide.ChannelGuide
 import com.evcalex.testcard.core.normalise.splitTitle
 import com.evcalex.testcard.core.nowMs
+import com.evcalex.testcard.core.text.plainTitle
 import com.evcalex.testcard.tv.ui.components.AppText
 import com.evcalex.testcard.tv.ui.components.ArtImage
 import com.evcalex.testcard.tv.ui.components.ChannelLogo
@@ -289,14 +290,14 @@ private fun NowNext(guide: ChannelGuide?) {
     Column(Modifier.height(72.dp).padding(top = 2.dp), verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
         if (on != null) Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             AppText("NOW", 20, Palette.accent, FontWeight.SemiBold, Modifier.width(80.dp), letterSpacing = 1f)
-            AppText(on.title, 25, Palette.foreground, FontWeight.Medium, Modifier.weight(1f, fill = false), maxLines = 1)
+            AppText(plainTitle(on.title), 25, Palette.foreground, FontWeight.Medium, Modifier.weight(1f, fill = false), maxLines = 1)
             if (through != null) Box(Modifier.width(160.dp).height(5.dp).background(Color(0x30FFFFFF), CircleShape)) { Box(Modifier.fillMaxHeight().fillMaxWidth(through).background(Palette.foreground)) }
             if (left != null) AppText(if (left >= 60) "${left / 60}h ${left % 60}m left" else "${left}m left", 21, Palette.muted, maxLines = 1)
         }
         guide.next?.let { next ->
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 AppText(clock(next.start), 20, Palette.accent, FontWeight.SemiBold, Modifier.width(80.dp), letterSpacing = 1f)
-                AppText(next.title, 25, Color(0xFFC3C9CE), maxLines = 1)
+                AppText(plainTitle(next.title), 25, Color(0xFFC3C9CE), maxLines = 1)
             }
         }
     }
