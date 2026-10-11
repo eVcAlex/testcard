@@ -48,6 +48,8 @@ sealed interface Route {
     class Series(val id: String, val title: String) : Route
     class Movie(val id: String, val title: String) : Route
     class Play(val item: PlayItem, val seriesId: String?, val channels: List<PlayItem>?, val resume: Boolean, val returnTo: Route) : Route
+    /** Several live channels on one screen; the channels are in [AppController.multiQueue]. */
+    data object Multi : Route
 }
 
 /** What a section can ask the shell to do. */
@@ -57,6 +59,8 @@ class ShellActions(
     val playMovie: (id: String, title: String, resume: Boolean) -> Unit,
     val playEpisode: (episodeId: String, title: String, resume: Boolean, seriesId: String) -> Unit,
     val playChannel: (channelId: String, title: String, zap: List<Pair<String, String>>) -> Unit,
+    /** Opens Multi view on the channels picked for it. */
+    val openMulti: () -> Unit,
 )
 
 /** Everything a section needs from the shell: the source it is scoped to, whether it is the one showing, and the actions. */
@@ -158,6 +162,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
             playMovie = { id, title, resume -> route = Route.Play(PlayItem(PlayKind.Movie, id, title), null, null, resume, Route.Shell) },
             playEpisode = { episodeId, title, resume, seriesId -> route = Route.Play(PlayItem(PlayKind.Episode, episodeId, title), seriesId, null, resume, Route.Shell) },
             playChannel = { id, title, zap -> route = Route.Play(PlayItem(PlayKind.Channel, id, title), null, zap.map { PlayItem(PlayKind.Channel, it.first, it.second) }, false, Route.Shell) },
+            openMulti = { route = Route.Multi },
         )
     }
 
@@ -199,7 +204,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
             Route.Shell -> {}
             // A group of its own, so the remote only moves between the page on top: the shell under it is composed too, and without this
             // Down from the page picks the nearest control of the shell behind it, which cannot be seen.
-            is Route.Movie, is Route.Series, is Route.Play -> Box(Modifier.fillMaxSize().trapFocus()) { content.overlay(current, actions, { route = it }, app) }
+            is Route.Movie, is Route.Series, is Route.Play, Route.Multi -> Box(Modifier.fillMaxSize().trapFocus()) { content.overlay(current, actions, { route = it }, app) }
         }
         // First sync or a refresh: the shell stays composed but covered, so there is nothing to navigate to until it finishes.
         if (settingUp && setup != null) SetupOverlay(setup, if (exitHint) "Press back again to exit" else null)

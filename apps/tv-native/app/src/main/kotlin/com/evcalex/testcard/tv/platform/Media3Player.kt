@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.evcalex.testcard.core.playback.PlayerStatus
+import com.evcalex.testcard.core.playback.TileBuffer
 import com.evcalex.testcard.core.playback.TrackLabel
 import okhttp3.OkHttpClient
 
@@ -44,6 +45,43 @@ object Media3Player {
                 // itself; captions only come on here when the CC button is pressed (or the viewer asked for them always).
                 it.trackSelectionParameters = it.trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
             }
+    }
+
+    /**
+     * A player for one picture of Multi view. Several run at once, so each reads only a little ahead (the player with sound a
+     * bit more) where one full-screen player reads a minute: the sum of their buffers has to fit a small device's memory, and
+     * what they read ahead is bandwidth the others need. A muted picture also drops its audio track, so it neither decodes
+     * nor renders sound. A decoder that cannot be had falls back to another instead of failing, and the picture is capped
+     * at the tile's own size, which only matters for adaptive streams but costs nothing.
+     */
+    fun createTile(context: Context, http: OkHttpClient, buffer: TileBuffer, muted: Boolean, maxHeight: Int): ExoPlayer {
+        val load = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(buffer.targetMs, buffer.targetMs, buffer.playAtMs, buffer.playAtMs)
+            .setTargetBufferBytes(buffer.capBytes)
+            .setPrioritizeTimeOverSizeThresholds(false)
+            .build()
+        val upstream = OkHttpDataSource.Factory(http).setUserAgent(Util.getUserAgent(context, "Testcard"))
+        val renderers = androidx.media3.exoplayer.DefaultRenderersFactory(context).setEnableDecoderFallback(true)
+        return ExoPlayer.Builder(context, renderers)
+            .setLoadControl(load)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(DefaultDataSource.Factory(context, upstream)))
+            // Only the picture with sound takes audio focus; the rest must not pause it by asking for theirs.
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), !muted)
+            .setHandleAudioBecomingNoisy(!muted)
+            .build()
+            .also { applyTileLook(it, muted, maxHeight) }
+    }
+
+    /** Sound on or off for a tile, and its size cap. Off also stops the audio renderer, which is most of a muted picture's other cost. */
+    fun applyTileLook(player: ExoPlayer, muted: Boolean, maxHeight: Int) {
+        player.volume = if (muted) 0f else 1f
+        player.setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), !muted)
+        player.setHandleAudioBecomingNoisy(!muted)
+        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
+            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, muted)
+            .setMaxVideoSize(maxHeight * 16 / 9, maxHeight)
+            .build()
     }
 
     fun status(state: Int, errored: Boolean): PlayerStatus = when {

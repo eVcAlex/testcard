@@ -62,6 +62,9 @@ import com.evcalex.testcard.core.guide.nowAndNext
 import com.evcalex.testcard.core.guide.segmentsFor
 import com.evcalex.testcard.core.nowMs
 import com.evcalex.testcard.core.playback.clock24
+import com.evcalex.testcard.core.playback.MAX_TILES
+import com.evcalex.testcard.core.playback.PlayItem
+import com.evcalex.testcard.core.playback.PlayKind
 import com.evcalex.testcard.tv.ui.browse.Pinning
 import com.evcalex.testcard.tv.ui.components.ActionGlyph
 import com.evcalex.testcard.tv.ui.components.AppText
@@ -291,6 +294,16 @@ fun GuideScreen(ctx: SectionContext) {
         val refresh: () -> Unit = { tick++ }
         value = buildList {
             add(DetailAction("watch", "Watch live", ActionGlyph.Restart) { play(channel) })
+            // Multi view: pick channels one at a time, then open them together.
+            val picked = PlayItem(PlayKind.Channel, channel.id, channel.normalisedName)
+            val inMulti = app.multiQueue.any { it.id == channel.id }
+            val others = app.multiQueue.count { it.id != channel.id }
+            if (inMulti) add(DetailAction("multiOff", "Remove from Multi view", ActionGlyph.Cross) { app.toggleMulti(picked) })
+            else if (app.multiQueue.size < MAX_TILES) add(DetailAction("multiOn", if (others == 0) "Add to Multi view" else "Add to Multi view ($others picked)", ActionGlyph.Plus) { app.toggleMulti(picked) })
+            if (others >= 1) add(DetailAction("multiOpen", if (inMulti) "Open Multi view" else "Add and open Multi view", ActionGlyph.Restart) {
+                if (!inMulti) app.toggleMulti(picked)
+                ctx.actions.openMulti()
+            })
             add(DetailAction("favourite", if (channel.isFavourite) "Remove from Favourites" else "Add to Favourites", ActionGlyph.Plus) {
                 app.scope.launch { app.db.write { it.toggleFavourite(channel.id) }; app.sync.notifyLocalChange(); refresh() }
             })
