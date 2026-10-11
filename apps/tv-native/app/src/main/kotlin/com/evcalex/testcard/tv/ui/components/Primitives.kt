@@ -81,6 +81,9 @@ fun Modifier.remoteSelect(onClick: () -> Unit, onLongClick: (() -> Unit)? = null
             if (!enabled || !isSelect(event.key)) return@onKeyEvent false
             when (event.type) {
                 KeyEventType.KeyDown -> {
+                    // Only a press that began here counts. Holding OK on one thing opens a sheet whose first row then receives the
+                    // key's repeats and its release: without this the release would click that row and close the sheet at once.
+                    if (!state.pressed && event.nativeKeyEvent.repeatCount > 0) return@onKeyEvent true
                     if (!state.pressed) { state.pressed = true; state.long = false }
                     if (onLongClick != null && event.nativeKeyEvent.isLongPress && !state.long) {
                         state.long = true
