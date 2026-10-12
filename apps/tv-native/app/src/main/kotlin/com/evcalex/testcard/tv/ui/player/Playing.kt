@@ -162,6 +162,8 @@ fun Playing(
     seriesId: String?,
     channels: List<PlayItem>?,
     onZap: (PlayItem) -> Unit,
+    /** Opens Multi view with this channel in it; null where it is not offered. */
+    onMultiView: (() -> Unit)?,
     onNextEpisode: (PlayItem) -> Unit,
     keys: PlayerKeys,
     history: ChannelHistory,
@@ -459,7 +461,7 @@ fun Playing(
     val previousChannel = if (zapping) history.previous else null
     val captionsKey = tracks.groups.any { it.type == C.TRACK_TYPE_TEXT } && vod && captionOptions.isNotEmpty()
     val nextKey = next != null
-    val rows = controlRows(vod, timeshift, zapping, vod && captionsKey, nextKey, previousChannel != null, archive != null, audioOptions.size > 1)
+    val rows = controlRows(vod, timeshift, zapping, vod && captionsKey, nextKey, previousChannel != null, archive != null, audioOptions.size > 1, multi = onMultiView != null && !vod && !timeshift)
     val ctx = KeyContext(
         vod, timeshift, zapping, chrome, panel, finished, rows, health.behindLive, previousChannel != null,
         captionOnSetting = captionAt > captionOptions.size, guideReady = guide is GuideState.Ready,
@@ -481,6 +483,7 @@ fun Playing(
             KeyAction.OpenCaptions -> { captionAt = Math.max(0, currentCaption); panel = Panel.Captions }
             KeyAction.OpenAudio -> { audioAt = Math.max(0, currentAudio); panel = Panel.Audio }
             KeyAction.OpenGuide -> openGuide()
+            KeyAction.OpenMulti -> onMultiView?.invoke()
             KeyAction.CyclePicture -> cycleFit()
             KeyAction.CycleSpeed -> cycleSpeed()
             KeyAction.BackToLive -> onCatchup(null)
@@ -693,6 +696,7 @@ fun Playing(
                                 if (nextKey) TransportKey(selected = lit(Control.Next)) { ink -> GlyphIcon(Glyph.SkipNext, ink, 38.dp) }
                                 previousChannel?.let { TextKey(if (it.title.length > 16) "Last: ${it.title.take(15)}..." else "Last: ${it.title}", selected = lit(Control.Last)) }
                                 if (archive != null) TextKey("Catch up", selected = lit(Control.Catchup))
+                                if (onMultiView != null && !vod && !timeshift) TextKey("Multi view", selected = lit(Control.Multi))
                             }
                         }
                         // Hidden until the remote is pressed Down onto this row.

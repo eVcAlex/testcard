@@ -148,16 +148,22 @@ fun GuideScreen(ctx: SectionContext) {
         // Categories pinned to Home come first in the rail (in the order they were pinned), then the rest as the provider lists them.
         val pinOrder = app.db.read { c -> c.pinnedCategoryIds(CategoryKind.Live).toList() }
         fun <T> pinnedFirst(items: List<T>, idOf: (T) -> String): List<T> = items.sortedBy { item -> pinOrder.indexOf(idOf(item)).let { if (it < 0) Int.MAX_VALUE else it } }
+        fun mark(label: String) = RailMark.Letters(label.trim().take(2).replaceFirstChar { it.uppercase() })
         value = buildList {
             add(GuideList("favourites", "Favourites", favourites, RailMark.Icon(Glyph.Star)))
             add(GuideList("recent", "Recently watched", recents, RailMark.Icon(Glyph.Restart)))
             if (bySource != null) for (source in bySource) {
                 val own = pinnedFirst(app.memoByCatalogue("live-categories", source.id) { it.listCategories(source.id).browsable() }.filter { it.count > 0 }) { it.id }
                 if (own.isEmpty()) continue
+                // The viewer's pinned categories get a section of their own ahead of the source's, tagged with the source they belong to.
+                for (c in own) if (c.id in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), "$PINNED_SECTION · ${source.name}"))
                 add(GuideList("all:${source.id}", "All channels", own.sumOf { it.count }, RailMark.Letters("All"), source.name))
-                for (c in own) add(GuideList(c.id, c.label, c.count, RailMark.Letters(c.label.trim().take(2).replaceFirstChar { it.uppercase() }), source.name))
+                for (c in own) if (c.id !in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), source.name))
             } else {
-                for (c in pinnedFirst(categories.filter { it.count > 0 }) { it.id }) add(GuideList(c.id, c.label, c.count, RailMark.Letters(c.label.trim().take(2).replaceFirstChar { it.uppercase() })))
+                // With any pins, the rail reads Pinned, then Categories: two named sections, so pins are easy to tell apart.
+                val ordered = pinnedFirst(categories.filter { it.count > 0 }) { it.id }
+                val sectioned = ordered.any { it.id in pinOrder }
+                for (c in ordered) add(GuideList(c.id, c.label, c.count, mark(c.label), if (!sectioned) null else if (c.id in pinOrder) PINNED_SECTION else "Categories"))
                 add(GuideList("all", "All channels", categories.sumOf { it.count }, RailMark.Letters("All")))
             }
         }
@@ -241,6 +247,8 @@ fun GuideScreen(ctx: SectionContext) {
 
     // The rail of lists.
     var railOpen by remember { mutableStateOf(false) }
+    // Sections folded away in the rail (OK on a heading), so the next source or group is a press away rather than a long scroll.
+    var collapsed by remember { mutableStateOf(emptySet<String>()) }
     val railState = rememberLazyListState()
     val railRequesters = remember(lists) { lists.orEmpty().associate { it.id to FocusRequester() } }
     fun openRail() {
@@ -248,7 +256,7 @@ fun GuideScreen(ctx: SectionContext) {
         railOpen = true
         scope.launch {
             // The separator after "recent" is an item of its own.
-            railState.scrollToItem(railItemIndex(lists.orEmpty(), current))
+            railState.scrollToItem(railItemIndex(lists.orEmpty(), current, collapsed))
             androidx.compose.runtime.withFrameNanos { }
             runCatching { railRequesters[current]?.requestFocus() }
         }
@@ -399,6 +407,7 @@ fun GuideScreen(ctx: SectionContext) {
             all, shownList ?: "all", railOpen,
             onPick = { listId = it }, onClose = ::closeRail, onLongPress = { categorySheet = it },
             requesters = railRequesters, state = railState,
+            collapsed = collapsed, onToggle = { name -> collapsed = if (name in collapsed) collapsed - name else collapsed + name },
         )
     }
 

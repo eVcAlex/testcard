@@ -25,4 +25,4 @@ publish:
   # The private GitHub repo cannot serve downloads, so releases live in the sync worker's release
   # bucket (ADR 0010): latest.yml and the installer are served from /app/.
   provider: generic
-  url: https://testcard-sync.evcalex.workers.dev/app
+  url: https://evicted.dev/app

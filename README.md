@@ -25,7 +25,7 @@ See [`CONTEXT.md`](CONTEXT.md) for the domain glossary and
 **Fire TV** (`apps/tv-native`, Kotlin + Compose for TV + Media3, [ADR 0012](docs/adr/0012-native-android-tv.md); it replaces the Expo app in `apps/mobile`, [ADR 0009](docs/adr/0009-android-app-fire-tv-and-phone.md))
 - Sign in to the same account and your sources, favourites and progress arrive.
 - Home, Movies, Series, Live TV and Search, laid out for a remote, with a TV guide grid on Live TV.
-- Multi view: up to six live channels at once in a choice of layouts, sized to what the device and the provider account can carry ([ADR 0014](docs/adr/0014-multi-view.md)).
+- Multi view: up to four live channels at once in a choice of layouts, started from the player's Multi view key or the guide, with channels added and swapped from inside the view. Sized to what the device and the provider account can carry ([ADR 0014](docs/adr/0014-multi-view.md)).
 - A live channel that won't start falls back to its other feeds and qualities (4K to HD) by itself.
 - Captions you can restyle, and the next episode offered with a short countdown when one ends.
 - Updates itself: a new release shows on the Settings gear and installs from there.

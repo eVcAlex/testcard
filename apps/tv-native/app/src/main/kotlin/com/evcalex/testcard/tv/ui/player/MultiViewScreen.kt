@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -53,6 +54,7 @@ import com.evcalex.testcard.tv.ui.components.SheetOption
 import com.evcalex.testcard.tv.ui.components.Toast
 import com.evcalex.testcard.tv.ui.theme.Palette
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Several live channels on one screen. The remote moves between the pictures; OK gives one the sound (and, where the layout has a
@@ -85,8 +87,14 @@ fun MultiViewScreen(app: AppController, onExit: () -> Unit, onFullScreen: (PlayI
     }
 }
 
+/** Where a channel picked from the in-view list goes: a new place, or the place of [replacing]. */
+private class PickTarget(val replacing: MultiTile?)
+
 @Composable
 private fun Picture(model: MultiViewModel, onExit: () -> Unit, onFullScreen: (PlayItem, List<PlayItem>) -> Unit) {
+    val scope = rememberCoroutineScope()
+    var picker by remember { mutableStateOf<PickTarget?>(null) }
+    val suggestions by produceState<List<PlayItem>?>(null, picker) { value = if (picker == null) null else model.suggestions() }
     var options by remember { mutableStateOf<MultiTile?>(null) }
     var layouts by remember { mutableStateOf(false) }
     var hint by remember { mutableStateOf(true) }
@@ -114,15 +122,20 @@ private fun Picture(model: MultiViewModel, onExit: () -> Unit, onFullScreen: (Pl
         }
         for (slot in model.tiles.size until layout.slots.size) {
             val rect = layout.slots[slot]
-            Box(Modifier.offset(maxWidth * rect.x, maxHeight * rect.y).size(maxWidth * rect.w, maxHeight * rect.h).padding(5.dp), contentAlignment = Alignment.Center) {
-                Box(Modifier.fillMaxSize().background(Palette.sunken, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                    AppText("Empty. Hold OK on a channel in the guide to add it.", 18, Palette.faint, align = TextAlign.Center, modifier = Modifier.padding(16.dp))
+            // An empty place is a button: OK picks a channel from favourites and recents without leaving the view.
+            Focusable(
+                { if (model.canAdd()) picker = PickTarget(null) },
+                Modifier.offset(maxWidth * rect.x, maxHeight * rect.y).size(maxWidth * rect.w, maxHeight * rect.h),
+                shape = RoundedCornerShape(12.dp),
+            ) { _ ->
+                Box(Modifier.fillMaxSize().padding(5.dp).background(Palette.sunken, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                    AppText(if (model.canAdd()) "+ Add a channel" else "No room on this device", if (rect.w < 0.3f) 16 else 24, Palette.muted, align = TextAlign.Center, modifier = Modifier.padding(16.dp))
                 }
             }
         }
         val note = model.note
         if (note != null) Toast(note, Modifier.align(Alignment.BottomCenter))
-        else if (hint) Toast("OK: sound   ·   Hold OK: options   ·   Menu: layouts", Modifier.align(Alignment.BottomCenter))
+        else if (hint) Toast("OK: sound   ·   Hold OK: swap or add   ·   Menu: layouts", Modifier.align(Alignment.BottomCenter))
     }
 
     val picked = options
@@ -132,6 +145,8 @@ private fun Picture(model: MultiViewModel, onExit: () -> Unit, onFullScreen: (Pl
             if (model.audio !== picked) add(SheetOption("sound", "Sound from this one"))
             if (model.layout.hasMain && model.tiles.indexOf(picked) > 0) add(SheetOption("main", "Make main picture"))
             add(SheetOption("full", "Full screen"))
+            add(SheetOption("swap", "Change channel"))
+            if (model.canAdd()) add(SheetOption("add", "Add another channel"))
             add(SheetOption("layout", "Change layout"))
             if (model.tiles.size > 2) add(SheetOption("remove", "Remove from view"))
         }
@@ -143,12 +158,25 @@ private fun Picture(model: MultiViewModel, onExit: () -> Unit, onFullScreen: (Pl
                     "sound" -> model.giveSound(picked)
                     "main" -> model.makeMain(picked)
                     "full" -> onFullScreen(picked.item, model.tiles.map { it.item })
+                    "swap" -> picker = PickTarget(picked)
+                    "add" -> picker = PickTarget(null)
                     "layout" -> layouts = true
                     "remove" -> model.remove(picked)
                     else -> {}
                 }
             },
             onClose = { options = null },
+        )
+    }
+    val target = picker
+    val list = suggestions
+    if (target != null && list != null) {
+        val title = if (target.replacing == null) "Add a channel" else "Change channel"
+        if (list.isEmpty()) OptionsSheet(title, listOf(SheetOption("none", "Nothing to pick from yet. Favourite a channel, or watch one, first.")), onChoose = {}, onClose = { picker = null })
+        else OptionsSheet(
+            title, list.map { SheetOption(it.id, it.title) },
+            onChoose = { id -> list.firstOrNull { it.id == id }?.let { item -> scope.launch { model.addChannel(item, target.replacing) } } },
+            onClose = { picker = null },
         )
     }
     if (layouts) OptionsSheet(

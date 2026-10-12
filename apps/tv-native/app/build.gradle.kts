@@ -24,6 +24,8 @@ android {
         // Which manifest entry the updater follows: `firetv`, the entry the old app followed.
         buildConfigField("String", "UPDATE_APK_KEY", "\"${findProperty("apkKey") ?: "firetv"}\"")
         buildConfigField("String", "SYNC_URL", "\"${findProperty("syncUrl") ?: "https://testcard-sync.evcalex.workers.dev"}\"")
+        // Where the update manifest, the APKs and the TV guides are fetched from: our own domain, served by the same Worker.
+        buildConfigField("String", "UPDATE_URL", "\"${findProperty("updateUrl") ?: "https://evicted.dev/app"}\"")
     }
 
     // Own signing key when the keystore file is given (the workflow decodes ANDROID_KEYSTORE_BASE64 into it). Otherwise the Expo debug

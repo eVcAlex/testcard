@@ -61,6 +61,7 @@ fun PlayerScreen(
     resume: Boolean,
     channels: List<PlayItem>?,
     onZap: (PlayItem) -> Unit,
+    onMultiView: (() -> Unit)? = null,
     onNextEpisode: (PlayItem) -> Unit,
     onExit: () -> Unit,
     /** Draws the source's form over the page. Absent where there is none. */
@@ -138,7 +139,7 @@ fun PlayerScreen(
         }
         // The note is decided once the label has been read; Playing starts without it and the health model reads it when the picture is up.
         Playing(
-            app, playing, current, catchup, { programme -> picked = programme?.let { item.id to it } }, seriesId, channels, onZap, onNextEpisode, keys, history,
+            app, playing, current, catchup, { programme -> picked = programme?.let { item.id to it } }, seriesId, channels, onZap, onMultiView, onNextEpisode, keys, history,
             moreFeeds, { if (item.kind == PlayKind.Movie) copyAt += 1 else feedAt += 1 }, { attempt += 1 }, onServerDown, fellBack,
             onExit = { app.sync.notifyLocalChange(); app.bump(); onExit() }, sourceForm = sourceForm,
         )
