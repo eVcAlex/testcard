@@ -120,8 +120,9 @@ class MultiViewModel(private val app: AppController, private val context: Contex
             delay(2_000)
             plan = planTiles(wishes.map { it.first }, cap, allowanceOf(wishes))
         }
-        if (plan.kept.size < 2) {
-            note = if (plan.kept.isEmpty()) "None of these channels can be played right now." else plan.note ?: "Pick at least two channels for Multi view."
+        // One channel is enough to start: the empty places in the layout are buttons that add the others.
+        if (plan.kept.isEmpty()) {
+            note = plan.note ?: "None of these channels can be played right now."
             phase = MultiPhase.Unavailable
             return
         }

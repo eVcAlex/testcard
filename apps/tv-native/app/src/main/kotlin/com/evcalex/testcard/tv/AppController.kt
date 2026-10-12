@@ -173,6 +173,13 @@ class AppController(context: Context) {
         return true
     }
 
+    /** Starts a Multi view from the channel being watched: it takes the main place, and the others are added inside the view. */
+    fun startMultiFrom(item: com.evcalex.testcard.core.playback.PlayItem) {
+        multiQueue.removeAll { it.id == item.id }
+        multiQueue.add(0, item)
+        while (multiQueue.size > com.evcalex.testcard.core.playback.MAX_TILES) multiQueue.removeAt(multiQueue.lastIndex)
+    }
+
     /** The "getting ready" screen: shown while a signed-in device waits for its first sync and while anything imports. */
     val setup: SetupProgress?
         get() {

@@ -53,6 +53,7 @@ fun appContent(app: AppController) = ShellContent(
             is Route.Play -> PlayerScreen(
                 controller, route.item, route.seriesId, route.resume, route.channels,
                 onZap = { channel -> setRoute(Route.Play(channel, null, route.channels, false, route.returnTo)) },
+                onMultiView = if (route.item.kind == PlayKind.Channel) ({ controller.startMultiFrom(route.item); setRoute(Route.Multi) }) else null,
                 onNextEpisode = { episode -> setRoute(Route.Play(episode, route.seriesId, null, false, route.returnTo)) },
                 onExit = { setRoute(route.returnTo) },
                 sourceForm = { id, close -> SourceFormDialog(controller, id, close) },

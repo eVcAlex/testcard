@@ -39,7 +39,7 @@ class SeekStreak(private val now: () -> Long) {
     }
 }
 
-enum class Control { Exit, Seek, Back, Play, Forward, Captions, Next, Last, Live, Catchup, Audio, Picture, Speed }
+enum class Control { Exit, Seek, Back, Play, Forward, Captions, Next, Last, Live, Catchup, Multi, Audio, Picture, Speed }
 
 enum class RemoteKey { Up, Down, Left, Right, Select, PlayPause, Rewind, FastForward }
 
@@ -93,6 +93,7 @@ sealed interface KeyAction {
     data object OpenCaptions : KeyAction
     data object OpenAudio : KeyAction
     data object OpenGuide : KeyAction
+    data object OpenMulti : KeyAction
     data object CyclePicture : KeyAction
     data object CycleSpeed : KeyAction
     data object BackToLive : KeyAction
@@ -221,6 +222,7 @@ class PlayerKeys {
         Control.Next -> listOf(KeyAction.GoNext)
         Control.Last -> if (c.hasPrevious) { carriedSelection = Control.Last; listOf(KeyAction.ZapToPrevious) } else emptyList()
         Control.Catchup -> listOf(KeyAction.OpenGuide)
+        Control.Multi -> listOf(KeyAction.OpenMulti)
         Control.Audio -> listOf(KeyAction.OpenAudio)
         Control.Picture -> listOf(KeyAction.CyclePicture)
         Control.Speed -> listOf(KeyAction.CycleSpeed)
@@ -233,8 +235,8 @@ class PlayerKeys {
  * The rows of controls the highlight moves over (PLY-10). The options row (soundtrack, picture, speed) is reached with Down
  * from the transport keys; speed only where there is a timeline to speed through.
  */
-fun controlRows(vod: Boolean, timeshift: Boolean, zapping: Boolean, captionsKey: Boolean, nextKey: Boolean, last: Boolean, catchup: Boolean, audioKey: Boolean): List<List<Control>> {
-    val more = listOfNotNull(if (last) Control.Last else null, if (catchup) Control.Catchup else null)
+fun controlRows(vod: Boolean, timeshift: Boolean, zapping: Boolean, captionsKey: Boolean, nextKey: Boolean, last: Boolean, catchup: Boolean, audioKey: Boolean, multi: Boolean = false): List<List<Control>> {
+    val more = listOfNotNull(if (last) Control.Last else null, if (catchup) Control.Catchup else null, if (multi) Control.Multi else null)
     val options = listOfNotNull(if (audioKey) Control.Audio else null, Control.Picture, if (vod || timeshift) Control.Speed else null)
     return if (vod) listOf(
         listOf(Control.Exit), listOf(Control.Seek),

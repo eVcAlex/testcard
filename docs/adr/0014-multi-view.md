@@ -41,6 +41,8 @@ fault; it is that nothing decides what the device, the line and the provider acc
 6. **Getting there**: holding OK on a channel in the Live TV guide offers *Add to Multi view*; once another is picked, *Open Multi
    view*. OK on a picture gives it the sound (and the big place in a spotlight layout), holding OK opens that picture's options
    (sound, make main, full screen, change layout, remove), Menu opens the layouts. Back leaves and clears the pick.
+   The full-screen live player has a *Multi view* key beside Last and Catch up: it opens the view with that channel as the main picture,
+   and the empty places are filled from inside (one channel is enough to start).
    Inside the view, an empty place is a button and a picture's options offer *Change channel* and *Add another channel*, picking from
    favourites and recents (`MultiViewModel.addChannel`), so channels are added and swapped without going back to the guide.
 
