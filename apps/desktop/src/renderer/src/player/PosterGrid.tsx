@@ -13,6 +13,8 @@ export interface PosterItem {
   readonly favourite?: boolean;
   /** How far through, 0–1. Only shown for something started and not finished. */
   readonly progress?: number | null;
+  /** A line under the title in place of the year: "S2 E4", "1h 5m left". */
+  readonly note?: string | null;
 }
 
 export function PosterCard({ item, onSelect }: { item: PosterItem; onSelect: (id: string) => void }) {
@@ -62,7 +64,11 @@ export function PosterCard({ item, onSelect }: { item: PosterItem; onSelect: (id
         )}
       </span>
       <span className="pw-poster-title">{title}</span>
-      {year !== null && <span className="pw-poster-year">{year}</span>}
+      {item.note !== undefined && item.note !== null ? (
+        <span className="pw-poster-year">{item.note}</span>
+      ) : (
+        year !== null && <span className="pw-poster-year">{year}</span>
+      )}
     </button>
   );
 }

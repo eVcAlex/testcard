@@ -4,6 +4,7 @@ import type { ChannelRow } from "@testcard/core";
 import { Sidebar, type BrowseTab } from "./Sidebar.js";
 import { BrowseView } from "./BrowseView.js";
 import { GuideView } from "./GuideView.js";
+import { HomeView } from "./HomeView.js";
 import { MoviesView } from "./MoviesView.js";
 import { SeriesView } from "./SeriesView.js";
 import { AccountView } from "./AccountView.js";
@@ -19,7 +20,7 @@ export function PlayerScreen() {
   const { theme, toggle } = useTheme();
   const { state, play, retry } = usePlaybackEvents();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<BrowseTab>("live");
+  const [tab, setTab] = useState<BrowseTab>("home");
   // Narrows Live TV, Guide, Movies and Series to one source. null = every source.
   const [sourceId, setSourceIdState] = useState<string | null>(() => localStorage.getItem("testcard.sourceFilter"));
   const setSourceId = useCallback((next: string | null) => {
@@ -100,6 +101,7 @@ export function PlayerScreen() {
     void window.testcard.playback.stop().then(() => {
       void queryClient.invalidateQueries({ queryKey: ["movies"] });
       void queryClient.invalidateQueries({ queryKey: ["series"] });
+      void queryClient.invalidateQueries({ queryKey: ["home"] });
     });
     void window.testcard.view.isFullscreen().then((fs) => {
       if (fs) void window.testcard.view.toggleFullscreen();
@@ -145,7 +147,9 @@ export function PlayerScreen() {
         theme={theme}
         onToggleTheme={toggle}
       />
-      {tab === "live" ? (
+      {tab === "home" ? (
+        <HomeView key={sourceId ?? "all"} sourceId={sourceId} onPlay={onPlay} onPlaybackStarted={onPlaybackStarted} onTab={setTab} />
+      ) : tab === "live" ? (
         <GuideView
           key={sourceId ?? "all"}
           sourceId={sourceId}

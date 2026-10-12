@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 import type { XtreamCredentials } from "../source/xtream/detect.js";
 import { generateSalt } from "./credentialCrypto.js";
+import { deriveLinkLookup, isValidLinkCode, normaliseLinkCode, sealLinkSecrets } from "./linkCrypto.js";
 import { SyncClient } from "./client.js";
 import { removeSourceRows } from "./sourceRemoval.js";
 import { applySourceContent } from "./sourceContent.js";
@@ -254,6 +255,29 @@ export class SyncController {
   async triggerNow(): Promise<SyncStatus> {
     await this.runOnce();
     return this.status();
+  }
+
+  /**
+   * Signs a TV in with the code it is showing: seals this account's email and password so only that code opens
+   * them, and leaves them for the TV to collect. Throws a message fit to show.
+   */
+  async approveLink(typed: string): Promise<void> {
+    const email = this.status().email;
+    if (this.accountPassword === undefined || email === undefined) throw new Error("Sign in on this computer first.");
+    const code = normaliseLinkCode(typed);
+    if (!isValidLinkCode(code)) throw new Error("That code is not 8 letters and numbers. Check your TV and try again.");
+    const fail = (error: unknown): Error =>
+      typeof (error as { status?: unknown }).status === "number"
+        ? new Error("That code was not found, or it has expired. Ask your TV for a new one.")
+        : new Error("Could not reach Testcard. Check your connection and try again.");
+    const lookup = await deriveLinkLookup(code);
+    const session = await this.client.linkSession(lookup).catch((error: unknown) => {
+      throw fail(error);
+    });
+    const sealed = await sealLinkSecrets({ email, password: this.accountPassword }, code, session.salt);
+    await this.client.linkApprove({ lookup, ...sealed }).catch((error: unknown) => {
+      throw fail(error);
+    });
   }
 
   async reenterPassword(password: string): Promise<SyncStatus> {

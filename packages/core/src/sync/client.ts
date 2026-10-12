@@ -113,6 +113,16 @@ export class SyncClient {
     return ((await (await this.request("/guides/register", { body: { url }, authed: true })).json()) as { file: string }).file;
   }
 
+  /** The salt of a TV's sign-in code, which also says whether the code is still live. */
+  async linkSession(lookup: string): Promise<{ salt: string }> {
+    return (await (await this.request(`/link/session?lookup=${encodeURIComponent(lookup)}`)).json()) as { salt: string };
+  }
+
+  /** Hands a TV its sealed sign-in. */
+  async linkApprove(body: { lookup: string; blob: string; iv: string }): Promise<void> {
+    await this.request("/link/approve", { body });
+  }
+
   async push(request: SyncPushRequest): Promise<SyncPushResponse> {
     const body = SyncPushRequestSchema.parse(request);
     const json = await (await this.request("/sync/push", { body, authed: true })).json();

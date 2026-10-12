@@ -9,6 +9,51 @@ import { SourceCard } from "./SourceCard.js";
 import { ProfilesPanel } from "./ProfilesPanel.js";
 import { UpdatePanel } from "./UpdatePanel.js";
 
+/** Signs a TV in: the TV shows a code, and typing it here hands it this account (the /link page does the same from a phone). */
+function LinkTv() {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setResult(null);
+    try {
+      await window.testcard.sync.linkTv(code);
+      setCode("");
+      setResult({ ok: true, text: "Done. Your TV is signing in." });
+    } catch (error) {
+      setResult({ ok: false, text: error instanceof Error ? error.message : "Could not link the TV." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="pw-link-tv" onSubmit={(event) => void submit(event)}>
+      <label htmlFor="pw-link-code">Sign in a TV</label>
+      <p className="pw-panel-note">On the TV choose Sign in with a code, then type the 8-character code it shows.</p>
+      <div className="pw-link-row">
+        <input
+          id="pw-link-code"
+          className="input"
+          value={code}
+          onChange={(event) => setCode(event.target.value.toUpperCase())}
+          placeholder="ABCD 2345"
+          autoComplete="off"
+          spellCheck={false}
+          maxLength={9}
+        />
+        <button type="submit" className="btn btn--primary" disabled={busy || code.trim() === ""}>
+          {busy ? "Linking…" : "Link TV"}
+        </button>
+      </div>
+      {result !== null && <p className={result.ok ? "msg msg--hint" : "msg msg--error"}>{result.text}</p>}
+    </form>
+  );
+}
+
 /** The sync status, refreshed on a slow poll so "Synced 2m ago" stays honest while the page is open. */
 export function useSyncStatus() {
   return useQuery({
@@ -110,6 +155,7 @@ function SyncPanel() {
         </div>
         {failed && <p className="msg msg--error">{status.lastError}</p>}
         <p className="pw-panel-note">Favourites, watch progress and sources stay in step across every device signed in to this account.</p>
+        <LinkTv />
         {confirmingSignOut && (
           <div
             className="pw-confirm-backdrop"

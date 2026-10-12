@@ -15,6 +15,7 @@ import type { BrowseTab } from "./Sidebar.js";
 // PlayerScreen branches to GuideView/MoviesView/SeriesView/AccountView first — but
 // BrowseTab is one shared union, so this stays total.
 const TITLES: Record<BrowseTab, string> = {
+  home: "Home",
   live: "Live TV",
   movies: "Movies",
   series: "Series",

@@ -34,7 +34,9 @@ export type IconName =
   | "check"
   | "arrow-up"
   | "arrow-down"
-  | "user";
+  | "user"
+  | "pin"
+  | "home";
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -164,6 +166,8 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M2.5 14c0-3.3 2.6-5.5 5.5-5.5s5.5 2.2 5.5 5.5" />
     </>
   ),
+  pin: <path d="M5.5 2h5M6.5 2v4.5L4.5 9h7l-2-2.5V2M8 9v5" />,
+  home: <path d="M2 7.5 8 2.5l6 5M3.5 6.5V13.5h9V6.5" />,
 };
 
 const FILLED: Partial<Record<IconName, true>> = {

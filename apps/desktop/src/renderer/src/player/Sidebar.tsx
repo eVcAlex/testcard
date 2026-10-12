@@ -5,9 +5,10 @@ import { useUpdateState } from "./UpdatePanel.js";
 import { useSources } from "./useSources.js";
 import type { Theme } from "./useTheme.js";
 
-export type BrowseTab = "live" | "movies" | "series" | "favourites" | "recent" | "account";
+export type BrowseTab = "home" | "live" | "movies" | "series" | "favourites" | "recent" | "account";
 
 const TABS: { id: BrowseTab; label: string; icon: IconName }[] = [
+  { id: "home", label: "Home", icon: "home" },
   { id: "live", label: "Live TV", icon: "tv" },
   { id: "movies", label: "Movies", icon: "film" },
   { id: "series", label: "Series", icon: "layers" },
