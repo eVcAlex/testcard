@@ -17,6 +17,7 @@ import type {
   MovieCategoryRow,
   MovieRow,
   MovieShelf,
+  PinKind,
   PlaybackProgressRow,
   Profile,
   SeriesCategoryRow,
@@ -24,6 +25,7 @@ import type {
   SeriesRow,
   SeriesShelf,
   Source,
+  StartRow,
 } from "@testcard/core";
 
 /**
@@ -327,6 +329,16 @@ export interface TestcardApi {
     /** Lazy-fetches (or returns cached) seasons/episodes for a series. */
     episodes(seriesId: string): Promise<SeriesDetail>;
   };
+  home: {
+    /** The Home tab's rows: where you left off, your lists, pinned categories and what is new. */
+    rows(sourceId?: string): Promise<readonly StartRow[]>;
+    /** Starts the episode a series carries on from, resuming it when it was part-watched. */
+    playSeries(seriesId: string): Promise<void>;
+    /** The ids of the categories of one kind that are pinned to Home. */
+    pinned(kind: PinKind): Promise<readonly string[]>;
+    /** Pins a category to Home, or takes it off. Answers whether it is pinned now. Kept on every device on the account. */
+    togglePin(kind: PinKind, categoryId: string, label: string): Promise<boolean>;
+  };
   progress: {
     get(itemType: "movie" | "episode", itemId: string): Promise<PlaybackProgressRow | undefined>;
     set(itemType: "movie" | "episode", itemId: string, positionSecs: number, durationSecs?: number): Promise<void>;
@@ -382,6 +394,8 @@ export interface TestcardApi {
     reenterPassword(password: string): Promise<SyncStatus>;
     /** Runs one push-then-pull cycle immediately, outside the periodic schedule. */
     triggerNow(): Promise<SyncStatus>;
+    /** Signs a TV in: the code it is showing hands it this account. Rejects with a message to show. */
+    linkTv(code: string): Promise<void>;
   };
   profiles: {
     /** Every profile on the account, Main first. */

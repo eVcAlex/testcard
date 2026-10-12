@@ -3,6 +3,7 @@ import type Database from "better-sqlite3";
 import {
   browseChannels,
   browseMovies,
+  buildStartRows,
   browseSeries,
   createM3UAdapter,
   createXtreamAdapter,
@@ -34,6 +35,8 @@ import {
   nextColour,
   nowNextForChannels,
   parseBackupUrls,
+  pinCategory,
+  pinnedCategoryIds,
   probeXtream,
   programmesInWindow,
   readActiveProfile,
@@ -56,6 +59,8 @@ import {
   moveSource,
   stampSourceOrder,
   toggleSeriesFavourite,
+  unpinCategory,
+  upNextIn,
   writeActiveProfile,
   SyncController,
   fetchShortEpg,
@@ -234,6 +239,7 @@ const SYNCED_MUTATIONS: ReadonlySet<string> = new Set([
   "series.toggleFavourite",
   "movies.removeFromHistory",
   "series.removeFromHistory",
+  "home.togglePin",
   "sources.add",
   "sources.update",
   "sources.move",
@@ -841,6 +847,27 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
     },
 
+    home: {
+      async rows(sourceId) {
+        return buildStartRows(db, sourceId ?? null);
+      },
+      async playSeries(seriesId) {
+        const next = upNextIn(await api.series.episodes(seriesId));
+        if (next === undefined) throw new Error("This series has no episodes yet.");
+        await playback.playEpisode(next.episode.id, { resume: next.resume });
+      },
+      async pinned(kind) {
+        return [...pinnedCategoryIds(db, kind)];
+      },
+      async togglePin(kind, categoryId, label) {
+        if (pinnedCategoryIds(db, kind).has(categoryId)) {
+          unpinCategory(db, kind, categoryId);
+          return false;
+        }
+        return pinCategory(db, kind, categoryId, label);
+      },
+    },
+
     progress: {
       async get(itemType, itemId) {
         return getPlaybackProgress(db, itemType, itemId);
@@ -940,6 +967,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       },
       async triggerNow() {
         return sync.triggerNow();
+      },
+      async linkTv(code: string) {
+        await sync.approveLink(code);
       },
     },
 

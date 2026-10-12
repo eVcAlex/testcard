@@ -248,7 +248,7 @@ export function SeriesView({
 
   return (
     <main className={railed ? "lt" : "pw-main"}>
-      {railed && <CategoryRail lists={railLists} value={categoryId ?? "home"} onPick={(id) => pickCategory(id === "home" ? null : id)} />}
+      {railed && <CategoryRail lists={railLists} value={categoryId ?? "home"} onPick={(id) => pickCategory(id === "home" ? null : id)} pinKind="series" />}
       <div className="pw-main pw-main--pane">
       <div className="pw-head">
         <h2>{heading}</h2>

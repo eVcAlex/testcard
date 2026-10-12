@@ -112,6 +112,7 @@ const api: TestcardApi = {
     signOut: bind("sync.signOut"),
     reenterPassword: bind("sync.reenterPassword"),
     triggerNow: bind("sync.triggerNow"),
+    linkTv: bind("sync.linkTv"),
   },
   profiles: {
     list: bind("profiles.list"),
@@ -120,6 +121,12 @@ const api: TestcardApi = {
     add: bind("profiles.add"),
     update: bind("profiles.update"),
     remove: bind("profiles.remove"),
+  },
+  home: {
+    rows: bind("home.rows"),
+    playSeries: bind("home.playSeries"),
+    pinned: bind("home.pinned"),
+    togglePin: bind("home.togglePin"),
   },
   update: {
     state: bind("update.state"),

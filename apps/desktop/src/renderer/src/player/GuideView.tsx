@@ -6,7 +6,9 @@ import type { ProgrammeLite } from "../../../shared/ipc.js";
 import { Icon } from "../components/Icon.js";
 import { logoSrc } from "../lib/logo.js";
 import { formatClock } from "../lib/time.js";
+import { PinButton } from "./CategoryRail.js";
 import { PictureWell } from "./PictureWell.js";
+import { isPinnable, usePins } from "./usePins.js";
 import { useSources } from "./useSources.js";
 
 const WINDOW_MIN = 120;
@@ -89,6 +91,7 @@ export function GuideView({
 
   // The starting list is chosen once: adding a first favourite must not swap the grid under the user.
   const [picked, setPicked] = useState<string | null>(null);
+  const pins = usePins("live");
   useEffect(() => {
     if (picked === null && ready) setPicked(startList(lists, null));
   }, [picked, ready, lists]);
@@ -300,6 +303,7 @@ export function GuideView({
           {lists.map((list: RailList, i) => (
             <div key={list.id}>
               {list.section !== undefined && list.section !== lists[i - 1]?.section && <p className="pw-nav-group">{list.section}</p>}
+              <div className="pw-cat-row">
               <button
                 type="button"
                 className="pw-cat"
@@ -311,6 +315,8 @@ export function GuideView({
                 <span className="pw-cat-name">{list.label}</span>
                 <span className="pw-cat-count">{list.count}</span>
               </button>
+              {isPinnable(list.id) && <PinButton pinned={pins.pinned.has(list.id)} label={list.label} onToggle={() => pins.toggle(list.id, list.label)} />}
+              </div>
             </div>
           ))}
         </div>

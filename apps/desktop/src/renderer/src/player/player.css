@@ -2542,3 +2542,69 @@
   min-width: 0;
   box-sizing: border-box;
 }
+
+/* ============================ home + pins + link ============================ */
+
+.pw-shelf-row--channels .pw-card {
+  flex: none;
+  width: var(--card-min);
+}
+
+.pw-cat-row {
+  position: relative;
+}
+
+.pw-cat-pin {
+  position: absolute;
+  top: 50%;
+  right: var(--s-2);
+  display: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  transform: translateY(-50%);
+  background: var(--card-hover);
+  border: 0;
+  border-radius: var(--r-1);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.pw-cat-row:hover .pw-cat-pin,
+.pw-cat-pin:focus-visible,
+.pw-cat-pin[data-pinned="true"] {
+  display: grid;
+}
+
+.pw-cat-pin[data-pinned="true"] {
+  color: var(--accent);
+}
+
+/* Hovering the row swaps the count for the pin so the two never overlap. */
+.pw-cat-row:hover .pw-cat-count,
+.pw-cat-row:has(.pw-cat-pin[data-pinned="true"]) .pw-cat-count {
+  visibility: hidden;
+}
+
+.pw-link-tv {
+  margin-top: var(--s-5);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--border);
+}
+
+.pw-link-tv label {
+  font-weight: var(--wght-semibold);
+}
+
+.pw-link-row {
+  display: flex;
+  gap: var(--s-3);
+  max-width: 340px;
+}
+
+.pw-link-row .input {
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.12em;
+}
