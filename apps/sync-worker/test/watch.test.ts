@@ -92,3 +92,27 @@ describe("GET /watch/p", () => {
     expect(await response.json()).toMatchObject({ error: "could not reach the provider", host: "p.example:8080" });
   });
 });
+
+describe("daily allowance", () => {
+  const withCap = { WEB_PLAYER: "on", WATCH_DAILY_CAP_MB: "1" } as Partial<Env>;
+
+  it("counts what streamed and turns the account away once the day's allowance is used", async () => {
+    await env.DB.prepare(`DELETE FROM watch_usage WHERE user_id = 'test-user'`).run();
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(new Uint8Array(700 * 1024), { headers: { "content-type": "video/mp4" } }));
+    for (const expected of [200, 200]) {
+      const response = await ask("http://provider.example/film.mp4", withCap);
+      expect(response.status).toBe(expected);
+      await response.arrayBuffer();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    const refused = await ask("http://provider.example/film.mp4", withCap);
+    expect(refused.status).toBe(429);
+    expect(((await refused.json()) as { error: string }).error).toBe("daily limit reached");
+  });
+
+  it("is off when no cap is set", async () => {
+    await env.DB.prepare(`DELETE FROM watch_usage WHERE user_id = 'test-user'`).run();
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(new Uint8Array(2 * 1024 * 1024)));
+    for (let i = 0; i < 3; i += 1) expect((await ask("http://provider.example/film.mp4", { WEB_PLAYER: "on", WATCH_DAILY_CAP_MB: "0" })).status).toBe(200);
+  });
+});

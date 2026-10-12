@@ -21,7 +21,7 @@ const BEHIND_AFTER_MS = 2000;
  * feed or copy when one dies or never starts, try the source's other addresses, say which feed took over, and notice
  * when a paused live picture has fallen behind the broadcast.
  */
-export function usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, fellBack, onFailOver, onServerDown }: { player: VideoPlayer; stream: ResolvedStream; vod: boolean; timeshift: boolean; moreFeeds: boolean; fellBack: string | undefined; onFailOver: () => void; onServerDown: (raw: string) => Promise<boolean> | null }) {
+export function usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, switchOnBuffering, fellBack, onFailOver, onServerDown }: { player: VideoPlayer; stream: ResolvedStream; vod: boolean; timeshift: boolean; moreFeeds: boolean; switchOnBuffering: boolean; fellBack: string | undefined; onFailOver: () => void; onServerDown: (raw: string) => Promise<boolean> | null }) {
   const { status, error } = useEvent(player, "statusChange", { status: player.status });
   const { isPlaying } = useEvent(player, "playingChange", { isPlaying: player.playing });
   const { videoTrack } = useEvent(player, "videoTrackChange", { videoTrack: player.videoTrack });
@@ -30,12 +30,12 @@ export function usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, f
   useEffect(() => {
     if (status === "readyToPlay") everPlayed.current = true;
   }, [status]);
-  // Live TV: a picture that stops to refill is moved to the next feed at once (a moment's grace, so a blip is not one);
-  // with no other feed it is asked for again from the start, a few times, before giving up.
+  // Live TV: a picture that stops to refill is moved to the next feed at once (a moment's grace, so a blip is not one),
+  // unless that is turned off in Settings; with no other feed to go to it is asked for again from the start, a few times, before giving up.
   const reloads = useRef(0);
   useEffect(() => {
     if (vod || timeshift || status !== "loading" || !everPlayed.current) return;
-    if (moreFeeds) {
+    if (moreFeeds && switchOnBuffering) {
       const timer = setTimeout(onFailOver, BUFFER_FAILOVER_MS);
       return () => clearTimeout(timer);
     }
@@ -46,7 +46,7 @@ export function usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, f
       player.play();
     }, STUCK_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [player, status, stream.url, timeshift, vod, moreFeeds, onFailOver]);
+  }, [player, status, stream.url, timeshift, vod, moreFeeds, switchOnBuffering, onFailOver]);
   // A live channel that errors is tried on its next feed, if it has one.
   // A film's next copy is only tried when this one never really played (a 4K copy the hardware cannot decode fails
   // just after it is ready): one that fails part-way through says so instead.

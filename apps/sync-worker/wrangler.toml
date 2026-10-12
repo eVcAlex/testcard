@@ -30,6 +30,8 @@ run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/
 # viewers' video, so check Cloudflare's terms and the bill first. Change to "on" and deploy to enable.
 [vars]
 WEB_PLAYER = "off"
+# Megabytes of video one account may stream through the web player per UTC day (20 GB). 0 removes the cap.
+WATCH_DAILY_CAP_MB = "20480"
 
 [[d1_databases]]
 binding = "DB"

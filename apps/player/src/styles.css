@@ -22,10 +22,25 @@ header .quiet { margin-left: auto; }
 .grid { list-style: none; margin: 0; padding: 0 16px 24px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 .grid button { width: 100%; padding: 0; background: var(--card); text-align: left; overflow: hidden; display: block; }
 .grid img, .poster { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; background: #000; }
-.grid span:last-child { display: block; padding: 8px; font-size: 14px; }
+.grid .main > span:not(.bar):not(.poster) { display: block; padding: 8px; font-size: 14px; }
 .player { position: fixed; inset: 0; background: #000; z-index: 10; display: flex; flex-direction: column; }
 .player video { flex: 1; min-height: 0; width: 100%; background: #000; }
 .player-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(0,0,0,.8); flex-wrap: wrap; }
 .switch { margin-left: auto; font-size: 14px; color: var(--muted); }
 .player-note { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.85); padding: 8px 14px; border-radius: 8px; }
 .player-error { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; background: rgba(0,0,0,.8); padding: 24px; gap: 8px; }
+
+.channels li, .grid li { position: relative; }
+.channels li { display: flex; gap: 6px; }
+.channels li .main { flex: 1; }
+.channels .heart, .heart { width: auto; background: transparent; border: 0; font-size: 22px; line-height: 1; padding: 8px 10px; color: var(--muted); }
+.heart.on, .channels .heart.on { color: #ff5d7a; }
+.grid .heart { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.55); border-radius: 999px; padding: 6px 9px; font-size: 18px; }
+.bar { display: block; height: 3px; background: var(--line); margin: 0 8px 8px; border-radius: 2px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); padding: 0; }
+.episodes .bar { margin: 6px 0 0; }
+.episodes button { flex-wrap: wrap; }
+.profiles { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin: 20px 0; }
+.profiles button { width: 100%; display: grid; gap: 8px; justify-items: center; background: var(--card); padding: 16px 8px; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; display: grid; place-content: center; color: #111; font-size: 24px; font-weight: 600; }
+.guide { color: var(--muted); font-size: 14px; flex-basis: 100%; }

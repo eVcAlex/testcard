@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { FeedHealth } from "./health.ts";
 import { viaProxy } from "./proxy.ts";
+import { nowAndNext, type Programme } from "./xtream.ts";
 
 /** One thing to play: a film or episode (one address), or a live channel with its other feeds. */
 export interface Feed {
@@ -11,8 +12,14 @@ export interface PlayRequest {
   readonly title: string;
   readonly live: boolean;
   readonly feeds: readonly Feed[];
-  /** Where a film's or episode's place is kept on this device. */
-  readonly resumeKey?: string;
+  /** Where to pick up a film or episode, in seconds. */
+  readonly resumeAt?: number;
+  /** Called once when it first plays (it goes to the top of Recent). */
+  readonly onStart?: () => void;
+  /** Called as a film or episode plays, and when it is left, with where it is up to. */
+  readonly onPlace?: (position: number, duration: number | null) => void;
+  /** What is on a live channel now and next. */
+  readonly guide?: () => Promise<Programme[]>;
 }
 
 const SWITCH_KEY = "tc:switchOnBuffering";
@@ -58,6 +65,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
   const [fellBack, setFellBack] = useState<string>();
   const [switchOn, setSwitchOn] = useState(read(SWITCH_KEY) !== "0");
   const [attempt, setAttempt] = useState(0);
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
   const switchRef = useRef(switchOn);
   switchRef.current = switchOn;
   const current = candidates[at];
@@ -82,6 +90,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       health.onPlaying();
       if (said) return;
       said = true;
+      request.onStart?.();
       const first = request.feeds[0];
       const now = request.feeds[current.feedIndex];
       if (at > 0 && first !== undefined && now !== undefined) setFellBack(now.name !== first.name ? `Playing ${now.name} instead` : "Playing a backup feed instead");
@@ -98,15 +107,16 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       if (health.tick() === "failover") next("");
     }, 500);
 
-    // A film or episode picks up where it was left.
+    // A film or episode picks up where it was left, and keeps its place as it plays.
     let saved: ReturnType<typeof setInterval> | undefined;
-    if (!request.live && request.resumeKey !== undefined) {
-      const key = `tc:pos:${request.resumeKey}`;
-      const place = Number(read(key));
-      if (place > 5) element.addEventListener("loadedmetadata", () => (element.currentTime = place), { once: true });
-      saved = setInterval(() => {
-        if (element.currentTime > 5 && !element.paused) write(key, String(Math.floor(element.currentTime)));
-      }, 5000);
+    const keep = () => {
+      if (!request.live && element.currentTime > 5) request.onPlace?.(element.currentTime, Number.isFinite(element.duration) ? element.duration : null);
+    };
+    if (!request.live) {
+      const place = request.resumeAt;
+      if (place !== undefined && place > 5) element.addEventListener("loadedmetadata", () => (element.currentTime = place), { once: true });
+      saved = setInterval(() => !element.paused && keep(), 10_000);
+      element.addEventListener("pause", keep);
     }
 
     const start = async () => {
@@ -149,12 +159,26 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       gone = true;
       clearInterval(tick);
       if (saved !== undefined) clearInterval(saved);
+      keep();
+      element.removeEventListener("pause", keep);
       element.removeEventListener("playing", onPlaying);
       element.removeEventListener("waiting", onWaiting);
       element.removeEventListener("error", onFail);
       stop();
     };
   }, [at, attempt, candidates, current, request]);
+
+  useEffect(() => {
+    if (!request.live || request.guide === undefined) return;
+    let gone = false;
+    const load = () => request.guide?.().then((list) => !gone && setProgrammes(list), () => undefined);
+    void load();
+    const again = setInterval(load, 5 * 60_000);
+    return () => {
+      gone = true;
+      clearInterval(again);
+    };
+  }, [request]);
 
   useEffect(() => {
     if (fellBack === undefined) return;
@@ -177,6 +201,9 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
     setSwitchOn(!switchOn);
   };
 
+  const { now, next } = nowAndNext(programmes, Date.now());
+  const clock = (at: number) => new Date(at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
   return (
     <div class="player">
       <video ref={video} controls autoplay playsinline />
@@ -188,6 +215,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
             <input type="checkbox" checked={switchOn} onChange={toggleSwitch} /> Switch feed when it buffers
           </label>
         ) : null}
+        {now !== undefined ? <div class="guide">Now: {now.title} (until {clock(now.end)}){next !== undefined ? ` · Next: ${next.title} at ${clock(next.start)}` : ""}</div> : null}
       </div>
       {fellBack !== undefined ? <div class="player-note">That feed wouldn't play. {fellBack}.</div> : null}
       {error !== undefined ? (

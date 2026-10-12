@@ -125,7 +125,48 @@ export async function call(login: XtreamLogin, action: string, params: Record<st
 export async function describeFailure(response: Response): Promise<string> {
   if (response.status === 401) return "You were signed out. Sign in again.";
   if (response.status === 404) return "The web player is not switched on yet.";
+  if (response.status === 429) {
+    const limit = (await response.clone().json().catch(() => null)) as { error?: string; detail?: string } | null;
+    return limit?.error === "daily limit reached" ? (limit.detail ?? "Today's streaming allowance on the web player is used up.") : "Too many requests. Wait a moment.";
+  }
   const body = (await response.json().catch(() => null)) as { error?: string; detail?: string } | null;
   if (body?.error === "could not reach the provider") return `Could not reach the provider${body.detail ? ` (${body.detail})` : ""}. Some servers cannot be reached from the web player.`;
   return body?.error ?? `The provider answered ${response.status}.`;
 }
+
+export interface Programme {
+  readonly title: string;
+  readonly start: number;
+  readonly end: number;
+}
+
+const fromBase64 = (value: unknown): string => {
+  if (typeof value !== "string" || value === "") return "";
+  try {
+    return new TextDecoder().decode(Uint8Array.from(atob(value), (char) => char.charCodeAt(0)));
+  } catch {
+    return value;
+  }
+};
+
+/** `get_short_epg`: the programmes on now and next (titles are base64; times are epoch seconds). */
+export function toShortEpg(info: unknown): Programme[] {
+  const rows = (info as { epg_listings?: unknown } | null)?.epg_listings;
+  return (Array.isArray(rows) ? (rows as Dto[]) : [])
+    .flatMap((row) => {
+      const start = Number(row.start_timestamp);
+      const end = Number(row.stop_timestamp);
+      const title = fromBase64(row.title);
+      return title !== "" && Number.isFinite(start) && Number.isFinite(end) ? [{ title, start: start * 1000, end: end * 1000 }] : [];
+    })
+    .sort((a, b) => a.start - b.start);
+}
+
+/** What is on now, and what follows, from a list in start order. */
+export function nowAndNext(programmes: readonly Programme[], at: number): { now?: Programme; next?: Programme } {
+  const now = programmes.find((programme) => programme.start <= at && at < programme.end);
+  const next = programmes.find((programme) => programme.start >= (now?.end ?? at));
+  return { ...(now !== undefined ? { now } : {}), ...(next !== undefined ? { next } : {}) };
+}
+
+export const shortEpg = async (login: XtreamLogin, streamId: string): Promise<Programme[]> => toShortEpg(await call(login, "get_short_epg", { stream_id: streamId, limit: "4" }));

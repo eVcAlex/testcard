@@ -29,8 +29,19 @@ Windows app. A browser cannot talk to an IPTV provider itself: providers send no
    `listChannelFeeds`). A feed that errors, never starts, or buffers for 3 seconds is moved on from (`FeedHealth`, the twin of
    `PlaybackHealth.kt`); the viewer can turn the buffering switch off.
 5. **No local database.** The web player asks the provider's JSON API per category and holds the answers in memory for the
-   visit. It does not import a catalogue, so there is no SQLite in the browser, no sync of favourites, recents or progress,
-   no profiles and no TV guide yet.
+   visit. It does not import a catalogue, so there is no SQLite in the browser.
+6. **What was watched is the account's, not the browser's** (`library.ts`). Signing in pulls the profile's favourites,
+   recents and progress; a heart, a film started or a place kept is pushed back with a newer timestamp, a moment later and in
+   one batch, so the apps see it and the web player sees theirs. Items go by the same keys the apps compute (`keys.ts`): a hash
+   of the provider's address and its id for Xtream, of the playlist and the title for M3U, and `ch.` plus a hash for a channel.
+   Nothing about watching is kept in browser storage; the only thing that is, is the buffering switch.
+7. **Profiles** are read from the account's sealed profile records (`profiles.ts`). More than one, or one with a PIN, asks who is
+   watching first; the PIN check is the apps' own hash, kept equal by a test. A profile's rows sync under its `p.<id>.` prefix.
+8. **Now and next** on a live channel comes from the provider's `get_short_epg`, not from a downloaded guide. There is no
+   full guide grid. M3U playlists get their series from the same title rules the apps use.
+9. **A daily cap per account** (`WATCH_DAILY_CAP_MB`, 20 GB in `wrangler.toml`; 0 removes it). The proxy counts the bytes it
+   streams for each account per UTC day in D1 (`watch_usage`) and answers 429 once the day's allowance is used. The count is
+   written when a stream ends, so one long stream can overshoot; the next request is refused.
 
 ## Consequences
 
@@ -39,12 +50,11 @@ Windows app. A browser cannot talk to an IPTV provider itself: providers send no
 - Films that are MKV or HEVC, and audio the browser cannot decode (AC-3), will not play in some browsers. There is no
   transcoding; that would be a separate service.
 - Cost: Workers charge for requests and CPU time, not outbound data, as far as we know; check Cloudflare's current terms for
-  proxying video before switching it on. The Worker carries every viewer's video, so abuse limits matter (a daily cap per
-  account is the obvious next step).
+  proxying video before switching it on. The Worker carries every viewer's video, so each account has a daily cap (above).
 - The CSP now allows `blob:` for media and workers (hls.js and mpegts.js use them).
 - Provider logins appear in addresses the proxy sees and forwards. They are not logged by this code.
 
 ## Not done
 
-Favourites, recents, resume and profiles synced with the apps; the TV guide; M3U series; pinned categories; a proper PWA install
-experience; per-account usage caps.
+A full TV guide grid in the browser; a playlist's channels as favourites (they have no stable id); pinned categories and hidden
+channels from the source records; a proper PWA install experience; adding or editing sources from the browser (the apps do).

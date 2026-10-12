@@ -1,0 +1,48 @@
+import { decryptJson } from "@testcard/core/src/sync/credentialCrypto.ts";
+import { ProfilePayloadSchema, profileKeyPrefix, type SyncProfile } from "@testcard/sync-schema";
+
+export const MAIN_PROFILE = "main";
+
+export interface WebProfile {
+  readonly id: string;
+  readonly name: string;
+  readonly colour: number;
+  readonly avatar: string | null;
+  /** A hash of the PIN, or null. */
+  readonly pin: string | null;
+  readonly position: number;
+}
+
+/** The avatar colours, in the order the apps give them out. */
+export const PROFILE_COLOURS = ["#e7d2ad", "#7fb8a4", "#e28a6d", "#8fa7e0", "#d7a3d8", "#e3c85c", "#9ccf6e", "#f0a3b5"];
+
+/** The apps' PIN hash (`pinHash` in core's profileIdentity): a PIN made on a TV unlocks here. Kept in step by a test. */
+export function pinHash(profileId: string, digits: string): string {
+  let hash = 0x811c9dc5;
+  for (const char of `${profileId}:${digits}`) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
+export const pinMatches = (profile: WebProfile, digits: string): boolean => profile.pin !== null && profile.pin === pinHash(profile.id, digits);
+
+/** The key prefix a profile's own favourites, recents and progress sync under; Main's have none. */
+export const prefixOf = (profileId: string): string => (profileId === MAIN_PROFILE ? "" : profileKeyPrefix(profileId));
+
+/** Every profile of the account, Main first. Main always exists even if the account never saved a record for it. */
+export async function openProfiles(rows: readonly SyncProfile[], password: string, salt: string): Promise<WebProfile[]> {
+  const found: WebProfile[] = [];
+  for (const row of rows) {
+    if (row.deletedAt !== null || row.blob === null || row.iv === null) continue;
+    try {
+      const payload = ProfilePayloadSchema.parse(await decryptJson({ blob: row.blob, iv: row.iv }, password, salt));
+      found.push({ id: row.remoteKey, ...payload });
+    } catch {
+      // A record this version cannot read is left out rather than blocking sign-in.
+    }
+  }
+  const main = found.find((profile) => profile.id === MAIN_PROFILE) ?? { id: MAIN_PROFILE, name: "Main", colour: 0, avatar: null, pin: null, position: 0 };
+  return [main, ...found.filter((profile) => profile.id !== MAIN_PROFILE).sort((a, b) => a.position - b.position)];
+}

@@ -7,6 +7,7 @@ import { installedVersion } from "../update/update";
 import { colors, space, type, styleSheet, uiScale } from "../theme";
 import { Button, Heading, Muted } from "../ui/controls";
 import { CaptionSettings } from "../ui/CaptionSettings";
+import { PlaybackSettings } from "../ui/PlaybackSettings";
 import { ProfileSettings } from "../ui/ProfileSettings";
 import { Focusable } from "../ui/Focusable";
 import { MenuRow, withCommas } from "../ui/MenuRow";
@@ -27,17 +28,18 @@ function ago(at: number): string {
   return `${days} ${days === 1 ? "day" : "days"} ago`;
 }
 
-type Pane = "sources" | "hidden" | "profiles" | "captions" | "account";
+type Pane = "sources" | "hidden" | "profiles" | "captions" | "playback" | "account";
 const PANES: { id: Pane; label: string }[] = [
   { id: "sources", label: "Sources" },
   { id: "hidden", label: "Hidden" },
   { id: "profiles", label: "Profiles" },
   { id: "captions", label: "Captions" },
+  { id: "playback", label: "Playback" },
   { id: "account", label: "Account and updates" },
 ];
 
 /**
- * The Settings tab: a short menu down the left (Sources, Hidden, Profiles, Captions, Account and updates) and the chosen one beside
+ * The Settings tab: a short menu down the left (Sources, Hidden, Profiles, Captions, Playback, Account and updates) and the chosen one beside
  * it. The pane follows the remote as it moves down the menu, as the category lists do; Right goes into it.
  */
 export function SourcesScreen() {
@@ -50,7 +52,7 @@ export function SourcesScreen() {
           <MenuRow key={entry.id} id={entry.id} label={entry.label} active={pane === entry.id} onPressId={choose} onFocusId={choose} />
         ))}
       </TVFocusGuideView>
-      <View style={styles.pane}>{pane === "sources" ? <SourcesPane /> : pane === "hidden" ? <HiddenPane /> : pane === "profiles" ? <ProfileSettings /> : pane === "captions" ? <CaptionSettings /> : <AccountPane />}</View>
+      <View style={styles.pane}>{pane === "sources" ? <SourcesPane /> : pane === "hidden" ? <HiddenPane /> : pane === "profiles" ? <ProfileSettings /> : pane === "captions" ? <CaptionSettings /> : pane === "playback" ? <PlaybackSettings /> : <AccountPane />}</View>
     </View>
   );
 }

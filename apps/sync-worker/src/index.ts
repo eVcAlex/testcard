@@ -19,6 +19,8 @@ export interface Env {
   readonly WEB_PLAYER?: string;
   /** "1" lets the proxy fetch private addresses. Tests only: never set in wrangler.toml. */
   readonly WATCH_ALLOW_PRIVATE?: string;
+  /** Megabytes of proxied video one account may use per UTC day on the web player; unset or 0 for no cap. */
+  readonly WATCH_DAILY_CAP_MB?: string;
 }
 
 type AppEnv = { Bindings: Env; Variables: { userId: string } };

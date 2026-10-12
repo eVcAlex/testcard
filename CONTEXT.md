@@ -41,7 +41,7 @@ plays back through an embedded `mpv`, stores everything locally.
   provider assigns.
 - **Web player** — Testcard in a browser at `/watch` (ADR 0015), for iPhone and any computer without the app. Signs in with the account and opens
   the sources in the browser; video goes through the Worker's `/watch/p` proxy because browsers cannot call providers. Off until `WEB_PLAYER` is
-  "on". Browses live, films and series; no local catalogue, and nothing is synced back yet.
+  "on". Browses live, films and series, with favourites, recents, resume and profiles synced with the apps; no local catalogue, and a daily streaming cap per account.
 - **Channel Variant** — one concrete stream a provider offers for a Channel — a specific
   resolution/framerate ("1080p50", "720p25") each with its own provider stream id and URL.
   A Channel has one or more Variants. Providers routinely ship the same channel as five or

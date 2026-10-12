@@ -1,5 +1,6 @@
 import type { WebChannel } from "./feeds.ts";
 import { xtreamChannel } from "./feeds.ts";
+import { xtreamKey } from "./keys.ts";
 import { loadPlaylist, type Playlist } from "./playlist.ts";
 import type { WebSource } from "./session.ts";
 import { call, episodeUrl, movieUrl, toCategories, toEpisodes, toLive, toMovies, toSeriesList, type Category, type XtreamLogin } from "./xtream.ts";
@@ -11,6 +12,8 @@ export interface Film {
   readonly categoryId: string;
   readonly poster: string | undefined;
   readonly url: string;
+  /** Its key on the account, for favourites, recents and places. */
+  readonly key: string;
 }
 export interface Show {
   readonly id: string;
@@ -18,9 +21,11 @@ export interface Show {
   readonly categoryId: string;
   readonly cover: string | undefined;
   readonly plot: string | undefined;
+  readonly key: string;
 }
 export interface Part {
   readonly id: string;
+  readonly key: string;
   readonly season: number;
   readonly number: number;
   readonly title: string;
@@ -41,6 +46,9 @@ function once<T>(key: string, make: () => Promise<T>): Promise<T> {
 }
 export const forgetCatalogue = (): void => memo.clear();
 
+/** What an Xtream source's items are keyed by on the account: the address it was first added with, which survives a provider moving. */
+const keyHostOf = (source: WebSource): string => (source.kind === "xtream" ? source.keyHost : "");
+
 const playlistOf = (source: Extract<WebSource, { kind: "m3u" }>): Promise<Playlist> => once(`${source.id}:playlist`, () => loadPlaylist(source.playlistUrl));
 const loginOf = (source: WebSource): XtreamLogin => {
   if (source.kind !== "xtream") throw new Error("Not an Xtream source.");
@@ -50,7 +58,7 @@ const loginOf = (source: WebSource): XtreamLogin => {
 export async function categories(source: WebSource, kind: "live" | "movies" | "series"): Promise<Category[]> {
   if (source.kind === "m3u") {
     const list = await playlistOf(source);
-    const used = new Set((kind === "live" ? list.live : kind === "movies" ? list.movies : []).map((item) => item.categoryId));
+    const used = new Set((kind === "live" ? list.live : kind === "movies" ? list.movies : list.shows).map((item) => item.categoryId));
     return list.categories.filter((category) => used.has(category.id));
   }
   const action = kind === "live" ? "get_live_categories" : kind === "movies" ? "get_vod_categories" : "get_series_categories";
@@ -64,7 +72,7 @@ export async function liveChannels(source: WebSource, categoryId?: string): Prom
     return list.live.filter((channel) => categoryId === undefined || channel.categoryId === categoryId);
   }
   const login = loginOf(source);
-  return once(`${source.id}:live:${categoryId ?? "*"}`, async () => toLive(await call(login, "get_live_streams", categoryId === undefined ? {} : { category_id: categoryId })).map((stream) => xtreamChannel(login, stream)));
+  return once(`${source.id}:live:${categoryId ?? "*"}`, async () => toLive(await call(login, "get_live_streams", categoryId === undefined ? {} : { category_id: categoryId })).map((stream) => xtreamChannel(login, stream, source.id)));
 }
 
 export async function films(source: WebSource, categoryId?: string): Promise<Film[]> {
@@ -73,18 +81,35 @@ export async function films(source: WebSource, categoryId?: string): Promise<Fil
     return list.movies.filter((movie) => categoryId === undefined || movie.categoryId === categoryId);
   }
   const login = loginOf(source);
-  return once(`${source.id}:films:${categoryId ?? "*"}`, async () =>
-    toMovies(await call(login, "get_vod_streams", categoryId === undefined ? {} : { category_id: categoryId })).map((movie) => ({ id: movie.id, name: movie.name, categoryId: movie.categoryId, poster: movie.poster, url: movieUrl(login, movie.id, movie.extension) })),
-  );
+  return once(`${source.id}:films:${categoryId ?? "*"}`, async () => {
+      const rows = toMovies(await call(login, "get_vod_streams", categoryId === undefined ? {} : { category_id: categoryId }));
+      const keys = await Promise.all(rows.map((movie) => xtreamKey(keyHostOf(source), movie.id)));
+      return rows.map((movie, index) => ({ id: movie.id, name: movie.name, categoryId: movie.categoryId, poster: movie.poster, url: movieUrl(login, movie.id, movie.extension), key: keys[index] as string }));
+  });
 }
 
 export async function shows(source: WebSource, categoryId?: string): Promise<Show[]> {
-  if (source.kind === "m3u") return [];
+  if (source.kind === "m3u") {
+    const list = await playlistOf(source);
+    return list.shows.filter((show) => categoryId === undefined || show.categoryId === categoryId).map((show) => ({ id: show.id, name: show.name, categoryId: show.categoryId, cover: show.cover, plot: undefined, key: show.key }));
+  }
   const login = loginOf(source);
-  return once(`${source.id}:shows:${categoryId ?? "*"}`, async () => toSeriesList(await call(login, "get_series", categoryId === undefined ? {} : { category_id: categoryId })));
+  return once(`${source.id}:shows:${categoryId ?? "*"}`, async () => {
+    const rows = toSeriesList(await call(login, "get_series", categoryId === undefined ? {} : { category_id: categoryId }));
+    const keys = await Promise.all(rows.map((show) => xtreamKey(keyHostOf(source), show.id)));
+    return rows.map((show, index) => ({ ...show, key: keys[index] as string }));
+  });
 }
 
 export async function episodesOf(source: WebSource, show: Show): Promise<Part[]> {
+  if (source.kind === "m3u") {
+    const found = (await playlistOf(source)).shows.find((candidate) => candidate.id === show.id);
+    return (found?.episodes ?? []).map((episode) => ({ id: episode.id, key: episode.key, season: episode.season, number: episode.number, title: episode.title, url: episode.url }));
+  }
   const login = loginOf(source);
-  return once(`${source.id}:episodes:${show.id}`, async () => toEpisodes(await call(login, "get_series_info", { series_id: show.id })).map((episode) => ({ id: episode.id, season: episode.season, number: episode.number, title: episode.title, url: episodeUrl(login, episode.id, episode.extension) })));
+  return once(`${source.id}:episodes:${show.id}`, async () => {
+    const rows = toEpisodes(await call(login, "get_series_info", { series_id: show.id }));
+    const keys = await Promise.all(rows.map((episode) => xtreamKey(keyHostOf(source), episode.id)));
+    return rows.map((episode, index) => ({ id: episode.id, key: keys[index] as string, season: episode.season, number: episode.number, title: episode.title, url: episodeUrl(login, episode.id, episode.extension) }));
+  });
 }

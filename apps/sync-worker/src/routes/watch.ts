@@ -1,4 +1,5 @@
 import type { AppContext } from "../validation.js";
+import { addUsage, capBytes, counted, usedToday } from "./watchUsage.js";
 
 /**
  * The stream proxy behind the web player (`apps/player`). A browser cannot call a provider itself: providers send no CORS
@@ -94,6 +95,12 @@ export async function handleWatchProxy(c: AppContext): Promise<Response> {
     return c.json({ error: "u is not an address" }, 400);
   }
 
+  const cap = capBytes(c.env.WATCH_DAILY_CAP_MB);
+  const userId = c.get("userId");
+  if (cap > 0 && (await usedToday(c.env.DB, userId)) >= cap) {
+    return c.json({ error: "daily limit reached", detail: "You have used today's streaming allowance on the web player. It resets at midnight UTC; the apps are not limited." }, 429);
+  }
+
   const forward = new Headers({ "user-agent": UPSTREAM_USER_AGENT });
   const range = c.req.header("range");
   if (range !== undefined) forward.set("range", range);
@@ -120,5 +127,7 @@ export async function handleWatchProxy(c: AppContext): Promise<Response> {
     if (value !== null) headers.set(name, value);
   }
   // The body is passed on as it arrives; nothing is buffered.
-  return new Response(c.req.method === "HEAD" ? null : response.body, { status: response.status, headers });
+  let body = c.req.method === "HEAD" ? null : response.body;
+  if (cap > 0 && body !== null) body = counted(body, (bytes) => c.executionCtx.waitUntil(addUsage(c.env.DB, userId, bytes)));
+  return new Response(body, { status: response.status, headers });
 }
