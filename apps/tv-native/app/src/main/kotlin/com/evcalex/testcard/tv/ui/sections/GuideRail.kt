@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -47,11 +48,18 @@ internal class GuideList(val id: String, val label: String, val count: Int, val 
 /** Whether the list is a source's (or everything's) "All channels", which has no category to pin or hide. */
 internal fun GuideList.isAll() = id == "all" || id.startsWith("all:")
 
-/** Where a list is among the rail's items: the separator after "recent" and each source heading are items of their own. */
-internal fun railItemIndex(lists: List<GuideList>, id: String): Int {
+/**
+ * The lists the rail draws: those in a collapsed section are left out, except [current], which stays so the remote has
+ * somewhere to rest and the viewer can see where they are.
+ */
+internal fun visibleLists(lists: List<GuideList>, collapsed: Set<String>, current: String): List<GuideList> =
+    lists.filter { it.group == null || it.group !in collapsed || it.id == current }
+
+/** Where a list is among the rail's items: the separator after "recent" and each section heading are items of their own. */
+internal fun railItemIndex(lists: List<GuideList>, id: String, collapsed: Set<String> = emptySet()): Int {
     var index = 0
     var group: String? = null
-    for (item in lists) {
+    for (item in visibleLists(lists, collapsed, id)) {
         if (item.group != null && item.group != group) { group = item.group; index++ }
         if (item.id == id) return index
         index++
@@ -59,6 +67,13 @@ internal fun railItemIndex(lists: List<GuideList>, id: String): Int {
     }
     return 0
 }
+
+/** The section headings in rail order, with how many lists each holds. */
+internal fun sectionsOf(lists: List<GuideList>): List<Pair<String, Int>> =
+    lists.mapNotNull { it.group }.groupingBy { it }.eachCount().entries.map { it.key to it.value }
+
+/** A section's key: its heading is "Pinned" or the source name; a pinned one in a source's rail reads "Pinned · Source". */
+internal const val PINNED_SECTION = "Pinned"
 
 /** What the collapsed rail draws for a list. */
 internal sealed interface RailMark {
@@ -81,6 +96,7 @@ internal fun GuideRail(
     lists: List<GuideList>, current: String, open: Boolean,
     onPick: (String) -> Unit, onClose: (String) -> Unit, onLongPress: (GuideList) -> Unit,
     requesters: Map<String, FocusRequester>, state: LazyListState,
+    collapsed: Set<String> = emptySet(), onToggle: (String) -> Unit = {},
 ) {
     var pending by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(pending) {
@@ -99,12 +115,13 @@ internal fun GuideRail(
             contentPadding = PaddingValues(vertical = 20.dp, horizontal = 14.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             var group: String? = null
-            for (item in lists) {
+            val sizes = sectionsOf(lists).toMap()
+            for (item in visibleLists(lists, collapsed, current)) {
                 if (item.group != null && item.group != group) {
                     group = item.group
                     val name = item.group
                     item("group:$name") {
-                        if (open) AppText(name, 18, Palette.faint, FontWeight.SemiBold, Modifier.padding(start = 14.dp, top = 14.dp, bottom = 4.dp), maxLines = 1)
+                        if (open) SectionHeading(name, sizes[name] ?: 0, name in collapsed, onToggle)
                         else Box(Modifier.padding(horizontal = 10.dp, vertical = 8.dp).fillMaxWidth().height(1.dp).background(Palette.border))
                     }
                 }
@@ -120,6 +137,24 @@ internal fun GuideRail(
             }
         }
         Box(Modifier.align(Alignment.CenterEnd).width(1.dp).fillMaxHeight().background(Palette.border))
+    }
+}
+
+/** A section's heading in the open rail. OK folds the section away (or opens it again), so the next one is a press away. */
+@Composable
+private fun SectionHeading(name: String, count: Int, folded: Boolean, onToggle: (String) -> Unit) {
+    Focusable(
+        { onToggle(name) },
+        Modifier.fillMaxWidth().height(44.dp).onPreviewKeyEvent { it.type == KeyEventType.KeyDown && it.key == Key.DirectionLeft },
+        RoundedCornerShape(10.dp), ring = false, background = Color.Transparent, focusedBackground = Palette.cardActive,
+    ) { focused ->
+        Row(Modifier.fillMaxSize().padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.width(44.dp), contentAlignment = Alignment.CenterStart) {
+                GlyphIcon(Glyph.ArrowDown, if (focused) Palette.foreground else Palette.faint, 24.dp, Modifier.graphicsLayer { rotationZ = if (folded) -90f else 0f })
+            }
+            AppText(name, 20, if (name.startsWith(PINNED_SECTION)) Palette.accent else if (focused) Palette.foreground else Palette.faint, FontWeight.SemiBold, Modifier.weight(1f), maxLines = 1, letterSpacing = 0.5f)
+            AppText(if (folded) "$count hidden" else count.toString(), 18, Palette.faint, maxLines = 1)
+        }
     }
 }
 

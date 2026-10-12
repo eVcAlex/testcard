@@ -20,7 +20,7 @@ fault; it is that nothing decides what the device, the line and the provider acc
 ## Decision
 
 1. **Decide before playing.** `core/playback/MultiView.kt` (pure, tested) holds every rule:
-   - `deviceTileCap`: pictures by memory and the hardware AVC decoder's `maxSupportedInstances`, whichever is lower (2, 4 or 6).
+   - `deviceTileCap`: pictures by memory (2 under 900 MB, 3 under 1.4 GB, else 4) and the hardware AVC decoder's `maxSupportedInstances`, whichever is lower. Four is the most, whatever the device (`MAX_TILES`).
    - `planTiles` + `freeStreams`: per source, no more pictures than its Xtream account has free (`max_connections` less
      `active_cons`, asked afresh), the same channel only once, the first channel (the main picture) always kept. The viewer is told
      when something was left out and why.
@@ -35,12 +35,14 @@ fault; it is that nothing decides what the device, the line and the provider acc
    the line is short, not one stream, so the least important one (never the one with sound) is stopped, with a note and OK to
    start it again. Dead or never-starting feeds reuse `PlaybackHealth` per tile, so they move to the channel's other feeds as
    the full-screen player does.
-5. **Screen variants** (`MultiLayout`, all 16:9 tiles so pictures fill them): Side by side (2), Picture in picture (2), Four grid
-   (4), Spotlight with 3 beside (4), Spotlight with 5 around (6), Six grid (6). Only layouts the device can carry are offered; the
+5. **Screen variants** (`MultiLayout`, all 16:9 tiles so pictures fill them): Side by side (2), Picture in picture (2), Spotlight with
+   2 beside (3), Four grid (4), Spotlight with 3 beside (4), Stage with 3 below (4). Only layouts the device can carry are offered; the
    choice is remembered (`schema_meta` `ui:multiview:layout`). "Make main picture" swaps a channel into the big place.
 6. **Getting there**: holding OK on a channel in the Live TV guide offers *Add to Multi view*; once another is picked, *Open Multi
    view*. OK on a picture gives it the sound (and the big place in a spotlight layout), holding OK opens that picture's options
    (sound, make main, full screen, change layout, remove), Menu opens the layouts. Back leaves and clears the pick.
+   Inside the view, an empty place is a button and a picture's options offer *Change channel* and *Add another channel*, picking from
+   favourites and recents (`MultiViewModel.addChannel`), so channels are added and swapped without going back to the guide.
 
 ## Consequences
 

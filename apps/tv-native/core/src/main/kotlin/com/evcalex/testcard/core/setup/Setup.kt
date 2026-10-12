@@ -31,7 +31,14 @@ enum class StepState { Done, Active, Waiting }
 class SetupStep(val key: String, val label: String, val note: String?, val state: StepState)
 
 /** What the "getting ready" screen shows. */
-class SetupProgress(val steps: List<SetupStep>, /** 0 to 1. */ val fraction: Double, val detail: String)
+class SetupProgress(
+    val steps: List<SetupStep>,
+    /** 0 to 1. */
+    val fraction: Double,
+    val detail: String,
+    /** True while sources are being fetched in full (first sign-in, a new source): the one slow wait, which later launches skip. */
+    val fetchingSources: Boolean = false,
+)
 
 private fun doingOf(stage: ImportStage) = when (stage) {
     ImportStage.Live -> "loading live channels"
@@ -111,5 +118,6 @@ fun describeSetup(firstSync: Boolean, launchSync: Boolean = false, imports: List
         steps,
         minOf(1.0, score / steps.size),
         if (current == null) { if (imports.isEmpty()) "Fetching your sources" else "Almost there" } else "${current.name}: ${doing(current)}",
+        fetchingSources = true,
     )
 }

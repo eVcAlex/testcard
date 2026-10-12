@@ -25,15 +25,9 @@ enum class MultiLayout(val id: String, val label: String, val note: String, val 
     SideBySide("duo", "Side by side", "Two equal pictures", listOf(r(0f, .25f, .5f, .5f), r(.5f, .25f, .5f, .5f))),
     Inset("pip", "Picture in picture", "One full screen, one in the corner", listOf(r(0f, 0f, 1f, 1f), r(.70f, .70f, .26f, .26f))),
     Quad("quad", "Four grid", "Four equal pictures", listOf(r(0f, 0f, .5f, .5f), r(.5f, 0f, .5f, .5f), r(0f, .5f, .5f, .5f), r(.5f, .5f, .5f, .5f))),
+    Spotlight3("spot3", "Spotlight, 2 beside", "One big, two small", listOf(r(0f, 0f, .75f, .75f), r(.75f, 0f, .25f, .25f), r(.75f, .25f, .25f, .25f))),
     Spotlight4("spot4", "Spotlight, 3 beside", "One big, three small", listOf(r(0f, 0f, .75f, .75f), r(.75f, 0f, .25f, .25f), r(.75f, .25f, .25f, .25f), r(.75f, .5f, .25f, .25f))),
-    Spotlight6("spot6", "Spotlight, 5 around", "One big, five small", listOf(
-        r(0f, 0f, 2f / 3, 2f / 3), r(2f / 3, 0f, 1f / 3, 1f / 3), r(2f / 3, 1f / 3, 1f / 3, 1f / 3),
-        r(0f, 2f / 3, 1f / 3, 1f / 3), r(1f / 3, 2f / 3, 1f / 3, 1f / 3), r(2f / 3, 2f / 3, 1f / 3, 1f / 3),
-    )),
-    Grid6("grid6", "Six grid", "Six equal pictures", listOf(
-        r(0f, 1f / 6, 1f / 3, 1f / 3), r(1f / 3, 1f / 6, 1f / 3, 1f / 3), r(2f / 3, 1f / 6, 1f / 3, 1f / 3),
-        r(0f, 1f / 2, 1f / 3, 1f / 3), r(1f / 3, 1f / 2, 1f / 3, 1f / 3), r(2f / 3, 1f / 2, 1f / 3, 1f / 3),
-    ));
+    Stage("stage", "Stage, 3 below", "One big, three in a row beneath", listOf(r(.2f, 0f, .6f, .6f), r(0f, .6f, 1f / 3, 1f / 3), r(1f / 3, .6f, 1f / 3, 1f / 3), r(2f / 3, .6f, 1f / 3, 1f / 3)));
 
     /** True where slot 0 is bigger than the rest, so "Make main" means something. */
     val hasMain get() = slots.drop(1).any { it.w < slots[0].w }
@@ -61,12 +55,13 @@ fun startLayout(wanted: Int, tiles: Int, last: MultiLayout?): MultiLayout {
 /** The most pictures a device carries without struggling, from its memory and what its video decoder says it can run at once. */
 fun deviceTileCap(totalMemMb: Int, decoderInstances: Int?): Int {
     // A decoder's own claim is generous on cheap chips; memory is the honest limit: each picture holds a decoder, a surface and a buffer.
-    val byMemory = if (totalMemMb < 1400) 2 else if (totalMemMb < 2600) 4 else 6
+    val byMemory = if (totalMemMb < 900) 2 else if (totalMemMb < 1400) 3 else MAX_TILES
     val byDecoder = decoderInstances?.coerceAtLeast(1) ?: byMemory
     return minOf(byMemory, byDecoder, MAX_TILES)
 }
 
-const val MAX_TILES = 6
+/** Multi view shows four pictures at most: past that each is too small to follow and the line rarely carries them. */
+const val MAX_TILES = 4
 
 /** A channel the viewer wants in the view, and which source (provider account) it plays from. */
 class TileWish(val channelId: String, val sourceId: String)

@@ -16,6 +16,9 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.evcalex.testcard.core.db.ChannelFeed
 import com.evcalex.testcard.core.db.listChannelFeeds
+import com.evcalex.testcard.core.db.listFavouriteChannels
+import com.evcalex.testcard.core.db.listRecentChannels
+import com.evcalex.testcard.core.playback.MAX_TILES
 import com.evcalex.testcard.core.nowMs
 import com.evcalex.testcard.core.playback.AUDIO_TILE_BUFFER
 import com.evcalex.testcard.core.playback.HealthAction
@@ -74,6 +77,9 @@ class MultiTile(val item: PlayItem) {
     var loadJob: Job? = null
     var wasReady = false
 
+    /** The source (provider account) this channel plays from, for the streams that account allows at once. */
+    var sourceId: String = ""
+
     var feed by mutableStateOf<ChannelFeed?>(null)
     var state by mutableStateOf(TileState.Starting)
     var playedOnce by mutableStateOf(false)
@@ -120,7 +126,7 @@ class MultiViewModel(private val app: AppController, private val context: Contex
             return
         }
         val titles = queue.associate { it.id to it.title }
-        val built = plan.kept.map { wish -> MultiTile(PlayItem(PlayKind.Channel, wish.channelId, titles[wish.channelId] ?: "")) }
+        val built = plan.kept.map { wish -> MultiTile(PlayItem(PlayKind.Channel, wish.channelId, titles[wish.channelId] ?: "")).also { it.sourceId = wish.sourceId } }
         val feeds = withContext(Dispatchers.Default) { built.map { tile -> app.db.read { it.listChannelFeeds(tile.item.id) } } }
         val saved = withContext(Dispatchers.Default) { app.db.read { it.readMultiLayout() } }
         layout = startLayout(built.size, cap, saved)
@@ -333,6 +339,58 @@ class MultiViewModel(private val app: AppController, private val context: Contex
         if (audio === tile) giveSound(tiles.first())
         if (layout.slots.size > tiles.size) layout = startLayout(tiles.size, cap, null)
         retargetAll()
+    }
+
+    // ---- adding and swapping without leaving
+
+    /** Channels to offer for an empty place or a swap: favourites, then what was watched lately, minus those already showing. */
+    suspend fun suggestions(): List<PlayItem> = withContext(Dispatchers.Default) {
+        val showing = tiles.map { it.item.id }.toSet()
+        app.db.read { c -> c.listFavouriteChannels() + c.listRecentChannels(40) }
+            .filter { it.id !in showing }.distinctBy { it.id }.take(60)
+            .map { PlayItem(PlayKind.Channel, it.id, it.normalisedName) }
+    }
+
+    /** True when another picture can be added: the device carries it and the layouts have a place for it. */
+    fun canAdd() = tiles.size < minOf(cap, MAX_TILES)
+
+    /**
+     * Puts [item] in the view: in a new place, or (with [replacing]) in the place of a picture, which stops. The same checks as
+     * at the start apply: a provider account that has no stream free refuses it, with a note saying so.
+     */
+    suspend fun addChannel(item: PlayItem, replacing: MultiTile? = null) {
+        if (tiles.any { it.item.id == item.id }) return
+        if (replacing == null && !canAdd()) { note = "This device carries $cap pictures smoothly."; return }
+        val source = withContext(Dispatchers.Default) { sourceOfPlay(app.db, PlayKind.Channel, item.id) }
+        if (source == null) { note = "That channel can't be played right now."; return }
+        // The place being given up frees a stream on its own account; any other account must have one free.
+        val frees = replacing != null && replacing.sourceId == source.first
+        val free = allowanceOf(listOf(TileWish(item.id, source.first) to source.second))(source.first)
+        if (!frees && free != null && free < 1) { note = "Your provider doesn't allow another stream at once."; return }
+        val tile = MultiTile(item).also { it.sourceId = source.first }
+        tile.feeds = withContext(Dispatchers.Default) { app.db.read { it.listChannelFeeds(item.id) } }
+        val slot = if (replacing != null) tiles.indexOf(replacing).also { if (it < 0) return } else tiles.size
+        val hadSound = replacing != null && replacing === audio
+        if (replacing != null) {
+            replacing.loadJob?.cancel()
+            replacing.player?.release()
+            replacing.player = null
+            governor.forget(slot)
+            app.multiQueue.removeAll { it.id == replacing.item.id }
+        }
+        val relaid = layout.slots.size <= slot
+        if (relaid) layout = startLayout(slot + 1, cap, null)
+        if (app.multiQueue.none { it.id == item.id }) app.multiQueue.add(item)
+        val sound = hadSound || audio == null
+        tile.player = Media3Player.createTile(context, app.http, if (sound) AUDIO_TILE_BUFFER else MUTED_TILE_BUFFER, !sound, targetHeight(layout.slots[slot].h))
+        attach(tile)
+        if (replacing != null) tiles[slot] = tile else tiles.add(tile)
+        if (sound) audio = tile
+        retarget(tile, slot, force = true)
+        // A bigger layout makes the other pictures smaller: each asks for the feed that fits its new size.
+        if (relaid) retargetAll()
+        note = null
+        load(tile, fresh = true)
     }
 
     /** The layouts to choose between: those that hold every picture and that this device is happy to carry. */

@@ -1,6 +1,7 @@
 package com.evcalex.testcard.core
 
 import com.evcalex.testcard.core.db.ChannelFeed
+import com.evcalex.testcard.core.playback.MAX_TILES
 import com.evcalex.testcard.core.playback.MultiLayout
 import com.evcalex.testcard.core.playback.TileAction
 import com.evcalex.testcard.core.playback.TileGovernor
@@ -43,25 +44,28 @@ class MultiViewTest {
         assertEquals(listOf(MultiLayout.SideBySide, MultiLayout.Inset), layoutsFor(2))
         assertTrue(layoutsFor(4).all { it.slots.size <= 4 })
         assertTrue(MultiLayout.Quad in layoutsFor(4))
-        assertTrue(MultiLayout.Grid6 !in layoutsFor(5))
-        assertEquals(MultiLayout.entries.toSet(), layoutsFor(6).toSet())
+        assertTrue(MultiLayout.Spotlight4 !in layoutsFor(3))
+        assertTrue(MultiLayout.Spotlight3 in layoutsFor(3))
+        assertEquals(MultiLayout.entries.toSet(), layoutsFor(MAX_TILES).toSet())
+        assertTrue(MultiLayout.entries.all { it.slots.size <= MAX_TILES })
     }
 
     @Test fun startsInTheSmallestLayoutThatHoldsEveryChannel() {
         assertEquals(MultiLayout.SideBySide, startLayout(2, 4, null))
-        assertEquals(MultiLayout.Quad, startLayout(3, 4, null))
-        assertEquals(MultiLayout.Quad, startLayout(4, 6, null))
+        assertEquals(MultiLayout.Spotlight3, startLayout(3, 4, null))
+        assertEquals(MultiLayout.Quad, startLayout(4, 4, null))
         assertEquals(MultiLayout.Quad, startLayout(4, 4, MultiLayout.Quad))
         // A remembered layout is used only when it holds them all and is allowed.
         assertEquals(MultiLayout.Quad, startLayout(2, 4, MultiLayout.Quad))
         assertEquals(MultiLayout.SideBySide, startLayout(2, 2, MultiLayout.Quad))
-        assertEquals(MultiLayout.Quad, startLayout(6, 4, null))
+        assertEquals(MultiLayout.Quad, startLayout(5, 4, null))
     }
 
     @Test fun deviceCapFollowsMemoryAndTheDecoder() {
-        assertEquals(2, deviceTileCap(1000, 16))
+        assertEquals(2, deviceTileCap(800, 16))
+        assertEquals(3, deviceTileCap(1000, 16))
         assertEquals(4, deviceTileCap(2048, 16))
-        assertEquals(6, deviceTileCap(4096, 16))
+        assertEquals(4, deviceTileCap(4096, 16))
         assertEquals(2, deviceTileCap(4096, 2))
         assertEquals(1, deviceTileCap(4096, 0))
         assertEquals(4, deviceTileCap(2048, null))

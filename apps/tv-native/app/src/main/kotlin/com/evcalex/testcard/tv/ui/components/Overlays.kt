@@ -252,7 +252,11 @@ fun SetupOverlay(setup: SetupProgress, hint: String?) {
                     if (step.note != null) AppText(step.note!!, 24, Palette.faint)
                 }
             }
-            AppText("You can use the app as soon as this finishes.", 24, Palette.faint, modifier = Modifier.padding(top = 24.dp))
+            AppText(
+                if (setup.fetchingSources) "This can take a few minutes the first time, while we fetch all your channels, movies and series. After that, opening Testcard is much quicker."
+                else "You can use the app as soon as this finishes.",
+                24, Palette.faint, modifier = Modifier.padding(top = 24.dp).width(BAR),
+            )
         }
         if (hint != null) Toast(hint, Modifier.align(Alignment.BottomCenter))
     }
