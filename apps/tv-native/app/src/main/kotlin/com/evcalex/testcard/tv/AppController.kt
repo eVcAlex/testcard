@@ -218,7 +218,7 @@ class AppController(context: Context) {
         // An update in place from the React Native app brings its logins along before sync looks for them.
         runCatching { Adoption.adoptSecrets(appContext, db, secrets) }
         sync = SyncController(db, logins, secrets, syncScope, baseUrl = BuildConfig.SYNC_URL, http = client, onSourcesAdded = { ids -> ids.forEach { id -> scope.launch { refreshSource(id) } } }, profile = first)
-        guideImporter = GuideImporter(db, client, scope, { sync.registerGuide(it) }, guides, { importing }, { bump() }, "${BuildConfig.SYNC_URL}/app", logins)
+        guideImporter = GuideImporter(db, client, scope, { sync.registerGuide(it) }, guides, { importing }, { bump() }, BuildConfig.UPDATE_URL, logins)
         reloadSources()
         sync.start()
         status = sync.status.value
