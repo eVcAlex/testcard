@@ -157,6 +157,10 @@ internal fun AccountPane(app: AppController) {
                 SmallButton("Sign out", { confirmingSignOut = true })
             }
         }
+        Card {
+            AppText("Live TV: switch to another feed when a channel buffers", 24, Palette.muted, modifier = Modifier.weight(1f))
+            SmallButton(if (app.switchOnBuffering) "On" else "Off", { app.changeSwitchOnBuffering(!app.switchOnBuffering) })
+        }
         val update = app.updates
         Card {
             val line = when {

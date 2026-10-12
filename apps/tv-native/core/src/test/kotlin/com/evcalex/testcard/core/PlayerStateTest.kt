@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test
 /** PLY-03..07, 10..14, 20: the player's two state machines, driven by key sequences and a fake clock. */
 class PlayerStateTest {
     private var clock = 1_000L
-    private fun health(vod: Boolean = false, timeshift: Boolean = false, moreFeeds: Boolean = false, fellBack: String? = null) = PlaybackHealth(vod, timeshift, moreFeeds, fellBack) { clock }
+    private fun health(vod: Boolean = false, timeshift: Boolean = false, moreFeeds: Boolean = false, fellBack: String? = null, switchOnBuffering: Boolean = true) = PlaybackHealth(vod, timeshift, moreFeeds, fellBack, { clock }, switchOnBuffering)
 
     @Test fun seekStreakGrowsThenResets() {
         val streak = SeekStreak { clock }
@@ -60,6 +60,16 @@ class PlayerStateTest {
         assertEquals(listOf(HealthAction.FailOver), h.tick())
         clock += 5_000
         assertTrue(h.tick().isEmpty())
+    }
+
+    @Test fun bufferingSwitchTurnedOffReloadsInsteadOfFailingOver() {
+        val h = health(moreFeeds = true, switchOnBuffering = false)
+        h.onStatus(PlayerStatus.Ready)
+        h.onStatus(PlayerStatus.Loading)
+        clock += 5_000
+        assertTrue(h.tick().isEmpty())
+        clock += 7_000
+        assertEquals(listOf(HealthAction.Reload), h.tick())
     }
 
     @Test fun aBlipThatRecoversDoesNotFailOver() {

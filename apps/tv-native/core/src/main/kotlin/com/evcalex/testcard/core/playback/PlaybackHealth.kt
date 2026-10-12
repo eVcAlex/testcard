@@ -51,6 +51,8 @@ class PlaybackHealth(
     private val moreFeeds: Boolean,
     fellBack: String?,
     private val now: () -> Long,
+    /** Off in Settings: a buffering live picture is reloaded in place and never moved to another feed for it. */
+    private val switchOnBuffering: Boolean = true,
 ) {
     /** The note to show once the picture is up on a feed that was not the first; may be set after the player has started. */
     var fellBack: String? = fellBack
@@ -132,7 +134,7 @@ class PlaybackHealth(
         // one); with no other feed it is asked for again from the start, a few times, before giving up.
         val since = loadingSince
         if (!vod && !timeshift && status == PlayerStatus.Loading && everPlayed && since != null) {
-            if (moreFeeds) {
+            if (moreFeeds && switchOnBuffering) {
                 if (t - since >= BUFFER_FAILOVER_MS) { loadingSince = null; actions += HealthAction.FailOver }
             } else if (reloads < MAX_RELOADS && t - since >= STUCK_AFTER_MS) {
                 reloads += 1
