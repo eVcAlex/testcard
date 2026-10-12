@@ -151,6 +151,9 @@ class PlayerStateTest {
         )
         assertEquals(listOf(listOf(Control.Exit, Control.Live, Control.Play), listOf(Control.Picture)), controlRows(false, false, false, false, false, false, false, false))
         assertEquals(listOf(Control.Picture, Control.Speed), controlRows(false, true, false, false, false, false, false, false)[1])
+        // Live channels offer Multi view beside Last and Catch up, where it is seen without going down to the options row.
+        assertEquals(listOf(Control.Exit, Control.Live, Control.Play, Control.Multi), controlRows(false, false, false, false, false, false, false, false, multi = true)[0])
+        assertEquals(listOf(KeyAction.OpenMulti), PlayerKeys().press(Control.Multi, KeyContext(false, false, true, true, Panel.None, false, emptyList())).toList())
     }
 
     @Test fun anyKeyWithControlsHiddenWakesOnPlayAndLeftRightSkipAtOnce() {

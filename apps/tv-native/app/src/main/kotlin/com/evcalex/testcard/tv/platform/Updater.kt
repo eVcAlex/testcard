@@ -37,7 +37,7 @@ private const val FIRST_CHECK_MS = 8000L
 class Updater(context: Context, private val http: () -> OkHttpClient, private val db: Db, private val scope: CoroutineScope) {
     private val context = context.applicationContext
     private val installer = Installer(this.context)
-    private val baseUrl = "${BuildConfig.SYNC_URL}/app"
+    private val baseUrl = BuildConfig.UPDATE_URL
 
     val installedCode = BuildConfig.VERSION_CODE
     val installedName: String = BuildConfig.VERSION_NAME

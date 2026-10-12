@@ -173,6 +173,13 @@ class AppController(context: Context) {
         return true
     }
 
+    /** Starts a Multi view from the channel being watched: it takes the main place, and the others are added inside the view. */
+    fun startMultiFrom(item: com.evcalex.testcard.core.playback.PlayItem) {
+        multiQueue.removeAll { it.id == item.id }
+        multiQueue.add(0, item)
+        while (multiQueue.size > com.evcalex.testcard.core.playback.MAX_TILES) multiQueue.removeAt(multiQueue.lastIndex)
+    }
+
     /** The "getting ready" screen: shown while a signed-in device waits for its first sync and while anything imports. */
     val setup: SetupProgress?
         get() {
@@ -211,7 +218,7 @@ class AppController(context: Context) {
         // An update in place from the React Native app brings its logins along before sync looks for them.
         runCatching { Adoption.adoptSecrets(appContext, db, secrets) }
         sync = SyncController(db, logins, secrets, syncScope, baseUrl = BuildConfig.SYNC_URL, http = client, onSourcesAdded = { ids -> ids.forEach { id -> scope.launch { refreshSource(id) } } }, profile = first)
-        guideImporter = GuideImporter(db, client, scope, { sync.registerGuide(it) }, guides, { importing }, { bump() }, "${BuildConfig.SYNC_URL}/app", logins)
+        guideImporter = GuideImporter(db, client, scope, { sync.registerGuide(it) }, guides, { importing }, { bump() }, BuildConfig.UPDATE_URL, logins)
         reloadSources()
         sync.start()
         status = sync.status.value
