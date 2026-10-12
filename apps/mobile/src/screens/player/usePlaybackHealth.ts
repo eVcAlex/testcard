@@ -5,12 +5,12 @@ import { streamFacts } from "../../playback/streamInfo";
 import type { ResolvedStream } from "../../playback/resolveStream";
 
 /**
- * A live picture stuck refilling this long is reloaded. With another feed to try, one reload is given and a second
- * stall moves on to that feed instead; with none, it is reloaded at most MAX_RELOADS times.
+ * A live picture that stops to refill is moved to the next feed once it has been stuck BUFFER_FAILOVER_MS, if there is
+ * one. With none, it is reloaded after STUCK_AFTER_MS, at most MAX_RELOADS times.
  */
 const STUCK_AFTER_MS = 12_000;
 const MAX_RELOADS = 4;
-const RELOADS_BEFORE_FAILOVER = 1;
+const BUFFER_FAILOVER_MS = 3000;
 /** How long a live feed may take to show a picture before the next one is tried. */
 const START_WITHIN_MS = 15_000;
 /** A live picture paused for longer than this has fallen behind the broadcast. */
@@ -30,17 +30,17 @@ export function usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, f
   useEffect(() => {
     if (status === "readyToPlay") everPlayed.current = true;
   }, [status]);
-  // Live TV: a picture that stays stuck refilling is asked for again from the start; stuck again with another feed to
-  // try, it moves on to that feed, and with none left it keeps reloading a few times before giving up.
+  // Live TV: a picture that stops to refill is moved to the next feed at once (a moment's grace, so a blip is not one);
+  // with no other feed it is asked for again from the start, a few times, before giving up.
   const reloads = useRef(0);
   useEffect(() => {
     if (vod || timeshift || status !== "loading" || !everPlayed.current) return;
-    if (!moreFeeds && reloads.current >= MAX_RELOADS) return;
+    if (moreFeeds) {
+      const timer = setTimeout(onFailOver, BUFFER_FAILOVER_MS);
+      return () => clearTimeout(timer);
+    }
+    if (reloads.current >= MAX_RELOADS) return;
     const timer = setTimeout(() => {
-      if (moreFeeds && reloads.current >= RELOADS_BEFORE_FAILOVER) {
-        onFailOver();
-        return;
-      }
       reloads.current += 1;
       player.replace(stream.url);
       player.play();

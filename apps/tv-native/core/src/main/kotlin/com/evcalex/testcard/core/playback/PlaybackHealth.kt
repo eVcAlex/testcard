@@ -16,12 +16,12 @@ sealed interface HealthAction {
 }
 
 /**
- * A live picture stuck refilling this long is reloaded (PLY-06). With another feed to try, one reload is given and a second
- * stall moves on to that feed instead; with none, it is reloaded at most [MAX_RELOADS] times.
+ * A live picture that stops to refill is moved to the next feed once it has been stuck [BUFFER_FAILOVER_MS] (PLY-06), if
+ * there is one. With none, it is reloaded after [STUCK_AFTER_MS], at most [MAX_RELOADS] times.
  */
 const val STUCK_AFTER_MS = 12_000L
 const val MAX_RELOADS = 4
-const val RELOADS_BEFORE_FAILOVER = 1
+const val BUFFER_FAILOVER_MS = 3_000L
 
 /** How long a live feed may take to show a picture before the next one is tried (PLY-03). */
 const val START_WITHIN_MS = 15_000L
@@ -128,14 +128,13 @@ class PlaybackHealth(
     private fun evaluate(): List<HealthAction> {
         val actions = ArrayList<HealthAction>()
         val t = now()
-        // Live TV: a picture that stays stuck refilling is asked for again from the start; stuck again with another feed
-        // to try, it moves on to that feed, and with none left it keeps reloading a few times before giving up.
+        // Live TV: a picture that stops to refill is moved to the next feed at once (a moment's grace, so a blip is not
+        // one); with no other feed it is asked for again from the start, a few times, before giving up.
         val since = loadingSince
-        if (!vod && !timeshift && status == PlayerStatus.Loading && everPlayed && since != null && t - since >= STUCK_AFTER_MS) {
-            if (moreFeeds && reloads >= RELOADS_BEFORE_FAILOVER) {
-                loadingSince = t
-                actions += HealthAction.FailOver
-            } else if (reloads < MAX_RELOADS) {
+        if (!vod && !timeshift && status == PlayerStatus.Loading && everPlayed && since != null) {
+            if (moreFeeds) {
+                if (t - since >= BUFFER_FAILOVER_MS) { loadingSince = null; actions += HealthAction.FailOver }
+            } else if (reloads < MAX_RELOADS && t - since >= STUCK_AFTER_MS) {
                 reloads += 1
                 loadingSince = t
                 actions += HealthAction.Reload
