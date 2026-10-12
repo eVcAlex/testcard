@@ -2,6 +2,7 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { createAuth } from "./auth.js";
 import { handleLinkApprove, handleLinkPoll, handleLinkSession, handleLinkStart } from "./routes/link.js";
 import { handleRegisterGuide } from "./routes/guides.js";
+import { handleWatchProxy } from "./routes/watch.js";
 import { handlePull } from "./routes/pull.js";
 import { handlePush } from "./routes/push.js";
 import { handleWaitlist } from "./routes/waitlist.js";
@@ -14,6 +15,10 @@ export interface Env {
   readonly RELEASES: R2Bucket;
   /** Signing/encryption secret for better-auth. Never in source: `wrangler secret put SYNC_AUTH_SECRET` when deployed, `.dev.vars` locally. */
   readonly SYNC_AUTH_SECRET: string;
+  /** "on" lets signed-in accounts use the web player's stream proxy (`/watch/p`); anything else answers 404. Set in wrangler.toml. */
+  readonly WEB_PLAYER?: string;
+  /** "1" lets the proxy fetch private addresses. Tests only: never set in wrangler.toml. */
+  readonly WATCH_ALLOW_PRIVATE?: string;
 }
 
 type AppEnv = { Bindings: Env; Variables: { userId: string } };
@@ -59,5 +64,6 @@ app.post("/sync/push", requireSession, handlePush);
 app.get("/sync/salt", requireSession, handleGetSalt);
 app.post("/sync/salt", requireSession, handleSetSalt);
 app.post("/guides/register", requireSession, handleRegisterGuide);
+app.on(["GET", "HEAD"], "/watch/p", requireSession, handleWatchProxy);
 
 export default app;

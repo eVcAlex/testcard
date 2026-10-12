@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "pnpm --filter @testcard/web build && wrangler deploy",
+    "deploy": "pnpm --filter @testcard/web build && pnpm --filter @testcard/player build && wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm --filter @testcard/web build && vitest run",
+    "test": "pnpm --filter @testcard/web build && pnpm --filter @testcard/player build && vitest run",
     "db:migrate:local": "wrangler d1 migrations apply testcard-sync --local",
     "db:migrate:remote": "wrangler d1 migrations apply testcard-sync --remote"
   },
@@ -21,6 +21,7 @@
     "@cloudflare/vitest-pool-workers": "^0.9.0",
     "@testcard/core": "workspace:*",
     "@testcard/web": "workspace:*",
+    "@testcard/player": "workspace:*",
     "@cloudflare/workers-types": "^4.20250109.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4",
