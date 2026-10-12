@@ -50,6 +50,18 @@ class PlayerStateTest {
         assertTrue(h.tick().isEmpty())
     }
 
+    @Test fun stuckLiveWithAnotherFeedReloadsOnceThenFailsOver() {
+        val h = health(moreFeeds = true)
+        h.onStatus(PlayerStatus.Ready)
+        h.onStatus(PlayerStatus.Loading)
+        clock += 12_000
+        assertEquals(listOf(HealthAction.Reload), h.tick())
+        clock += 11_900
+        assertTrue(h.tick().isEmpty())
+        clock += 200
+        assertEquals(listOf(HealthAction.FailOver), h.tick())
+    }
+
     @Test fun stuckReloadDoesNotApplyToFilmsOrCatchUp() {
         for (h in listOf(health(vod = true), health(timeshift = true))) {
             h.onStatus(PlayerStatus.Ready)
