@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testcard web player spike</title>
+<style>
+  body { font: 16px system-ui, sans-serif; margin: 0; padding: 16px; background: #111; color: #eee; max-width: 640px; }
+  input, button, textarea { font: inherit; width: 100%; box-sizing: border-box; margin: 4px 0 10px; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #1c1c1c; color: inherit; }
+  button { background: #2b5fd9; border: 0; }
+  button.quiet { background: #333; }
+  video { width: 100%; background: #000; border-radius: 8px; }
+  pre { white-space: pre-wrap; word-break: break-word; background: #1c1c1c; padding: 10px; border-radius: 8px; font-size: 13px; }
+  h1 { font-size: 20px; } h2 { font-size: 16px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<h1>Testcard web player spike</h1>
+<p>Paste one stream address from your provider. Nothing is stored; the token and address stay in this page.</p>
+
+<label>Token (SPIKE_TOKEN)<input id="token" type="password" autocomplete="off"></label>
+<label>Stream address<input id="url" placeholder="http://host:port/live/user/pass/123.m3u8" autocapitalize="off" autocorrect="off"></label>
+<button id="probe">1. Probe (what is it, can the proxy reach it)</button>
+<button id="play">2. Play</button>
+<button id="variant" class="quiet">Swap .ts for .m3u8 in the address</button>
+<video id="video" controls playsinline muted></video>
+
+<h2>This browser</h2>
+<pre id="caps"></pre>
+<h2>Result</h2>
+<pre id="log"></pre>
+<button id="copy" class="quiet">Copy report</button>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const video = $("video");
+const report = { when: new Date().toISOString(), agent: navigator.userAgent, steps: [] };
+const note = (step) => { report.steps.push(step); $("log").textContent = JSON.stringify(report.steps, null, 2); };
+const proxied = (address) => `/p?u=${encodeURIComponent(address)}&t=${encodeURIComponent($("token").value)}`;
+
+// What this browser can decode at all.
+const types = {
+  nativeHls: 'application/vnd.apple.mpegurl',
+  h264: 'video/mp4; codecs="avc1.640028"',
+  hevc: 'video/mp4; codecs="hvc1.1.6.L120.B0"',
+  av1: 'video/mp4; codecs="av01.0.08M.08"',
+  vp9: 'video/webm; codecs="vp9"',
+  aac: 'audio/mp4; codecs="mp4a.40.2"',
+  ac3: 'audio/mp4; codecs="ac-3"',
+  eac3: 'audio/mp4; codecs="ec-3"',
+  mkv: 'video/x-matroska',
+};
+const caps = {
+  MediaSource: typeof MediaSource !== "undefined",
+  ManagedMediaSource: typeof ManagedMediaSource !== "undefined",
+  hlsjsSupported: typeof Hls !== "undefined" && Hls.isSupported(),
+  ...Object.fromEntries(Object.entries(types).map(([name, type]) => [name, video.canPlayType(type) || "no"])),
+};
+report.caps = caps;
+$("caps").textContent = JSON.stringify(caps, null, 2);
+
+// What the first bytes of a stream say it is.
+function sniff(bytes) {
+  const text = new TextDecoder().decode(bytes.slice(0, 16));
+  if (text.startsWith("#EXTM3U")) return "HLS playlist";
+  if (bytes[0] === 0x47 && (bytes.length < 189 || bytes[188] === 0x47)) return "MPEG-TS (raw transport stream)";
+  if (bytes.length > 8 && new TextDecoder().decode(bytes.slice(4, 8)) === "ftyp") return "MP4";
+  if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) return "Matroska/MKV or WebM";
+  return `unknown (first bytes ${[...bytes.slice(0, 8)].map((b) => b.toString(16).padStart(2, "0")).join(" ")})`;
+}
+
+$("probe").onclick = async () => {
+  const started = performance.now();
+  try {
+    const response = await fetch(proxied($("url").value.trim()), { headers: { range: "bytes=0-1999" } });
+    const ms = Math.round(performance.now() - started);
+    if (!response.ok && response.status !== 206) return note({ probe: "failed", status: response.status, ms, body: (await response.text()).slice(0, 400) });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    note({ probe: "reached", status: response.status, ms, type: response.headers.get("content-type"), finalUrl: response.headers.get("x-final-url"), container: sniff(bytes), bytes: bytes.length });
+  } catch (error) {
+    note({ probe: "page could not call the proxy", detail: String(error) });
+  }
+};
+
+$("variant").onclick = () => { $("url").value = $("url").value.replace(/\.ts(\?|$)/, ".m3u8$1"); };
+
+let hls;
+let stalls = 0;
+let startedAt = 0;
+video.addEventListener("waiting", () => { if (startedAt) { stalls += 1; note({ event: "waiting (buffering)", count: stalls, atSecs: Math.round(video.currentTime) }); } });
+video.addEventListener("playing", () => { if (!startedAt) { startedAt = performance.now(); note({ event: "playing", firstPictureMs: Math.round(performance.now() - playClickedAt) }); } });
+video.addEventListener("error", () => note({ event: "video element error", code: video.error?.code, message: video.error?.message }));
+let playClickedAt = 0;
+
+$("play").onclick = () => {
+  hls?.destroy();
+  startedAt = 0; stalls = 0; playClickedAt = performance.now();
+  const address = $("url").value.trim();
+  const source = proxied(address);
+  const isPlaylist = /\.m3u8?(\?|$)/i.test(address);
+  if (isPlaylist && video.canPlayType(types.nativeHls)) {
+    note({ play: "native HLS (Safari)" });
+    video.src = source;
+  } else if (isPlaylist && caps.hlsjsSupported) {
+    note({ play: "hls.js" });
+    hls = new Hls();
+    hls.on(Hls.Events.ERROR, (_, data) => note({ hlsError: data.details, fatal: data.fatal, status: data.response?.code }));
+    hls.loadSource(source);
+    hls.attachMedia(video);
+  } else if (isPlaylist) {
+    return note({ play: "cannot: this browser has neither native HLS nor hls.js support" });
+  } else {
+    note({ play: "direct (mp4/other): the browser decides" });
+    video.src = source;
+  }
+  video.play().catch((error) => note({ playRejected: String(error) }));
+};
+
+$("copy").onclick = () => navigator.clipboard.writeText(JSON.stringify(report, null, 2)).then(() => { $("copy").textContent = "Copied"; });
+</script>
+</body>
+</html>
