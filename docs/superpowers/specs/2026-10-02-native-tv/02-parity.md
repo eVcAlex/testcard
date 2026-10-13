@@ -293,7 +293,7 @@ Paths: `m/` = `apps/mobile/`, `c/` = `packages/core/src/`, `s/` = `packages/sync
   - VOD: target 40 s, play at 2.5 s, cap 64 MB. Live: target 60 s, play at 2.5 s, cap 48 MB.
   - min = max = target; time updates every 0.5 s (VOD) and 1 s (live).
 - **PLY-23 Screen stays on while playing** (expo-video default `keepScreenOnWhilePlaying`).
-- **PLY-24 Stream User-Agent.** Media3 default: `Testcard/<versionName> (Linux;Android <rel>) AndroidXMedia3/1.9.0`, via an OkHttp data source.
+- **PLY-24 Stream User-Agent.** `node`, as for every provider request, via an OkHttp data source. (The Media3 default `Testcard/<versionName> (Linux;Android <rel>) AndroidXMedia3/1.9.0` was refused by some providers.)
 - **PLY-25 Ignored keys.** Key-down duplicates are ignored; the only key events used are releases and long-press starts and ends.
 
 ### 4.9 Movies (MOV)
