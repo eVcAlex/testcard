@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { ScrollReveal } from "../ui/ScrollReveal.tsx";
 import { useScene } from "../ui/motion.ts";
 import { Br } from "../ui/parts.tsx";
-import { DESKTOP_LIVE, DESKTOP_MOVIES, TV_GUIDE, TV_MOVIES } from "./shots.ts";
+import { DESKTOP_LIVE, DESKTOP_MOVIES, SIZES, srcSet, TV_GUIDE, TV_MOVIES } from "./shots.ts";
 
 const FLOATS = [TV_MOVIES, DESKTOP_LIVE, TV_GUIDE, DESKTOP_MOVIES];
 
@@ -27,7 +27,7 @@ export function Statement() {
           <p className="what-sub">You add your own channels. Testcard makes them easy to watch.</p>
         </div>
         <div className="floats" aria-hidden="true">
-          {FLOATS.map((s, i) => <img key={s.src} className={`fl fl${i}`} src={s.src} alt="" width={s.width} height={s.height} loading="lazy" decoding="async" />)}
+          {FLOATS.map((s, i) => <img key={s.src} className={`fl fl${i}`} src={s.src} srcSet={srcSet(s)} sizes={SIZES.float} alt="" width={s.width} height={s.height} loading="lazy" decoding="async" />)}
         </div>
       </div>
     </section>

@@ -7,3 +7,18 @@ export const DESKTOP_LIVE: Shot = { src: "/shots/desktop-live.webp", title: "Liv
 export const DESKTOP_MOVIES: Shot = { src: "/shots/desktop-movies.webp", title: "Films and series on shelves", tags: "Windows · Films · Series", alt: "The Testcard desktop app on Movies: poster shelves grouped by category with titles and years.", width: 1600, height: 900 };
 
 export const SHOTS: readonly Shot[] = [TV_MOVIES, TV_GUIDE, DESKTOP_LIVE, DESKTOP_MOVIES];
+
+/** Every width a shot is written at (scripts/screenshots/compress.mjs): name-800.webp, name-1200.webp and the 1600px original. */
+export const srcSet = (s: Shot) => `${s.src.replace(/\.webp$/, "-800.webp")} 800w, ${s.src.replace(/\.webp$/, "-1200.webp")} 1200w, ${s.src} ${s.width}w`;
+
+/**
+ * How wide each use of a shot is drawn (the `sizes` attribute), so a phone fetches the 800px file rather than the 1600px
+ * one. Keep in step with home.css and content.css.
+ */
+export const SIZES = {
+  hero: "100vw",
+  float: "(min-width: 900px) 27vw, 62vw",
+  frame: "min(38vw, 640px)",
+  inline: "(min-width: 900px) 760px, 100vw",
+  tile: "(min-width: 760px) 50vw, 100vw",
+} as const;

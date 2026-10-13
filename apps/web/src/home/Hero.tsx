@@ -1,6 +1,6 @@
 import { useScene } from "../ui/motion.ts";
 import { Arrow } from "../ui/parts.tsx";
-import { TV_GUIDE } from "./shots.ts";
+import { SIZES, TV_GUIDE, srcSet } from "./shots.ts";
 
 export function Hero() {
   // the picture sinks slower than the page, and the words leave a little faster
@@ -12,7 +12,7 @@ export function Hero() {
   return (
     <section className="hero" ref={ref}>
       <div className="hero-bg" aria-hidden="true">
-        <img src={TV_GUIDE.src} alt="" width={TV_GUIDE.width} height={TV_GUIDE.height} fetchPriority="high" decoding="async" />
+        <img src={TV_GUIDE.src} srcSet={srcSet(TV_GUIDE)} sizes={SIZES.hero} alt="" width={TV_GUIDE.width} height={TV_GUIDE.height} fetchPriority="high" decoding="async" />
       </div>
       <h1 className="hero-h" tabIndex={-1}>
         <span className="sr-only">Testcard IPTV player. </span>
