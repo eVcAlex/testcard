@@ -5,6 +5,8 @@ interface Row {
   readonly [key: string]: unknown;
 }
 
+type Read = D1Result<Row>;
+
 export async function handlePull(c: AppContext): Promise<Response> {
   const userId = c.get("userId");
   // A malformed `since` would otherwise become NaN, and `updated_at > NaN` silently matches nothing
@@ -23,59 +25,52 @@ export async function handlePull(c: AppContext): Promise<Response> {
   const mine = profile === undefined || profile === "main" ? `remote_key NOT LIKE 'p.%'` : `remote_key LIKE '${profileKeyPrefix(profile)}%'`;
   const db = c.env.DB;
 
-  const [sources, movieFavourites, movieRecents, seriesFavourites, seriesRecents, progress, profiles, channelFavourites, channelRecents] = await Promise.all([
+  // One batch, so the nine reads cost one round trip to the database rather than nine (Promise.all still sends each
+  // query on its own, and the Worker usually runs far from D1's region).
+  const [sources, movieFavourites, movieRecents, seriesFavourites, seriesRecents, progress, profiles, channelFavourites, channelRecents] = (await db.batch<Row>([
     db
       .prepare(
         `SELECT remote_key AS remoteKey, label, credentials_blob AS credentialsBlob, credentials_iv AS credentialsIv,
                 updated_at AS updatedAt, deleted_at AS deletedAt
          FROM sources WHERE user_id = ? AND updated_at > ?`,
       )
-      .bind(userId, since)
-      .all<Row>(),
+      .bind(userId, since),
     db
       .prepare(`SELECT remote_key AS remoteKey, added_at AS addedAt, updated_at AS updatedAt, deleted_at AS deletedAt
                 FROM movie_favourites WHERE user_id = ? AND updated_at > ? AND ${mine}`)
-      .bind(userId, since)
-      .all<Row>(),
+      .bind(userId, since),
     db
       .prepare(`SELECT remote_key AS remoteKey, played_at AS playedAt, updated_at AS updatedAt, deleted_at AS deletedAt
                 FROM movie_recents WHERE user_id = ? AND updated_at > ? AND ${mine}`)
-      .bind(userId, since)
-      .all<Row>(),
+      .bind(userId, since),
     db
       .prepare(`SELECT remote_key AS remoteKey, added_at AS addedAt, updated_at AS updatedAt, deleted_at AS deletedAt
                 FROM series_favourites WHERE user_id = ? AND updated_at > ? AND ${mine}`)
-      .bind(userId, since)
-      .all<Row>(),
+      .bind(userId, since),
     db
       .prepare(`SELECT remote_key AS remoteKey, played_at AS playedAt, updated_at AS updatedAt, deleted_at AS deletedAt
                 FROM series_recents WHERE user_id = ? AND updated_at > ? AND ${mine}`)
-      .bind(userId, since)
-      .all<Row>(),
+      .bind(userId, since),
     db
       .prepare(
         `SELECT remote_key AS remoteKey, item_type AS itemType, position_secs AS positionSecs, duration_secs AS durationSecs,
                 watched, updated_at AS updatedAt, deleted_at AS deletedAt
          FROM playback_progress WHERE user_id = ? AND updated_at > ? AND ${mine}`,
       )
-      .bind(userId, since)
-      .all<Row>(),
+      .bind(userId, since),
     db
       .prepare(`SELECT remote_key AS remoteKey, blob, iv, updated_at AS updatedAt, deleted_at AS deletedAt
                 FROM profiles WHERE user_id = ? AND updated_at > ?`)
-      .bind(userId, since)
-      .all<Row>(),
+      .bind(userId, since),
     db
       .prepare(`SELECT remote_key AS remoteKey, added_at AS addedAt, position, updated_at AS updatedAt, deleted_at AS deletedAt
                 FROM channel_favourites WHERE user_id = ? AND updated_at > ? AND ${mine}`)
-      .bind(userId, since)
-      .all<Row>(),
+      .bind(userId, since),
     db
       .prepare(`SELECT remote_key AS remoteKey, played_at AS playedAt, updated_at AS updatedAt, deleted_at AS deletedAt
                 FROM channel_recents WHERE user_id = ? AND updated_at > ? AND ${mine}`)
-      .bind(userId, since)
-      .all<Row>(),
-  ]);
+      .bind(userId, since),
+  ])) as [Read, Read, Read, Read, Read, Read, Read, Read, Read];
 
   /**
    * The cursor must be the high-water mark of the client-authored `updated_at` values actually
