@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, ScrollView, Text, View } from "react-native";
-import { NavArrowRight, Plus } from "iconoir-react-native";
+import { NavArrowRight, Plus } from "./icons";
 import { useApp } from "../state/app";
 import { AVATARS, MAIN_PROFILE, newProfileId, nextColour, pinHash, pinMatches, PROFILE_COLOURS, type Profile } from "../state/profiles";
 import { colors, space, type, styleSheet, uiScale } from "../theme";

@@ -3,7 +3,7 @@ import { FlatList, Modal, Pressable, Text, TVFocusGuideView, useTVEventHandler, 
 import { Image } from "expo-image";
 import { sized } from "../ui/imageSize";
 import { ChannelLogo } from "../ui/ChannelLogo";
-import { NavArrowRight } from "iconoir-react-native";
+import { NavArrowRight } from "../ui/icons";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { colors, space, styleSheet, uiScale } from "../theme";
 import { Facts, type DetailAction } from "../ui/DetailActions";
