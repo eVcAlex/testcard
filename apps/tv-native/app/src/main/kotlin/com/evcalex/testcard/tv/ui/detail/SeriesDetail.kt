@@ -215,7 +215,7 @@ fun SeriesDetailScreen(
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                     AppText(fullTitle, 56, Palette.foreground, FontWeight.SemiBold, maxLines = 2, letterSpacing = -1f)
-                    Facts(factsOf(detail))
+                    Facts(factsOf(detail) + listOfNotNull(if (versions.isNotEmpty()) app.sources.firstOrNull { it.id == sourceId }?.name?.takeIf { it.isNotEmpty() } else null))
                     if (!series?.plot.isNullOrEmpty()) AppText(series!!.plot!!, 26, Palette.muted, modifier = Modifier.width(1000.dp), maxLines = 3, lineHeight = 38)
                     if (upNext != null && series != null) {
                         DetailActions(
