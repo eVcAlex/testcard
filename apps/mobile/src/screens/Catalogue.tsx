@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { dedupeTitles } from "@testcard/core/src/normalise/titleKey.js";
 import { BackHandler, View } from "react-native";
-import { displayName } from "@testcard/core/src/normalise/displayName.js";
+import { categoryDisplayName } from "@testcard/core/src/normalise/displayName.js";
 import { movieHome, seriesHome } from "@testcard/core/src/db/homeQueries.js";
 import { ensureMovieDetails } from "@testcard/core/src/db/importVodDetails.js";
 import { getCredentials } from "../platform/secrets";
@@ -18,8 +18,8 @@ import { BrowseScreen, type BrowseItem, type BrowseSource } from "./Browse";
 import { HomeSkeleton } from "../ui/HomeSkeleton";
 import { HomeScreen, type HeroActions, type HomeItem, type HomeRow } from "./Home";
 
-/** Provider category names as row titles, whatever the provider's house style; see displayName. */
-const tidy = (name: string) => displayName(name);
+/** Provider category names as row titles, whatever the provider's house style; see categoryDisplayName. */
+const tidy = (name: string) => categoryDisplayName(name);
 /** Category tags that are dividers or decoration rather than something to browse (adult ones stay out of the way too). */
 const hidden = (tags: string) => tags.split(" ").some((tag) => tag === "junk" || tag === "separator" || tag === "adult");
 

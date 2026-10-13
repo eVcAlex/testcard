@@ -20,7 +20,7 @@ import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
 import { PosterShelf } from "./PosterShelf.js";
 import { Removable } from "./Removable.js";
-import { displayName } from "@testcard/core/src/normalise/displayName.js";
+import { categoryDisplayName } from "@testcard/core/src/normalise/displayName.js";
 
 type MovieListRow = Awaited<ReturnType<typeof window.testcard.movies.browse>>[number];
 
@@ -199,7 +199,7 @@ export function MoviesView({
         categories: Object.fromEntries(
           ["", ...sources.map((source) => source.id)].map((key, i) => [
             key,
-            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: displayName(c.name), count: c.movie_count })),
+            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: categoryDisplayName(c.name), count: c.movie_count })),
           ]),
         ),
       }),
@@ -264,7 +264,7 @@ export function MoviesView({
             {(shelves.data ?? []).map((shelf) => (
               <PosterShelf
                 key={shelf.category.id}
-                title={displayName(shelf.category.name)}
+                title={categoryDisplayName(shelf.category.name)}
                 items={shelf.items.map(toPoster)}
                 onSelect={setSelectedMovieId}
                 onSeeAll={() => pickCategory(shelf.category.id)}

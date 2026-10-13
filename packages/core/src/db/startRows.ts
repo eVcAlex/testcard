@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import { displayName } from "../normalise/displayName.js";
+import { categoryDisplayName } from "../normalise/displayName.js";
 import { shouldPromptResume } from "../playback/progressPolicy.js";
 import { listHomePins, type PinKind } from "../sync/sourcePins.js";
 import { listWatchedLately } from "./homeQueries.js";
@@ -117,7 +117,7 @@ export function buildStartRows(db: Database.Database, sourceId: string | null): 
     if (pin.categoryId === null || (sourceId !== null && pin.sourceId !== sourceId)) continue;
     // Titled from the category as it is now, through the same tidying as everywhere else, not the label saved when it was pinned.
     const raw = db.prepare(`SELECT raw_name AS name FROM ${PIN_TABLE[pin.kind]} WHERE id = ?`).get(pin.categoryId) as { name: string } | undefined;
-    const label = raw !== undefined ? displayName(raw.name) : pin.label;
+    const label = raw !== undefined ? categoryDisplayName(raw.name) : pin.label;
     const key = `pin:${pin.sourceId}:${pin.kind}:${pin.key}`;
     if (pin.kind === "live") add(key, label, browseChannels(db, { categoryId: pin.categoryId, limit: 24 }).map(channelItem), true);
     else if (pin.kind === "movies") add(key, label, browseMovies(db, { categoryId: pin.categoryId, limit: 30 }).map((movie) => movieItem(movie)), true);
@@ -126,7 +126,7 @@ export function buildStartRows(db: Database.Database, sourceId: string | null): 
 
   // The landing shelves are the best-rated of the biggest categories, not a "new" or "top" list, so one row each.
   const shelfOpts = sourceId !== null ? { sourceId, shelves: 2, perShelf: 20 } : { shelves: 2, perShelf: 20 };
-  for (const shelf of movieShelves(db, shelfOpts)) add(`movies:${shelf.category.id}`, displayName(shelf.category.name), shelf.items.map((movie) => movieItem(movie)));
-  for (const shelf of seriesShelves(db, shelfOpts)) add(`series:${shelf.category.id}`, displayName(shelf.category.name), shelf.items.map((show) => seriesItem(show)));
+  for (const shelf of movieShelves(db, shelfOpts)) add(`movies:${shelf.category.id}`, categoryDisplayName(shelf.category.name), shelf.items.map((movie) => movieItem(movie)));
+  for (const shelf of seriesShelves(db, shelfOpts)) add(`series:${shelf.category.id}`, categoryDisplayName(shelf.category.name), shelf.items.map((show) => seriesItem(show)));
   return rows;
 }

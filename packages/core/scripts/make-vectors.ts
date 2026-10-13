@@ -7,7 +7,7 @@
  */
 import golden from "../src/__tests__/fixtures/categoryGolden.json" with { type: "json" };
 import { classifyCategory } from "../src/normalise/classifyCategory.js";
-import { channelDisplayName, displayName, fallbackRank, sameChannelKey } from "../src/normalise/displayName.js";
+import { categoryDisplayName, channelDisplayName, displayName, fallbackRank, sameChannelKey } from "../src/normalise/displayName.js";
 import { groupVariants, type RawChannelEntry } from "../src/normalise/groupVariants.js";
 import { dropVariantMarks, parseName } from "../src/normalise/parseName.js";
 import { splitTitle } from "../src/normalise/splitTitle.js";
@@ -51,6 +51,18 @@ const AWKWARD = [
   "UK| Sky Sports Main Event ᵁᴴᴰ ᴴᴰᴿ",
   "UK| TNT Sports ᴳᴬᴺᴶᴬ",
   "🔥 Fire Channel 🔥",
+  "⚽ UK| SPORTS ⚽",
+  "🇬🇧 UK | Movies",
+  "UK| Movies 🇬🇧",
+  "❤️ ROMANCE",
+  "❤ ROMANCE",
+  "👨‍👩‍👧 FAMILY",
+  "👍🏽 Picks",
+  "⚽⚽⚽",
+  "|EN| KIDS 🧸",
+  "✔ VERIFIED",
+  "⛔️ ADULT",
+  "🆕 NEW RELEASES",
   "İstanbul TV",
   "STRASSE ß HD",
   "##### PPV #####",
@@ -197,6 +209,7 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
     add("normalise", "dropVariantMarks", [name], dropVariantMarks(name));
     add("normalise", "displayName", [name], displayName(name));
     add("normalise", "channelDisplayName", [name], channelDisplayName(name));
+    add("normalise", "categoryDisplayName", [name], categoryDisplayName(name));
     add("normalise", "sameChannelKey", [name], sameChannelKey(name));
     add("normalise", "fallbackRank", [name], fallbackRank(name));
     add("normalise", "splitTitle", [name], splitTitle(name));

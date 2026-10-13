@@ -25,7 +25,7 @@ import com.evcalex.testcard.core.db.hideChannel
 import com.evcalex.testcard.core.db.listFavouriteChannels
 import com.evcalex.testcard.core.db.moveFavourite
 import com.evcalex.testcard.core.importing.ensureMovieDetails
-import com.evcalex.testcard.core.normalise.displayName
+import com.evcalex.testcard.core.normalise.categoryDisplayName
 import com.evcalex.testcard.core.sync.pinCategory
 import com.evcalex.testcard.core.sync.pinnedCategoryIds
 import com.evcalex.testcard.core.sync.unpinCategory
@@ -171,7 +171,7 @@ internal fun refreshOnShow(active: Boolean): MutableIntState {
     return tick
 }
 
-internal fun categoryOf(row: CategoryRow) = BrowseCategory(row.id, displayName(row.name), row.count, row.genre)
+internal fun categoryOf(row: CategoryRow) = BrowseCategory(row.id, categoryDisplayName(row.name), row.count, row.genre)
 
 internal fun List<CategoryRow>.browsable() = filter { !hiddenTags(it.tags) }.map(::categoryOf)
 

@@ -31,6 +31,13 @@
   "out": "4K Children"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| 4K CHILDREN"
+  ],
+  "out": "4K Children"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| 4K CHILDREN"
@@ -109,6 +116,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| 4K CLASSIC MOVIES"
+  ],
+  "out": "4K Classic Movies"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| 4K CLASSIC MOVIES"
   ],
@@ -199,6 +213,13 @@
   "out": "4K Movies"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| 4K MOVIES"
+  ],
+  "out": "4K Movies"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| 4K MOVIES"
@@ -277,6 +298,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| ACTION/THRILLER"
+  ],
+  "out": "Action/Thriller"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| ACTION/THRILLER"
   ],
@@ -365,6 +393,13 @@
   "out": "Actors & Directors"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| ACTORS & DIRECTORS"
+  ],
+  "out": "Actors & Directors"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| ACTORS & DIRECTORS"
@@ -441,6 +476,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| ADVENTURE MOVIES"
+  ],
+  "out": "Adventure Movies"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| ADVENTURE MOVIES"
   ],
@@ -529,6 +571,13 @@
   "out": "Anime"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| ANIME"
+  ],
+  "out": "Anime"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| ANIME"
@@ -605,6 +654,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| BET/ALLBLK MOVIES"
+  ],
+  "out": "BET/Allblk Movies"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| BET/ALLBLK MOVIES"
   ],
@@ -693,6 +749,13 @@
   "out": "Broadway/Musical"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| BROADWAY/MUSICAL"
+  ],
+  "out": "Broadway/Musical"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| BROADWAY/MUSICAL"
@@ -769,6 +832,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| CHILDREN/FAMILY"
+  ],
+  "out": "Children/Family"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| CHILDREN/FAMILY"
   ],
@@ -857,6 +927,13 @@
   "out": "Christmas Movies"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| CHRISTMAS MOVIES"
+  ],
+  "out": "Christmas Movies"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| CHRISTMAS MOVIES"
@@ -933,6 +1010,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| CLASSIC MOVIES COLLECTION"
+  ],
+  "out": "Classic Movies Collection"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| CLASSIC MOVIES COLLECTION"
   ],
@@ -1021,6 +1105,13 @@
   "out": "Collections"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| COLLECTIONS"
+  ],
+  "out": "Collections"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| COLLECTIONS"
@@ -1097,6 +1188,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| COMEDY"
+  ],
+  "out": "Comedy"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| COMEDY"
   ],
@@ -1185,6 +1283,13 @@
   "out": "Disney+"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| DISNEY+"
+  ],
+  "out": "Disney+"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| DISNEY+"
@@ -1261,6 +1366,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| DOCUMENTARY"
+  ],
+  "out": "Documentary"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| DOCUMENTARY"
   ],
@@ -1349,6 +1461,13 @@
   "out": "Drama"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| DRAMA"
+  ],
+  "out": "Drama"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| DRAMA"
@@ -1425,6 +1544,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| DRAMA/COMEDY"
+  ],
+  "out": "Drama/Comedy"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| DRAMA/COMEDY"
   ],
@@ -1513,6 +1639,13 @@
   "out": "Drama/Crime"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| DRAMA/CRIME"
+  ],
+  "out": "Drama/Crime"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| DRAMA/CRIME"
@@ -1589,6 +1722,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| DRAMA/ROMANCE"
+  ],
+  "out": "Drama/Romance"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| DRAMA/ROMANCE"
   ],
@@ -1677,6 +1817,13 @@
   "out": "Foreign Movies"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| FOREIGN MOVIES"
+  ],
+  "out": "Foreign Movies"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| FOREIGN MOVIES"
@@ -1753,6 +1900,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| FRENCH MOVIES / ENG SUB"
+  ],
+  "out": "French Movies / ENG SUB"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| FRENCH MOVIES / ENG SUB"
   ],
@@ -1841,6 +1995,13 @@
   "out": "HBO Max"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| HBO MAX"
+  ],
+  "out": "HBO Max"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| HBO MAX"
@@ -1917,6 +2078,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| HORROR/THRILLER"
+  ],
+  "out": "Horror/Thriller"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| HORROR/THRILLER"
   ],
@@ -2005,6 +2173,13 @@
   "out": "Hulu"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| HULU"
+  ],
+  "out": "Hulu"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| HULU"
@@ -2081,6 +2256,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| ITALIAN MOVIES / ENG SUB"
+  ],
+  "out": "Italian Movies / ENG SUB"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| ITALIAN MOVIES / ENG SUB"
   ],
@@ -2169,6 +2351,13 @@
   "out": "Movies 2018-2021"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| MOVIES 2018-2021"
+  ],
+  "out": "Movies 2018-2021"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| MOVIES 2018-2021"
@@ -2245,6 +2434,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| MUSIC/CONCERTS"
+  ],
+  "out": "Music/Concerts"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| MUSIC/CONCERTS"
   ],
@@ -2333,6 +2529,13 @@
   "out": "Netflix"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| NETFLIX"
+  ],
+  "out": "Netflix"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| NETFLIX"
@@ -2415,6 +2618,13 @@
   "out": "Science Fiction/Fantasty"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| SCIENCE FICTION/FANTASTY"
+  ],
+  "out": "Science Fiction/Fantasty"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| SCIENCE FICTION/FANTASTY"
@@ -2491,6 +2701,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| STAND-UP COMEDY"
+  ],
+  "out": "Stand-UP Comedy"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| STAND-UP COMEDY"
   ],
@@ -2581,6 +2798,13 @@
   "out": "WAR"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| WAR"
+  ],
+  "out": "WAR"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|EN| WAR"
@@ -2657,6 +2881,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|EN| WESTERNS"
+  ],
+  "out": "Westerns"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|EN| WESTERNS"
   ],
@@ -2745,6 +2976,13 @@
   "out": "SPT| Sport UFC"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|SPT| SPORT UFC"
+  ],
+  "out": "SPT| Sport UFC"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "|SPT| SPORT UFC"
@@ -2821,6 +3059,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|SPT| SPORT WWE"
+  ],
+  "out": "SPT| Sport WWE"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|SPT| SPORT WWE"
   ],
@@ -2909,6 +3154,13 @@
   "out": "FIFA+"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚽️ FIFA+"
+  ],
+  "out": "⚽️ FIFA+"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "⚽️ FIFA+"
@@ -2991,6 +3243,13 @@
   "out": "MLS Direct Kick"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚽️ MLS Direct Kick"
+  ],
+  "out": "⚽️ MLS Direct Kick"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "⚽️ MLS Direct Kick"
@@ -3071,6 +3330,13 @@
    "⚽️ Sports PPV"
   ],
   "out": "Sports PPV"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚽️ Sports PPV"
+  ],
+  "out": "⚽️ Sports PPV"
  },
  {
   "fn": "sameChannelKey",
@@ -3157,6 +3423,13 @@
   "out": "UEFA"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚽️ UEFA"
+  ],
+  "out": "⚽️ UEFA"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "⚽️ UEFA"
@@ -3237,6 +3510,13 @@
    "⚾️ B/R Max Sports"
   ],
   "out": "B/R Max Sports"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚾️ B/R Max Sports"
+  ],
+  "out": "⚾️ B/R Max Sports"
  },
  {
   "fn": "sameChannelKey",
@@ -3321,6 +3601,13 @@
   "out": "MILB.tv"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚾️ MILB.tv"
+  ],
+  "out": "⚾️ MILB.tv"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "⚾️ MILB.tv"
@@ -3401,6 +3688,13 @@
    "⚾️ MLB.tv"
   ],
   "out": "MLB.tv"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚾️ MLB.tv"
+  ],
+  "out": "⚾️ MLB.tv"
  },
  {
   "fn": "sameChannelKey",
@@ -3485,6 +3779,13 @@
   "out": "Golf"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⛳️ Golf"
+  ],
+  "out": "⛳️ Golf"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "⛳️ Golf"
@@ -3565,6 +3866,13 @@
    "🌍| World Sports ⬇️"
   ],
   "out": "World Sports"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🌍| World Sports ⬇️"
+  ],
+  "out": "🌍 World Sports"
  },
  {
   "fn": "sameChannelKey",
@@ -3649,6 +3957,13 @@
   "out": "Music Videos"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🎶 Music Videos"
+  ],
+  "out": "🎶 Music Videos"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "🎶 Music Videos"
@@ -3729,6 +4044,13 @@
    "🎾 Tennis"
   ],
   "out": "Tennis"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🎾 Tennis"
+  ],
+  "out": "🎾 Tennis"
  },
  {
   "fn": "sameChannelKey",
@@ -3813,6 +4135,13 @@
   "out": "NBA League Pass"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🏀 NBA League Pass"
+  ],
+  "out": "🏀 NBA League Pass"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "🏀 NBA League Pass"
@@ -3893,6 +4222,13 @@
    "🏀 WNBA League Pass "
   ],
   "out": "WNBA League Pass"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🏀 WNBA League Pass "
+  ],
+  "out": "🏀 WNBA League Pass"
  },
  {
   "fn": "sameChannelKey",
@@ -3977,6 +4313,13 @@
   "out": "News Networks"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "📰 News Networks"
+  ],
+  "out": "📰 News Networks"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "📰 News Networks"
@@ -4057,6 +4400,13 @@
    "📻 Music Streaming"
   ],
   "out": "Music Streaming"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "📻 Music Streaming"
+  ],
+  "out": "📻 Music Streaming"
  },
  {
   "fn": "sameChannelKey",
@@ -4141,6 +4491,13 @@
   "out": "Westerns"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🤠 Westerns ᴳᴬᴺᴶᴬ"
+  ],
+  "out": "🤠 Westerns"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "🤠 Westerns ᴳᴬᴺᴶᴬ"
@@ -4223,6 +4580,13 @@
   "out": "Kids Channels"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🧸 Kids Channels"
+  ],
+  "out": "🧸 Kids Channels"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "🧸 Kids Channels"
@@ -4299,6 +4663,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "24/7 ACTION & ADVENTURE VIP"
+  ],
+  "out": "24/7 Action & Adventure VIP"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "24/7 ACTION & ADVENTURE VIP"
   ],
@@ -4389,6 +4760,13 @@
   "out": "24/7 Comedy VIP"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "24/7 COMEDY VIP"
+  ],
+  "out": "24/7 Comedy VIP"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "24/7 COMEDY VIP"
@@ -4467,6 +4845,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "24/7 DRAMA VIP"
+  ],
+  "out": "24/7 Drama VIP"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "24/7 DRAMA VIP"
   ],
@@ -4557,6 +4942,13 @@
   "out": "24/7 Kids/Family VIP"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "24/7 KIDS/FAMILY VIP"
+  ],
+  "out": "24/7 Kids/Family VIP"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "24/7 KIDS/FAMILY VIP"
@@ -4635,6 +5027,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "24/7 REALITY VIP"
+  ],
+  "out": "24/7 Reality VIP"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "24/7 REALITY VIP"
   ],
@@ -4725,6 +5124,13 @@
   "out": "Amazon Docu-Movies"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "AMAZON DOCU-MOVIES"
+  ],
+  "out": "Amazon Docu-Movies"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "AMAZON DOCU-MOVIES"
@@ -4801,6 +5207,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "AMAZON DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "Amazon Docu-Movies 4K 3 840P"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "AMAZON DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ"
   ],
@@ -4891,6 +5304,13 @@
   "out": "Amazon Docu-Series"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "AMAZON DOCU-SERIES"
+  ],
+  "out": "Amazon Docu-Series"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "AMAZON DOCU-SERIES"
@@ -4967,6 +5387,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "AMAZON DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "Amazon Docu-Series 4K 3 840P"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "AMAZON DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ"
   ],
@@ -5057,6 +5484,13 @@
   "out": "Amazon Kids"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "AMAZON KIDS"
+  ],
+  "out": "Amazon Kids"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "AMAZON KIDS"
@@ -5133,6 +5567,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "AMAZON KIDS ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "Amazon Kids 4K 3 840P"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "AMAZON KIDS ⁴ᴷ ³⁸⁴⁰ᴾ"
   ],
@@ -5223,6 +5664,13 @@
   "out": "Amazon Reality"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "AMAZON REALITY"
+  ],
+  "out": "Amazon Reality"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "AMAZON REALITY"
@@ -5299,6 +5747,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "AMAZON REALITY ᴰᴼᴸᴮʸ ᴬᵁᴰᴵᴼ ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "Amazon Reality 3 840P"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "AMAZON REALITY ᴰᴼᴸᴮʸ ᴬᵁᴰᴵᴼ ⁴ᴷ ³⁸⁴⁰ᴾ"
   ],
@@ -5389,6 +5844,13 @@
   "out": "Apple+ Docu-Series"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "APPLE+ DOCU-SERIES"
+  ],
+  "out": "Apple+ Docu-Series"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "APPLE+ DOCU-SERIES"
@@ -5465,6 +5927,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "APPLE+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "Apple+ Docu-Series 4K 3"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "APPLE+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
   ],
@@ -5555,6 +6024,13 @@
   "out": "Apple+ Kids"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "APPLE+ KIDS"
+  ],
+  "out": "Apple+ Kids"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "APPLE+ KIDS"
@@ -5631,6 +6107,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "APPLE+ KIDS ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "Apple+ Kids 4K 3"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "APPLE+ KIDS ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
   ],
@@ -5722,6 +6205,13 @@
   "out": "Documentary EN"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "CA| DOCUMENTARY EN"
+  ],
+  "out": "Documentary EN"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "CA| DOCUMENTARY EN"
@@ -5799,6 +6289,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "CA| DOCUMENTARY FR"
+  ],
+  "out": "Documentary FR"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "CA| DOCUMENTARY FR"
   ],
@@ -5888,6 +6385,13 @@
   "out": "Kids"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "CA| Kids"
+  ],
+  "out": "Kids"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "CA| Kids"
@@ -5965,6 +6469,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "CA| KIDS"
+  ],
+  "out": "Kids"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "CA| KIDS"
   ],
@@ -6054,6 +6565,13 @@
   "out": "Music FR"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "CA| MUSIC FR"
+  ],
+  "out": "Music FR"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "CA| MUSIC FR"
@@ -6131,6 +6649,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "CA| News"
+  ],
+  "out": "News"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "CA| News"
   ],
@@ -6220,6 +6745,13 @@
   "out": "News EN"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "CA| NEWS EN"
+  ],
+  "out": "News EN"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "CA| NEWS EN"
@@ -6302,6 +6834,13 @@
   "out": "Disney+ Docu-Movies"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "DISNEY+ DOCU-MOVIES"
+  ],
+  "out": "Disney+ Docu-Movies"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "DISNEY+ DOCU-MOVIES"
@@ -6378,6 +6917,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "DISNEY+ DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "Disney+ Docu-Movies 4K 3"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "DISNEY+ DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
   ],
@@ -6468,6 +7014,13 @@
   "out": "Disney+ Docu-Series"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "DISNEY+ DOCU-SERIES"
+  ],
+  "out": "Disney+ Docu-Series"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "DISNEY+ DOCU-SERIES"
@@ -6544,6 +7097,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "DISNEY+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "Disney+ Docu-Series 4K 3"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "DISNEY+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
   ],
@@ -6634,6 +7194,13 @@
   "out": "Disney+ Reality"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "DISNEY+ REALITY"
+  ],
+  "out": "Disney+ Reality"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "DISNEY+ REALITY"
@@ -6710,6 +7277,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "DISNEY+ STAND-UP COMEDY"
+  ],
+  "out": "Disney+ Stand-UP Comedy"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "DISNEY+ STAND-UP COMEDY"
   ],
@@ -6800,6 +7374,13 @@
   "out": "Dreamworks Animation"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "DREAMWORKS ANIMATION"
+  ],
+  "out": "Dreamworks Animation"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "DREAMWORKS ANIMATION"
@@ -6876,6 +7457,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "EN - ACTION"
+  ],
+  "out": "Action"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "EN - ACTION"
   ],
@@ -6964,6 +7552,13 @@
   "out": "Adventure"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "EN - ADVENTURE"
+  ],
+  "out": "Adventure"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "EN - ADVENTURE"
@@ -7040,6 +7635,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "EN - CHRISTMAS"
+  ],
+  "out": "Christmas"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "EN - CHRISTMAS"
   ],
@@ -7128,6 +7730,13 @@
   "out": "Comedy"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "EN - COMEDY"
+  ],
+  "out": "Comedy"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "EN - COMEDY"
@@ -7204,6 +7813,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "EN - CONCERTS"
+  ],
+  "out": "Concerts"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "EN - CONCERTS"
   ],
@@ -7292,6 +7908,13 @@
   "out": "Documentaries"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "EN - DOCUMENTARIES"
+  ],
+  "out": "Documentaries"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "EN - DOCUMENTARIES"
@@ -7368,6 +7991,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "EN - DRAMA"
+  ],
+  "out": "Drama"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "EN - DRAMA"
   ],
@@ -7456,6 +8086,13 @@
   "out": "Horror"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "EN - HORROR"
+  ],
+  "out": "Horror"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "EN - HORROR"
@@ -7532,6 +8169,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "EN - MANGA/ANIME"
+  ],
+  "out": "Manga/Anime"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "EN - MANGA/ANIME"
   ],
@@ -7620,6 +8264,13 @@
   "out": "Musical"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "EN - MUSICAL"
+  ],
+  "out": "Musical"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "EN - MUSICAL"
@@ -7696,6 +8347,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "EN - ROMANCE"
+  ],
+  "out": "Romance"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "EN - ROMANCE"
   ],
@@ -7784,6 +8442,13 @@
   "out": "Science Fiction"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "EN - SCIENCE FICTION"
+  ],
+  "out": "Science Fiction"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "EN - SCIENCE FICTION"
@@ -7860,6 +8525,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "EN - THRILLER"
+  ],
+  "out": "Thriller"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "EN - THRILLER"
   ],
@@ -7948,6 +8620,13 @@
   "out": "Westerns"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "EN - WESTERNS"
+  ],
+  "out": "Westerns"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "EN - WESTERNS"
@@ -8024,6 +8703,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "ENGLISH REALITY SERIES"
+  ],
+  "out": "English Reality Series"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "ENGLISH REALITY SERIES"
   ],
@@ -8112,6 +8798,13 @@
   "out": "James Bond 007"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "JAMES BOND 007"
+  ],
+  "out": "James Bond 007"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "JAMES BOND 007"
@@ -8188,6 +8881,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "NETFLIX ANIME"
+  ],
+  "out": "Netflix Anime"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "NETFLIX ANIME"
   ],
@@ -8276,6 +8976,13 @@
   "out": "Netflix Animi"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "NETFLIX ANIMI"
+  ],
+  "out": "Netflix Animi"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "NETFLIX ANIMI"
@@ -8352,6 +9059,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "NETFLIX MUSIC"
+  ],
+  "out": "Netflix Music"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "NETFLIX MUSIC"
   ],
@@ -8440,6 +9154,13 @@
   "out": "Netflix Reality"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "NETFLIX REALITY"
+  ],
+  "out": "Netflix Reality"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "NETFLIX REALITY"
@@ -8516,6 +9237,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "NETFLIX STAND-UP COMEDY"
+  ],
+  "out": "Netflix Stand-UP Comedy"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "NETFLIX STAND-UP COMEDY"
   ],
@@ -8607,6 +9335,13 @@
   "out": "Music"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "UK| MUSIC"
+  ],
+  "out": "Music"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "UK| MUSIC"
@@ -8684,6 +9419,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "UK| MUSIC ᴴᴰ/ᴿᴬᵂ"
+  ],
+  "out": "Music HD"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "UK| MUSIC ᴴᴰ/ᴿᴬᵂ"
   ],
@@ -8775,6 +9517,13 @@
   "out": "News"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "UK| News"
+  ],
+  "out": "News"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "UK| News"
@@ -8858,6 +9607,13 @@
   "out": "News"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "UK| NEWS"
+  ],
+  "out": "News"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "UK| NEWS"
@@ -8935,6 +9691,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "UK| NEWS ᴴᴰ/ᴿᴬᵂ"
+  ],
+  "out": "News HD"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "UK| NEWS ᴴᴰ/ᴿᴬᵂ"
   ],
@@ -9026,6 +9789,13 @@
   "out": "NEWS hevc"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "UK| NEWS ʰᵉᵛᶜ"
+  ],
+  "out": "NEWS hevc"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "UK| NEWS ʰᵉᵛᶜ"
@@ -9109,6 +9879,13 @@
   "out": "Reality Show TV"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "UK| REALITY SHOW TV"
+  ],
+  "out": "Reality Show TV"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "UK| REALITY SHOW TV"
@@ -9186,6 +9963,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "UK| REALITY SHOW TV ᴿᴬᵂ"
+  ],
+  "out": "Reality Show TV"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "UK| REALITY SHOW TV ᴿᴬᵂ"
   ],
@@ -9277,6 +10061,13 @@
   "out": "24/7 Action/Adventure"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "US| 24/7 ACTION/ADVENTURE ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "24/7 Action/Adventure"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "US| 24/7 ACTION/ADVENTURE ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
@@ -9356,6 +10147,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "US| 24/7 COMEDY ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "24/7 Comedy"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "US| 24/7 COMEDY ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
   ],
@@ -9447,6 +10245,13 @@
   "out": "24/7 Reality"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "US| 24/7 REALITY ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "24/7 Reality"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "US| 24/7 REALITY ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
@@ -9526,6 +10331,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "US| NEWS ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "News HD"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "US| NEWS ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
   ],
@@ -9617,6 +10429,13 @@
   "out": "News Network"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "US| NEWS NETWORK"
+  ],
+  "out": "News Network"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "US| NEWS NETWORK"
@@ -9693,6 +10512,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   ""
+  ],
+  "out": ""
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    ""
   ],
@@ -9777,6 +10603,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   " "
+  ],
+  "out": ""
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    " "
   ],
@@ -9868,6 +10701,13 @@
   "out": "Sky Sports"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   " UK| Sky Sports "
+  ],
+  "out": "Sky Sports"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    " UK| Sky Sports "
@@ -9945,6 +10785,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "﻿UK| BOM Channel"
+  ],
+  "out": "BOM Channel"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "﻿UK| BOM Channel"
   ],
@@ -10034,6 +10881,13 @@
   "out": "Ideographic Space"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "　UK| Ideographic Space　"
+  ],
+  "out": "Ideographic Space"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "　UK| Ideographic Space　"
@@ -10111,6 +10965,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "UK| Sky Sports Main Event ᵁᴴᴰ ᴴᴰᴿ"
+  ],
+  "out": "Sky Sports Main Event UHD HDR"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "UK| Sky Sports Main Event ᵁᴴᴰ ᴴᴰᴿ"
   ],
@@ -10202,6 +11063,13 @@
   "out": "TNT Sports"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "UK| TNT Sports ᴳᴬᴺᴶᴬ"
+  ],
+  "out": "TNT Sports"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "UK| TNT Sports ᴳᴬᴺᴶᴬ"
@@ -10284,6 +11152,13 @@
   "out": "Fire Channel"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🔥 Fire Channel 🔥"
+  ],
+  "out": "🔥 Fire Channel"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "🔥 Fire Channel 🔥"
@@ -10337,6 +11212,1079 @@
  {
   "fn": "parseName",
   "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": {
+   "normalised": "UK| SPORTS",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": "⚽ UK| SPORTS ⚽"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": "Sports"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": "Sports"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": "⚽ Sports"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": "⚽ uk| sports ⚽"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": {
+   "title": "⚽ UK| SPORTS ⚽",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": "⚽ uk sports ⚽|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": {
+   "genre": "sports",
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": {
+   "normalised": "🇬🇧 UK | Movies",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": "🇬🇧 UK | Movies"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": "Movies"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": "Movies"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": "🇬🇧 Movies"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": "🇬🇧 uk | movies"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": {
+   "title": "🇬🇧 UK | Movies",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": "🇬🇧 uk movies|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": {
+   "genre": null,
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": {
+   "normalised": "Movies 🇬🇧",
+   "country": "UK",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": "UK| Movies 🇬🇧"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": "Movies"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": "Movies"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": "🇬🇧 Movies"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": "uk| movies 🇬🇧"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": {
+   "title": "UK| Movies 🇬🇧",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": "uk movies 🇬🇧|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": {
+   "genre": null,
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": {
+   "normalised": "️ ROMANCE",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": "❤️ ROMANCE"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": "Romance"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": "Romance"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": "❤️ Romance"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": "❤️ romance"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": {
+   "title": "❤️ ROMANCE",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": "❤️ romance|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": {
+   "genre": "romance",
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": {
+   "normalised": "ROMANCE",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": "❤ ROMANCE"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": "Romance"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": "Romance"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": "Romance"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": "❤ romance"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": {
+   "title": "❤ ROMANCE",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": "❤ romance|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": {
+   "genre": "romance",
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": {
+   "normalised": "‍‍ FAMILY",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": "👨‍👩‍👧 FAMILY"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": "Family"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": "Family"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": "👨‍👩‍👧 Family"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": "👨‍👩‍👧 family"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": {
+   "title": "👨‍👩‍👧 FAMILY",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": "👨‍👩‍👧 family|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": {
+   "genre": "kids",
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": {
+   "normalised": "Picks",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": "👍🏽 Picks"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": "Picks"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": "Picks"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": "👍🏽 Picks"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": "👍🏽 picks"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": {
+   "title": "👍🏽 Picks",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": "👍🏽 picks|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": {
+   "genre": null,
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": {
+   "normalised": "",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": "⚽⚽⚽"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": "⚽⚽⚽"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": "⚽⚽⚽"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": "⚽⚽⚽"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": "⚽⚽⚽"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": {
+   "title": "⚽⚽⚽",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": "⚽⚽⚽|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": {
+   "genre": null,
+   "service": null,
+   "language": null,
+   "tags": [
+    "separator"
+   ]
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": {
+   "normalised": "|EN| KIDS",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": "|EN| KIDS 🧸"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": "Kids"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": "Kids"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": "🧸 Kids"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": "|en| kids 🧸"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": {
+   "title": "|EN| KIDS 🧸",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": "en kids 🧸|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": {
+   "genre": "kids",
+   "service": null,
+   "language": "en",
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": {
+   "normalised": "VERIFIED",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": "✔ VERIFIED"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": "Verified"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": "Verified"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": "Verified"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": "✔ verified"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": {
+   "title": "✔ VERIFIED",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": "✔ verified|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": {
+   "genre": null,
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": {
+   "normalised": "️ ADULT",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": "⛔️ ADULT"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": "Adult"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": "Adult"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": "⛔️ Adult"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": "⛔️ adult"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": {
+   "title": "⛔️ ADULT",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": "⛔️ adult|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": {
+   "genre": "adult",
+   "service": null,
+   "language": null,
+   "tags": [
+    "adult"
+   ]
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": {
+   "normalised": "🆕 NEW RELEASES",
+   "isOffline": false
+  }
+ },
+ {
+  "fn": "dropVariantMarks",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": "🆕 NEW RELEASES"
+ },
+ {
+  "fn": "displayName",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": "New Releases"
+ },
+ {
+  "fn": "channelDisplayName",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": "New Releases"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": "🆕 New Releases"
+ },
+ {
+  "fn": "sameChannelKey",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": "🆕 new releases"
+ },
+ {
+  "fn": "fallbackRank",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "splitTitle",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": {
+   "title": "🆕 NEW RELEASES",
+   "year": null,
+   "is4k": false
+  }
+ },
+ {
+  "fn": "titleKey",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": "🆕 new releases|"
+ },
+ {
+  "fn": "isDatedTitle",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": false
+ },
+ {
+  "fn": "classifyCategory",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": {
+   "genre": null,
+   "service": null,
+   "language": null,
+   "tags": []
+  }
+ },
+ {
+  "fn": "parseName",
+  "in": [
    "İstanbul TV"
   ],
   "out": {
@@ -10360,6 +12308,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "İstanbul TV"
+  ],
+  "out": "İstanbul TV"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "İstanbul TV"
   ],
@@ -10448,6 +12403,13 @@
   "out": "Strasse ß HD"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "STRASSE ß HD"
+  ],
+  "out": "Strasse ß HD"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "STRASSE ß HD"
@@ -10524,6 +12486,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "##### PPV #####"
+  ],
+  "out": "PPV"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "##### PPV #####"
   ],
@@ -10608,6 +12577,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "##### PPV HD/4K #####"
+  ],
+  "out": "PPV HD/4K"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "##### PPV HD/4K #####"
   ],
@@ -10699,6 +12675,13 @@
   "out": "TNT Sports Ultimate"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "TNT Sports Ultimate (OFFLINE)"
+  ],
+  "out": "TNT Sports Ultimate (OFFLINE)"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "TNT Sports Ultimate (OFFLINE)"
@@ -10780,6 +12763,13 @@
    "TNT Sports 1 (1080p50)"
   ],
   "out": "TNT Sports 1"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "TNT Sports 1 (1080p50)"
+  ],
+  "out": "TNT Sports 1 (1080p50)"
  },
  {
   "fn": "sameChannelKey",
@@ -10865,6 +12855,13 @@
   "out": "TNT Sports 1"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "TNT Sports 1 (720p25)"
+  ],
+  "out": "TNT Sports 1 (720p25)"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "TNT Sports 1 (720p25)"
@@ -10946,6 +12943,13 @@
    "Channel (4K)"
   ],
   "out": "Channel"
+ },
+ {
+  "fn": "categoryDisplayName",
+  "in": [
+   "Channel (4K)"
+  ],
+  "out": "Channel (4K)"
  },
  {
   "fn": "sameChannelKey",
@@ -11033,6 +13037,13 @@
   "out": "Channel"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "Channel (UHD)"
+  ],
+  "out": "Channel (UHD)"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "Channel (UHD)"
@@ -11118,6 +13129,13 @@
   "out": "Channel"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "Channel (FHD) (OFFLINE)"
+  ],
+  "out": "Channel (FHD) (OFFLINE)"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "Channel (FHD) (OFFLINE)"
@@ -11195,6 +13213,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "UK| BBC One HD"
+  ],
+  "out": "BBC One HD"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "UK| BBC One HD"
   ],
@@ -11283,6 +13308,13 @@
   "out": "BBC Two"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "[UK] BBC Two"
+  ],
+  "out": "BBC Two"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "[UK] BBC Two"
@@ -11359,6 +13391,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "|UK| ITV 1"
+  ],
+  "out": "ITV 1"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "|UK| ITV 1"
   ],
@@ -11449,6 +13488,13 @@
   "out": "ESPN 2"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "US| ESPN 2 (SD)"
+  ],
+  "out": "ESPN 2 (SD)"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "US| ESPN 2 (SD)"
@@ -11526,6 +13572,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "FR | TF1"
+  ],
+  "out": "TF1"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "FR | TF1"
   ],
@@ -11614,6 +13667,13 @@
   "out": "The Wire S01E02"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "The Wire S01E02"
+  ],
+  "out": "The Wire S01E02"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "The Wire S01E02"
@@ -11690,6 +13750,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "The.Wire.S01E02E03.1080p"
+  ],
+  "out": "The.Wire.S01E02E03.1080p"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "The.Wire.S01E02E03.1080p"
   ],
@@ -11778,6 +13845,13 @@
   "out": "Show 1x02"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "Show 1x02"
+  ],
+  "out": "Show 1x02"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "Show 1x02"
@@ -11854,6 +13928,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  ],
+  "out": "Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
   ],
@@ -11943,6 +14024,13 @@
   "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (1080p50)"
+  ],
+  "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (1080p50)"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (1080p50)"
@@ -12019,6 +14107,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "Plain name"
+  ],
+  "out": "Plain name"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "Plain name"
   ],
@@ -12107,6 +14202,13 @@
   "out": "spaced out name"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "  spaced   out   name  "
+  ],
+  "out": "spaced out name"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "  spaced   out   name  "
@@ -12189,6 +14291,13 @@
   "out": "Movie Title (2019)"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "Movie Title (2019)"
+  ],
+  "out": "Movie Title (2019)"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "Movie Title (2019)"
@@ -12265,6 +14374,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "Movie Title (2019) 4K"
+  ],
+  "out": "Movie Title (2019) 4K"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "Movie Title (2019) 4K"
   ],
@@ -12355,6 +14471,13 @@
   "out": "Movie Title - 2019"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "UK: Movie Title - 2019"
+  ],
+  "out": "Movie Title - 2019"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "UK: Movie Title - 2019"
@@ -12431,6 +14554,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "Le Film: Épisode 1"
+  ],
+  "out": "Le Film: Épisode 1"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "Le Film: Épisode 1"
   ],
@@ -12520,6 +14650,13 @@
   "out": "Milb PPV"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "US| MILB PPV"
+  ],
+  "out": "Milb PPV"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "US| MILB PPV"
@@ -12598,6 +14735,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "XXX ADULT"
+  ],
+  "out": "XXX Adult"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "XXX ADULT"
   ],
@@ -12689,6 +14833,13 @@
   "out": "Premium"
  },
  {
+  "fn": "categoryDisplayName",
+  "in": [
+   "VIP | PREMIUM"
+  ],
+  "out": "Premium"
+ },
+ {
   "fn": "sameChannelKey",
   "in": [
    "VIP | PREMIUM"
@@ -12767,6 +14918,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "RAW 4K"
+  ],
+  "out": "RAW 4K"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "RAW 4K"
   ],
@@ -12853,6 +15011,13 @@
  },
  {
   "fn": "channelDisplayName",
+  "in": [
+   "-----"
+  ],
+  "out": "-----"
+ },
+ {
+  "fn": "categoryDisplayName",
   "in": [
    "-----"
   ],

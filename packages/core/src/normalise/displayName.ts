@@ -30,6 +30,29 @@ export function displayName(rawName: string): string {
   return calmShouting(text);
 }
 
+/**
+ * A category's name as a label: `displayName`, with the first real emoji in the provider's name kept in front of it
+ * ("⚽ UK| SPORTS ⚽" → "⚽ Sports", "🇬🇧 UK | Movies" → "🇬🇧 Movies"). Text-style symbols (★ ● ♦ ✓) are still decoration.
+ * Channel names keep `displayName`, where an emoji is usually a border ("⭐ BBC One ⭐").
+ */
+export function categoryDisplayName(rawName: string): string {
+  const name = displayName(rawName);
+  const emoji = EMOJI.exec(rawName)?.[0];
+  if (emoji === undefined || EMOJI.exec(name)?.index === 0) return name;
+  return `${emoji} ${name}`;
+}
+
+/**
+ * Emoji, written as explicit code points so the Kotlin port matches exactly: a flag (two regional indicators); a
+ * pictograph (U+1F300–1FAFF, the squared words 🆕–🆚, or one of the older symbols that show as emoji by default); or
+ * any older symbol given emoji style with U+FE0F ("❤️"). Skin tones, U+FE0F and ZWJ sequences ("👨‍👩‍👧") stay attached.
+ */
+const EMOJI_BASE =
+  "(?:[\u{1F300}-\u{1F3FA}\u{1F400}-\u{1FAFF}\u{1F191}-\u{1F19A}\u231A\u231B\u23E9-\u23EC\u23F0\u23F3\u2614\u2615\u2648-\u2653" +
+  "\u267F\u2693\u26A1\u26BD\u26BE\u26C4\u26C5\u26CE\u26D4\u26EA\u26F2\u26F3\u26F5\u26FA\u26FD\u2705\u270A\u270B\u2728" +
+  "\u274C\u274E\u2753-\u2755\u2757\u2B50\u2B55]|[\u2300-\u23FF\u2600-\u27BF\u2B00-\u2BFF]\uFE0F)(?:\uFE0F|[\u{1F3FB}-\u{1F3FF}])*";
+const EMOJI = new RegExp(`[\u{1F1E6}-\u{1F1FF}]{2}|${EMOJI_BASE}(?:\u200D${EMOJI_BASE})*`, "u");
+
 /** A channel's name, less the quality or "(OFFLINE)" mark that makes it one Variant of the channel rather than another. */
 export function channelDisplayName(rawName: string): string {
   return displayName(dropVariantMarks(rawName));

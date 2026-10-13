@@ -17,7 +17,7 @@ import { genreOptions } from "@testcard/core/src/normalise/genres.js";
 import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
 import { PosterShelf } from "./PosterShelf.js";
-import { displayName } from "@testcard/core/src/normalise/displayName.js";
+import { categoryDisplayName } from "@testcard/core/src/normalise/displayName.js";
 
 type SeriesListRow = Awaited<ReturnType<typeof window.testcard.series.browse>>[number];
 
@@ -232,7 +232,7 @@ export function SeriesView({
         categories: Object.fromEntries(
           ["", ...sources.map((source) => source.id)].map((key, i) => [
             key,
-            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: displayName(c.name), count: c.series_count })),
+            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: categoryDisplayName(c.name), count: c.series_count })),
           ]),
         ),
       }),
@@ -290,7 +290,7 @@ export function SeriesView({
             {(shelves.data ?? []).map((shelf) => (
               <PosterShelf
                 key={shelf.category.id}
-                title={displayName(shelf.category.name)}
+                title={categoryDisplayName(shelf.category.name)}
                 items={shelf.items.map(toPoster)}
                 onSelect={setSelectedSeriesId}
                 onSeeAll={() => pickCategory(shelf.category.id)}

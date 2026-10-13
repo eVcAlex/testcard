@@ -1,6 +1,7 @@
 package com.evcalex.testcard.core
 
 import com.evcalex.testcard.core.normalise.Catchup
+import com.evcalex.testcard.core.normalise.categoryDisplayName
 import com.evcalex.testcard.core.normalise.RawChannelEntry
 import com.evcalex.testcard.core.normalise.channelDisplayName
 import com.evcalex.testcard.core.normalise.displayName
@@ -71,6 +72,7 @@ class NormaliseVectorsTest {
                 "dropVariantMarks" -> check(dropVariantMarks(row.string(0)))
                 "displayName" -> check(displayName(row.string(0)))
                 "channelDisplayName" -> check(channelDisplayName(row.string(0)))
+                "categoryDisplayName" -> check(categoryDisplayName(row.string(0)))
                 "sameChannelKey" -> check(sameChannelKey(row.string(0)))
                 "fallbackRank" -> check(fallbackRank(row.string(0)))
                 "groupVariants" -> {
