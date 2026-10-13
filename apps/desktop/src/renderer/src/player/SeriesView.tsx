@@ -8,7 +8,7 @@ import { Icon } from "../components/Icon.js";
 import { Drawer } from "../components/Drawer.js";
 import { EmptyState } from "../components/EmptyState.js";
 import { formatDuration } from "../lib/time.js";
-import { logoSrc } from "../lib/logo.js";
+import { posterSrc } from "../lib/logo.js";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { CategoryRail } from "./CategoryRail.js";
 import { categoryRail } from "@testcard/core/src/normalise/categoryRail.js";
@@ -316,11 +316,11 @@ export function SeriesView({
       </div>
 
       {selectedSeriesId !== null && (
-        <Drawer label="Series details" backdropUrl={series?.poster_url ? logoSrc(series.poster_url) : null} onClose={closeDrawer}>
+        <Drawer label="Series details" backdropUrl={series?.poster_url ? posterSrc(series.poster_url, "card") : null} onClose={closeDrawer}>
           {series !== undefined && seriesTitle !== null && detail.data !== undefined ? (
             <>
               <div className="pw-detail-top">
-                {series.poster_url && <img className="pw-detail-poster" src={logoSrc(series.poster_url)} alt="" referrerPolicy="no-referrer" />}
+                {series.poster_url && <img className="pw-detail-poster" src={posterSrc(series.poster_url, "large")} alt="" referrerPolicy="no-referrer" />}
                 <div className="pw-detail-heading">
                   <h3>{seriesTitle.title}</h3>
                   <p className="pw-detail-meta">
