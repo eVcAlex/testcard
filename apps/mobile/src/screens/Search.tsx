@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { FlatList, Platform, Text, TextInput, TVFocusGuideView, View } from "react-native";
 import { ChannelLogo } from "../ui/ChannelLogo";
-import { Search } from "iconoir-react-native";
+import { Search } from "../ui/icons";
 import { MIN_SEARCH_LENGTH, searchAll, type SearchResults } from "@testcard/core/src/db/searchQueries.js";
 import type { ChannelRow } from "@testcard/core/src/db/queries.js";
 import { useApp } from "../state/app";

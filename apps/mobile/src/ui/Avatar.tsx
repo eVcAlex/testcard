@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { Lock } from "iconoir-react-native";
+import { Lock } from "./icons";
 import { avatarGlyph, profileColour, type Profile } from "../state/profiles";
 import { colors, styleSheet, uiScale } from "../theme";
 

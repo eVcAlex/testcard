@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Icon } from "../components/Icon.js";
-import { logoSrc } from "../lib/logo.js";
+import { posterSrc } from "../lib/logo.js";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { Removable } from "./Removable.js";
 
@@ -28,7 +28,7 @@ export function PosterCard({ item, onSelect }: { item: PosterItem; onSelect: (id
       <span className="pw-poster-image" data-loading={showImage && !loaded}>
         {showImage ? (
           <img
-            src={logoSrc(item.posterUrl)}
+            src={posterSrc(item.posterUrl, "card")}
             alt=""
             loading="lazy"
             decoding="async"

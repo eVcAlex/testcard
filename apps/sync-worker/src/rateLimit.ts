@@ -14,6 +14,18 @@ export function network(ip: string): string {
   return groups.slice(0, 4).map((g) => g.toLowerCase().replace(/^0+(?=.)/, "")).join(":");
 }
 
+/** Lets `work` finish after the response is sent; without an execution context to hand it to, waits for it. */
+async function afterResponse(c: Context, work: Promise<unknown>): Promise<void> {
+  let ctx: Pick<ExecutionContext, "waitUntil"> | undefined;
+  try {
+    ctx = c.executionCtx; // Hono throws when the request came without one
+  } catch {
+    ctx = undefined;
+  }
+  if (ctx) ctx.waitUntil(work);
+  else await work;
+}
+
 /**
  * Counts this request against the caller's daily allowance for `scope`; true when it is over `max`. The caller is only
  * ever stored as a hash that changes every day, so the table cannot be turned back into addresses.
@@ -29,7 +41,8 @@ export async function overDailyLimit(c: Context<{ Bindings: Env }>, scope: strin
     )
     .bind(ipHash, day)
     .first<{ count: number }>();
-  // A first hit of the day for this caller is a cheap moment to drop every earlier day.
-  if (row?.count === 1) await c.env.DB.prepare(`DELETE FROM waitlist_rate WHERE day < ?`).bind(day).run();
+  // A first hit of the day for this caller is a cheap moment to drop every earlier day. The caller's answer does not
+  // depend on it, so it runs after the response has gone (awaited only where there is no execution context, as in tests).
+  if (row?.count === 1) await afterResponse(c, c.env.DB.prepare(`DELETE FROM waitlist_rate WHERE day < ?`).bind(day).run());
   return (row?.count ?? 0) > max;
 }

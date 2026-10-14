@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useScene } from "../ui/motion.ts";
 import { Arrow, Br } from "../ui/parts.tsx";
-import { SHOTS } from "./shots.ts";
+import { SHOTS, SIZES, srcSet } from "./shots.ts";
 
 /** A sticky frame that swaps the screen as each numbered item scrolls past. Without motion, each item carries its own image. */
 export function OnScreen() {
@@ -30,7 +30,7 @@ export function OnScreen() {
       <div className="os-grid wrap">
         <div className="os-col">
           <div className="os-frame">
-            {SHOTS.map((s) => <img key={s.src} className="osf-img" src={s.src} alt="" width={s.width} height={s.height} loading="lazy" decoding="async" />)}
+            {SHOTS.map((s) => <img key={s.src} className="osf-img" src={s.src} srcSet={srcSet(s)} sizes={SIZES.frame} alt="" width={s.width} height={s.height} loading="lazy" decoding="async" />)}
             <Link to="/features" className="chip-b">See what it does <Arrow dir="right" /></Link>
           </div>
         </div>
@@ -39,7 +39,7 @@ export function OnScreen() {
             <li className="os-item" key={s.src}>
               <p className="os-n" aria-hidden="true">{i + 1}</p>
               <h3>{s.title}</h3>
-              <img className="os-inline" src={s.src} alt={s.alt} width={s.width} height={s.height} loading="lazy" decoding="async" />
+              <img className="os-inline" src={s.src} srcSet={srcSet(s)} sizes={SIZES.inline} alt={s.alt} width={s.width} height={s.height} loading="lazy" decoding="async" />
               <p className="os-tags">{s.tags}</p>
             </li>
           ))}

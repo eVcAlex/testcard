@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, BackHandler, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, useTVEventHandler, View } from "react-native";
 import { useEvent } from "expo";
-import { DashboardSpeed, Headset, Pause, Play, ScaleFrameEnlarge } from "iconoir-react-native";
+import { DashboardSpeed, Headset, Pause, Play, ScaleFrameEnlarge } from "../ui/icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import type Database from "better-sqlite3";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, ScrollView, Text, View } from "react-native";
-import { NavArrowRight } from "iconoir-react-native";
+import { NavArrowRight } from "./icons";
 import { useApp } from "../state/app";
 import { CAPTION_SETTINGS, settingLabel, settingValue, withSetting, type CaptionSetting } from "../playback/captions";
 import { colors, space, type, styleSheet, uiScale } from "../theme";

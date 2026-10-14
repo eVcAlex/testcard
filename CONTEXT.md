@@ -56,6 +56,9 @@ plays back through an embedded `mpv`, stores everything locally.
 - **Category** — a provider's `group-title` (Xtream: `get_live_categories`), e.g.
   `UK| TNT Sports`. Raw categories are flat strings; the sidebar tree in the UI is a
   presentation-layer grouping by parsed **Country** prefix, not a separate domain concept.
+  Shown as `categoryDisplayName`: the tidied name with the provider's first real emoji kept in front ("⚽ Sports",
+  "🇬🇧 Movies"); text-style symbols (★ ● ✓) are decoration and go. The desktop app bundles a flags-only font, since
+  Windows draws flag emoji as letters.
 - **Category classification** — advisory metadata (`genre`, `language`, `service`, `tags`) derived
   from a Category's name by the pure `classifyCategory` rules and stored beside the untouched
   provider name. Never authoritative: unknown is `null`, and flags like `junk`/`separator` mark

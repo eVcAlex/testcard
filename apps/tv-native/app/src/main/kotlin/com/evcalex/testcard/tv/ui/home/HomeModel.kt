@@ -24,7 +24,7 @@ import com.evcalex.testcard.core.db.movieHome
 import com.evcalex.testcard.core.db.one
 import com.evcalex.testcard.core.db.seriesHome
 import com.evcalex.testcard.core.guide.ChannelGuide
-import com.evcalex.testcard.core.normalise.displayName
+import com.evcalex.testcard.core.normalise.categoryDisplayName
 import com.evcalex.testcard.core.shouldPromptResume
 import com.evcalex.testcard.core.sync.listHomePins
 import com.evcalex.testcard.tv.ui.components.DetailAction
@@ -179,7 +179,7 @@ fun SQLiteConnection.buildStartRows(sourceId: String?, movieShelves: List<HomeSh
         val kind = CategoryKind.of(pin.kind)
         // Titled from the category as it is now, through the same tidying as everywhere else, not from the label saved when it was pinned.
         val rawName = one("SELECT raw_name FROM ${pinTable(kind)} WHERE id = ?", categoryId) { it.getText(0) }
-        val label = if (rawName != null) displayName(rawName) else pin.label
+        val label = if (rawName != null) categoryDisplayName(rawName) else pin.label
         when (kind) {
             CategoryKind.Live -> add(key, label, browseChannels(categoryId = categoryId, limit = 24).map { tag("channel", toHomeItem(it)) }, channels = true, pinned = true)
             CategoryKind.Movies -> add(key, label, browseMovies(categoryId = categoryId, limit = 30).map(::asMovie), pinned = true)
