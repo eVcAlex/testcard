@@ -4,7 +4,7 @@ import wretch from "wretch";
 import { WaitlistForm } from "../components/WaitlistForm.tsx";
 import { BackChip, Meta } from "../ui/parts.tsx";
 import { parseAndroid, parseDesktop } from "../releases.ts";
-import { DOWNLOADER_CODE, PRODUCT_NAME, RELEASE_STATE, type ReleaseState, SIGNED } from "../site.ts";
+import { DOWNLOADER_CODE, PRODUCT_NAME, RELEASE_STATE, type ReleaseState, SIGNED, WATCH_HREF, WEB_PLAYER_LIVE } from "../site.ts";
 
 // null, not undefined: TanStack Query v5 treats undefined data as an error (and retries).
 const desktop = () => wretch("/app/latest.yml").get().text().then((t) => parseDesktop(t) ?? null).catch(() => null);
@@ -22,7 +22,11 @@ function Requirements() {
       <tbody>
         <tr><th scope="row">Windows</th><td>Windows 10 or 11, 64-bit (x64) only</td><td>.exe installer</td></tr>
         <tr><th scope="row">Android TV and Fire TV</th><td>Android 7 or later, or Fire OS 6 or later {TBC}</td><td>.apk, installed with Downloader</td></tr>
-        <tr><th scope="row">Phones and tablets</th><td>Not supported for now</td><td>None</td></tr>
+        {WEB_PLAYER_LIVE ? (
+          <tr><th scope="row">Phones, tablets and any computer</th><td>A current browser</td><td>Nothing to install: <a href={WATCH_HREF}>open the web player</a></td></tr>
+        ) : (
+          <tr><th scope="row">Phones and tablets</th><td>Not supported for now</td><td>None</td></tr>
+        )}
       </tbody>
     </table>
   );
@@ -64,7 +68,7 @@ function ComingSoon({ signed }: { signed: boolean }) {
         <h1 className="case-title split" tabIndex={-1}>{`Join the ${PRODUCT_NAME} beta`}</h1>
         <p className="case-lede" data-rise>{PRODUCT_NAME} is in private beta. The Windows app can't be downloaded yet: join the waitlist and we'll email you when it opens. On Android TV or Fire TV you can install the beta now with the Downloader code below.</p>
       </div>
-      <Meta items={[["Works on", "Windows · Android TV"], ["The beta", "Free"], ["You bring", "Your own source"], ["Updates", "Automatic"]]} />
+      <Meta items={[["Works on", WEB_PLAYER_LIVE ? "Windows · Android TV · Browser" : "Windows · Android TV"], ["The beta", "Free"], ["You bring", "Your own source"], ["Updates", "Automatic"]]} />
       <div className="dl-grid">
         <section id="waitlist" aria-labelledby="waitlist-h" className="dl-form lform" data-rise>
           <h2 id="waitlist-h">Join the waitlist</h2>
