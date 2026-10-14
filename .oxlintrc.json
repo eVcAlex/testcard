@@ -3,5 +3,8 @@
   "categories": {
     "correctness": "error"
   },
+  "rules": {
+    "no-restricted-imports": ["error", { "paths": [{ "name": "iconoir-react-native", "message": "Import icons from apps/mobile/src/ui/icons.ts: the package barrel loads all ~1,670 icons." }] }]
+  },
   "ignorePatterns": ["dist", "dist-electron", "release", "node_modules", "resources/mpv"]
 }

@@ -1,6 +1,6 @@
 import { memo, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ArrowLeft, Backward15Seconds, ClosedCaptionsTag, Forward15Seconds, Headset, NavArrowLeft, NavArrowRight, Pause, Play, SkipNext } from "iconoir-react-native";
+import { ArrowLeft, Backward15Seconds, ClosedCaptionsTag, Forward15Seconds, Headset, NavArrowLeft, NavArrowRight, Pause, Play, SkipNext } from "../../ui/icons";
 import { colors, styleSheet, uiScale } from "../../theme";
 
 /** A length written in 1920 px design units, for the shapes in the player that are sized in code. */

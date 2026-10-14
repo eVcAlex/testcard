@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View } from "react-native";
-import { displayName } from "@testcard/core/src/normalise/displayName.js";
+import { categoryDisplayName } from "@testcard/core/src/normalise/displayName.js";
 import { browseChannels, listCategories, listFavouriteChannels, listRecentChannels, removeChannelFromRecents, toggleFavourite, type ChannelRow } from "@testcard/core/src/db/queries.js";
 import { fetchGuide } from "../playback/airing";
 import { timed } from "../platform/perf";
@@ -33,7 +33,7 @@ export const toHomeItem = (channel: ChannelRow): HomeItem => ({
 export const channelCategories = memoByVersion((db: Parameters<typeof listCategories>[0], sourceId?: string) =>
   listCategories(db, sourceId)
     .filter((category) => !category.tags.split(" ").some((tag) => tag === "junk" || tag === "separator" || tag === "adult"))
-    .map((category) => ({ id: category.id, label: displayName(category.name), count: category.channel_count, genre: category.genre })),
+    .map((category) => ({ id: category.id, label: categoryDisplayName(category.name), count: category.channel_count, genre: category.genre })),
 );
 
 /** How many categories get a row on the landing page; the rest are one press away under Browse all. */

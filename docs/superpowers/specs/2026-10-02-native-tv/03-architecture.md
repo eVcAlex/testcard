@@ -143,7 +143,7 @@ Room 2.7 sits on the same driver API, so adopting it later remains possible.
 
 - One `ExoPlayer` per player session, reused across zaps (`setMediaItem` + `prepare`) instead of remounting per channel.
   This is invisible to the user and faster.
-- `DefaultLoadControl` with the same numbers as PLY-22. OkHttp data source with `Util.getUserAgent(context, "Testcard")`.
+- `DefaultLoadControl` with the same numbers as PLY-22. OkHttp data source with User-Agent `node`.
   Media3 version matches expo-video (1.9.x) at first.
 - `PlayerView` inside `AndroidView`, `useController = false`, `resizeMode` for Fit/Fill/Stretch, `subtitleView`
   styled with `CaptionStyleCompat` and `setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * scale)`.
@@ -201,7 +201,7 @@ Verified in `c/sync/*`, `s/index.ts`, `w/routes/*`. Kotlin must match this byte 
 | Headers (all `/auth`, `/sync`, `/guides` calls) | `Origin: <baseUrl>` (needed for better-auth's CSRF check). `Authorization: Bearer <session token>` on authed calls. `Content-Type: application/json` when a body is sent. |
 | Timeout | 15 s for the whole request, body included (`AbortController`). `setPaused(true)` aborts all in-flight calls. |
 | Errors | Non-2xx → error carrying `status` and the body text. 404 on `GET /sync/salt` means "no salt yet". |
-| User-Agent | The TV sends `user-agent: node` on every `fetch` (polyfill), so keep it for API and provider calls. Media requests use the Media3 UA (PLY-24). |
+| User-Agent | The TV sends `user-agent: node` on every `fetch` (polyfill), so keep it for API and provider calls. Media requests send `node` too (PLY-24); some providers refuse the Media3 UA. |
 
 ### 8.2 Authentication
 

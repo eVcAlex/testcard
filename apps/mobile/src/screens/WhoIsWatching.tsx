@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
-import { Plus } from "iconoir-react-native";
+import { Plus } from "../ui/icons";
 import { useApp } from "../state/app";
 import { pinMatches, type Profile } from "../state/profiles";
 import { colors, styleSheet, uiScale } from "../theme";

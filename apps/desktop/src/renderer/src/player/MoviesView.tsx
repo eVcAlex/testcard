@@ -10,7 +10,7 @@ import { Icon } from "../components/Icon.js";
 import { Drawer } from "../components/Drawer.js";
 import { EmptyState } from "../components/EmptyState.js";
 import { formatDuration } from "../lib/time.js";
-import { logoSrc } from "../lib/logo.js";
+import { posterSrc } from "../lib/logo.js";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { CategoryRail } from "./CategoryRail.js";
 import { categoryRail } from "@testcard/core/src/normalise/categoryRail.js";
@@ -20,7 +20,7 @@ import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
 import { PosterShelf } from "./PosterShelf.js";
 import { Removable } from "./Removable.js";
-import { displayName } from "@testcard/core/src/normalise/displayName.js";
+import { categoryDisplayName } from "@testcard/core/src/normalise/displayName.js";
 
 type MovieListRow = Awaited<ReturnType<typeof window.testcard.movies.browse>>[number];
 
@@ -199,7 +199,7 @@ export function MoviesView({
         categories: Object.fromEntries(
           ["", ...sources.map((source) => source.id)].map((key, i) => [
             key,
-            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: displayName(c.name), count: c.movie_count })),
+            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: categoryDisplayName(c.name), count: c.movie_count })),
           ]),
         ),
       }),
@@ -264,7 +264,7 @@ export function MoviesView({
             {(shelves.data ?? []).map((shelf) => (
               <PosterShelf
                 key={shelf.category.id}
-                title={displayName(shelf.category.name)}
+                title={categoryDisplayName(shelf.category.name)}
                 items={shelf.items.map(toPoster)}
                 onSelect={setSelectedMovieId}
                 onSeeAll={() => pickCategory(shelf.category.id)}
@@ -293,12 +293,12 @@ export function MoviesView({
       </div>
 
       {selectedMovieId !== null && (
-        <Drawer label="Movie details" backdropUrl={detail.data?.poster_url ? logoSrc(detail.data.poster_url) : null} onClose={closeDrawer}>
+        <Drawer label="Movie details" backdropUrl={detail.data?.poster_url ? posterSrc(detail.data.poster_url, "card") : null} onClose={closeDrawer}>
           {detail.data !== undefined && detailTitle !== null ? (
             <>
               <div className="pw-detail-top">
                 {detail.data.poster_url && (
-                  <img className="pw-detail-poster" src={logoSrc(detail.data.poster_url)} alt="" referrerPolicy="no-referrer" />
+                  <img className="pw-detail-poster" src={posterSrc(detail.data.poster_url, "large")} alt="" referrerPolicy="no-referrer" />
                 )}
                 <div className="pw-detail-heading">
                   <h3>{detailTitle.title}</h3>
@@ -358,7 +358,7 @@ function ContinueTile({ movie, onSelect }: { movie: MovieListRow; onSelect: (id:
   return (
     <button type="button" className="pw-continue" onClick={() => onSelect(movie.id)} title={movie.name}>
       <span className="pw-continue-art">
-        {movie.poster_url ? <img src={logoSrc(movie.poster_url)} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Icon name="film" />}
+        {movie.poster_url ? <img src={posterSrc(movie.poster_url, "card")} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Icon name="film" />}
         <span className="pw-poster-progress" aria-hidden="true">
           <i style={{ width: `${Math.min(1, progress) * 100}%` }} />
         </span>

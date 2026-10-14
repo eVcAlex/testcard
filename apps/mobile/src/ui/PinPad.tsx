@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BackHandler, Text, TVFocusGuideView, View } from "react-native";
-import { Erase } from "iconoir-react-native";
+import { Erase } from "./icons";
 import { colors, styleSheet, uiScale } from "../theme";
 import { Focusable } from "./Focusable";
 

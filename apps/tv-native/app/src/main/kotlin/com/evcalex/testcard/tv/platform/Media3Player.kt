@@ -5,7 +5,6 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Tracks
-import androidx.media3.common.util.Util
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -18,12 +17,15 @@ import okhttp3.OkHttpClient
 
 /**
  * The player's setup (PLY-22, PLY-24): read well ahead so a provider hiccup is absorbed instead of stalling the picture, with a
- * byte cap so a high-bitrate 4K stream cannot fill a small device's memory before the time target is reached; and the Media3
- * default User-Agent, through an OkHttp data source.
+ * byte cap so a high-bitrate 4K stream cannot fill a small device's memory before the time target is reached; and the same
+ * `node` User-Agent as the provider API calls, through an OkHttp data source.
  */
 object Media3Player {
     private const val PLAY_AT_MS = 2_500
     private const val MB = 1024 * 1024
+
+    /** Providers filter on User-Agent and refuse the Media3 default on some accounts; every other provider request already sends `node`. */
+    private const val STREAM_USER_AGENT = "node"
 
     fun create(context: Context, http: OkHttpClient, vod: Boolean): ExoPlayer {
         val target = if (vod) 40_000 else 60_000
@@ -33,7 +35,7 @@ object Media3Player {
             .setTargetBufferBytes(cap)
             .setPrioritizeTimeOverSizeThresholds(false)
             .build()
-        val upstream = OkHttpDataSource.Factory(http).setUserAgent(Util.getUserAgent(context, "Testcard"))
+        val upstream = OkHttpDataSource.Factory(http).setUserAgent(STREAM_USER_AGENT)
         return ExoPlayer.Builder(context)
             .setLoadControl(load)
             .setMediaSourceFactory(DefaultMediaSourceFactory(DefaultDataSource.Factory(context, upstream)))
@@ -60,7 +62,7 @@ object Media3Player {
             .setTargetBufferBytes(buffer.capBytes)
             .setPrioritizeTimeOverSizeThresholds(false)
             .build()
-        val upstream = OkHttpDataSource.Factory(http).setUserAgent(Util.getUserAgent(context, "Testcard"))
+        val upstream = OkHttpDataSource.Factory(http).setUserAgent(STREAM_USER_AGENT)
         val renderers = androidx.media3.exoplayer.DefaultRenderersFactory(context).setEnableDecoderFallback(true)
         return ExoPlayer.Builder(context, renderers)
             .setLoadControl(load)

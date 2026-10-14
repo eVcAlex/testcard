@@ -30,6 +30,24 @@ fun displayName(rawName: String): String {
     return calmShouting(text)
 }
 
+/**
+ * A category's name as a label: [displayName] with the first real emoji in the provider's name kept in front of it
+ * ("⚽ UK| SPORTS ⚽" → "⚽ Sports"). Port of `categoryDisplayName`; text-style symbols (★ ● ♦ ✓) are still decoration.
+ */
+fun categoryDisplayName(rawName: String): String {
+    val name = displayName(rawName)
+    val emoji = EMOJI.find(rawName)?.value
+    if (emoji == null || EMOJI.find(name)?.range?.first == 0) return name
+    return "$emoji $name"
+}
+
+// The same explicit code points as the TypeScript EMOJI, so both match exactly whatever the platform's Unicode data.
+private const val EMOJI_BASE =
+    "(?:[\\x{1F300}-\\x{1F3FA}\\x{1F400}-\\x{1FAFF}\\x{1F191}-\\x{1F19A}\\u231A\\u231B\\u23E9-\\u23EC\\u23F0\\u23F3\\u2614\\u2615\\u2648-\\u2653" +
+        "\\u267F\\u2693\\u26A1\\u26BD\\u26BE\\u26C4\\u26C5\\u26CE\\u26D4\\u26EA\\u26F2\\u26F3\\u26F5\\u26FA\\u26FD\\u2705\\u270A\\u270B\\u2728" +
+        "\\u274C\\u274E\\u2753-\\u2755\\u2757\\u2B50\\u2B55]|[\\u2300-\\u23FF\\u2600-\\u27BF\\u2B00-\\u2BFF]\\uFE0F)(?:\\uFE0F|[\\x{1F3FB}-\\x{1F3FF}])*"
+private val EMOJI = Regex("[\\x{1F1E6}-\\x{1F1FF}]{2}|$EMOJI_BASE(?:\\u200D$EMOJI_BASE)*")
+
 /** A channel's name, less the quality or "(OFFLINE)" mark that makes it one Variant of the channel rather than another. */
 fun channelDisplayName(rawName: String): String = displayName(dropVariantMarks(rawName))
 

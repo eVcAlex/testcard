@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { channelDisplayName, displayName } from "../normalise/displayName.js";
+import { categoryDisplayName, channelDisplayName, displayName } from "../normalise/displayName.js";
 
 // Each provider has its own house style, so these cover the common ones, not just the one we started with.
 describe("displayName", () => {
@@ -83,5 +83,30 @@ describe("channelDisplayName", () => {
 
   it("keeps quality written into the name, since those are separate channels", () => {
     expect(channelDisplayName("UK: BBC One FHD")).toBe("BBC One FHD");
+  });
+});
+
+describe("categoryDisplayName", () => {
+  it("keeps the provider's first emoji in front of the tidy name", () => {
+    expect(categoryDisplayName("⚽ UK| SPORTS ⚽")).toBe("⚽ Sports");
+    expect(categoryDisplayName("|EN| KIDS 🧸")).toBe("🧸 Kids");
+    expect(categoryDisplayName("👨‍👩‍👧 FAMILY")).toBe("👨‍👩‍👧 Family");
+  });
+
+  it("keeps a flag, which stands in for the country prefix it removes", () => {
+    expect(categoryDisplayName("🇬🇧 UK | Movies")).toBe("🇬🇧 Movies");
+    expect(categoryDisplayName("UK| Movies 🇬🇧")).toBe("🇬🇧 Movies");
+  });
+
+  it("treats text-style symbols as decoration, but not one given emoji style", () => {
+    expect(categoryDisplayName("★★ UK ★★")).toBe("UK");
+    expect(categoryDisplayName("✔ VERIFIED")).toBe("Verified");
+    expect(categoryDisplayName("❤ ROMANCE")).toBe("Romance");
+    expect(categoryDisplayName("❤️ ROMANCE")).toBe("❤️ Romance");
+  });
+
+  it("adds nothing to a name with no emoji, or one that is only emoji", () => {
+    expect(categoryDisplayName("UK| SKY CINEMA")).toBe(displayName("UK| SKY CINEMA"));
+    expect(categoryDisplayName("⚽⚽⚽")).toBe("⚽⚽⚽");
   });
 });

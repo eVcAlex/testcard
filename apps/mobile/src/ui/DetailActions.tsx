@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { useFocusTracking } from "./Focusable";
 import { Image } from "expo-image";
 import { sized } from "./imageSize";
-import { Check, Eye, EyeClosed, InfoCircle, MultiplePages, NavArrowLeft, NavArrowRight, Play, Plus, Restart, Xmark } from "iconoir-react-native";
+import { Check, Eye, EyeClosed, InfoCircle, MultiplePages, NavArrowLeft, NavArrowRight, Play, Plus, Restart, Xmark } from "./icons";
 import { colors, styleSheet, uiScale } from "../theme";
 
 const u = (n: number) => Math.round(n * uiScale);

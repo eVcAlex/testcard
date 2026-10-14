@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { Modal, ScrollView, Text, TVFocusGuideView, View } from "react-native";
-import { WarningCircle } from "iconoir-react-native";
+import { WarningCircle } from "../ui/icons";
 import { useApp, type SourceSummary } from "../state/app";
 import { useUpdate } from "../update/UpdateProvider";
 import { installedVersion } from "../update/update";

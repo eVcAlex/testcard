@@ -31,6 +31,9 @@ export default defineConfig({
   renderer: {
     root: resolve(__dirname, "src/renderer"),
     build: {
+      // electron-vite leaves minification off; minified, the window has about half the script to parse at startup
+      // (react-dom alone was 548 kB as readable source). Sourcemaps stay off as before.
+      minify: true,
       rollupOptions: {
         // Two entries: the main window and the transparent on-video overlay window (ADR 0002).
         // Rollup dedupes React + the shared token/font chunk across them.

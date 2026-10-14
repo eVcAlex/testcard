@@ -106,17 +106,18 @@ fun MovieDetailScreen(app: AppController, movieId: String, onPlay: (resume: Bool
     val parts = splitTitle(movie.name)
     val position = movie.positionSecs
     val resume = position != null && shouldPromptResume(position, movie.durationSecs)
+    val versions = loaded.versions
+    fun providerOf(row: MovieRow) = app.sources.firstOrNull { it.id == row.sourceId }?.name
     val facts = listOfNotNull(
         parts.year?.takeIf { it.isNotEmpty() },
         movie.durationSecs?.takeIf { it > 0 }?.let { runtimeLabel(it) },
         ratingFact(movie.rating),
+        // With other versions on offer, say whose this one is, so the list of the others reads as who's who.
+        if (versions.isNotEmpty()) providerOf(movie)?.takeIf { it.isNotEmpty() } else null,
     )
-    val versions = loaded.versions
-    // Named only when the copies come from more than one source; otherwise every line would say the same thing.
-    val mixed = versions.any { it.sourceId != movie.sourceId }
     fun versionLabel(row: MovieRow): String {
         val tag = VERSION_TAG.find(row.name.trim())?.groupValues?.get(1)
-        val source = if (mixed) app.sources.firstOrNull { it.id == row.sourceId }?.name else null
+        val source = providerOf(row)
         return listOfNotNull(
             if (splitTitle(row.name).is4k) "4K" else "HD",
             tag?.takeIf { it != "4K" }?.replace(Regex("^4K-?"), ""),

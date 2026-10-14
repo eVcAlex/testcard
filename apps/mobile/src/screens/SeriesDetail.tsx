@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, BackHandler, Easing, FlatList, Text, TVFocusGuideView, useTVEventHandler, View } from "react-native";
 import { Image } from "expo-image";
 import { sized } from "../ui/imageSize";
-import { Check, Movie } from "iconoir-react-native";
+import { Check, Movie } from "../ui/icons";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { getSeriesDetail, getSeriesSource, listSeriesVersions, removeSeriesFromRecents, toggleSeriesFavourite, upNextIn, withBorrowedSeasons } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";

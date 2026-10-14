@@ -8,7 +8,7 @@ import { Icon } from "../components/Icon.js";
 import { Drawer } from "../components/Drawer.js";
 import { EmptyState } from "../components/EmptyState.js";
 import { formatDuration } from "../lib/time.js";
-import { logoSrc } from "../lib/logo.js";
+import { posterSrc } from "../lib/logo.js";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
 import { CategoryRail } from "./CategoryRail.js";
 import { categoryRail } from "@testcard/core/src/normalise/categoryRail.js";
@@ -17,7 +17,7 @@ import { genreOptions } from "@testcard/core/src/normalise/genres.js";
 import { useSources } from "./useSources.js";
 import { PosterGrid, type PosterItem } from "./PosterGrid.js";
 import { PosterShelf } from "./PosterShelf.js";
-import { displayName } from "@testcard/core/src/normalise/displayName.js";
+import { categoryDisplayName } from "@testcard/core/src/normalise/displayName.js";
 
 type SeriesListRow = Awaited<ReturnType<typeof window.testcard.series.browse>>[number];
 
@@ -232,7 +232,7 @@ export function SeriesView({
         categories: Object.fromEntries(
           ["", ...sources.map((source) => source.id)].map((key, i) => [
             key,
-            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: displayName(c.name), count: c.series_count })),
+            (railQueries[i]?.data ?? []).filter((c) => genre === null || c.genre === genre).map((c) => ({ id: c.id, label: categoryDisplayName(c.name), count: c.series_count })),
           ]),
         ),
       }),
@@ -290,7 +290,7 @@ export function SeriesView({
             {(shelves.data ?? []).map((shelf) => (
               <PosterShelf
                 key={shelf.category.id}
-                title={displayName(shelf.category.name)}
+                title={categoryDisplayName(shelf.category.name)}
                 items={shelf.items.map(toPoster)}
                 onSelect={setSelectedSeriesId}
                 onSeeAll={() => pickCategory(shelf.category.id)}
@@ -316,11 +316,11 @@ export function SeriesView({
       </div>
 
       {selectedSeriesId !== null && (
-        <Drawer label="Series details" backdropUrl={series?.poster_url ? logoSrc(series.poster_url) : null} onClose={closeDrawer}>
+        <Drawer label="Series details" backdropUrl={series?.poster_url ? posterSrc(series.poster_url, "card") : null} onClose={closeDrawer}>
           {series !== undefined && seriesTitle !== null && detail.data !== undefined ? (
             <>
               <div className="pw-detail-top">
-                {series.poster_url && <img className="pw-detail-poster" src={logoSrc(series.poster_url)} alt="" referrerPolicy="no-referrer" />}
+                {series.poster_url && <img className="pw-detail-poster" src={posterSrc(series.poster_url, "large")} alt="" referrerPolicy="no-referrer" />}
                 <div className="pw-detail-heading">
                   <h3>{seriesTitle.title}</h3>
                   <p className="pw-detail-meta">

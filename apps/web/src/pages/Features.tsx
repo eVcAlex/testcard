@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { WaitlistLink } from "../components/WaitlistLink.tsx";
-import { DESKTOP_LIVE, DESKTOP_MOVIES, type Shot, TV_GUIDE, TV_MOVIES } from "../home/shots.ts";
+import { DESKTOP_LIVE, DESKTOP_MOVIES, SIZES, type Shot, srcSet, TV_GUIDE, TV_MOVIES } from "../home/shots.ts";
 import { RELEASE_STATE } from "../site.ts";
 import { type Engine, animated, whenEngine } from "../ui/motion.ts";
 import { BackChip, Br } from "../ui/parts.tsx";
@@ -75,7 +75,7 @@ export function Features() {
         {FEATURES.map((f, i) => (
           <li key={f.title} className={`ftile c${(i % 6) + 2}${big === i ? " big" : ""}`} data-flip-id={`f${i}`} data-rise>
             <div className="frame">
-              {f.shot ? <img src={f.shot.src} alt={f.shot.alt} width={f.shot.width} height={f.shot.height} loading="lazy" decoding="async" /> : f.panel}
+              {f.shot ? <img src={f.shot.src} srcSet={srcSet(f.shot)} sizes={big === i ? SIZES.hero : SIZES.tile} alt={f.shot.alt} width={f.shot.width} height={f.shot.height} loading="lazy" decoding="async" /> : f.panel}
               {f.shot && (
                 <button type="button" className="enl" aria-pressed={big === i} onClick={() => toggle(i)}>
                   {big === i ? "Smaller" : "Enlarge"}<span className="sr-only"> picture: {f.title}</span>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable } from "react-native";
-import { NavArrowLeft } from "iconoir-react-native";
+import { NavArrowLeft } from "./icons";
 import { colors, styleSheet, uiScale } from "../theme";
 
 const u = (n: number) => Math.round(n * uiScale);
