@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { categories, episodesOf, films, forgetCatalogue, liveChannels, shows, type Film, type Part, type Show } from "./catalogue.ts";
 import { feedsFor, type WebChannel } from "./feeds.ts";
 import type { Library, Shelf } from "./library.ts";
+import { Manage } from "./Manage.tsx";
 import { Player, type PlayRequest } from "./Player.tsx";
 import { PROFILE_COLOURS, pinMatches, type WebProfile } from "./profiles.ts";
 import { plainReason, signInAndLoad, signOut, type Account, type WebSource } from "./session.ts";
@@ -41,6 +42,7 @@ export function App() {
   const [profile, setProfile] = useState<WebProfile>();
   const [library, setLibrary] = useState<Library>();
   const [play, setPlay] = useState<PlayRequest>();
+  const [managing, setManaging] = useState(false);
 
   // What is waiting to be saved goes out when the page is left or hidden.
   useEffect(() => {
@@ -61,7 +63,13 @@ export function App() {
     setPlay(undefined);
     setLibrary(undefined);
     setProfile(undefined);
+    setManaging(false);
     setAccount(undefined);
+  };
+  // One profile is the account itself: no need to ask who is watching.
+  const autoOpen = (opened: Account) => {
+    const only = opened.profiles.length === 1 ? opened.profiles[0] : undefined;
+    if (only !== undefined && only.pin === null && opened.sources.length > 0) void opened.openLibrary(only.id).then((opened_) => { setLibrary(opened_); setProfile(only); });
   };
   const choose = async (picked: WebProfile) => {
     if (account === undefined) return;
@@ -77,11 +85,12 @@ export function App() {
 
   if (account === undefined) return <SignIn onSignedIn={(opened) => {
     setAccount(opened);
-    // One profile is the account itself: no need to ask who is watching.
-    const only = opened.profiles.length === 1 ? opened.profiles[0] : undefined;
-    if (only !== undefined && only.pin === null) void opened.openLibrary(only.id).then((opened_) => { setLibrary(opened_); setProfile(only); });
+    // An account with nothing in it yet starts by adding a source.
+    if (opened.sources.length === 0) setManaging(true);
+    else autoOpen(opened);
   }} />;
-  if (profile === undefined || library === undefined) return <Profiles profiles={account.profiles} onPick={choose} onSignOut={leave} />;
+  if (managing) return <Manage account={account} onChanged={setAccount} onSignOut={leave} onDone={() => { setManaging(false); if (profile === undefined) autoOpen(account); }} />;
+  if (profile === undefined || library === undefined) return <Profiles profiles={account.profiles} onPick={choose} onManage={() => setManaging(true)} onSignOut={leave} />;
   return (
     <>
       <Browser
@@ -90,6 +99,7 @@ export function App() {
         profile={account.profiles.length > 1 ? profile : undefined}
         onPlay={setPlay}
         onSwitchProfile={switchProfile}
+        onManage={account.profiles.length === 1 ? () => setManaging(true) : undefined}
         onSignOut={leave}
       />
       {play !== undefined ? <Player request={play} onClose={() => { setPlay(undefined); void library.send(); }} /> : null}
@@ -98,7 +108,7 @@ export function App() {
 }
 
 /** Who is watching. A profile with a PIN asks for it, the one set in the apps. */
-function Profiles({ profiles, onPick, onSignOut }: { profiles: WebProfile[]; onPick: (profile: WebProfile) => Promise<void>; onSignOut: () => void }) {
+function Profiles({ profiles, onPick, onManage, onSignOut }: { profiles: WebProfile[]; onPick: (profile: WebProfile) => Promise<void>; onManage: () => void; onSignOut: () => void }) {
   const [asking, setAsking] = useState<WebProfile>();
   const [wrong, setWrong] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -139,6 +149,7 @@ function Profiles({ profiles, onPick, onSignOut }: { profiles: WebProfile[]; onP
           </button></li>
         ))}
       </ul>
+      <button class="quiet" onClick={onManage}>Manage sources and profiles</button>{" "}
       <button class="quiet" onClick={onSignOut}>Sign out</button>
     </main>
   );
@@ -153,9 +164,7 @@ function SignIn({ onSignedIn }: { onSignedIn: (account: Account) => void }) {
     setBusy(true);
     setError(undefined);
     try {
-      const opened = await signInAndLoad(String(form.get("email")).trim(), String(form.get("password")));
-      if (opened.sources.length === 0) setError("This account has no sources yet. Add one in the app first.");
-      else onSignedIn(opened);
+      onSignedIn(await signInAndLoad(String(form.get("email")).trim(), String(form.get("password"))));
     } catch (reason) {
       setError(plainReason(reason));
     } finally {
@@ -195,7 +204,7 @@ function onShelf<T>(items: readonly T[], keyOf: (item: T) => string | undefined,
   return keys.flatMap((key) => (byKey.has(key) ? [byKey.get(key) as T] : []));
 }
 
-function Browser({ sources, library, profile, onPlay, onSwitchProfile, onSignOut }: { sources: WebSource[]; library: Library; profile: WebProfile | undefined; onPlay: (request: PlayRequest) => void; onSwitchProfile: () => void; onSignOut: () => void }) {
+function Browser({ sources, library, profile, onPlay, onSwitchProfile, onManage, onSignOut }: { sources: WebSource[]; library: Library; profile: WebProfile | undefined; onPlay: (request: PlayRequest) => void; onSwitchProfile: () => void; onManage: (() => void) | undefined; onSignOut: () => void }) {
   useLibrary(library);
   const [sourceId, setSourceId] = useState(sources[0]?.id ?? "");
   const [tab, setTab] = useState<Tab>("live");
@@ -282,6 +291,7 @@ function Browser({ sources, library, profile, onPlay, onSwitchProfile, onSignOut
           </select>
         ) : <span class="muted">{source.label}</span>}
         {profile !== undefined ? <button class="quiet" onClick={onSwitchProfile}>{profile.name}</button> : null}
+        {onManage !== undefined ? <button class="quiet" onClick={onManage}>Manage</button> : null}
         <button class="quiet" onClick={onSignOut}>Sign out</button>
       </header>
       <nav class="tabs">

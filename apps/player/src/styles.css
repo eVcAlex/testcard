@@ -44,3 +44,18 @@ header .quiet { margin-left: auto; }
 .profiles button { width: 100%; display: grid; gap: 8px; justify-items: center; background: var(--card); padding: 16px 8px; }
 .avatar { width: 56px; height: 56px; border-radius: 50%; display: grid; place-content: center; color: #111; font-size: 24px; font-weight: 600; }
 .guide { color: var(--muted); font-size: 14px; flex-basis: 100%; }
+
+.manage { max-width: 560px; }
+.manage h2 { margin: 28px 0 8px; font-size: 18px; }
+.rows { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.rows li { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; flex-wrap: wrap; }
+.rows li > span:first-of-type { flex: 1; min-width: 0; }
+.small-avatar { width: 32px; height: 32px; font-size: 16px; flex: none; }
+.rows .small-avatar + span { flex: 1; }
+.inline { display: flex; gap: 6px; align-items: center; margin: 0; }
+.inline input { width: 90px; padding: 6px 8px; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch { width: 36px; height: 36px; padding: 0; border: 2px solid transparent; }
+.swatch.on { border-color: var(--text); }
+.check { display: flex; align-items: center; gap: 8px; }
+fieldset { border: 1px solid var(--line); border-radius: 8px; display: grid; gap: 6px; }

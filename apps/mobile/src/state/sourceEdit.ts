@@ -3,40 +3,16 @@ import { extractXtreamCredentials, probeXtream, type XtreamCredentials } from "@
 import { remoteKeyFor, remoteKeyForPlaylist } from "@testcard/core/src/sync/remoteKey.js";
 import { applySourceContent } from "@testcard/core/src/sync/sourceContent.js";
 import { parseBackupUrls } from "@testcard/core/src/sync/localChanges.js";
-import type { SourceContent } from "@testcard/sync-schema";
+import { checkDraftBasics, emptyDraft, playlistAddress, serverAddress, type SourceDraft } from "@testcard/core/src/sync/sourceDraft.js";
 import { getStoredCredentials as getCredentials, saveCredentials } from "../platform/secrets";
 
 /**
  * Adding and editing a source on the TV, as the desktop app's source form does: the login is checked with the
- * provider before it is kept, and the change syncs to the account's other devices.
+ * provider before it is kept, and the change syncs to the account's other devices. The form rules themselves are
+ * shared with the website (`sourceDraft.ts`).
  */
 
-/** A source as the form edits it. `password` is blank while editing unless a new one is typed. */
-export interface SourceDraft {
-  readonly kind: "xtream" | "m3u";
-  readonly name: string;
-  readonly server: string;
-  readonly username: string;
-  readonly password: string;
-  /** A playlist link; for a new source, a whole Xtream `get.php` link is taken as its login. */
-  readonly playlistUrl: string;
-  readonly epgUrl: string;
-  /** Xtream: other server addresses for the same account, comma or space separated as typed. */
-  readonly backupUrls: string;
-  readonly content: SourceContent;
-}
-
-export const emptyDraft = (kind: SourceDraft["kind"]): SourceDraft => ({
-  kind,
-  name: "",
-  server: "",
-  username: "",
-  password: "",
-  playlistUrl: "",
-  epgUrl: "",
-  backupUrls: "",
-  content: { live: true, movies: true, series: true },
-});
+export { emptyDraft, type SourceDraft };
 
 export async function readDraft(db: Database.Database, sourceId: string): Promise<SourceDraft | undefined> {
   const row = db
@@ -60,19 +36,6 @@ export async function readDraft(db: Database.Database, sourceId: string): Promis
   };
 }
 
-/** Just the scheme and host of a server address, so a whole pasted provider link still works. */
-function serverAddress(input: string): string {
-  const trimmed = input.trim();
-  let parsed: URL;
-  try {
-    parsed = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`);
-  } catch {
-    throw new Error("That's not a server address.");
-  }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("A server address starts with http:// or https://.");
-  return `${parsed.protocol}//${parsed.host}`;
-}
-
 async function checkLogin(credentials: XtreamCredentials): Promise<void> {
   const result = await probeXtream(credentials).catch(() => {
     throw new Error("Couldn't reach that server. Check the address.");
@@ -81,32 +44,13 @@ async function checkLogin(credentials: XtreamCredentials): Promise<void> {
 }
 
 async function checkPlaylist(input: string): Promise<string> {
-  const url = input.trim();
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    throw new Error("That's not a playlist link.");
-  }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("A playlist link starts with http:// or https://.");
+  const url = playlistAddress(input);
   const response = await fetch(url).catch(() => {
     throw new Error("Couldn't reach that playlist. Check the link.");
   });
   void response.body?.cancel().catch(() => undefined);
   if (!response.ok) throw new Error(`The playlist link answered with HTTP ${response.status}.`);
   return url;
-}
-
-function checkGuide(input: string): string | null {
-  const url = input.trim();
-  if (url === "") return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") return url;
-  } catch {
-    // falls through
-  }
-  throw new Error("The TV guide address must be a link starting with http:// or https://.");
 }
 
 export interface SavedSource {
@@ -118,19 +62,9 @@ export interface SavedSource {
 
 /** Checks and keeps a new source (`sourceId` undefined) or a change to one. Throws a message fit to show. */
 export async function saveSource(db: Database.Database, sourceId: string | undefined, draft: SourceDraft, newId: () => string): Promise<SavedSource> {
-  const name = draft.name.trim();
-  if (name === "") throw new Error("Give the source a name.");
-  if (!draft.content.live && !draft.content.movies && !draft.content.series) throw new Error("Choose at least one of Live TV, Movies and Series.");
-  const epg = checkGuide(draft.epgUrl);
-  const backups = JSON.stringify(
-    [...new Set(draft.backupUrls.split(/[\s,]+/).filter((entry) => entry !== "").map((entry) => {
-      try {
-        return serverAddress(entry);
-      } catch {
-        throw new Error(`"${entry}" is not a server address.`);
-      }
-    }))],
-  );
+  const basics = checkDraftBasics(draft);
+  const { name, epgUrl: epg } = basics;
+  const backups = JSON.stringify(basics.backups);
   const now = Date.now();
 
   // A whole Xtream link pasted as a new playlist is an Xtream login.
