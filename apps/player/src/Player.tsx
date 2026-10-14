@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { FeedHealth } from "./health.ts";
+import { Icon } from "./Icon.tsx";
 import { viaProxy } from "./proxy.ts";
 import { nowAndNext, type Programme } from "./xtream.ts";
 
@@ -45,7 +46,7 @@ async function whyNot(source: string): Promise<string | undefined> {
     const response = await fetch(source, { headers: { range: "bytes=0-0" } });
     await response.body?.cancel();
     if (response.status === 401) return "You were signed out. Sign in again.";
-    if (response.status === 403) return "The provider refused this stream (403).";
+    if (response.status === 403) return "The provider refused this stream (403). Some providers block web players; the app may still play it.";
     if (response.status === 404) return "The provider does not have this stream (404).";
     if (response.status === 429) return "Today's streaming allowance on the web player is used up.";
     if (response.status >= 400) return `The provider answered ${response.status}.`;
@@ -82,6 +83,8 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
   const [switchOn, setSwitchOn] = useState(read(SWITCH_KEY) !== "0");
   const [attempt, setAttempt] = useState(0);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [started, setStarted] = useState(false);
+  const [idle, setIdle] = useState(false);
   const switchRef = useRef(switchOn);
   switchRef.current = switchOn;
   const current = candidates[at];
@@ -98,12 +101,14 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       else setError(why);
     };
     setError(undefined);
+    setStarted(false);
     const source = viaProxy(current.url);
     const kind = kindOf(current.url);
 
     let said = false;
     const onPlaying = () => {
       health.onPlaying();
+      setStarted(true);
       if (said) return;
       said = true;
       request.onStart?.();
@@ -205,6 +210,22 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
     return () => clearTimeout(timer);
   }, [fellBack]);
 
+  // The top bar fades after a few seconds without the pointer moving, so it never sits over the picture.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const wake = () => {
+      setIdle(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setIdle(true), 3500);
+    };
+    wake();
+    for (const name of ["mousemove", "touchstart", "keydown"]) addEventListener(name, wake, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      for (const name of ["mousemove", "touchstart", "keydown"]) removeEventListener(name, wake);
+    };
+  }, []);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
     addEventListener("keydown", onKey);
@@ -224,10 +245,11 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
   const clock = (at: number) => new Date(at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   return (
-    <div class="player">
+    <div class={`player${idle && started && error === undefined ? " idle" : ""}`}>
       <video ref={video} controls autoplay playsinline />
-      <div class="player-bar">
-        <button class="quiet" onClick={onClose} aria-label="Close player">Close</button>
+      <div class="player-top">
+        <button class="btn" onClick={onClose} aria-label="Close player"><Icon name="back" />Close</button>
+        {request.live ? <span class="pill pill--live">LIVE</span> : null}
         <strong>{request.title}</strong>
         {request.live && candidates.length > 1 ? (
           <label class="switch">
@@ -236,11 +258,16 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
         ) : null}
         {now !== undefined ? <div class="guide">Now: {now.title} (until {clock(now.end)}){next !== undefined ? ` · Next: ${next.title} at ${clock(next.start)}` : ""}</div> : null}
       </div>
+      {!started && error === undefined ? <div class="player-wait"><div class="spinner" /><span>Tuning...</span></div> : null}
       {fellBack !== undefined ? <div class="player-note">That feed wouldn't play. {fellBack}.</div> : null}
       {error !== undefined ? (
         <div class="player-error">
+          <Icon name="signal" size={32} />
           <p>{error}</p>
-          <button onClick={retry}>Try again</button> <button class="quiet" onClick={onClose}>Close</button>
+          <div class="row">
+            <button class="btn btn--primary" onClick={retry}><Icon name="refresh" />Try again</button>
+            <button class="btn" onClick={onClose}>Close</button>
+          </div>
         </div>
       ) : null}
     </div>

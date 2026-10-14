@@ -189,6 +189,9 @@ importers:
       '@testcard/sync-schema':
         specifier: workspace:*
         version: link:../../packages/sync-schema
+      '@testcard/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
       hls.js:
         specifier: 1.6.0
         version: 1.6.0
