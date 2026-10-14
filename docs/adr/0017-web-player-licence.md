@@ -119,3 +119,23 @@ Service-Specific Terms (updated 28 Sep 2026).
   what end users do. The sections read contain no restriction aimed at relaying video, and the Stream and Images terms
   do not apply (neither is used). **Not reviewed:** the master agreement and acceptable use policy, which are the other
   half of the answer; a provider's own terms on relaying a login through a third party are a separate question.
+
+## Terms read: Self-Serve Subscription Agreement (read 2026-10-14, version of 12 Sep 2025)
+
+- **2.7 Acceptable Use:** the Services must not be used to "post, transmit, store or link to" video or other content that
+  infringes intellectual property rights or is otherwise unlawful.
+- **2.5.2 and 2.5.4:** the customer warrants that content passing through the Services does not infringe, and is "solely
+  responsible for the consequences of ... transmitting Customer Content".
+- **8 Termination:** Cloudflare may Suspend or terminate "at any time, with or without notice for any reason or no
+  reason", and may act on DMCA notifications from content owners or on being a repeat infringer.
+- No clause aimed at relaying video as such was found in the sections read (the older "non-HTML content" rule did not
+  appear). Whether relaying a viewer's own provider stream counts under 2.7 is a legal question this ADR does not
+  answer.
+
+**What follows.** The exposure is not cost but the account: a suspension would take everything on it, not only the
+player (sync, the website, D1, email and the domain's DNS). Before the player is switched on for anyone else, run the
+relay from a **separate Cloudflare account**, or accept that risk knowingly. Reducing what the relay carries (playing
+directly where the browser allows it) lowers it too.
+
+**Email (confirmed):** sending to arbitrary recipients needs Workers Paid; 3,000 emails a month are included, then
+$0.35 per 1,000. Sending to verified addresses in the account is free.
