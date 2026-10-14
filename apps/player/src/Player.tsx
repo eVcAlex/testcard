@@ -39,6 +39,22 @@ const write = (key: string, value: string): void => {
   }
 };
 
+/** What the provider really answered, for a stream the browser could only call a "format error". */
+async function whyNot(source: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(source, { headers: { range: "bytes=0-0" } });
+    await response.body?.cancel();
+    if (response.status === 401) return "You were signed out. Sign in again.";
+    if (response.status === 403) return "The provider refused this stream (403).";
+    if (response.status === 404) return "The provider does not have this stream (404).";
+    if (response.status === 429) return "Today's streaming allowance on the web player is used up.";
+    if (response.status >= 400) return `The provider answered ${response.status}.`;
+  } catch {
+    // Offline or blocked: the browser's own message stands.
+  }
+  return undefined;
+}
+
 const isApple = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
 type Kind = "hls" | "ts" | "file";
 const kindOf = (address: string): Kind => {
@@ -98,7 +114,10 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
     const onWaiting = () => health.onWaiting();
     const onFail = () => {
       if (health.onError() === "failover") next("");
-      else next(element.error?.message || "This could not be played.");
+      else {
+        const browser = element.error?.message || "This could not be played.";
+        void whyNot(source).then((why) => next(why ?? browser));
+      }
     };
     element.addEventListener("playing", onPlaying);
     element.addEventListener("waiting", onWaiting);
