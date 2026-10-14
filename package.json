@@ -38,6 +38,9 @@
       "electron-winstaller",
       "esbuild"
     ],
+    "overrides": {
+      "webworkify-webpack": "2.1.5"
+    },
     "patchedDependencies": {
       "expo-video@57.0.4": "patches/expo-video@57.0.4.patch"
     }
