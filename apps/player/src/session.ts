@@ -10,10 +10,22 @@ export type WebSource =
   | { readonly kind: "xtream"; readonly id: string; readonly label: string; readonly login: XtreamLogin; readonly keyHost: string }
   | { readonly kind: "m3u"; readonly id: string; readonly label: string; readonly playlistUrl: string };
 
+/** What the server said, when it said something short (it replies in JSON with a message). */
+function serverSays(error: unknown): string {
+  const text = error instanceof Error ? error.message : "";
+  try {
+    const said = (JSON.parse(text) as { message?: unknown; error?: unknown }).message ?? (JSON.parse(text) as { error?: unknown }).error;
+    return typeof said === "string" && said.length < 120 ? ` (${said})` : "";
+  } catch {
+    return "";
+  }
+}
+
 /** The words for a sign-in or sync failure. */
 export function plainReason(error: unknown): string {
   const status = (error as { status?: unknown } | null)?.status;
-  if (status === 401 || status === 403) return "That email or password was not accepted.";
+  if (status === 401) return "That email or password was not accepted.";
+  if (status === 403) return `Testcard refused this page's request${serverSays(error)}. If you are running a local copy, its address may need allowing.`;
   if (status === 429) return "Too many tries. Wait a few minutes and try again.";
   if (error instanceof DOMException && error.name === "OperationError") return "Your sources could not be opened with that password.";
   if (error instanceof TypeError || (error instanceof DOMException && error.name === "AbortError")) return "Could not reach Testcard. Check your connection and try again.";
