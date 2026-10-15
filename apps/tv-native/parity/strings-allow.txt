@@ -40,3 +40,6 @@ Sign in on this computer first.
 That code is not 8 letters and numbers. Check your TV and try again.
 That code was not found, or it has expired. Ask your TV for a new one.
 Could not reach Testcard. Check your connection and try again.
+Switch feed when it buffers: On
+Switch feed when it buffers: Off
+When a live channel stops to buffer for a few seconds, switch to another feed of the same channel (another quality or copy) if there is one. Off: it keeps reloading the same feed.
