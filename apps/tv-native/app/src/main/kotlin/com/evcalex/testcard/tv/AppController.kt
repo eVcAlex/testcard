@@ -95,7 +95,7 @@ private const val GUIDES_AFTER_LAUNCH_MS = 60_000L
 private const val SERVERS_AFTER_LAUNCH_MS = 10_000L
 
 /** Where the source pick is kept between launches: this device's own setting, not synced. */
-private const val SOURCE_PICK_KEY = "ui:source"
+internal const val SOURCE_PICK_KEY = "ui:source"
 
 /** Where the "switch feed when it buffers" choice is kept: "0" is off. */
 private const val SWITCH_ON_BUFFERING_KEY = "ui:switchOnBuffering"
@@ -166,7 +166,7 @@ class AppController(context: Context) {
     internal var profileId by mutableStateOf(MAIN_PROFILE)
     val profile: Profile get() = profiles.firstOrNull { it.id == profileId } ?: profiles.firstOrNull() ?: Profile(MAIN_PROFILE, "Main", 0, null, null, 0)
     var sourcePick by mutableStateOf<String?>(null)
-        private set
+        internal set
 
     /** The channels picked for Multi view, in the order picked (the first is the main picture). Kept while the app runs; not synced. */
     val multiQueue = androidx.compose.runtime.mutableStateListOf<com.evcalex.testcard.core.playback.PlayItem>()
