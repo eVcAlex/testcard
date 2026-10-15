@@ -9,6 +9,11 @@ on:
   pull_request:
     paths: ["apps/tv-native/**", "packages/core/**", ".github/workflows/tv-native.yml"]
   workflow_dispatch:
+    inputs:
+      beta:
+        description: "Publish as the Testcard Beta app (its own app id and update feed). Always on when run from a branch other than main."
+        type: boolean
+        default: false
 
 jobs:
   # The TypeScript side of the contract: the committed test vectors must still be what the real TS core produces.
@@ -71,7 +76,8 @@ jobs:
           fi
           # This app has the old app's id, so its versionCode (100000 + run number, set in build.gradle.kts) must be above
           # every old build for Android to accept it as an update.
-          gradle :app:assembleRelease -PbuildNumber=${{ github.run_number }} --no-daemon
+          if [ "$GITHUB_REF" != "refs/heads/main" ] || [ "${{ inputs.beta }}" = "true" ]; then BETA="-PbetaApp=true"; fi
+          gradle :app:assembleRelease -PbuildNumber=${{ github.run_number }} $BETA --no-daemon
 
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'workflow_dispatch'
@@ -81,7 +87,7 @@ jobs:
 
       # Run by hand, the APK goes to the update server: the APK first, then the manifest that points at it, so a device
       # never sees a manifest for a file that is not there yet. From main it is the release (it takes over the old app's
-      # entry, apks.firetv). From any other branch it is a beta, which only a stick with Settings > Beta builds on picks up.
+      # entry, apks.firetv). From any other branch (or with the beta box ticked) it is the Testcard Beta app: its own app id, so it sits beside the release, and it follows only beta-latest.json.
       - name: Publish to the update server
         if: github.event_name == 'workflow_dispatch'
         working-directory: .
@@ -91,14 +97,14 @@ jobs:
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "No CLOUDFLARE_API_TOKEN secret: not publishing."; exit 0; fi
           CODE=$((100000 + ${{ github.run_number }}))
-          if [ "$GITHUB_REF" = "refs/heads/main" ]; then PREFIX=""; NAME="0.2.${{ github.run_number }}"; else PREFIX="beta-"; NAME="0.2.${{ github.run_number }}-beta"; fi
+          if [ "$GITHUB_REF" = "refs/heads/main" ] && [ "${{ inputs.beta }}" != "true" ]; then PREFIX=""; NAME="0.2.${{ github.run_number }}"; else PREFIX="beta-"; NAME="0.2.${{ github.run_number }}-beta"; fi
           echo "{\"versionCode\":$CODE,\"versionName\":\"$NAME\"}" > build.json
           cp apps/tv-native/app/build/outputs/apk/release/app-release.apk testcard-firetv.apk
           APK="${PREFIX}testcard-firetv-$CODE.apk"
           MANIFEST="${PREFIX}latest.json"
           MANIFEST_NAME="$MANIFEST" node scripts/release-manifest.mjs build.json "$APK" "$GITHUB_SHA" "$MANIFEST"
           npx --yes wrangler@3 r2 object put "testcard-releases/$APK" --file testcard-firetv.apk --content-type application/vnd.android.package-archive
-          # The fixed-name copy is what the release serves to a first install; a beta never replaces it.
-          if [ -z "$PREFIX" ]; then npx --yes wrangler@3 r2 object put testcard-releases/testcard-firetv.apk --file testcard-firetv.apk --content-type application/vnd.android.package-archive; fi
+          # The fixed-name copy is what a first install downloads: testcard-firetv.apk for the release, beta-testcard-firetv.apk for the beta app.
+          npx --yes wrangler@3 r2 object put "testcard-releases/${PREFIX}testcard-firetv.apk" --file testcard-firetv.apk --content-type application/vnd.android.package-archive
           npx --yes wrangler@3 r2 object put "testcard-releases/$MANIFEST" --file "$MANIFEST" --content-type application/json
           echo "Published $NAME"
