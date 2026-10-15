@@ -148,25 +148,27 @@ fun GuideScreen(ctx: SectionContext) {
         // Categories pinned to Home come first in the rail (in the order they were pinned), then the rest as the provider lists them.
         val pinOrder = app.db.read { c -> c.pinnedCategoryIds(CategoryKind.Live).toList() }
         fun <T> pinnedFirst(items: List<T>, idOf: (T) -> String): List<T> = items.sortedBy { item -> pinOrder.indexOf(idOf(item)).let { if (it < 0) Int.MAX_VALUE else it } }
-        fun mark(label: String) = RailMark.Letters(label.trim().take(2).replaceFirstChar { it.uppercase() })
+        // A name that opens with an emoji shows it as the collapsed mark, and the open rail names the list without it, so it is drawn once.
+        fun mark(label: String) = leadingEmoji(label)?.let { RailMark.Letters(it) } ?: RailMark.Letters(label.trim().take(2).replaceFirstChar { it.uppercase() })
+        fun entry(id: String, label: String, count: Int, mark: RailMark, group: String? = null) = GuideList(id, withoutLeadingEmoji(label), count, mark, group)
         value = buildList {
-            add(GuideList("favourites", "Favourites", favourites, RailMark.Icon(Glyph.Star)))
-            add(GuideList("recent", "Recently watched", recents, RailMark.Icon(Glyph.Restart)))
+            add(entry("favourites", "Favourites", favourites, RailMark.Icon(Glyph.Star)))
+            add(entry("recent", "Recently watched", recents, RailMark.Icon(Glyph.Restart)))
             if (bySource != null) for (source in bySource) {
                 val own = pinnedFirst(app.memoByCatalogue("live-categories", source.id) { it.listCategories(source.id).browsable() }.filter { it.count > 0 }) { it.id }
                 if (own.isEmpty()) continue
                 // The viewer's pinned categories get a section of their own ahead of the source's, tagged with the source they belong to.
-                for (c in own) if (c.id in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), "$PINNED_SECTION · ${source.name}"))
-                add(GuideList("all:${source.id}", "All channels", own.sumOf { it.count }, RailMark.Letters("All"), source.name))
-                for (c in own) if (c.id !in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), source.name))
+                for (c in own) if (c.id in pinOrder) add(entry(c.id, c.label, c.count, mark(c.label), "$PINNED_SECTION · ${source.name}"))
+                add(entry("all:${source.id}", "All channels", own.sumOf { it.count }, RailMark.Letters("All"), source.name))
+                for (c in own) if (c.id !in pinOrder) add(entry(c.id, c.label, c.count, mark(c.label), source.name))
             } else {
                 // With any pins, the rail reads Pinned, then Categories: two named sections, so pins are easy to tell apart.
                 val ordered = pinnedFirst(categories.filter { it.count > 0 }) { it.id }
                 val sectioned = ordered.any { it.id in pinOrder }
-                for (c in ordered) add(GuideList(c.id, c.label, c.count, mark(c.label), if (!sectioned) null else if (c.id in pinOrder) PINNED_SECTION else "Categories"))
-                add(GuideList("all", "All channels", categories.sumOf { it.count }, RailMark.Letters("All")))
+                for (c in ordered) add(entry(c.id, c.label, c.count, mark(c.label), if (!sectioned) null else if (c.id in pinOrder) PINNED_SECTION else "Categories"))
+                add(entry("all", "All channels", categories.sumOf { it.count }, RailMark.Letters("All")))
             }
-        }
+        }.distinctBy { it.id } // the rail keys its items by id, and a repeated key would place one item twice
     }
     var listId by rememberSaveable { mutableStateOf<String?>(null) }
     val shownList: String? = lists?.let { all ->
@@ -347,7 +349,7 @@ fun GuideScreen(ctx: SectionContext) {
         EmptyNote(if (sourceId != null) NOTHING_FROM_SOURCE else "Sources that sync from your account load here. Open Sources to see progress.")
         return
     }
-    val rows = channels.orEmpty()
+    val rows = channels.orEmpty().distinctBy { it.id }
     // Before the remote is on the grid, the info pane describes the top channel.
     val shown = focused?.takeIf { f -> rows.any { it.id == f.channel.id } } ?: rows.firstOrNull()?.let { Focused(it, GuideSegment(from, to, null)) }
 
@@ -564,4 +566,27 @@ private fun GuideCell(
             if (airing != null) AppText("${clock24(airing.start)} to ${clock24(airing.end)}", 18, if (isFocused) Palette.accentInk else Palette.faint, maxLines = 1)
         }
     }
+}
+
+/** The emoji a list's name opens with, if any ("⚽ FIFA+" gives "⚽"). */
+internal fun leadingEmoji(label: String): String? {
+    val text = label.trim()
+    if (text.isEmpty()) return null
+    val first = text.codePointAt(0)
+    if (Character.isLetterOrDigit(first) || first < 0x2190) return null
+    var end = Character.charCount(first)
+    // Variation selectors, joiners and skin tones belong to the same emoji.
+    while (end < text.length) {
+        val next = text.codePointAt(end)
+        if (next == 0xFE0F || next == 0x200D || next in 0x1F3FB..0x1F3FF) end += Character.charCount(next)
+        else if (text.codePointBefore(end) == 0x200D) end += Character.charCount(next)
+        else break
+    }
+    return text.substring(0, end)
+}
+
+/** The name without a leading emoji, unless that would leave nothing. */
+internal fun withoutLeadingEmoji(label: String): String {
+    val emoji = leadingEmoji(label) ?: return label
+    return label.trim().removePrefix(emoji).trim().ifEmpty { label }
 }
