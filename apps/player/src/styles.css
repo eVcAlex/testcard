@@ -206,3 +206,18 @@ select.input { padding-right: var(--s-3); }
   .who button { width: 104px; }
   input, select, .input { font-size: 16px; } /* iOS zooms into anything smaller when it is focused */
 }
+
+.manage { max-width: 560px; margin: 0 auto; padding: var(--s-7) var(--s-5); color: var(--foreground); }
+.manage h2 { margin: 28px 0 8px; font-size: 18px; }
+.rows { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.rows li { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; flex-wrap: wrap; }
+.rows li > span:first-of-type { flex: 1; min-width: 0; }
+.small-avatar { width: 32px; height: 32px; font-size: 16px; flex: none; }
+.rows .small-avatar + span { flex: 1; }
+.inline { display: flex; gap: 6px; align-items: center; margin: 0; }
+.inline input { width: 90px; padding: 6px 8px; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch { width: 36px; height: 36px; padding: 0; border: 2px solid transparent; }
+.swatch.on { border-color: var(--foreground); }
+.check { display: flex; align-items: center; gap: 8px; }
+fieldset { border: 1px solid var(--border); border-radius: 8px; display: grid; gap: 6px; }

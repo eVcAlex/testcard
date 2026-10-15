@@ -167,8 +167,9 @@ plays back through an embedded `mpv`, stores everything locally.
   Shown on each source's card; a refused stream says when every stream is in use or the
   subscription has expired (`apps/mobile/src/state/account.ts`).
 - **Sources on the TV** can be added and edited there too (`state/sourceEdit.ts`, the same checks
-  as the desktop form: the login is tried with the provider before it is kept). A change of
-  server or playlist changes the source's remote key, so the old key is tombstoned.
+  as the desktop form: the login is tried with the provider before it is kept). An edit keeps
+  the source's remote key (see Source identity), so the other devices update it rather than add
+  another. The web player manages sources and profiles the same way (`docs/adr/0016-*`).
 - **Aspect ratio** (fit/fill/16:9/4:3) is an mpv property re-applied per load and persisted
   like volume; **channel logos** are served through the `testcard-logo:` privileged scheme
   backed by a main-process disk cache. See `docs/adr/0004-player-refinements.md`.

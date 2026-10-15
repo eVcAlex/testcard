@@ -1,4 +1,4 @@
-import { DOWNLOADER_CODE, PRODUCT_NAME, SIGNED } from "./site.ts";
+import { DOWNLOADER_CODE, PRODUCT_NAME, SIGNED, WATCH_HREF, WEB_PLAYER_LIVE } from "./site.ts";
 
 interface FaqItem {
   id: string;
@@ -62,7 +62,12 @@ export const FAQ: readonly FaqItem[] = [
   {
     id: "phones",
     question: "Does it work on phones?",
-    answer: ["Not for now. The apps are for Windows and Android TV (Fire TV included). The TV layout is drawn for a TV and a remote."],
+    answer: WEB_PLAYER_LIVE
+      ? [
+          `Yes, in a browser. Open [${PRODUCT_NAME} on the web](${WATCH_HREF}), sign in with your account and your sources open there. It works on an iPhone, an iPad and any computer, and favourites and where you were in a film stay in step with the apps.`,
+          "There is no iPhone or iPad app yet. The web player has a daily viewing allowance, and some films need a codec a browser can't play; the apps have neither limit.",
+        ]
+      : ["Not for now. The apps are for Windows and Android TV (Fire TV included). The TV layout is drawn for a TV and a remote."],
     structured: false,
   },
   {

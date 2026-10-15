@@ -1,5 +1,4 @@
-import { decryptJson } from "@testcard/core/src/sync/credentialCrypto.ts";
-import { ProfilePayloadSchema, profileKeyPrefix, type SyncProfile } from "@testcard/sync-schema";
+import { profileKeyPrefix } from "@testcard/sync-schema";
 
 export const MAIN_PROFILE = "main";
 
@@ -40,19 +39,3 @@ export const pinMatches = (profile: WebProfile, digits: string): boolean => prof
 
 /** The key prefix a profile's own favourites, recents and progress sync under; Main's have none. */
 export const prefixOf = (profileId: string): string => (profileId === MAIN_PROFILE ? "" : profileKeyPrefix(profileId));
-
-/** Every profile of the account, Main first. Main always exists even if the account never saved a record for it. */
-export async function openProfiles(rows: readonly SyncProfile[], password: string, salt: string): Promise<WebProfile[]> {
-  const found: WebProfile[] = [];
-  for (const row of rows) {
-    if (row.deletedAt !== null || row.blob === null || row.iv === null) continue;
-    try {
-      const payload = ProfilePayloadSchema.parse(await decryptJson({ blob: row.blob, iv: row.iv }, password, salt));
-      found.push({ id: row.remoteKey, ...payload });
-    } catch {
-      // A record this version cannot read is left out rather than blocking sign-in.
-    }
-  }
-  const main = found.find((profile) => profile.id === MAIN_PROFILE) ?? { id: MAIN_PROFILE, name: "Main", colour: 0, avatar: null, pin: null, position: 0 };
-  return [main, ...found.filter((profile) => profile.id !== MAIN_PROFILE).sort((a, b) => a.position - b.position)];
-}

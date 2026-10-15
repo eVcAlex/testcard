@@ -7,6 +7,14 @@ export type ReleaseState = "waitlist" | "beta" | "public";
 export const RELEASE_STATE: ReleaseState = "waitlist";
 /** Whether the Windows installer is code-signed. false shows the SmartScreen note on /download. */
 export const SIGNED = false;
+/**
+ * Whether the web player (/watch) is switched on for everyone. false keeps it out of the site's copy and links, so the
+ * pages do not advertise a feature the Worker still answers 404 for (`WEB_PLAYER` in apps/sync-worker/wrangler.toml).
+ * Flip this together with that setting.
+ */
+export const WEB_PLAYER_LIVE = false;
+/** Where the web player lives. A separate page from the site, so link to it with a plain anchor, not the router. */
+export const WATCH_HREF = "/watch";
 
 export const SITE_URL = "https://evicted.dev";
 export const PRODUCT_NAME = "Testcard";

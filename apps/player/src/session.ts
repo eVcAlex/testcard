@@ -1,8 +1,8 @@
 import { SyncClient } from "@testcard/core/src/sync/client.ts";
-import { decryptCredentials } from "@testcard/core/src/sync/credentialCrypto.ts";
-import type { SourceCredentialsPayload } from "@testcard/sync-schema";
+import { forgetKey, generateSalt } from "@testcard/core/src/sync/credentialCrypto.ts";
+import { AccountEditor } from "./account.ts";
 import { Library } from "./library.ts";
-import { openProfiles, prefixOf, type WebProfile } from "./profiles.ts";
+import { prefixOf, type WebProfile } from "./profiles.ts";
 import type { XtreamLogin } from "./xtream.ts";
 
 /** A source as the web player uses it: an Xtream login, or a playlist address. Both come from the account's encrypted record. */
@@ -32,49 +32,53 @@ export function plainReason(error: unknown): string {
   return error instanceof Error && error.message !== "" ? error.message : "Something went wrong. Try again.";
 }
 
-const asSource = (id: string, label: string, payload: SourceCredentialsPayload): WebSource & { position: number } =>
-  "playlistUrl" in payload
-    ? { kind: "m3u", id, label, playlistUrl: payload.playlistUrl, position: payload.position ?? 0 }
-    : { kind: "xtream", id, label, login: { host: payload.host, username: payload.username, password: payload.password }, keyHost: payload.keyHost ?? payload.host, position: payload.position ?? 0 };
-
 /** A signed-in account: its sources and profiles, opened with the password, and a way to open a profile's library. */
 export interface Account {
   readonly sources: WebSource[];
   readonly profiles: WebProfile[];
+  /** Adds, changes and removes sources and profiles; `refreshed` then gives the account's new lists. */
+  readonly editor: AccountEditor;
   openLibrary(profileId: string): Promise<Library>;
 }
+
+/** The account as it is now, after the editor changed something. */
+export const refreshed = (account: Account): Account => ({ ...account, sources: account.editor.sources(), profiles: account.editor.profiles() });
 
 /**
  * Signs in with the account and opens its sources and profiles in the browser: the server only ever holds them sealed, and the
  * key is made from the password here. The session cookie this sets is what lets the stream proxy know who is asking. The
- * password is not kept; nothing is written to browser storage.
+ * password stays in this page's memory while signed in (the editor seals changes with it) and goes on sign-out; nothing is
+ * written to browser storage.
  */
 export async function signInAndLoad(email: string, password: string): Promise<Account> {
   let token: string | undefined;
   const client = new SyncClient({ baseUrl: location.origin, getSessionToken: () => token });
   token = (await client.signIn(email, password)).sessionToken;
-  const salt = await client.getSalt();
-  if (salt === undefined) throw new Error("This account has no sources yet. Add one in the app first.");
-  const pulled = await client.pull(0);
-  const opened: (WebSource & { position: number })[] = [];
-  for (const row of pulled.sources) {
-    if (row.deletedAt !== null || row.credentialsBlob === null || row.credentialsIv === null || row.label === null) continue;
-    opened.push(asSource(row.remoteKey, row.label, await decryptCredentials({ blob: row.credentialsBlob, iv: row.credentialsIv }, password, salt)));
+  let salt = await client.getSalt();
+  if (salt === undefined) {
+    // An account made before any device has its salt: set one (set-once, so another device getting there first is fine).
+    const fresh = generateSalt();
+    try {
+      await client.setSalt(fresh);
+      salt = fresh;
+    } catch (error) {
+      if ((error as { status?: unknown }).status !== 409) throw error;
+      salt = await client.getSalt();
+    }
+    if (salt === undefined) throw new Error("Could not set up this account. Try again.");
   }
-  const sources = opened.sort((a, b) => a.position - b.position).map((entry) => {
-    const { position, ...source } = entry;
-    void position;
-    return source;
-  });
-  const profiles = await openProfiles(pulled.profiles, password, salt);
+  const pulled = await client.pull(0);
+  const editor = await AccountEditor.open(client, password, salt, pulled);
   return {
-    sources,
-    profiles,
+    sources: editor.sources(),
+    profiles: editor.profiles(),
+    editor,
     // Main's history came with the first pull; another profile's is its own pull.
     openLibrary: async (profileId) => new Library(client, prefixOf(profileId), profileId === "main" ? pulled : await client.pull(0, profileId)),
   };
 }
 
 export async function signOut(): Promise<void> {
+  forgetKey();
   await fetch("/auth/sign-out", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }).catch(() => undefined);
 }

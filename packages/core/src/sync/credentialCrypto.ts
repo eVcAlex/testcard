@@ -44,6 +44,11 @@ export function generateSalt(): string {
 type Key = Awaited<ReturnType<typeof crypto.subtle.deriveKey>>;
 let cachedKey: { readonly id: string; readonly key: Promise<Key> } | undefined;
 
+/** Drops the kept key, and the password its cache id holds, as signing out must. */
+export function forgetKey(): void {
+  cachedKey = undefined;
+}
+
 function deriveKey(password: string, saltBase64: string): Promise<Key> {
   const id = `${saltBase64}\0${password}`;
   if (cachedKey?.id === id) return cachedKey.key;

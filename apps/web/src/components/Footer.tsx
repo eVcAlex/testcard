@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CONTACT_EMAIL, ORG_NAME, PRODUCT_FULL_NAME, RELEASE_STATE } from "../site.ts";
+import { CONTACT_EMAIL, ORG_NAME, PRODUCT_FULL_NAME, RELEASE_STATE, WATCH_HREF, WEB_PLAYER_LIVE } from "../site.ts";
 import { Mark } from "../ui/parts.tsx";
 import { ThemeToggle } from "./ThemeToggle.tsx";
 import { WaitlistLink } from "./WaitlistLink.tsx";
@@ -30,7 +30,11 @@ export function Footer() {
       <div className="ftr-mid">
         <nav aria-label="Footer">
           <p className="ftr-k">Site</p>
-          <ul>{SITE.map(([to, label]) => <li key={to}><Link to={to} className="ftr-a">{label}</Link></li>)}</ul>
+          <ul>
+            {SITE.map(([to, label]) => <li key={to}><Link to={to} className="ftr-a">{label}</Link></li>)}
+            {/* A separate page, so a plain anchor: a router link would land on this site's 404. */}
+            {WEB_PLAYER_LIVE && <li><a href={WATCH_HREF} className="ftr-a">Watch in your browser</a></li>}
+          </ul>
         </nav>
       </div>
       <div className="ftr-bot">
