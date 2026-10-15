@@ -74,7 +74,7 @@ export function WaitlistForm() {
         </form>
       )}
       <p className="wl-data note">
-        One email when the beta opens, nothing else. We keep your email and ticked devices only for that, and delete them if you ask. <Link to="/privacy">Privacy policy</Link>.
+        We store your email, the devices you ticked and the time you signed up. We use them only to invite you to the beta. Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we'll delete them. More in the <Link to="/privacy">privacy policy</Link>.
       </p>
     </div>
   );
