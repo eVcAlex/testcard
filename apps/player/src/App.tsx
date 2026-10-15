@@ -84,6 +84,23 @@ export function App() {
     setProfile(undefined);
   };
 
+  // Arriving from the link page's "manage in your browser" with credentials it has just checked: sign in without asking again.
+  useEffect(() => {
+    let handed: { email?: string; password?: string; at?: number } | undefined;
+    try {
+      handed = JSON.parse(sessionStorage.getItem("tc:handoff") ?? "null");
+      sessionStorage.removeItem("tc:handoff");
+    } catch {
+      return;
+    }
+    if (handed?.email === undefined || handed.password === undefined || Date.now() - (handed.at ?? 0) > 60_000) return;
+    void signInAndLoad(handed.email, handed.password).then((opened) => {
+      setAccount(opened);
+      if (opened.sources.length === 0 || location.hash === "#manage") setManaging(true);
+      else autoOpen(opened);
+    }, () => undefined);
+  }, []);
+
   if (account === undefined) return <SignIn onSignedIn={(opened) => {
     setAccount(opened);
     // An account with nothing in it yet starts by adding a source, and the site's "Manage" links land here too.

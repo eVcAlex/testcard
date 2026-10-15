@@ -5,6 +5,18 @@ import { MANAGE_HREF } from "../site.ts";
 import { BackChip, Disc, Meta } from "../ui/parts.tsx";
 import { type Field, LinkError, type Mode, linkTv } from "../link/linkTv.ts";
 
+/**
+ * "Manage in your browser" from the confirmation signs the web player in without asking again: the page just checked these
+ * credentials. They go in this tab's sessionStorage, read and removed by the player on its first moment (and ignored after a minute).
+ */
+const handOff = (email: string, password: string) => {
+  try {
+    sessionStorage.setItem("tc:handoff", JSON.stringify({ email, password, at: Date.now() }));
+  } catch {
+    // Blocked storage: the player just asks for the password.
+  }
+};
+
 const pretty = (typed: string) => formatLinkCode(normaliseLinkCode(typed).slice(0, 8));
 
 function codeFromHash(): string {
@@ -63,11 +75,11 @@ export function LinkPage() {
               <ul className="next">
                 <li>On your TV: open <b>Sources</b>.</li>
                 <li>In the Windows app: <b>Sources</b>.</li>
-                <li>In your browser: <a href={MANAGE_HREF}>sign in and manage sources and profiles</a>.</li>
+                <li>In your browser: <a href={MANAGE_HREF} onClick={() => handOff(email, password)}>manage sources and profiles</a>.</li>
               </ul>
             </>
           ) : (
-            <p>Your TV is loading your sources now. You can close this page. To add or change one later, use <b>Sources</b> on the TV, in the Windows app, or <a href={MANAGE_HREF}>in your browser</a>.</p>
+            <p>Your TV is loading your sources now. You can close this page. To add or change one later, use <b>Sources</b> on the TV, in the Windows app, or <a href={MANAGE_HREF} onClick={() => handOff(email, password)}>in your browser</a>.</p>
           )}
         </div>
       </section>
