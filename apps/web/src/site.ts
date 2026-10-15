@@ -15,6 +15,8 @@ export const SIGNED = false;
 export const WEB_PLAYER_LIVE = false;
 /** Where the web player lives. A separate page from the site, so link to it with a plain anchor, not the router. */
 export const WATCH_HREF = "/watch";
+/** The web player's Manage screen: sources and profiles of the account. A separate page, so a plain anchor. */
+export const MANAGE_HREF = "/watch#manage";
 
 export const SITE_URL = "https://evicted.dev";
 export const PRODUCT_NAME = "Testcard";

@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { formatLinkCode, normaliseLinkCode } from "@testcard/core/src/sync/linkCrypto.ts";
 import { type FormEvent, useEffect, useState } from "react";
-import { WATCH_HREF, WEB_PLAYER_LIVE } from "../site.ts";
+import { MANAGE_HREF } from "../site.ts";
 import { BackChip, Disc, Meta } from "../ui/parts.tsx";
 import { type Field, LinkError, type Mode, linkTv } from "../link/linkTv.ts";
 
@@ -63,11 +63,11 @@ export function LinkPage() {
               <ul className="next">
                 <li>On your TV: open <b>Sources</b>.</li>
                 <li>In the Windows app: <b>Sources</b>.</li>
-                {WEB_PLAYER_LIVE && <li>In your browser: <a href={WATCH_HREF}>open the web player</a>, then <b>Manage</b>.</li>}
+                <li>In your browser: <a href={MANAGE_HREF}>sign in and manage sources and profiles</a>.</li>
               </ul>
             </>
           ) : (
-            <p>Your TV is loading your sources now. You can close this page. To add or change one later, use <b>Sources</b> on the TV{WEB_PLAYER_LIVE ? <>, in the Windows app, or <a href={WATCH_HREF}>in your browser</a></> : " or in the Windows app"}.</p>
+            <p>Your TV is loading your sources now. You can close this page. To add or change one later, use <b>Sources</b> on the TV, in the Windows app, or <a href={MANAGE_HREF}>in your browser</a>.</p>
           )}
         </div>
       </section>
@@ -107,23 +107,23 @@ export function LinkPage() {
               <button type="button" role="tab" aria-selected={!signup} onClick={() => choose("signin")}>Sign in</button>
               <button type="button" role="tab" aria-selected={signup} onClick={() => choose("signup")}>Create account</button>
             </div>
-            <form className="lform-in" onSubmit={submit} noValidate autoComplete="on">
+            <form key={mode} className="lform-in" onSubmit={submit} noValidate autoComplete={signup ? "off" : "on"}>
               <div className="fld">
                 <label htmlFor="link-code">Code on your TV</label>
                 <input id="link-code" className="codein" value={code} onChange={(e) => setCode(pretty(e.target.value))} inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX" maxLength={9} aria-invalid={invalid("code")} aria-describedby={describedBy("code")} />
               </div>
               <div className="fld">
                 <label htmlFor="link-email">Email</label>
-                <input id="link-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" inputMode="email" placeholder="you@example.com" aria-invalid={invalid("email")} aria-describedby={describedBy("email")} />
+                <input id="link-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete={signup ? "email" : "username"} name={signup ? "signup-email" : "email"} inputMode="email" placeholder="you@example.com" aria-invalid={invalid("email")} aria-describedby={describedBy("email")} />
               </div>
               <div className="fld">
                 <label htmlFor="link-password">Password</label>
-                <input key={mode} id="link-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} aria-describedby={describedBy("password")} />
+                <input key={mode} id="link-password" name={signup ? "new-password" : "password"} type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} aria-describedby={describedBy("password")} />
               </div>
               {signup && (
                 <div className="fld">
                   <label htmlFor="link-confirm">Confirm password</label>
-                  <input id="link-confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} aria-describedby={describedBy("confirm")} />
+                  <input id="link-confirm" name="confirm-password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} aria-describedby={describedBy("confirm")} />
                 </div>
               )}
               <div id="link-error" className="error" role="alert">{error?.message}</div>
