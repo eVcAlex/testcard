@@ -7,6 +7,8 @@ plugins {
 // CI stamps the build number; Android refuses an update that is not a higher versionCode. Native builds start at 100000 so they
 // are above every React Native build (those stay below it), which is what lets this app update the old one in place.
 val buildNumber = (findProperty("buildNumber") as String?)?.toInt() ?: 1
+// `-PbetaApp=true` builds the beta: its own app (own id, name and update feed), installed beside the release instead of replacing it.
+val betaApp = findProperty("betaApp") == "true"
 
 android {
     namespace = "com.evcalex.testcard.tv"
@@ -14,11 +16,13 @@ android {
 
     defaultConfig {
         // The old React Native app's id, so installing this over it is an update that keeps its data (adopted on first launch).
-        applicationId = "com.evcalex.testcard"
+        applicationId = if (betaApp) "com.evcalex.testcard.beta" else "com.evcalex.testcard"
         minSdk = 24
         targetSdk = 36
         versionCode = 100000 + buildNumber
-        versionName = "0.2.$buildNumber"
+        versionName = "0.2.$buildNumber" + if (betaApp) "-beta" else ""
+        manifestPlaceholders["appLabel"] = if (betaApp) "Testcard Beta" else "Testcard"
+        buildConfigField("boolean", "IS_BETA", "$betaApp")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The sync server; `-PsyncUrl=http://10.0.2.2:8787` points a build at a local `wrangler dev` from the emulator.
         // Which manifest entry the updater follows: `firetv`, the entry the old app followed.
