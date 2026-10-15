@@ -48,6 +48,8 @@ suspend fun AppController.switchProfile(id: String) {
     profileId = id
     captions = db.read { it.readCaptionPrefs() }
     audioLanguage = db.read { it.readAudioLanguage() }
+    // The source being browsed is the profile's own, so each profile has its own Home.
+    sourcePick = db.read { c -> c.one("SELECT value FROM schema_meta WHERE key = ?", SOURCE_PICK_KEY) { it.getText(0) }?.takeIf { it != "" } }
     bump()
     // Resuming syncs at once, fetching the new profile's history from the account. Waited for (as at launch, up to a cap), so
     // the picker keeps saying it is switching and the screens read the history the moment it is in, not on a later tick.
