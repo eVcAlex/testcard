@@ -69,13 +69,12 @@ export function WaitlistForm() {
           <button type="submit" className="btn" disabled={phase === "sending"}>
             {phase === "sending" ? "Joining..." : "Join the beta waitlist"}
           </button>
-          <p className="wl-promise">One email when the beta opens. That is all we send.</p>
           {phase === "error" && <p ref={message} className="wl-msg wl-error" role="alert" tabIndex={-1}>{error}</p>}
           {phase === "sending" && <p className="sr-only" role="status">Joining the waitlist</p>}
         </form>
       )}
       <p className="wl-data note">
-        We store your email, the devices you ticked and the time you signed up. We use them only to invite you to the beta. Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we'll delete them. More in the <Link to="/privacy">privacy policy</Link>.
+        One email when the beta opens, nothing else. We keep your email and ticked devices only for that, and delete them if you ask. <Link to="/privacy">Privacy policy</Link>.
       </p>
     </div>
   );
