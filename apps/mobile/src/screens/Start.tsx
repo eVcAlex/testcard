@@ -283,7 +283,7 @@ export function StartScreen({
   if (rows.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>Nothing here yet. Sign in to the account your computer uses and its sources will load. Open Sources to see progress.</Text>
+        <Text style={styles.emptyText}>Nothing here yet. Sign in to your Testcard account and its sources will load. Open Sources to see progress.</Text>
       </View>
     );
   }

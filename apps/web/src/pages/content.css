@@ -155,7 +155,8 @@
 .lform .error:empty { display: none; }
 .lform .error { padding: 10px 12px; border-radius: 3px; background: rgba(154, 36, 16, 0.12); color: var(--bad-on-field); font-weight: 700; }
 .ok-h { font: 700 clamp(40px, 5vw, 72px) / 0.95 var(--font); letter-spacing: -0.045em; text-transform: uppercase; }
-.lform.ok { justify-items: start; gap: 20px; }
+.lform.ok { justify-items: start; gap: 20px; margin-top: 24px; }
+.lform.ok .next { margin: 0; padding-left: 1.2em; }
 .lform.ok .disc { width: 56px; height: 56px; }
 
 /* ---------- 404: a TV with no input ---------- */

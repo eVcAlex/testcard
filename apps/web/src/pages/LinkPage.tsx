@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { formatLinkCode, normaliseLinkCode } from "@testcard/core/src/sync/linkCrypto.ts";
 import { type FormEvent, useEffect, useState } from "react";
+import { WATCH_HREF, WEB_PLAYER_LIVE } from "../site.ts";
 import { BackChip, Disc, Meta } from "../ui/parts.tsx";
 import { type Field, LinkError, type Mode, linkTv } from "../link/linkTv.ts";
 
@@ -49,19 +50,32 @@ export function LinkPage() {
   }, [link.isSuccess]);
 
   if (link.isSuccess) {
+    const created = link.variables?.mode === "signup";
     return (
       <section className="page-in wrap" key="done">
         <BackChip />
         <div className="lform ok" role="status">
           <Disc />
           <h1 className="ok-h" tabIndex={-1}>You're signed in on your TV</h1>
-          <p>Your TV is loading your sources now. You can close this page.</p>
+          {created ? (
+            <>
+              <p>Your account is ready, with no sources yet. Add one, and a profile if you want one, from any of these. You can skip it and do it later.</p>
+              <ul className="next">
+                <li>On your TV: open <b>Sources</b>.</li>
+                <li>In the Windows app: <b>Sources</b>.</li>
+                {WEB_PLAYER_LIVE && <li>In your browser: <a href={WATCH_HREF}>open the web player</a>, then <b>Manage</b>.</li>}
+              </ul>
+            </>
+          ) : (
+            <p>Your TV is loading your sources now. You can close this page. To add or change one later, use <b>Sources</b> on the TV{WEB_PLAYER_LIVE ? <>, in the Windows app, or <a href={WATCH_HREF}>in your browser</a></> : " or in the Windows app"}.</p>
+          )}
         </div>
       </section>
     );
   }
 
-  const choose = (next: Mode) => { setMode(next); setError(undefined); };
+  // The password boxes are cleared and rebuilt on a switch, so a saved password the browser filled in sign-in mode is not carried into sign-up.
+  const choose = (next: Mode) => { setMode(next); setError(undefined); setPassword(""); setConfirm(""); };
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setError(undefined);
@@ -104,7 +118,7 @@ export function LinkPage() {
               </div>
               <div className="fld">
                 <label htmlFor="link-password">Password</label>
-                <input id="link-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} aria-describedby={describedBy("password")} />
+                <input key={mode} id="link-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={signup ? "new-password" : "current-password"} placeholder={signup ? "At least 8 characters" : "Your Testcard password"} aria-invalid={invalid("password")} aria-describedby={describedBy("password")} />
               </div>
               {signup && (
                 <div className="fld">

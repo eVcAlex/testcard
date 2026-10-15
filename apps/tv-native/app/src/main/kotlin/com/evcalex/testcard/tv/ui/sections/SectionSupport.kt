@@ -177,7 +177,7 @@ internal fun List<CategoryRow>.browsable() = filter { !hiddenTags(it.tags) }.map
 
 internal const val BROWSE = "browse"
 internal const val NOTHING_FROM_SOURCE = "Nothing from this source. Use the Source button at the top right to switch."
-internal const val SIGN_IN_FIRST = "Sign in to the account your computer uses and its sources will load here. Open Sources to see progress."
+internal const val SIGN_IN_FIRST = "Sign in to your Testcard account and its sources will load here. Open Sources to see progress."
 
 
 
