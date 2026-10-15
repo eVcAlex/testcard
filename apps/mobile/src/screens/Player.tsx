@@ -23,6 +23,7 @@ import { fetchGuide, type Airing } from "../playback/airing";
 import { autoCaptionTrack, CAPTION_SETTINGS, nativeCaptionStyle, settingLabel, stepSetting, type CaptionPrefs, type CaptionSetting } from "../playback/captions";
 import { audioLanguage as languageOfAudio, audioName, autoAudioTrack, nextFit, nextSpeed, pictureLabel, readPictureFit, speedLabel, writePictureFit } from "../playback/viewing";
 import { usePlaybackHealth } from "./player/usePlaybackHealth";
+import { readSwitchOnBuffering } from "../playback/bufferSwitch";
 import { Failure, explain } from "./player/Failure";
 import { clock, clock24, catchupEntries, two, type CatchupEntry } from "./player/format";
 import { INK, u, Key, TextKey, OptionKey, CcGlyph, NextGlyph, Scrim, Chip, ChevronGlyph, ChannelGlyph, PauseGlyph, PlayGlyph, SkipGlyph } from "./player/keys";
@@ -197,6 +198,8 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
   const { db, sync, version, captions, setCaptions, audioLanguage, setAudioLanguage } = useApp();
   const vod = item.kind !== "channel";
   const timeshift = catchup !== undefined;
+  // Read when a channel opens: a change in Settings applies from the next one.
+  const switchOnBuffering = useMemo(() => readSwitchOnBuffering(db), [db]);
   const started = useRef(false);
 
   const player = useVideoPlayer(stream.url, (instance) => {
@@ -214,7 +217,7 @@ function Playing({ item, stream, catchup, onCatchup, seriesId, channels, onZap, 
     instance.play();
   });
 
-  const { status, error, isPlaying, facts, everPlayed, failing, otherServer, fellBackShown, behindLive, goLive } = usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, fellBack, onFailOver, onServerDown });
+  const { status, error, isPlaying, facts, everPlayed, failing, otherServer, fellBackShown, behindLive, goLive } = usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, switchOnBuffering, fellBack, onFailOver, onServerDown });
   // Live TV: what is on now, for the programme bar. Asked once, then again when that programme ends.
   const [airing, setAiring] = useState<Airing | null>(null);
   useEffect(() => {

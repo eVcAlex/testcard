@@ -219,7 +219,7 @@ class MultiViewModel(private val app: AppController, private val context: Contex
         tile.wasReady = false
         if (fresh) {
             tile.playedOnce = false
-            tile.health = PlaybackHealth(false, false, tile.at + 1 < tile.order.size, null, ::nowMs)
+            tile.health = PlaybackHealth(false, false, tile.at + 1 < tile.order.size, null, ::nowMs, app.switchOnBuffering)
         }
         if (tile.state != TileState.Playing || fresh) tile.state = TileState.Starting
         tile.loadJob = scope.launch {

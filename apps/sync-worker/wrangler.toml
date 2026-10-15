@@ -26,11 +26,18 @@ routes = [
 directory = "../web/dist"
 not_found_handling = "404-page"
 html_handling = "drop-trailing-slash" # canonical URLs have no trailing slash: /download is the page, /download/ redirects to it
-run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/approve", "/link/poll", "/sync/*", "/guides/*", "/waitlist"]
+run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/approve", "/link/poll", "/sync/*", "/guides/*", "/watch/p", "/waitlist"]
 
 # SYNC_AUTH_SECRET (better-auth signing/encryption secret) is deliberately NOT declared here: a [vars]
 # entry is deployed as a plain var and replaces the real secret. Deployed: `wrangler secret put
 # SYNC_AUTH_SECRET`. Local `wrangler dev`: .dev.vars (gitignored). Worker tests: vitest.config.ts.
+
+# The web player (apps/player, served at /watch) streams through /watch/p. Off until switched on: this makes the Worker carry
+# viewers' video, so check Cloudflare's terms and the bill first. Change to "on" and deploy to enable.
+[vars]
+WEB_PLAYER = "off"
+# Megabytes of video one account may stream through the web player per UTC day (20 GB). 0 removes the cap.
+WATCH_DAILY_CAP_MB = "20480"
 
 [[d1_databases]]
 binding = "DB"

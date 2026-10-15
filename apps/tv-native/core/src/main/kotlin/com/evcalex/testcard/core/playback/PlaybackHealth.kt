@@ -15,9 +15,13 @@ sealed interface HealthAction {
     class TryOtherServer(val raw: String) : HealthAction
 }
 
-/** A live picture stuck refilling this long is reloaded, at most [MAX_RELOADS] times (PLY-06). */
+/**
+ * A live picture that stops to refill is moved to the next feed once it has been stuck [BUFFER_FAILOVER_MS] (PLY-06), if
+ * there is one. With none, it is reloaded after [STUCK_AFTER_MS], at most [MAX_RELOADS] times.
+ */
 const val STUCK_AFTER_MS = 12_000L
 const val MAX_RELOADS = 4
+const val BUFFER_FAILOVER_MS = 3_000L
 
 /** How long a live feed may take to show a picture before the next one is tried (PLY-03). */
 const val START_WITHIN_MS = 15_000L
@@ -47,6 +51,8 @@ class PlaybackHealth(
     private val moreFeeds: Boolean,
     fellBack: String?,
     private val now: () -> Long,
+    /** Off in Settings: a buffering live picture is reloaded in place and never moved to another feed for it. */
+    private val switchOnBuffering: Boolean = true,
 ) {
     /** The note to show once the picture is up on a feed that was not the first; may be set after the player has started. */
     var fellBack: String? = fellBack
@@ -124,12 +130,17 @@ class PlaybackHealth(
     private fun evaluate(): List<HealthAction> {
         val actions = ArrayList<HealthAction>()
         val t = now()
-        // Live TV: a picture that stays stuck refilling is asked for again from the start, a few times, before giving up.
+        // Live TV: a picture that stops to refill is moved to the next feed at once (a moment's grace, so a blip is not
+        // one); with no other feed it is asked for again from the start, a few times, before giving up.
         val since = loadingSince
-        if (!vod && !timeshift && status == PlayerStatus.Loading && everPlayed && reloads < MAX_RELOADS && since != null && t - since >= STUCK_AFTER_MS) {
-            reloads += 1
-            loadingSince = t
-            actions += HealthAction.Reload
+        if (!vod && !timeshift && status == PlayerStatus.Loading && everPlayed && since != null) {
+            if (moreFeeds && switchOnBuffering) {
+                if (t - since >= BUFFER_FAILOVER_MS) { loadingSince = null; actions += HealthAction.FailOver }
+            } else if (reloads < MAX_RELOADS && t - since >= STUCK_AFTER_MS) {
+                reloads += 1
+                loadingSince = t
+                actions += HealthAction.Reload
+            }
         }
         // With no other feed or copy left, a server that cannot be reached is tried on the source's other addresses.
         if (status == PlayerStatus.Error && !failing && !serverAsked) {

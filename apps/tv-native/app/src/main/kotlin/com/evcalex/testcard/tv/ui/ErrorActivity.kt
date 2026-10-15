@@ -27,6 +27,7 @@ class ErrorActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val message = intent.getStringExtra(MESSAGE) ?: ""
+        val where = intent.getStringExtra(WHERE) ?: ""
         setContent {
             TestcardTheme {
                 val focus = remember { FocusRequester() }
@@ -34,6 +35,7 @@ class ErrorActivity : ComponentActivity() {
                 Column(Modifier.fillMaxSize().background(Palette.background).padding(horizontal = 120.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically)) {
                     AppText("Something went wrong", 40, Palette.foreground, FontWeight.SemiBold)
                     AppText(message, 22, Palette.faint, maxLines = 4)
+                    if (where.isNotEmpty()) AppText(where, 16, Palette.faint, maxLines = 4)
                     AppButton("Try again", {
                         startActivity(Intent(this@ErrorActivity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
                         finish()
@@ -45,5 +47,6 @@ class ErrorActivity : ComponentActivity() {
 
     companion object {
         const val MESSAGE = "message"
+        const val WHERE = "where"
     }
 }

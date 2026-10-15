@@ -24,11 +24,19 @@ class TestcardApp : Application() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             runCatching {
-                startActivity(Intent(this, ErrorActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra(ErrorActivity.MESSAGE, error.message ?: error.javaClass.simpleName))
+                startActivity(Intent(this, ErrorActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra(ErrorActivity.MESSAGE, error.message ?: error.javaClass.simpleName).putExtra(ErrorActivity.WHERE, whereItHappened(error)))
             }
             previous?.uncaughtException(thread, error)
         }
         controller = AppController(this)
+    }
+
+    /** Where the error came from (its first two frames and Testcard's own first two), so a photo of the crash screen says which screen it was. */
+    private fun whereItHappened(error: Throwable): String {
+        val frames = generateSequence(error) { it.cause }.last().stackTrace
+        // A layout error is raised deep inside Compose, so the top of the stack alone would not name the screen: add Testcard's first frame.
+        val ours = (frames.take(2) + frames.filter { it.className.startsWith("com.evcalex.testcard") }.take(2)).distinct()
+        return ours.joinToString("\n") { "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}" }
     }
 
     private fun processName(): String =

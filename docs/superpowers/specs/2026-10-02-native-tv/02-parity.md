@@ -237,7 +237,7 @@ Paths: `m/` = `apps/mobile/`, `c/` = `packages/core/src/`, `s/` = `packages/sync
   - Message while switching: "Trying another feed...". Once playing: "That feed wouldn't play. Playing the X feed instead." (5 s).
 - **PLY-04 Film copies** (`listMoviePlayOrder`). 4K and the first source come first. The next copy is tried only if this one never really played (under 8 s). Its resume point is carried over. Message: "Playing the 4K copy from S instead".
 - **PLY-05 Backup servers.** Once per play, on an unreachable error: "The provider's server isn't answering. Trying its other addresses...", then a re-resolve if another server answers.
-- **PLY-06 Stuck live.** A live stream stuck loading 12 s after it had played is reloaded, at most 4 times.
+- **PLY-06 Stuck live.** A live stream that has played and then sits loading for 3 s moves to the next feed, if there is one. With none, 12 s of loading reloads it, at most 4 times.  Settings has a switch ("switch to another feed when a channel buffers", on by default; Fire TV Settings, and Playback in the Android app) that turns the 3 s switch off, leaving the reload.
 - **PLY-07 Behind live.** After a pause longer than 2 s, the pill reads **BEHIND LIVE** and **Live** reloads the stream.
 - **PLY-08 Failure screen.**
   - Messages:

@@ -185,7 +185,7 @@ fun Playing(
     remember { keys.begin(); if (item.kind == PlayKind.Channel && !timeshift) history.see(item); true }
 
     // ---- stream health
-    val health = remember { PlaybackHealth(vod, timeshift, moreFeeds, fellBack, ::nowMs) }
+    val health = remember { PlaybackHealth(vod, timeshift, moreFeeds, fellBack, ::nowMs, app.switchOnBuffering) }
     health.fellBack = fellBack
     var healthTick by remember { mutableIntStateOf(0) }
     var errored by remember { mutableStateOf(false) }

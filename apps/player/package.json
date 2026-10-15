@@ -1,0 +1,25 @@
+{
+  "name": "@testcard/player",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@testcard/core": "workspace:*",
+    "@testcard/sync-schema": "workspace:*",
+    "hls.js": "1.6.0",
+    "mpegts.js": "1.8.0",
+    "preact": "11.0.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "2.10.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12",
+    "vitest": "^3.2.4"
+  }
+}

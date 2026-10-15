@@ -97,6 +97,9 @@ private const val SERVERS_AFTER_LAUNCH_MS = 10_000L
 /** Where the source pick is kept between launches: this device's own setting, not synced. */
 private const val SOURCE_PICK_KEY = "ui:source"
 
+/** Where the "switch feed when it buffers" choice is kept: "0" is off. */
+private const val SWITCH_ON_BUFFERING_KEY = "ui:switchOnBuffering"
+
 /**
  * Owns the database and the sync loop for the life of the app (`state/app.tsx`). Every field the screens read is Compose
  * state; every operation runs on a background dispatcher. The screens re-read their data when [version] changes.
@@ -154,6 +157,10 @@ class AppController(context: Context) {
         internal set
     var audioLanguage by mutableStateOf<String?>(null)
         internal set
+
+    /** Whether a live picture that starts buffering moves to the channel's next feed (on by default); this device's own setting, not synced. */
+    var switchOnBuffering by mutableStateOf(true)
+        private set
     var profiles by mutableStateOf<List<Profile>>(emptyList())
         private set
     internal var profileId by mutableStateOf(MAIN_PROFILE)
@@ -214,6 +221,7 @@ class AppController(context: Context) {
         profileId = first
         captions = db.read { it.readCaptionPrefs() }
         audioLanguage = db.read { it.readAudioLanguage() }
+        switchOnBuffering = db.read { connection -> connection.one("SELECT value FROM schema_meta WHERE key = ?", SWITCH_ON_BUFFERING_KEY) { it.getText(0) } } != "0"
         sourcePick = db.read { connection -> connection.one("SELECT value FROM schema_meta WHERE key = ?", SOURCE_PICK_KEY) { it.getText(0) }?.takeIf { it != "" } }
         // An update in place from the React Native app brings its logins along before sync looks for them.
         runCatching { Adoption.adoptSecrets(appContext, db, secrets) }
@@ -379,6 +387,11 @@ class AppController(context: Context) {
     fun pickSource(id: String?) {
         sourcePick = id
         scope.launch { db.write { it.run("INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)", SOURCE_PICK_KEY, id ?: "") } }
+    }
+
+    fun changeSwitchOnBuffering(on: Boolean) {
+        switchOnBuffering = on
+        scope.launch { db.write { it.run("INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)", SWITCH_ON_BUFFERING_KEY, if (on) "1" else "0") } }
     }
 
     private companion object {

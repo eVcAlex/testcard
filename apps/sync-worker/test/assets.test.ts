@@ -36,7 +36,7 @@ describe("the site and the API share one Worker", () => {
   it.each([
     ["GET", "/sync/pull"], ["POST", "/sync/push"], ["GET", "/sync/salt"], ["POST", "/sync/salt"],
     ["POST", "/guides/register"], ["GET", "/link/session"], ["GET", "/link/poll"], ["POST", "/link/start"],
-    ["POST", "/link/approve"], ["POST", "/waitlist"], ["GET", "/waitlist"], ["GET", "/auth/get-session"], ["GET", "/app/x.apk"],
+    ["POST", "/link/approve"], ["GET", "/watch/p"], ["POST", "/waitlist"], ["GET", "/waitlist"], ["GET", "/auth/get-session"], ["GET", "/app/x.apk"],
   ])("%s %s reaches the Worker, not the SPA shell", async (method, path) => {
     const res = await SELF.fetch(`https://example.com${path}`, { method, headers: { "sec-fetch-mode": "navigate", accept: "text/html" } });
     expect(await res.text()).not.toContain('<div id="root">');

@@ -4,9 +4,13 @@ import type { VideoPlayer } from "expo-video";
 import { streamFacts } from "../../playback/streamInfo";
 import type { ResolvedStream } from "../../playback/resolveStream";
 
-/** A live picture stuck refilling this long is reloaded, at most this many times. */
+/**
+ * A live picture that stops to refill is moved to the next feed once it has been stuck BUFFER_FAILOVER_MS, if there is
+ * one. With none, it is reloaded after STUCK_AFTER_MS, at most MAX_RELOADS times.
+ */
 const STUCK_AFTER_MS = 12_000;
 const MAX_RELOADS = 4;
+const BUFFER_FAILOVER_MS = 3000;
 /** How long a live feed may take to show a picture before the next one is tried. */
 const START_WITHIN_MS = 15_000;
 /** A live picture paused for longer than this has fallen behind the broadcast. */
@@ -17,7 +21,7 @@ const BEHIND_AFTER_MS = 2000;
  * feed or copy when one dies or never starts, try the source's other addresses, say which feed took over, and notice
  * when a paused live picture has fallen behind the broadcast.
  */
-export function usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, fellBack, onFailOver, onServerDown }: { player: VideoPlayer; stream: ResolvedStream; vod: boolean; timeshift: boolean; moreFeeds: boolean; fellBack: string | undefined; onFailOver: () => void; onServerDown: (raw: string) => Promise<boolean> | null }) {
+export function usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, switchOnBuffering, fellBack, onFailOver, onServerDown }: { player: VideoPlayer; stream: ResolvedStream; vod: boolean; timeshift: boolean; moreFeeds: boolean; switchOnBuffering: boolean; fellBack: string | undefined; onFailOver: () => void; onServerDown: (raw: string) => Promise<boolean> | null }) {
   const { status, error } = useEvent(player, "statusChange", { status: player.status });
   const { isPlaying } = useEvent(player, "playingChange", { isPlaying: player.playing });
   const { videoTrack } = useEvent(player, "videoTrackChange", { videoTrack: player.videoTrack });
@@ -26,17 +30,23 @@ export function usePlaybackHealth({ player, stream, vod, timeshift, moreFeeds, f
   useEffect(() => {
     if (status === "readyToPlay") everPlayed.current = true;
   }, [status]);
-  // Live TV: a picture that stays stuck refilling is asked for again from the start, a few times, before giving up.
+  // Live TV: a picture that stops to refill is moved to the next feed at once (a moment's grace, so a blip is not one),
+  // unless that is turned off in Settings; with no other feed to go to it is asked for again from the start, a few times, before giving up.
   const reloads = useRef(0);
   useEffect(() => {
-    if (vod || timeshift || status !== "loading" || !everPlayed.current || reloads.current >= MAX_RELOADS) return;
+    if (vod || timeshift || status !== "loading" || !everPlayed.current) return;
+    if (moreFeeds && switchOnBuffering) {
+      const timer = setTimeout(onFailOver, BUFFER_FAILOVER_MS);
+      return () => clearTimeout(timer);
+    }
+    if (reloads.current >= MAX_RELOADS) return;
     const timer = setTimeout(() => {
       reloads.current += 1;
       player.replace(stream.url);
       player.play();
     }, STUCK_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [player, status, stream.url, timeshift, vod]);
+  }, [player, status, stream.url, timeshift, vod, moreFeeds, switchOnBuffering, onFailOver]);
   // A live channel that errors is tried on its next feed, if it has one.
   // A film's next copy is only tried when this one never really played (a 4K copy the hardware cannot decode fails
   // just after it is ready): one that fails part-way through says so instead.
