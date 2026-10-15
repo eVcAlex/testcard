@@ -71,7 +71,7 @@ export function LinkPage() {
           <h1 className="ok-h" tabIndex={-1}>You're signed in on your TV</h1>
           {created ? (
             <>
-              <p>Your account is ready, with no sources yet. Add one, and a profile if you want one, from any of these. You can skip it and do it later.</p>
+              <p>Your account is ready. Add a source and your live TV, films and series appear on every device you sign in on, with your favourites and where you got up to kept in step. You can do it later.</p>
               <ul className="next">
                 <li>On your TV: open <b>Sources</b>.</li>
                 <li>In the Windows app: <b>Sources</b>.</li>
