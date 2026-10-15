@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CONTACT_EMAIL, ORG_NAME, PRODUCT_FULL_NAME, RELEASE_STATE, WATCH_HREF, WEB_PLAYER_LIVE } from "../site.ts";
+import { CONTACT_EMAIL, MANAGE_HREF, ORG_NAME, PRODUCT_FULL_NAME, RELEASE_STATE, WATCH_HREF, WEB_PLAYER_LIVE } from "../site.ts";
 import { Mark } from "../ui/parts.tsx";
 import { ThemeToggle } from "./ThemeToggle.tsx";
 import { WaitlistLink } from "./WaitlistLink.tsx";
@@ -34,6 +34,7 @@ export function Footer() {
             {SITE.map(([to, label]) => <li key={to}><Link to={to} className="ftr-a">{label}</Link></li>)}
             {/* A separate page, so a plain anchor: a router link would land on this site's 404. */}
             {WEB_PLAYER_LIVE && <li><a href={WATCH_HREF} className="ftr-a">Watch in your browser</a></li>}
+            <li><a href={MANAGE_HREF} className="ftr-a">Manage sources and profiles</a></li>
           </ul>
         </nav>
       </div>

@@ -86,8 +86,8 @@ export function App() {
 
   if (account === undefined) return <SignIn onSignedIn={(opened) => {
     setAccount(opened);
-    // An account with nothing in it yet starts by adding a source.
-    if (opened.sources.length === 0) setManaging(true);
+    // An account with nothing in it yet starts by adding a source, and the site's "Manage" links land here too.
+    if (opened.sources.length === 0 || location.hash === "#manage") setManaging(true);
     else autoOpen(opened);
   }} />;
   if (managing) return <Manage account={account} onChanged={setAccount} onSignOut={leave} onDone={() => { setManaging(false); if (profile === undefined) autoOpen(account); }} />;

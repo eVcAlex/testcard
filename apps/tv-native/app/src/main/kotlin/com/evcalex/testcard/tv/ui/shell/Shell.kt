@@ -106,7 +106,9 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     if (!app.ready) { Box(Modifier.fillMaxSize().background(Palette.background), contentAlignment = Alignment.Center) { AppText("testcard", 40, Palette.foreground, FontWeight.SemiBold) }; return }
     val status = app.status
     // Signed out (or the session ended): only the sign-in screen makes sense.
-    if (status.account != SyncAccount.SignedIn) { SignInScreen(app); return }
+    // Whether this run began signed out: a viewer who has just signed in is asked who is watching once, to add a profile or carry on.
+    val signedOutThisRun = remember { mutableStateOf(false) }
+    if (status.account != SyncAccount.SignedIn) { signedOutThisRun.value = true; SignInScreen(app); return }
 
     val sources = app.sources
     val pickedSource = app.sourcePick
@@ -121,8 +123,8 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     var exitHint by remember { mutableStateOf(false) }
     var goTo by remember { mutableStateOf<String?>(null) }
     var lastBack by remember { mutableStateOf(0L) }
-    // "Who's watching?": on launch when there is more than one profile, and from the profile button in the nav bar.
-    var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else null) }
+    // "Who's watching?": on launch when there is more than one profile, right after signing in, and from the profile button in the nav bar.
+    var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else if (signedOutThisRun.value) "offer" else null) }
     val holder = rememberSaveableStateHolder()
 
     val sourceNames = remember(sourceId, sources) {
@@ -133,7 +135,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
         WhoIsWatching(
             app,
             onDone = { choosing = null; route = Route.Shell; section = Section.Home; browsing = null },
-            onCancel = if (choosing == "switch") ({ choosing = null }) else null,
+            onCancel = if (choosing == "switch" || choosing == "offer") ({ choosing = null }) else null,
             onExit = exit,
         )
         return

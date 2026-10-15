@@ -17,7 +17,7 @@ describe("Footer", () => {
   it("links every page, the waitlist, and the font licence", () => {
     render(<Footer />);
     const nav = screen.getByRole("navigation", { name: "Footer" });
-    expect(within(nav).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/", "/features", "/setup", "/faq", "/download", "/changelog", "/link", "/privacy", "/terms"]);
+    expect(within(nav).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/", "/features", "/setup", "/faq", "/download", "/changelog", "/link", "/privacy", "/terms", "/watch#manage"]);
     expect(screen.getByRole("link", { name: "Join the beta waitlist" })).toHaveAttribute("href", "/download");
     expect(screen.getByRole("link", { name: /open font license/i })).toHaveAttribute("href", "/fonts/OFL-PlusJakartaSans.txt");
   });
