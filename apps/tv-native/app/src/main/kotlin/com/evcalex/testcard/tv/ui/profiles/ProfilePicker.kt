@@ -73,13 +73,13 @@ private fun parseColour(hex: String) = Color(android.graphics.Color.parseColor(h
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WhoIsWatching(app: AppController, onDone: () -> Unit, onCancel: (() -> Unit)?, onExit: () -> Unit) {
+fun WhoIsWatching(app: AppController, onDone: () -> Unit, onCancel: (() -> Unit)?, onExit: () -> Unit, startAdding: Boolean = false) {
     val profiles = app.profiles
     val current = app.profile
     var asking by remember { mutableStateOf<Profile?>(null) }
     var switching by remember { mutableStateOf<Profile?>(null) }
     // Adding or changing profiles from here, before anyone is chosen: "add" opens straight on a new one's name.
-    var managing by remember { mutableStateOf<String?>(null) }
+    var managing by remember { mutableStateOf<String?>(if (startAdding) "add" else null) }
     val scope = rememberCoroutineScope()
     val start = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { start.requestFocus() } }
@@ -136,6 +136,22 @@ fun WhoIsWatching(app: AppController, onDone: () -> Unit, onCancel: (() -> Unit)
         PinPad("Enter ${profile.name}'s PIN", { digits ->
             if (!pinMatches(profile, digits)) false else { asking = null; open(profile); true }
         }, { asking = null })
+    }
+}
+
+/** Right after signing in to an account with only the default profile: make another, or carry on with the default. */
+@Composable
+fun ProfileOffer(onCreate: () -> Unit, onSkip: () -> Unit) {
+    val start = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { start.requestFocus() } }
+    BackHandler { onSkip() }
+    Column(Modifier.fillMaxSize().background(Palette.background).padding(horizontal = 120.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically)) {
+        AppText("Create a profile?", 56, Palette.foreground, FontWeight.SemiBold, letterSpacing = -0.5f)
+        AppText("Profiles keep each person's favourites and place in films apart. You can add more any time in Settings.", 28, Palette.muted)
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            AppButton("Create a profile", onCreate, primary = true, focusRequester = start)
+            AppButton("Skip", onSkip)
+        }
     }
 }
 

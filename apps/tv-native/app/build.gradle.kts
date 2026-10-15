@@ -70,6 +70,9 @@ android {
         }
     }
 
+    // The beta app has its own icon and banner (a BETA ribbon); release builds only.
+    if (betaApp) sourceSets.getByName("release").res.srcDir("src/beta/res")
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

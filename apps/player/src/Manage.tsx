@@ -70,7 +70,7 @@ export function Manage({ account, onChanged, onDone, onSignOut }: { account: Acc
 
   return (
     <main class="manage">
-      <h1>Your account</h1>
+      <h1 class="brand-line">Your account</h1>
       <p class="small">Changes here reach your TV and other devices the next time they sync.</p>
       {notice !== undefined ? <p class="muted" role="status">{notice}</p> : null}
       {error !== undefined ? <p class="problem" role="alert">{error}</p> : null}
@@ -93,7 +93,7 @@ export function Manage({ account, onChanged, onDone, onSignOut }: { account: Acc
       <ul class="rows">
         {account.profiles.map((profile) => (
           <li key={profile.id}>
-            <span class="avatar small-avatar" style={{ background: PROFILE_COLOURS[profile.colour % PROFILE_COLOURS.length] }}>{profile.name.slice(0, 1).toUpperCase()}</span>
+            <span class="disc small-avatar" style={{ background: PROFILE_COLOURS[profile.colour % PROFILE_COLOURS.length] }}>{profile.name.slice(0, 1).toUpperCase()}</span>
             <span>{profile.name}{profile.pin !== null ? " 🔒" : ""}</span>
             <PinGate profile={profile}>
               <button class="btn btn--ghost" disabled={busy} onClick={() => setEditing({ kind: "profile", id: profile.id })}>Edit</button>
@@ -104,8 +104,8 @@ export function Manage({ account, onChanged, onDone, onSignOut }: { account: Acc
       </ul>
       <button class="btn btn--primary" disabled={busy || account.profiles.length >= MAX_PROFILES} onClick={() => setEditing({ kind: "profile", id: undefined })}>Add a profile</button>
 
-      <p>
-        <button class="btn btn--ghost" disabled={account.sources.length === 0} onClick={onDone}>{account.sources.length === 0 ? "Add a source to start watching" : "Done"}</button>{" "}
+      <p class="manage-foot">
+        <button class="btn btn--primary" disabled={account.sources.length === 0} onClick={onDone}>{account.sources.length === 0 ? "Add a source to start watching" : "Done"}</button>
         <button class="btn btn--ghost" onClick={onSignOut}>Sign out</button>
       </p>
     </main>
@@ -143,7 +143,7 @@ function SourceForm({ initial, busy, error, onSave, onCancel }: { initial: Sourc
   const [kind, setKind] = useState<SourceDraft["kind"]>(initial?.kind ?? "xtream");
   const [content, setContent] = useState((initial ?? emptyDraft("xtream")).content);
   return (
-    <main class="signin manage">
+    <main class="manage">
       <h1>{editing ? "Change source" : "Add a source"}</h1>
       <form onSubmit={(event) => {
         event.preventDefault();
@@ -185,7 +185,7 @@ function SourceForm({ initial, busy, error, onSave, onCancel }: { initial: Sourc
 function ProfileForm({ profile, busy, error, count, onSave, onCancel }: { profile: WebProfile | undefined; busy: boolean; error: string | undefined; count: number; onSave: (change: { name: string; colour: number }) => void; onCancel: () => void }) {
   const [colour, setColour] = useState(profile?.colour ?? count % PROFILE_COLOURS.length);
   return (
-    <main class="signin manage">
+    <main class="manage">
       <h1>{profile !== undefined ? "Change profile" : "Add a profile"}</h1>
       <form onSubmit={(event) => {
         event.preventDefault();
@@ -194,7 +194,7 @@ function ProfileForm({ profile, busy, error, count, onSave, onCancel }: { profil
         <label>Name<input class="input" name="name" required maxLength={20} defaultValue={profile?.name ?? ""} /></label>
         <div class="swatches" role="radiogroup" aria-label="Colour">
           {PROFILE_COLOURS.map((value, index) => (
-            <button type="button" role="radio" aria-checked={colour === index} aria-label={`Colour ${index + 1}`} class={`avatar swatch${colour === index ? " on" : ""}`} style={{ background: value }} onClick={() => setColour(index)} />
+            <button type="button" role="radio" aria-checked={colour === index} aria-label={`Colour ${index + 1}`} class={`disc swatch${colour === index ? " on" : ""}`} style={{ background: value }} onClick={() => setColour(index)} />
           ))}
         </div>
         {profile?.pin != null ? <p class="small">The PIN stays as it is; change it on a TV.</p> : null}

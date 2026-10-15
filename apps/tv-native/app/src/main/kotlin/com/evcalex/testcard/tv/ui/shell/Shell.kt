@@ -38,6 +38,7 @@ import com.evcalex.testcard.tv.ui.components.SetupOverlay
 import com.evcalex.testcard.tv.ui.components.SourcePicker
 import com.evcalex.testcard.tv.ui.components.Toast
 import com.evcalex.testcard.tv.ui.components.trapFocus
+import com.evcalex.testcard.tv.ui.profiles.ProfileOffer
 import com.evcalex.testcard.tv.ui.profiles.WhoIsWatching
 import com.evcalex.testcard.tv.ui.signin.SignInScreen
 import com.evcalex.testcard.tv.ui.theme.Palette
@@ -124,19 +125,24 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     var goTo by remember { mutableStateOf<String?>(null) }
     var lastBack by remember { mutableStateOf(0L) }
     // "Who's watching?": on launch when there is more than one profile, right after signing in, and from the profile button in the nav bar.
-    var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else if (signedOutThisRun.value) "offer" else null) }
+    var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else if (signedOutThisRun.value && app.profiles.size == 1) "offer" else null) }
     val holder = rememberSaveableStateHolder()
 
     val sourceNames = remember(sourceId, sources) {
         if (sourceId == null && sources.count { it.movies + it.series > 0 } > 1) sources.associate { it.id to it.name } else null
     }
 
+    if (choosing == "offer") {
+        ProfileOffer(onCreate = { choosing = "create" }, onSkip = { choosing = null })
+        return
+    }
     if (choosing != null) {
         WhoIsWatching(
             app,
             onDone = { choosing = null; route = Route.Shell; section = Section.Home; browsing = null },
-            onCancel = if (choosing == "switch" || choosing == "offer") ({ choosing = null }) else null,
+            onCancel = if (choosing == "switch" || choosing == "create") ({ choosing = null }) else null,
             onExit = exit,
+            startAdding = choosing == "create",
         )
         return
     }

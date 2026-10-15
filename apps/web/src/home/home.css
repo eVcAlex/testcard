@@ -18,6 +18,7 @@
   .hero { --hs: clamp(46px, 10.4vw, 200px); min-height: max(100svh, 640px); justify-content: center; padding: 0; }
   .hl2 { justify-content: flex-end; }
   .hl3 { padding-left: 0.6em; }
+  .hero-h { line-height: 1.02; }
   .hero-p { position: absolute; top: 50%; transform: translateY(-50%); left: calc(var(--g) + var(--hs) * 1.95); max-width: 250px; margin: 0; font-size: 17px; }
   .corner { display: inline-flex; }
 }
