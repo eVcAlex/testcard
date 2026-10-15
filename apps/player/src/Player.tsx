@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { FeedHealth } from "./health.ts";
+import { FeedHealth, Reconnects } from "./health.ts";
 import { Icon } from "./Icon.tsx";
 import { viaProxy } from "./proxy.ts";
 import { nowAndNext, type Programme } from "./xtream.ts";
@@ -85,6 +85,9 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [started, setStarted] = useState(false);
   const [idle, setIdle] = useState(false);
+  const reconnects = useMemo(() => new Reconnects(() => Date.now()), []);
+  const quiet = useRef(false);
+  const resumeFrom = useRef<number | undefined>(undefined);
   const switchRef = useRef(switchOn);
   switchRef.current = switchOn;
   const current = candidates[at];
@@ -100,14 +103,29 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       if (request.live && at + 1 < candidates.length) setAt(at + 1);
       else setError(why);
     };
+    // A quiet reconnect keeps the picture's frame and shows no "Tuning..." over it.
+    const reconnecting = quiet.current;
+    quiet.current = false;
     setError(undefined);
-    setStarted(false);
+    if (!reconnecting) setStarted(false);
+    let played = false;
+    /** The stream was lost: if it had been playing, pick it up again without a word; otherwise move on or fail. */
+    const lost = (why: string) => {
+      if (gone) return;
+      if (played && reconnects.take()) {
+        quiet.current = true;
+        if (!request.live && element.currentTime > 5) resumeFrom.current = element.currentTime;
+        setAttempt((value) => value + 1);
+      } else next(why);
+    };
     const source = viaProxy(current.url);
     const kind = kindOf(current.url);
 
     let said = false;
     const onPlaying = () => {
       health.onPlaying();
+      reconnects.onPlaying();
+      played = true;
       setStarted(true);
       if (said) return;
       said = true;
@@ -118,6 +136,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
     };
     const onWaiting = () => health.onWaiting();
     const onFail = () => {
+      if (played) return lost(element.error?.message || "The stream stopped.");
       if (health.onError() === "failover") next("");
       else {
         const browser = element.error?.message || "This could not be played.";
@@ -137,7 +156,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       if (!request.live && element.currentTime > 5) request.onPlace?.(element.currentTime, Number.isFinite(element.duration) ? element.duration : null);
     };
     if (!request.live) {
-      const place = request.resumeAt;
+      const place = resumeFrom.current ?? request.resumeAt;
       if (place !== undefined && place > 5) element.addEventListener("loadedmetadata", () => (element.currentTime = place), { once: true });
       saved = setInterval(() => !element.paused && keep(), 10_000);
       element.addEventListener("pause", keep);
@@ -151,7 +170,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
         if (Hls !== undefined && Hls.isSupported()) {
           const hls = new Hls({ lowLatencyMode: false });
           hls.on(Hls.Events.ERROR, (_, data) => {
-            if (data.fatal) next(`The stream stopped (${data.details}).`);
+            if (data.fatal) lost(`The stream stopped (${data.details}).`);
           });
           hls.loadSource(source);
           hls.attachMedia(element);
@@ -161,7 +180,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
           if (gone) return;
           if (!mpegts.isSupported()) return next("This browser cannot play this kind of stream.");
           const player = mpegts.createPlayer({ type: "mpegts", isLive: true, url: source });
-          player.on(mpegts.Events.ERROR, () => next("The stream stopped."));
+          player.on(mpegts.Events.ERROR, () => lost("The stream stopped."));
           player.attachMediaElement(element);
           player.load();
           stop = () => player.destroy();
@@ -190,7 +209,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       element.removeEventListener("error", onFail);
       stop();
     };
-  }, [at, attempt, candidates, current, request]);
+  }, [at, attempt, candidates, current, request, reconnects]);
 
   useEffect(() => {
     if (!request.live || request.guide === undefined) return;

@@ -48,3 +48,32 @@ export class FeedHealth {
     return null;
   }
 }
+
+/** Quiet reconnects allowed in a row, and how long a picture must run before they are counted afresh. */
+export const MAX_RECONNECTS = 3;
+export const STABLE_MS = 30_000;
+
+/**
+ * Cloudflare cuts a long stream now and then (runtime updates), and a provider drops a connection. A picture that had been
+ * playing and is lost is reconnected without the viewer being told, a few times; one that runs for {@link STABLE_MS}
+ * between losses starts the count again, so a stream that keeps failing still ends in the error screen.
+ */
+export class Reconnects {
+  private used = 0;
+  private playingSince: number | null = null;
+
+  constructor(private readonly now: () => number) {}
+
+  onPlaying(): void {
+    this.playingSince ??= this.now();
+  }
+
+  /** The picture was lost. True if it should be reconnected quietly. */
+  take(): boolean {
+    if (this.playingSince !== null && this.now() - this.playingSince >= STABLE_MS) this.used = 0;
+    this.playingSince = null;
+    if (this.used >= MAX_RECONNECTS) return false;
+    this.used += 1;
+    return true;
+  }
+}
