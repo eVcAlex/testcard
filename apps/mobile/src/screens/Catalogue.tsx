@@ -81,7 +81,7 @@ function MoviesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
   return (
     <BrowseScreen
       source={source}
-      empty={sourceId !== null ? "Nothing from this source. Use the Source button at the top right to switch." : "Sign in to the account your computer uses and its sources will load here. Open Sources to see progress."}
+      empty={sourceId !== null ? "Nothing from this source. Use the Source button at the top right to switch." : "Sign in to your Testcard account and its sources will load here. Open Sources to see progress."}
       onSelect={(item) => onOpen({ id: item.id, title: item.title })}
     />
   );
@@ -117,7 +117,7 @@ function SeriesBrowse({ sourceId, onOpen }: { sourceId: string | null; onOpen: (
   return (
     <BrowseScreen
       source={source}
-      empty={sourceId !== null ? "Nothing from this source. Use the Source button at the top right to switch." : "Sign in to the account your computer uses and its sources will load here. Open Sources to see progress."}
+      empty={sourceId !== null ? "Nothing from this source. Use the Source button at the top right to switch." : "Sign in to your Testcard account and its sources will load here. Open Sources to see progress."}
       onSelect={(item) => onOpen({ id: item.id, title: item.title })}
     />
   );

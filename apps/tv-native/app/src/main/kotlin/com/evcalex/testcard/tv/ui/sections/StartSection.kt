@@ -40,7 +40,7 @@ fun StartSection(ctx: SectionContext) {
         app.db.read { it.buildStartRows(sourceId, movies, series) }
     }
     if (built == null) { Loading(); return }
-    if (built.rows.isEmpty()) { EmptyNote("Nothing here yet. Sign in to the account your computer uses and its sources will load. Open Sources to see progress."); return }
+    if (built.rows.isEmpty()) { EmptyNote("Nothing here yet. Sign in to your Testcard account and its sources will load. Open Sources to see progress."); return }
     StartPage(ctx, built) { tick.intValue += 1 }
 }
 
