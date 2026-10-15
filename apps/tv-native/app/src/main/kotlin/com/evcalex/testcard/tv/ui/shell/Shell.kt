@@ -107,9 +107,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     if (!app.ready) { Box(Modifier.fillMaxSize().background(Palette.background), contentAlignment = Alignment.Center) { AppText("testcard", 40, Palette.foreground, FontWeight.SemiBold) }; return }
     val status = app.status
     // Signed out (or the session ended): only the sign-in screen makes sense.
-    // Whether this run began signed out: a viewer who has just signed in is asked who is watching once, to add a profile or carry on.
-    val signedOutThisRun = remember { mutableStateOf(false) }
-    if (status.account != SyncAccount.SignedIn) { signedOutThisRun.value = true; SignInScreen(app); return }
+    if (status.account != SyncAccount.SignedIn) { SignInScreen(app); return }
 
     val sources = app.sources
     val pickedSource = app.sourcePick
@@ -124,8 +122,10 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     var exitHint by remember { mutableStateOf(false) }
     var goTo by remember { mutableStateOf<String?>(null) }
     var lastBack by remember { mutableStateOf(0L) }
-    // "Who's watching?": on launch when there is more than one profile, right after signing in, and from the profile button in the nav bar.
-    var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else if (signedOutThisRun.value && app.profiles.size == 1) "offer" else null) }
+    // "Who's watching?": on launch when there is more than one profile, and from the profile button in the nav bar. The offer to add
+    // profiles is shown once, on the first device after the account was made; signing in to an existing account never shows it.
+    var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else if (app.freshAccount && app.profiles.size == 1) "offer" else null) }
+    LaunchedEffect(Unit) { app.freshAccount = false }
     val holder = rememberSaveableStateHolder()
 
     val sourceNames = remember(sourceId, sources) {

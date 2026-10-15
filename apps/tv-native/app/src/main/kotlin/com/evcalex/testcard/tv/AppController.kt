@@ -341,8 +341,15 @@ class AppController(context: Context) {
 
     // ---- account
 
-    suspend fun signIn(email: String, password: String) {
+    /**
+     * Set when the account was made moments ago (here, or on the link page), so the shell offers to add profiles once. Never set
+     * by signing in to an account that already existed.
+     */
+    var freshAccount by mutableStateOf(false)
+
+    suspend fun signIn(email: String, password: String, fresh: Boolean = false) {
         sync.signIn(email, password)
+        freshAccount = fresh
         status = sync.status.value
         launching = false
         bump()
@@ -350,6 +357,7 @@ class AppController(context: Context) {
 
     suspend fun signUp(email: String, password: String) {
         sync.signUp(email, password)
+        freshAccount = true
         status = sync.status.value
         launching = false
         bump()

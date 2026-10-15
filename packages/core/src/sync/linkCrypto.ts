@@ -13,6 +13,8 @@ export const LINK_ITERATIONS = 210_000;
 export interface LinkSecrets {
   readonly email: string;
   readonly password: string;
+  /** Set when the page has just made the account, so the TV can offer to add profiles once. */
+  readonly created?: boolean;
 }
 
 function toBase64(bytes: Uint8Array): string {
@@ -74,5 +76,5 @@ export async function openLinkSecrets(sealed: { blob: string; iv: string }, code
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromBase64(sealed.iv) }, await deriveKey(code, saltBase64, "decrypt"), fromBase64(sealed.blob));
   const parsed = JSON.parse(new TextDecoder().decode(plain)) as Partial<LinkSecrets>;
   if (typeof parsed.email !== "string" || typeof parsed.password !== "string") throw new Error("The link did not carry a sign-in.");
-  return { email: parsed.email, password: parsed.password };
+  return parsed.created === true ? { email: parsed.email, password: parsed.password, created: true } : { email: parsed.email, password: parsed.password };
 }

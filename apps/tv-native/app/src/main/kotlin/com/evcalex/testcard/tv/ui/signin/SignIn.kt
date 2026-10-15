@@ -155,7 +155,7 @@ private fun CodeSignIn(app: AppController, onTypeInstead: () -> Unit) {
                 phase = "waiting"
                 val secrets = session.waitForApproval()
                 phase = "signing"
-                app.signIn(secrets.email, secrets.password)
+                app.signIn(secrets.email, secrets.password, fresh = secrets.created)
             }
         } catch (failure: Exception) {
             if (failure is kotlinx.coroutines.CancellationException) throw failure

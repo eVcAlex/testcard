@@ -229,11 +229,12 @@ fun SetupOverlay(setup: SetupProgress, hint: String?) {
     val fill by animateFloatAsState(setup.fraction.toFloat(), tween(500), label = "fill")
     val sweep by rememberInfiniteTransition(label = "sweep").animateFloat(0f, 1f, infiniteRepeatable(tween(1600, easing = LinearEasing), RepeatMode.Restart), label = "glint")
     Box(Modifier.fillMaxSize().background(Palette.background)) {
-        Row(Modifier.padding(start = 120.dp, top = 90.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(14.dp).background(Palette.accent, CircleShape))
-            AppText("SETTING UP", 22, Palette.muted, FontWeight.Medium, letterSpacing = 3f)
-        }
-        Column(Modifier.fillMaxSize().padding(start = 120.dp, end = 120.dp, bottom = 120.dp), verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically)) {
+        // The kicker sits in the same column as the rest, so a long list of steps pushes it up rather than drawing over it.
+        Column(Modifier.fillMaxSize().padding(start = 120.dp, end = 120.dp, top = 90.dp, bottom = 120.dp), verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(14.dp).background(Palette.accent, CircleShape))
+                AppText("SETTING UP", 22, Palette.muted, FontWeight.Medium, letterSpacing = 3f)
+            }
             AppText("Getting Testcard ready...", 68, Palette.foreground, FontWeight.SemiBold, letterSpacing = -1.5f)
             Box(Modifier.width(BAR).height(8.dp).clip(CircleShape).background(Palette.cardActive)) {
                 Box(Modifier.fillMaxHeight().width(BAR * fill).background(Palette.accent, CircleShape))

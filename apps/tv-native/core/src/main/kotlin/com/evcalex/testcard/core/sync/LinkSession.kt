@@ -21,8 +21,8 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import kotlin.coroutines.coroutineContext
 
-/** What the link page sealed: the person's sign-in. */
-class LinkSecrets(val email: String, val password: String)
+/** What the link page sealed: the person's sign-in, and whether the page has just made the account. */
+class LinkSecrets(val email: String, val password: String, val created: Boolean = false)
 
 class LinkExpiredException : Exception("The code ran out.")
 
@@ -72,7 +72,8 @@ class LinkSession(
         val email = (parsed["email"] as? JsonPrimitive)?.takeIf { it.isString }?.content
         val password = (parsed["password"] as? JsonPrimitive)?.takeIf { it.isString }?.content
         if (email == null || password == null) throw IllegalStateException("The link did not carry a sign-in.")
-        return LinkSecrets(email, password)
+        val created = (parsed["created"] as? JsonPrimitive)?.content == "true"
+        return LinkSecrets(email, password, created)
     }
 }
 

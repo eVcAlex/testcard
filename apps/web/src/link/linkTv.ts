@@ -22,7 +22,7 @@ export async function linkTv(input: { code: string; email: string; password: str
 
   if (!isValidLinkCode(code)) throw new LinkError("That code is not 8 letters and numbers. Check your TV and try again.", "code");
   if (!email) throw new LinkError("Enter the email you use for Testcard.", "email");
-  if (!/^[^s@]+@[^s@]+.[^s@]+$/.test(email)) throw new LinkError("That does not look like an email address. Check it and try again.", "email");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new LinkError("That does not look like an email address. Check it and try again.", "email");
   if (!password) throw new LinkError("Enter your password.", "password");
   if (signup && password.length < 8) throw new LinkError("Use at least 8 characters for your password.", "password");
   if (signup && password !== input.confirm) throw new LinkError("The two passwords do not match.", "confirm");
@@ -54,7 +54,7 @@ export async function linkTv(input: { code: string; email: string; password: str
       throw new LinkError(errorMessage(e) ?? "Could not create the account. Check your details and try again.", "password");
     }
 
-    const sealed = await sealLinkSecrets({ email, password }, code, session.salt);
+    const sealed = await sealLinkSecrets({ email, password, created }, code, session.salt);
     try {
       await linkApprove({ lookup, ...sealed });
     } catch (e) {
