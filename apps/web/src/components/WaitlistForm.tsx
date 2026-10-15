@@ -69,7 +69,6 @@ export function WaitlistForm() {
           <button type="submit" className="btn" disabled={phase === "sending"}>
             {phase === "sending" ? "Joining..." : "Join the beta waitlist"}
           </button>
-          <p className="wl-promise">One email when the beta opens. That is all we send.</p>
           {phase === "error" && <p ref={message} className="wl-msg wl-error" role="alert" tabIndex={-1}>{error}</p>}
           {phase === "sending" && <p className="sr-only" role="status">Joining the waitlist</p>}
         </form>

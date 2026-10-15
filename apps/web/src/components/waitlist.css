@@ -10,7 +10,6 @@
 .wl-msg { margin: 0; padding: 12px 14px; border: 1.5px solid var(--on-accent); border-radius: 3px; font-weight: 600; }
 .wl-msg:focus { outline: 3px solid var(--on-accent); outline-offset: 2px; }
 .wl-error { background: rgba(154, 36, 16, 0.12); }
-.wl-promise { margin: 0; font-weight: 600; }
 .wl-data { font-size: 14px; opacity: 0.85; }
 /* visually hidden, still in the DOM for bots; aria-hidden and tabindex -1 keep people out */
 .wl-hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
