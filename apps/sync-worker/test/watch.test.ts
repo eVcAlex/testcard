@@ -83,6 +83,8 @@ describe("GET /watch/p", () => {
     expect(response.headers.get("content-range")).toBe("bytes 2-5/10");
     expect(await response.text()).toBe("2345");
     expect(new Headers(((spy.mock.calls[0] as unknown[])[1] as RequestInit).headers).get("range")).toBe("bytes=2-5");
+    // Providers 403 an unknown User-Agent; the apps send "node", so the proxy must too.
+    expect(new Headers(((spy.mock.calls[0] as unknown[])[1] as RequestInit).headers).get("user-agent")).toBe("node");
   });
 
   it("explains a provider it cannot reach", async () => {

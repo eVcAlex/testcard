@@ -21,6 +21,8 @@ export interface Env {
   readonly WATCH_ALLOW_PRIVATE?: string;
   /** Megabytes of proxied video one account may use per UTC day on the web player; unset or 0 for no cap. */
   readonly WATCH_DAILY_CAP_MB?: string;
+  /** Comma-separated extra page origins allowed to sign in. Dev only (`wrangler dev --remote`); never set in wrangler.toml. */
+  readonly AUTH_TRUSTED_ORIGINS?: string;
 }
 
 type AppEnv = { Bindings: Env; Variables: { userId: string } };
@@ -39,7 +41,7 @@ app.use("*", async (c, next) => {
 
 /** better-auth's `baseURL` taken from the request rather than its own inference (which its docs flag as "not recommended"). */
 function authFor(c: { env: Env; req: { url: string } }) {
-  return createAuth(c.env.DB, c.env.SYNC_AUTH_SECRET, new URL(c.req.url).origin);
+  return createAuth(c.env.DB, c.env.SYNC_AUTH_SECRET, new URL(c.req.url).origin, c.env.AUTH_TRUSTED_ORIGINS);
 }
 
 app.on(["GET", "POST"], "/auth/*", (c) => authFor(c).handler(c.req.raw));

@@ -12,7 +12,7 @@ import { bearer } from "better-auth/plugins";
  * — configured with the default `requireSignature: false` — does not itself use it to gate raw
  * bearer tokens; see the comment on `test/auth-sync.integration.test.ts`'s secret-binding test.
  */
-export function createAuth(db: D1Database, secret: string, baseUrl: string) {
+export function createAuth(db: D1Database, secret: string, baseUrl: string, extraOrigins: string = "") {
   return betterAuth({
     database: db,
     /**
@@ -21,6 +21,11 @@ export function createAuth(db: D1Database, secret: string, baseUrl: string) {
      */
     basePath: "/auth",
     baseURL: baseUrl,
+    /**
+     * Pages allowed to call this Worker besides its own address. Only for `wrangler dev --remote`, where the Worker sees a
+     * preview address while the browser's page is on localhost (`AUTH_TRUSTED_ORIGINS`, never set in wrangler.toml).
+     */
+    trustedOrigins: extraOrigins.split(",").map((origin) => origin.trim()).filter((origin) => origin !== ""),
     secret,
     /**
      * better-auth 1.7's Kysely adapter validates its schema at init by introspecting

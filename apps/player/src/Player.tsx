@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { FeedHealth } from "./health.ts";
+import { FeedHealth, Reconnects } from "./health.ts";
+import { Icon } from "./Icon.tsx";
 import { viaProxy } from "./proxy.ts";
 import { nowAndNext, type Programme } from "./xtream.ts";
 
@@ -39,6 +40,22 @@ const write = (key: string, value: string): void => {
   }
 };
 
+/** What the provider really answered, for a stream the browser could only call a "format error". */
+async function whyNot(source: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(source, { headers: { range: "bytes=0-0" } });
+    await response.body?.cancel();
+    if (response.status === 401) return "You were signed out. Sign in again.";
+    if (response.status === 403) return "The provider refused this stream (403). Some providers block web players; the app may still play it.";
+    if (response.status === 404) return "The provider does not have this stream (404).";
+    if (response.status === 429) return "Today's streaming allowance on the web player is used up.";
+    if (response.status >= 400) return `The provider answered ${response.status}.`;
+  } catch {
+    // Offline or blocked: the browser's own message stands.
+  }
+  return undefined;
+}
+
 const isApple = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
 type Kind = "hls" | "ts" | "file";
 const kindOf = (address: string): Kind => {
@@ -66,6 +83,11 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
   const [switchOn, setSwitchOn] = useState(read(SWITCH_KEY) !== "0");
   const [attempt, setAttempt] = useState(0);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [started, setStarted] = useState(false);
+  const [idle, setIdle] = useState(false);
+  const reconnects = useMemo(() => new Reconnects(() => Date.now()), []);
+  const quiet = useRef(false);
+  const resumeFrom = useRef<number | undefined>(undefined);
   const switchRef = useRef(switchOn);
   switchRef.current = switchOn;
   const current = candidates[at];
@@ -81,13 +103,30 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       if (request.live && at + 1 < candidates.length) setAt(at + 1);
       else setError(why);
     };
+    // A quiet reconnect keeps the picture's frame and shows no "Tuning..." over it.
+    const reconnecting = quiet.current;
+    quiet.current = false;
     setError(undefined);
+    if (!reconnecting) setStarted(false);
+    let played = false;
+    /** The stream was lost: if it had been playing, pick it up again without a word; otherwise move on or fail. */
+    const lost = (why: string) => {
+      if (gone) return;
+      if (played && reconnects.take()) {
+        quiet.current = true;
+        if (!request.live && element.currentTime > 5) resumeFrom.current = element.currentTime;
+        setAttempt((value) => value + 1);
+      } else next(why);
+    };
     const source = viaProxy(current.url);
     const kind = kindOf(current.url);
 
     let said = false;
     const onPlaying = () => {
       health.onPlaying();
+      reconnects.onPlaying();
+      played = true;
+      setStarted(true);
       if (said) return;
       said = true;
       request.onStart?.();
@@ -97,8 +136,12 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
     };
     const onWaiting = () => health.onWaiting();
     const onFail = () => {
+      if (played) return lost(element.error?.message || "The stream stopped.");
       if (health.onError() === "failover") next("");
-      else next(element.error?.message || "This could not be played.");
+      else {
+        const browser = element.error?.message || "This could not be played.";
+        void whyNot(source).then((why) => next(why ?? browser));
+      }
     };
     element.addEventListener("playing", onPlaying);
     element.addEventListener("waiting", onWaiting);
@@ -113,7 +156,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       if (!request.live && element.currentTime > 5) request.onPlace?.(element.currentTime, Number.isFinite(element.duration) ? element.duration : null);
     };
     if (!request.live) {
-      const place = request.resumeAt;
+      const place = resumeFrom.current ?? request.resumeAt;
       if (place !== undefined && place > 5) element.addEventListener("loadedmetadata", () => (element.currentTime = place), { once: true });
       saved = setInterval(() => !element.paused && keep(), 10_000);
       element.addEventListener("pause", keep);
@@ -127,7 +170,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
         if (Hls !== undefined && Hls.isSupported()) {
           const hls = new Hls({ lowLatencyMode: false });
           hls.on(Hls.Events.ERROR, (_, data) => {
-            if (data.fatal) next(`The stream stopped (${data.details}).`);
+            if (data.fatal) lost(`The stream stopped (${data.details}).`);
           });
           hls.loadSource(source);
           hls.attachMedia(element);
@@ -137,7 +180,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
           if (gone) return;
           if (!mpegts.isSupported()) return next("This browser cannot play this kind of stream.");
           const player = mpegts.createPlayer({ type: "mpegts", isLive: true, url: source });
-          player.on(mpegts.Events.ERROR, () => next("The stream stopped."));
+          player.on(mpegts.Events.ERROR, () => lost("The stream stopped."));
           player.attachMediaElement(element);
           player.load();
           stop = () => player.destroy();
@@ -166,7 +209,7 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
       element.removeEventListener("error", onFail);
       stop();
     };
-  }, [at, attempt, candidates, current, request]);
+  }, [at, attempt, candidates, current, request, reconnects]);
 
   useEffect(() => {
     if (!request.live || request.guide === undefined) return;
@@ -185,6 +228,22 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
     const timer = setTimeout(() => setFellBack(undefined), 5000);
     return () => clearTimeout(timer);
   }, [fellBack]);
+
+  // The top bar fades after a few seconds without the pointer moving, so it never sits over the picture.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const wake = () => {
+      setIdle(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setIdle(true), 3500);
+    };
+    wake();
+    for (const name of ["mousemove", "touchstart", "keydown"]) addEventListener(name, wake, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      for (const name of ["mousemove", "touchstart", "keydown"]) removeEventListener(name, wake);
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
@@ -205,10 +264,11 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
   const clock = (at: number) => new Date(at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   return (
-    <div class="player">
+    <div class={`player${idle && started && error === undefined ? " idle" : ""}`}>
       <video ref={video} controls autoplay playsinline />
-      <div class="player-bar">
-        <button class="quiet" onClick={onClose} aria-label="Close player">Close</button>
+      <div class="player-top">
+        <button class="btn" onClick={onClose} aria-label="Close player"><Icon name="back" />Close</button>
+        {request.live ? <span class="pill pill--live">LIVE</span> : null}
         <strong>{request.title}</strong>
         {request.live && candidates.length > 1 ? (
           <label class="switch">
@@ -217,11 +277,16 @@ export function Player({ request, onClose }: { request: PlayRequest; onClose: ()
         ) : null}
         {now !== undefined ? <div class="guide">Now: {now.title} (until {clock(now.end)}){next !== undefined ? ` · Next: ${next.title} at ${clock(next.start)}` : ""}</div> : null}
       </div>
+      {!started && error === undefined ? <div class="player-wait"><div class="spinner" /><span>Tuning...</span></div> : null}
       {fellBack !== undefined ? <div class="player-note">That feed wouldn't play. {fellBack}.</div> : null}
       {error !== undefined ? (
         <div class="player-error">
+          <Icon name="signal" size={32} />
           <p>{error}</p>
-          <button onClick={retry}>Try again</button> <button class="quiet" onClick={onClose}>Close</button>
+          <div class="row">
+            <button class="btn btn--primary" onClick={retry}><Icon name="refresh" />Try again</button>
+            <button class="btn" onClick={onClose}>Close</button>
+          </div>
         </div>
       ) : null}
     </div>

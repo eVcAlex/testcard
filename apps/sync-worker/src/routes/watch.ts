@@ -16,8 +16,8 @@ const MAX_REDIRECTS = 5;
 const MAX_PLAYLIST_BYTES = 2_000_000;
 /** How long a provider has to answer with headers; the body that follows may stream for as long as the viewer watches. */
 const HEADERS_WITHIN_MS = 20_000;
-/** Providers often turn away a client they do not know. */
-const UPSTREAM_USER_AGENT = "Testcard-Web";
+/** Providers filter on User-Agent and answer 403 to ones they do not know; the apps send `node` on every provider request, so this does too. */
+const UPSTREAM_USER_AGENT = "node";
 
 /** True for names that mean this machine or a private network. A Worker cannot reach those anyway; this is belt and braces. */
 export function isPrivateHost(hostname: string): boolean {

@@ -69,7 +69,7 @@ export function Manage({ account, onChanged, onDone, onSignOut }: { account: Acc
   }
 
   return (
-    <main class="signin manage">
+    <main class="manage">
       <h1>Your account</h1>
       <p class="small">Changes here reach your TV and other devices the next time they sync.</p>
       {notice !== undefined ? <p class="muted" role="status">{notice}</p> : null}
@@ -82,12 +82,12 @@ export function Manage({ account, onChanged, onDone, onSignOut }: { account: Acc
         {account.sources.map((source) => (
           <li key={source.id}>
             <span>{source.label}<small class="muted"> {source.kind === "xtream" ? "Xtream" : "Playlist"}</small></span>
-            <button class="quiet" disabled={busy} onClick={() => setEditing({ kind: "source", id: source.id })}>Edit</button>
+            <button class="btn btn--ghost" disabled={busy} onClick={() => setEditing({ kind: "source", id: source.id })}>Edit</button>
             <ConfirmRemove disabled={busy} onConfirm={() => void run(() => editor.removeSource(source.id).then(() => undefined))} />
           </li>
         ))}
       </ul>
-      <button disabled={busy} onClick={() => setEditing({ kind: "source", id: undefined })}>Add a source</button>
+      <button class="btn btn--primary" disabled={busy} onClick={() => setEditing({ kind: "source", id: undefined })}>Add a source</button>
 
       <h2>Profiles</h2>
       <ul class="rows">
@@ -96,17 +96,17 @@ export function Manage({ account, onChanged, onDone, onSignOut }: { account: Acc
             <span class="avatar small-avatar" style={{ background: PROFILE_COLOURS[profile.colour % PROFILE_COLOURS.length] }}>{profile.name.slice(0, 1).toUpperCase()}</span>
             <span>{profile.name}{profile.pin !== null ? " 🔒" : ""}</span>
             <PinGate profile={profile}>
-              <button class="quiet" disabled={busy} onClick={() => setEditing({ kind: "profile", id: profile.id })}>Edit</button>
+              <button class="btn btn--ghost" disabled={busy} onClick={() => setEditing({ kind: "profile", id: profile.id })}>Edit</button>
               {profile.id !== MAIN_PROFILE ? <ConfirmRemove disabled={busy} onConfirm={() => void run(() => editor.removeProfile(profile.id))} /> : null}
             </PinGate>
           </li>
         ))}
       </ul>
-      <button disabled={busy || account.profiles.length >= MAX_PROFILES} onClick={() => setEditing({ kind: "profile", id: undefined })}>Add a profile</button>
+      <button class="btn btn--primary" disabled={busy || account.profiles.length >= MAX_PROFILES} onClick={() => setEditing({ kind: "profile", id: undefined })}>Add a profile</button>
 
       <p>
-        <button class="quiet" disabled={account.sources.length === 0} onClick={onDone}>{account.sources.length === 0 ? "Add a source to start watching" : "Done"}</button>{" "}
-        <button class="quiet" onClick={onSignOut}>Sign out</button>
+        <button class="btn btn--ghost" disabled={account.sources.length === 0} onClick={onDone}>{account.sources.length === 0 ? "Add a source to start watching" : "Done"}</button>{" "}
+        <button class="btn btn--ghost" onClick={onSignOut}>Sign out</button>
       </p>
     </main>
   );
@@ -115,8 +115,8 @@ export function Manage({ account, onChanged, onDone, onSignOut }: { account: Acc
 /** Asks twice: removing a profile takes its history off every device. */
 function ConfirmRemove({ onConfirm, disabled }: { onConfirm: () => void; disabled: boolean }) {
   const [sure, setSure] = useState(false);
-  if (!sure) return <button class="quiet" disabled={disabled} onClick={() => setSure(true)}>Remove</button>;
-  return <><button disabled={disabled} onClick={onConfirm}>Remove for every device</button><button class="quiet" onClick={() => setSure(false)}>Keep</button></>;
+  if (!sure) return <button class="btn btn--ghost" disabled={disabled} onClick={() => setSure(true)}>Remove</button>;
+  return <><button class="btn btn--primary" disabled={disabled} onClick={onConfirm}>Remove for every device</button><button class="btn btn--ghost" onClick={() => setSure(false)}>Keep</button></>;
 }
 
 /** Shows what is inside only once the profile's PIN is right (a profile without one is open). */
@@ -131,8 +131,8 @@ function PinGate({ profile, children }: { profile: WebProfile; children: preact.
       if (pinMatches(profile, digits)) setOpen(true);
       else setWrong(true);
     }}>
-      <input name="pin" type="password" inputMode="numeric" autocomplete="off" placeholder="PIN" aria-label={`${profile.name}'s PIN`} required />
-      <button class="quiet" type="submit">Unlock</button>
+      <input class="input" name="pin" type="password" inputMode="numeric" autocomplete="off" placeholder="PIN" aria-label={`${profile.name}'s PIN`} required />
+      <button class="btn btn--ghost" type="submit">Unlock</button>
       {wrong ? <span class="problem" role="alert">Not right.</span> : null}
     </form>
   );
@@ -152,22 +152,22 @@ function SourceForm({ initial, busy, error, onSave, onCancel }: { initial: Sourc
         onSave({ kind, name: text("name"), server: text("server"), username: text("username"), password: text("password"), playlistUrl: text("playlistUrl"), epgUrl: text("epgUrl"), backupUrls: text("backupUrls"), content });
       }}>
         {!editing ? (
-          <label>Type<select value={kind} onChange={(event) => setKind((event.currentTarget as HTMLSelectElement).value as SourceDraft["kind"])}>
+          <label>Type<select class="input" value={kind} onChange={(event) => setKind((event.currentTarget as HTMLSelectElement).value as SourceDraft["kind"])}>
             <option value="xtream">Xtream login</option><option value="m3u">Playlist link (M3U)</option>
           </select></label>
         ) : null}
-        <label>Name<input name="name" required defaultValue={initial?.name ?? ""} /></label>
+        <label>Name<input class="input" name="name" required defaultValue={initial?.name ?? ""} /></label>
         {kind === "xtream" ? (
           <>
-            <label>Server address<input name="server" placeholder="http://provider.example:8080" required defaultValue={initial?.server ?? ""} /></label>
-            <label>Username<input name="username" autocomplete="off" required defaultValue={initial?.username ?? ""} /></label>
-            <label>Password<input name="password" type="password" autocomplete="off" required={!editing} placeholder={editing ? "Leave blank to keep it" : ""} /></label>
-            <label>Other server addresses<input name="backupUrls" placeholder="Optional, separated by commas" defaultValue={initial?.backupUrls ?? ""} /></label>
+            <label>Server address<input class="input" name="server" placeholder="http://provider.example:8080" required defaultValue={initial?.server ?? ""} /></label>
+            <label>Username<input class="input" name="username" autocomplete="off" required defaultValue={initial?.username ?? ""} /></label>
+            <label>Password<input class="input" name="password" type="password" autocomplete="off" required={!editing} placeholder={editing ? "Leave blank to keep it" : ""} /></label>
+            <label>Other server addresses<input class="input" name="backupUrls" placeholder="Optional, separated by commas" defaultValue={initial?.backupUrls ?? ""} /></label>
           </>
         ) : (
-          <label>Playlist link<input name="playlistUrl" required defaultValue={initial?.playlistUrl ?? ""} placeholder="https://..." /></label>
+          <label>Playlist link<input class="input" name="playlistUrl" required defaultValue={initial?.playlistUrl ?? ""} placeholder="https://..." /></label>
         )}
-        <label>TV guide link<input name="epgUrl" placeholder="Optional (XMLTV)" defaultValue={initial?.epgUrl ?? ""} /></label>
+        <label>TV guide link<input class="input" name="epgUrl" placeholder="Optional (XMLTV)" defaultValue={initial?.epgUrl ?? ""} /></label>
         <fieldset>
           <legend>Load</legend>
           {(["live", "movies", "series"] as const).map((part) => (
@@ -175,8 +175,8 @@ function SourceForm({ initial, busy, error, onSave, onCancel }: { initial: Sourc
           ))}
         </fieldset>
         {error !== undefined ? <p class="problem" role="alert">{error}</p> : null}
-        <button type="submit" disabled={busy}>{busy ? "Saving..." : "Save"}</button>
-        <button type="button" class="quiet" disabled={busy} onClick={onCancel}>Cancel</button>
+        <button class="btn btn--primary" type="submit" disabled={busy}>{busy ? "Saving..." : "Save"}</button>
+        <button type="button" class="btn btn--ghost" disabled={busy} onClick={onCancel}>Cancel</button>
       </form>
     </main>
   );
@@ -191,7 +191,7 @@ function ProfileForm({ profile, busy, error, count, onSave, onCancel }: { profil
         event.preventDefault();
         onSave({ name: String(new FormData(event.currentTarget as HTMLFormElement).get("name") ?? ""), colour });
       }}>
-        <label>Name<input name="name" required maxLength={20} defaultValue={profile?.name ?? ""} /></label>
+        <label>Name<input class="input" name="name" required maxLength={20} defaultValue={profile?.name ?? ""} /></label>
         <div class="swatches" role="radiogroup" aria-label="Colour">
           {PROFILE_COLOURS.map((value, index) => (
             <button type="button" role="radio" aria-checked={colour === index} aria-label={`Colour ${index + 1}`} class={`avatar swatch${colour === index ? " on" : ""}`} style={{ background: value }} onClick={() => setColour(index)} />
@@ -199,8 +199,8 @@ function ProfileForm({ profile, busy, error, count, onSave, onCancel }: { profil
         </div>
         {profile?.pin != null ? <p class="small">The PIN stays as it is; change it on a TV.</p> : null}
         {error !== undefined ? <p class="problem" role="alert">{error}</p> : null}
-        <button type="submit" disabled={busy}>{busy ? "Saving..." : "Save"}</button>
-        <button type="button" class="quiet" disabled={busy} onClick={onCancel}>Cancel</button>
+        <button class="btn btn--primary" type="submit" disabled={busy}>{busy ? "Saving..." : "Save"}</button>
+        <button type="button" class="btn btn--ghost" disabled={busy} onClick={onCancel}>Cancel</button>
       </form>
     </main>
   );
