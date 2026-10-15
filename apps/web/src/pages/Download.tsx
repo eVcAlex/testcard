@@ -10,7 +10,7 @@ import { DOWNLOADER_CODE, PRODUCT_NAME, RELEASE_STATE, type ReleaseState, SIGNED
 const desktop = () => wretch("/app/latest.yml").get().text().then((t) => parseDesktop(t) ?? null).catch(() => null);
 const android = () => wretch("/app/latest.json").get().json().then((j) => parseAndroid(j) ?? null).catch(() => null);
 
-const TBC = <span className="tbc">to be confirmed</span>;
+const TBC = <span className="tbc">not yet tested</span>;
 
 function Requirements() {
   return (
@@ -82,7 +82,7 @@ function ComingSoon({ signed }: { signed: boolean }) {
           <section id="requirements" aria-labelledby="requirements-h" className="block">
             <h2 id="requirements-h">Requirements</h2>
             <Requirements />
-            <p className="note">Some values are still to be confirmed. We'll fill them in once we have tested on real hardware.</p>
+            <p className="note">The Android version is not yet tested on real hardware. We'll update it once it has been.</p>
           </section>
           <section id="windows" aria-labelledby="windows-h" className="block">
             <h2 id="windows-h">Windows</h2>
