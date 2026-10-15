@@ -1,3 +1,4 @@
+import { WEB_PLAYER_LIVE } from "../site.ts";
 import { useScene } from "../ui/motion.ts";
 import { Arrow } from "../ui/parts.tsx";
 import { SIZES, TV_GUIDE, srcSet } from "./shots.ts";
@@ -26,7 +27,12 @@ export function Hero() {
         </span>
       </h1>
       <div className="hero-p intro">
-        <p>Testcard is a player for Windows and Android TV, Fire TV included. You bring the channels from your provider; it makes them easy to watch.</p>
+        <p>
+          {WEB_PLAYER_LIVE
+            ? "Testcard is a player for Windows, Android TV and Fire TV, and in any browser. "
+            : "Testcard is a player for Windows and Android TV, Fire TV included. "}
+          You bring the channels from your provider; it makes them easy to watch.
+        </p>
       </div>
       <p className="corner c-bl intro">Please stand by</p>
       <p className="corner c-br intro" aria-hidden="true">Scroll</p>

@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { BackChip } from "../ui/parts.tsx";
 import { FAQ, GUIDE_CAUSES, GUIDE_QUESTION, LINK } from "../faq-data.ts";
-import { CONTACT_EMAIL, PRODUCT_NAME } from "../site.ts";
+import { CONTACT_EMAIL, PRODUCT_NAME, WATCH_HREF } from "../site.ts";
 
 /** Answer paragraph with `[text](/path#hash)` links turned into router links. */
 function Para({ text }: { text: string }): ReactNode {
@@ -11,7 +11,8 @@ function Para({ text }: { text: string }): ReactNode {
   for (const m of text.matchAll(LINK)) {
     out.push(text.slice(last, m.index));
     const [path = "/", hash] = (m[2] ?? "/").split("#");
-    out.push(<Link key={m.index} to={path as "/"} hash={hash}>{m[1]}</Link>);
+    // The web player is its own page, not a route of this site: a router link would land on the 404.
+    out.push(path === WATCH_HREF ? <a key={m.index} href={path}>{m[1]}</a> : <Link key={m.index} to={path as "/"} hash={hash}>{m[1]}</Link>);
     last = m.index + m[0].length;
   }
   out.push(text.slice(last));
