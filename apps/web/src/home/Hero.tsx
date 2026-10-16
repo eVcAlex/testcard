@@ -18,7 +18,7 @@ export function Hero() {
       <h1 className="hero-h" tabIndex={-1}>
         <span className="sr-only">Testcard IPTV player. </span>
         <span className="hl hl1">
-          <span className="ln"><span className="ln-i i0">Live <span className="kern-tv">T</span>V,</span></span>
+          <span className="ln"><span className="ln-i i0">Live TV,</span></span>
         </span>{" "}
         <span className="hl hl2"><span className="ln"><span className="ln-i i1">films &amp;</span></span></span>{" "}
         <span className="hl hl3">
