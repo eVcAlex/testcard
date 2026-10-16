@@ -56,7 +56,7 @@ describe("WaitlistForm", () => {
     expect(join).toHaveBeenCalledWith({ email: "Me@Example.com", windows: false, firetv: true, hp_note: "" });
     const done = await screen.findByRole("status");
     expect(done).toHaveTextContent(WAITLIST_DONE);
-    expect(WAITLIST_DONE).toBe("You're on the list. We'll email you when the beta opens. That's the only email we'll send.");
+    expect(WAITLIST_DONE).toBe("You're on the list. You should have received a confirmation email. If you can't see it, check your spam or junk folder. We'll email you again when the beta opens, and that's the only other email we'll send.");
     // Preact runs effects after paint, a moment after the DOM appears.
     await waitFor(() => expect(done).toHaveFocus());
     expect(screen.queryByLabelText("Email address")).toBeNull();

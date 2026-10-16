@@ -15,6 +15,8 @@ export interface Env {
   readonly RELEASES: R2Bucket;
   /** Signing/encryption secret for better-auth. Never in source: `wrangler secret put SYNC_AUTH_SECRET` when deployed, `.dev.vars` locally. */
   readonly SYNC_AUTH_SECRET: string;
+  /** Cloudflare Email Sending binding (`send_email` in wrangler.toml). Absent in tests and local dev: no mail is sent. */
+  readonly EMAIL?: { send(message: { from: string | { email: string; name?: string }; to: string; subject: string; text: string; html?: string }): Promise<unknown> };
   /** "on" lets signed-in accounts use the web player's stream proxy (`/watch/p`); anything else answers 404. Set in wrangler.toml. */
   readonly WEB_PLAYER?: string;
   /** "1" lets the proxy fetch private addresses. Tests only: never set in wrangler.toml. */

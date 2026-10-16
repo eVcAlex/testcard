@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from "../site.ts";
 
 type Phase = "idle" | "sending" | "done" | "error";
 
-export const WAITLIST_DONE = "You're on the list. We'll email you when the beta opens. That's the only email we'll send.";
+export const WAITLIST_DONE = "You're on the list. You should have received a confirmation email. If you can't see it, check your spam or junk folder. We'll email you again when the beta opens, and that's the only other email we'll send.";
 export const WAITLIST_RATE_LIMITED = "Too many sign-ups from this network today. Try again tomorrow.";
 export const WAITLIST_FAILED = `Something went wrong and you're not on the list yet. Try again, or email ${CONTACT_EMAIL} and we'll add you by hand.`;
 

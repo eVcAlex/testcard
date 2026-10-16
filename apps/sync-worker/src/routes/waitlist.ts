@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Context } from "hono";
 import type { Env } from "../index.js";
 import { overDailyLimit } from "../rateLimit.js";
+import { WAITLIST_HTML, WAITLIST_SUBJECT, WAITLIST_TEXT } from "../waitlistEmail.js";
 
 /**
  * Website waitlist. Same-origin only (no CORS headers are ever sent), JSON only, small bodies. The email is never
@@ -60,9 +61,28 @@ export async function handleWaitlist(c: WaitlistContext): Promise<Response> {
   // Honeypot: a bot filled the hidden field. Look successful, store nothing.
   if (hp_note !== undefined && hp_note !== "") return respond(c, { ok: true }, 200);
 
-  await c.env.DB
+  const result = await c.env.DB
     .prepare(`INSERT INTO waitlist (email, windows, firetv, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO NOTHING`)
     .bind(email, windows ? 1 : 0, firetv ? 1 : 0, new Date().toISOString())
     .run();
+
+  // Confirmation only for a new row, so a repeat sign-up never mails the address again. Best effort: a send failure
+  // must not fail the sign-up, and the response is the same whether or not mail goes out.
+  if (result.meta.changes > 0 && c.env.EMAIL) {
+    const sent = c.env.EMAIL
+      .send({
+        from: { email: "noreply@evicted.dev", name: "Testcard" },
+        to: email,
+        subject: WAITLIST_SUBJECT,
+        html: WAITLIST_HTML,
+        text: WAITLIST_TEXT,
+      })
+      .catch(() => undefined);
+    try {
+      c.executionCtx.waitUntil(sent);
+    } catch {
+      await sent; // no execution context (tests)
+    }
+  }
   return respond(c, { ok: true }, 200);
 }
