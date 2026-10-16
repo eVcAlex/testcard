@@ -178,7 +178,7 @@ fun SQLiteConnection.getUpNextEpisode(seriesId: String): UpNextEpisode? = getSer
 fun SQLiteConnection.episodeProgressTimes(detail: SeriesDetail): Map<String, Long> {
     val out = HashMap<String, Long>()
     for (ids in detail.seasons.flatMap { s -> s.episodes.map { it.id } }.chunked(500)) {
-        query("SELECT item_id, updated_at FROM playback_progress WHERE item_type = 'episode' AND item_id IN (${ids.joinToString(",") { "?" }})", *ids.toTypedArray()) { out[it.getText(0)] = it.getLong(1) }
+        query("SELECT item_id, updated_at FROM playback_progress WHERE item_type = 'episode' AND deleted_at IS NULL AND item_id IN (${ids.joinToString(",") { "?" }})", *ids.toTypedArray()) { out[it.getText(0)] = it.getLong(1) }
     }
     return out
 }
@@ -186,10 +186,14 @@ fun SQLiteConnection.episodeProgressTimes(detail: SeriesDetail): Map<String, Lon
 /** The choice of `getUpNextEpisode`, over a detail already read (one with borrowed seasons, say). */
 fun upNextIn(detail: SeriesDetail, progressAt: Map<String, Long> = emptyMap()): UpNextEpisode? {
     val all = detail.seasons.flatMap { season -> season.episodes.map { it to season.season } }
-    // Several episodes can be part-watched (an abandoned start of season one, then season four tonight): resume the one touched last.
-    // With no times to go on (or a tie) the earliest wins, as before.
-    val pick = all.filter { (e, _) -> e.positionSecs != null && !e.watched && shouldPromptResume(e.positionSecs, e.durationSecs) }
-        .fold(null as Pair<EpisodeRow, SeasonRow>?) { best, entry -> if (best == null || (progressAt[entry.first.id] ?: 0L) > (progressAt[best.first.id] ?: 0L)) entry else best }
+    // Carry on from whatever was viewed last, wherever it sits in the series (season four tonight, or a rewatch of season one's first
+    // episode): that episode if it is unfinished, else the one after it. A later episode wins a tie, so marking a season watched in one go
+    // leads on to the next. With no times to go on, the first part-watched episode, else the first unwatched, as before.
+    var last = -1
+    all.forEachIndexed { index, (e, _) -> val at = progressAt[e.id]; if (at != null && (last < 0 || at >= (progressAt[all[last].first.id] ?: 0L))) last = index }
+    val afterLast = if (last < 0) null else if (all[last].first.watched) (all.getOrNull(last + 1) ?: all.firstOrNull { (e, _) -> !e.watched } ?: all[last]) else all[last]
+    val pick = afterLast
+        ?: all.firstOrNull { (e, _) -> e.positionSecs != null && !e.watched && shouldPromptResume(e.positionSecs, e.durationSecs) }
         ?: all.firstOrNull { (e, _) -> !e.watched } ?: all.firstOrNull() ?: return null
     val resume = pick.first.positionSecs != null && shouldPromptResume(pick.first.positionSecs!!, pick.first.durationSecs)
     return UpNextEpisode(pick.first, pick.second, resume)
@@ -206,7 +210,7 @@ fun SQLiteConnection.getUpNextEpisodes(seriesIds: List<String>): Map<String, UpN
         val rows = query(
             """SELECT e.series_id AS seriesId, s.season_number AS seasonNumber, e.episode_number AS episodeNumber,
                       pp.position_secs AS positionSecs, COALESCE(e.duration_secs, pp.duration_secs) AS durationSecs, COALESCE(pp.watched, 0) AS watched,
-                      COALESCE(pp.updated_at, 0) AS at
+                      CASE WHEN pp.deleted_at IS NULL THEN COALESCE(pp.updated_at, 0) ELSE 0 END AS at
                FROM episodes e
                JOIN seasons s ON s.id = e.season_id
                LEFT JOIN playback_progress pp ON pp.item_type = 'episode' AND pp.item_id = e.id
@@ -215,8 +219,11 @@ fun SQLiteConnection.getUpNextEpisodes(seriesIds: List<String>): Map<String, UpN
             *ids.toTypedArray(),
         ) { Row(it.getText(0), it.getLong(1).toInt(), it.getLong(2).toInt(), if (it.isNull(3)) null else it.getDouble(3), if (it.isNull(4)) null else it.getDouble(4), it.getLong(5) != 0L, it.getLong(6)) }
         for ((seriesId, all) in rows.groupBy { it.seriesId }) {
-            val pick = all.filter { it.positionSecs != null && !it.watched && shouldPromptResume(it.positionSecs, it.durationSecs) }
-                .fold(null as Row?) { best, row -> if (best == null || row.at > best.at) row else best }
+            var last = -1
+            all.forEachIndexed { index, row -> if (row.at > 0 && (last < 0 || row.at >= all[last].at)) last = index }
+            val afterLast = if (last < 0) null else if (all[last].watched) (all.getOrNull(last + 1) ?: all.firstOrNull { !it.watched } ?: all[last]) else all[last]
+            val pick = afterLast
+                ?: all.firstOrNull { it.positionSecs != null && !it.watched && shouldPromptResume(it.positionSecs, it.durationSecs) }
                 ?: all.firstOrNull { !it.watched } ?: all.firstOrNull() ?: continue
             out[seriesId] = UpNextSummary(pick.seasonNumber, pick.episodeNumber, pick.positionSecs, pick.durationSecs, pick.positionSecs != null && shouldPromptResume(pick.positionSecs, pick.durationSecs))
         }
