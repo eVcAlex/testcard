@@ -549,7 +549,7 @@ fun Playing(
 
     // ---- what is drawn
     if (health.failing) { StatusScreen(item.title, "Trying another feed..."); return }
-    if (health.otherServer == "checking") { StatusScreen(item.title, "That address isn't working. Trying the provider's other addresses..."); return }
+    if (health.otherServer == "checking") { StatusScreen(item.title, "The provider's server isn't answering. Trying its other addresses..."); return }
     if (status == PlayerStatus.Error) {
         val raw = health.error ?: errorText
         val message = explain(raw)

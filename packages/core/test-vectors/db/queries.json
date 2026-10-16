@@ -6352,67 +6352,54 @@
   ],
   "out": {
    "episode": {
-    "id": "x1:801:1:80111",
-    "season_id": "x1:801:1",
+    "id": "x1:801:2:80121",
+    "season_id": "x1:801:2",
     "series_id": "x1:801",
     "episode_number": 1,
-    "name": "Drama Show 1 (2019) S1E1",
+    "name": "Drama Show 1 (2019) S2E1",
     "container_extension": "mp4",
     "duration_secs": 2700,
     "plot": "Episode 1",
-    "image_url": "http://img.example/e80111.jpg",
-    "position_secs": 2000,
+    "image_url": "http://img.example/e80121.jpg",
+    "position_secs": null,
     "watched": 0
    },
    "season": {
-    "id": "x1:801:1",
+    "id": "x1:801:2",
     "series_id": "x1:801",
-    "season_number": 1,
-    "name": "Season 1",
-    "poster_url": "http://img.example/c1.jpg",
+    "season_number": 2,
+    "name": null,
+    "poster_url": null,
     "episodes": [
      {
-      "id": "x1:801:1:80111",
-      "season_id": "x1:801:1",
+      "id": "x1:801:2:80121",
+      "season_id": "x1:801:2",
       "series_id": "x1:801",
       "episode_number": 1,
-      "name": "Drama Show 1 (2019) S1E1",
+      "name": "Drama Show 1 (2019) S2E1",
       "container_extension": "mp4",
       "duration_secs": 2700,
       "plot": "Episode 1",
-      "image_url": "http://img.example/e80111.jpg",
-      "position_secs": 2000,
+      "image_url": "http://img.example/e80121.jpg",
+      "position_secs": null,
       "watched": 0
      },
      {
-      "id": "x1:801:1:80112",
-      "season_id": "x1:801:1",
+      "id": "x1:801:2:80122",
+      "season_id": "x1:801:2",
       "series_id": "x1:801",
       "episode_number": 2,
-      "name": "Drama Show 1 (2019) S1E2",
+      "name": "Drama Show 1 (2019) S2E2",
       "container_extension": "mkv",
       "duration_secs": 2700,
       "plot": "Episode 2",
-      "image_url": "http://img.example/e80112.jpg",
-      "position_secs": 100,
+      "image_url": "http://img.example/e80122.jpg",
+      "position_secs": null,
       "watched": 0
-     },
-     {
-      "id": "x1:801:1:80113",
-      "season_id": "x1:801:1",
-      "series_id": "x1:801",
-      "episode_number": 3,
-      "name": "Drama Show 1 (2019) S1E3",
-      "container_extension": "mp4",
-      "duration_secs": 3600,
-      "plot": "Episode 3",
-      "image_url": "http://img.example/e80113.jpg",
-      "position_secs": 3600,
-      "watched": 1
      }
     ]
    },
-   "resume": true
+   "resume": false
   }
  },
  {
@@ -7767,11 +7754,11 @@
    [
     "x1:801",
     {
-     "seasonNumber": 1,
+     "seasonNumber": 2,
      "episodeNumber": 1,
-     "positionSecs": 2000,
+     "positionSecs": null,
      "durationSecs": 2700,
-     "resume": true
+     "resume": false
     }
    ],
    [
