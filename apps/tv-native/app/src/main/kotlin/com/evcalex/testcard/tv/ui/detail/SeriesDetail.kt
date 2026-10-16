@@ -40,6 +40,7 @@ import com.evcalex.testcard.core.db.listSeriesVersions
 import com.evcalex.testcard.core.db.removeSeriesFromRecents
 import com.evcalex.testcard.core.db.setWatched
 import com.evcalex.testcard.core.db.toggleSeriesFavourite
+import com.evcalex.testcard.core.db.episodeProgressTimes
 import com.evcalex.testcard.core.db.upNextIn
 import com.evcalex.testcard.core.db.withBorrowedSeasons
 import com.evcalex.testcard.core.importing.ensureSeriesEpisodes
@@ -90,7 +91,7 @@ private suspend fun fetchEpisodes(app: AppController, seriesId: String) = withCo
 
 internal class Failure(val text: String, val gone: Boolean)
 
-internal class SeriesState(val detail: SeriesDetail?)
+internal class SeriesState(val detail: SeriesDetail?, val progressAt: Map<String, Long> = emptyMap())
 
 internal class Versions(val rows: List<SeriesRow>, val sourceId: String?)
 
@@ -180,13 +181,16 @@ fun SeriesDetailScreen(
     // Read straight away, not after the episode fetch: the poster, plot and rating are already stored, so the page shows them
     // while the episodes load (and re-reads once they have).
     val state by produceState<SeriesState?>(null, seriesId, app.version, tick, loading, donors, donorsIn) {
-        value = app.db.read { c -> SeriesState(c.getSeriesDetail(seriesId)?.let { c.withBorrowedSeasons(it, donors.map { d -> d.id }) }) }
+        value = app.db.read { c ->
+            val detail = c.getSeriesDetail(seriesId)?.let { c.withBorrowedSeasons(it, donors.map { d -> d.id }) }
+            SeriesState(detail, detail?.let { c.episodeProgressTimes(it) } ?: emptyMap())
+        }
     }
     val detail = state?.detail
     val seasons = detail?.seasons ?: emptyList()
     val series = detail?.series
     // The big button: carry on with what you were watching, else the first episode you have not seen.
-    val upNext = remember(loading, detail) { if (loading || detail == null) null else upNextIn(detail) }
+    val upNext = remember(loading, detail) { if (loading || detail == null) null else upNextIn(detail, state?.progressAt ?: emptyMap()) }
     val upNextResume = upNext?.resume ?: false
     // Opens on the season Resume points to, so the highlighted pill always agrees with the big button.
     val active: SeasonWithEpisodes? = seasons.firstOrNull { it.season.id == seasonId } ?: seasons.firstOrNull { it.season.id == upNext?.season?.id } ?: seasons.firstOrNull()

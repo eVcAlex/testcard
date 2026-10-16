@@ -323,8 +323,11 @@ fun DetailActions(
                         GlyphIcon(Glyph.Play, if (focused) Color(0xFF0B0E10) else Palette.foreground, 28.dp)
                         AppText(primary.label, 26, if (focused) Color(0xFF0B0E10) else Palette.foreground, FontWeight.SemiBold, maxLines = 1)
                     }
-                    if (primary.progress != null && primary.progress > 0f) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 7.dp, start = 40.dp, end = 40.dp).fillMaxWidth().height(3.dp).background(Color(0x33FFFFFF), RoundedCornerShape(2.dp))) {
-                        Box(Modifier.fillMaxHeight().fillMaxWidth(primary.progress.coerceAtMost(1f)).background(Palette.accent, RoundedCornerShape(2.dp)))
+                    // Sized to the pill by matchParentSize: a fillMaxWidth bar inside a wrap-content Box would stretch the pill across the page.
+                    if (primary.progress != null && primary.progress > 0f) Box(Modifier.matchParentSize().padding(bottom = 7.dp, start = 40.dp, end = 40.dp), contentAlignment = Alignment.BottomCenter) {
+                        Box(Modifier.fillMaxWidth().height(3.dp).background(Color(0x33FFFFFF), RoundedCornerShape(2.dp))) {
+                            Box(Modifier.fillMaxHeight().fillMaxWidth(primary.progress.coerceAtMost(1f)).background(Palette.accent, RoundedCornerShape(2.dp)))
+                        }
                     }
                 }
             }

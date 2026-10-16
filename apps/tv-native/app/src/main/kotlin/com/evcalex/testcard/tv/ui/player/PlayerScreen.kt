@@ -37,7 +37,6 @@ import com.evcalex.testcard.core.playback.ResolvedStream
 import com.evcalex.testcard.core.playback.resolveStream
 import com.evcalex.testcard.core.playback.sourceOfPlay
 import com.evcalex.testcard.core.playback.xtreamSourceOf
-import com.evcalex.testcard.core.sync.unreachable
 import com.evcalex.testcard.core.text.plainReason
 import com.evcalex.testcard.core.text.serverGone
 import com.evcalex.testcard.core.xtream.CatchupProgramme
@@ -82,7 +81,8 @@ fun PlayerScreen(
     var attempt by remember(item.id) { mutableIntStateOf(0) }
     val feeds by produceState<List<ChannelFeed>?>(null, item.id) { value = if (item.kind == PlayKind.Channel) app.db.read { it.listChannelFeeds(item.id) } else emptyList() }
     val copies by produceState<List<String>?>(null, item.id, resume) { value = if (item.kind == PlayKind.Movie) app.db.read { it.listMoviePlayOrder(item.id, resume) } else emptyList() }
-    val serverTried = remember(item.id) { booleanArrayOf(false) }
+    // The addresses of the source already tried for this play: each failure moves on to the next, until every one has had its turn.
+    val serversTried = remember(item.id) { mutableSetOf<String>() }
     // Where the first copy was to start, so the next one picks up at the same place.
     val startedFrom = remember(item.id) { arrayOf<Double?>(null) }
     val copyId = copies?.getOrNull(copyAt)
@@ -105,15 +105,15 @@ fun PlayerScreen(
     }
 
     // Try again starts over: the best copy or first feed, and the source's other addresses may be tried again.
-    val retry = { serverTried[0] = false; copyAt = 0; feedAt = 0; attempt += 1 }
+    val retry = { serversTried.clear(); copyAt = 0; feedAt = 0; attempt += 1 }
 
-    // A source's server that cannot be reached: once per play, its other addresses are tried, and on one that answers the stream
-    // is asked for again. Null when there is nothing to try.
+    // A stream that will not play, whether the server could not be reached or it refused: the source's next address is tried (the main
+    // one, then each backup in turn), and the stream is asked for again from it. Null when there is nothing left to try.
     val onServerDown: suspend (String) -> Boolean? = down@{ raw ->
         val source = sourceOfPlay(app.db, playing.kind, playing.id)
-        if (serverTried[0] || source == null || !unreachable(raw) || !app.servers.hasBackups(source.first)) return@down null
-        serverTried[0] = true
-        val changed = withContext(Dispatchers.Default) { runCatching { app.servers.pickServer(source.first) }.getOrDefault(false) }
+        // A picture this device cannot decode would fail the same way on every address.
+        if (source == null || Regex("EXCEEDS_CAPABILITIES|MediaCodec|Decoder", RegexOption.IGNORE_CASE).containsMatchIn(raw) || !app.servers.hasBackups(source.first)) return@down null
+        val changed = withContext(Dispatchers.Default) { runCatching { app.servers.nextServer(source.first, serversTried) }.getOrDefault(false) }
         if (changed) attempt += 1
         changed
     }

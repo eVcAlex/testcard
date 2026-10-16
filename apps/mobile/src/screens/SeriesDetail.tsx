@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { sized } from "../ui/imageSize";
 import { Check, Movie } from "../ui/icons";
 import { splitTitle } from "@testcard/core/src/normalise/splitTitle.js";
-import { getSeriesDetail, getSeriesSource, listSeriesVersions, removeSeriesFromRecents, toggleSeriesFavourite, upNextIn, withBorrowedSeasons } from "@testcard/core/src/db/seriesQueries.js";
+import { getSeriesDetail, getSeriesSource, listSeriesVersions, removeSeriesFromRecents, toggleSeriesFavourite, upNextIn, withBorrowedSeasons, episodeProgressTimes } from "@testcard/core/src/db/seriesQueries.js";
 import { ensureSeriesEpisodes } from "@testcard/core/src/db/importVodDetails.js";
 import { shouldPromptResume } from "@testcard/core/src/playback/progressPolicy.js";
 import { setWatched } from "@testcard/core/src/db/progressQueries.js";
@@ -260,7 +260,7 @@ export function SeriesDetailScreen({
   const seasons = detail?.seasons ?? [];
   const series = detail?.series;
   // The big button: carry on with what you were watching, else the first episode you have not seen.
-  const upNext = useMemo(() => (loading || detail === undefined ? undefined : upNextIn(detail)), [loading, detail]);
+  const upNext = useMemo(() => (loading || detail === undefined ? undefined : upNextIn(detail, episodeProgressTimes(db, detail))), [db, loading, detail, tick]);
   const upNextResume = upNext?.resume ?? false;
   // Opens on the season Resume points to, so the highlighted pill always agrees with the big button
   // (rather than a separately computed "first unwatched" that could land on a different season).

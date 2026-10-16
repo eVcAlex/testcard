@@ -68,6 +68,31 @@ class ServerPicker(private val db: Db, private val logins: SourceLogins, private
         return false
     }
 
+    /**
+     * A stream was refused or failed on the address in use: moves to the next of the source's addresses (the main one, then each
+     * backup in order) that is not in [tried] and answers, and records it in [tried]. False once every address has had its turn.
+     * Unlike [pickServer] this does not go back to an address that has just failed, even if it still answers the login check.
+     */
+    suspend fun nextServer(sourceId: String, tried: MutableSet<String>): Boolean {
+        val backups = backupsOf(sourceId)
+        if (backups.isEmpty()) return false
+        val stored = runCatching { logins.stored(sourceId) }.getOrNull() ?: return false
+        tried += logins.serverFor(sourceId) ?: stored.baseUrl
+        for (server in listOf(stored.baseUrl) + backups) {
+            if (server in tried) continue
+            tried += server
+            if (!answers(stored.copy(baseUrl = server))) continue
+            val backup = if (server == stored.baseUrl) null else server
+            logins.setServerInUse(sourceId, backup)
+            db.write {
+                if (backup == null) it.run("DELETE FROM schema_meta WHERE key = ?", metaKey(sourceId))
+                else it.run("INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)", metaKey(sourceId), backup)
+            }
+            return true
+        }
+        return false
+    }
+
     private companion object {
         /** How long one address is given to answer before the next is tried. */
         const val ANSWER_WITHIN_MS = 8000L

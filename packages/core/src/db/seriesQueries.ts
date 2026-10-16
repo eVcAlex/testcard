@@ -244,13 +244,31 @@ export interface UpNextEpisode {
  */
 export function getUpNextEpisode(db: Database.Database, seriesId: string): UpNextEpisode | undefined {
   const detail = getSeriesDetail(db, seriesId);
-  return detail === undefined ? undefined : upNextIn(detail);
+  return detail === undefined ? undefined : upNextIn(detail, episodeProgressTimes(db, detail));
+}
+
+/** When each episode of a detail last had its progress written, by episode id: how "what you were watching" is told from older, abandoned starts. */
+export function episodeProgressTimes(db: Database.Database, detail: SeriesDetail): Map<string, number> {
+  const out = new Map<string, number>();
+  const ids = detail.seasons.flatMap((season) => season.episodes.map((episode) => episode.id));
+  for (let at = 0; at < ids.length; at += 500) {
+    const chunk = ids.slice(at, at + 500);
+    const rows = db
+      .prepare(`SELECT item_id AS id, updated_at AS at FROM playback_progress WHERE item_type = 'episode' AND item_id IN (${chunk.map(() => "?").join(",")})`)
+      .all(...chunk) as { id: string; at: number }[];
+    for (const row of rows) out.set(row.id, row.at);
+  }
+  return out;
 }
 
 /** `getUpNextEpisode`'s choice, over a detail already read (one with borrowed seasons, say). */
-export function upNextIn(detail: SeriesDetail): UpNextEpisode | undefined {
+export function upNextIn(detail: SeriesDetail, progressAt: ReadonlyMap<string, number> = new Map()): UpNextEpisode | undefined {
   const all = detail.seasons.flatMap((season) => season.episodes.map((episode) => ({ episode, season: season as SeasonRow })));
-  const upNext = all.find(({ episode }) => episode.position_secs !== null && episode.watched !== 1 && shouldPromptResume(episode.position_secs, episode.duration_secs)) ?? all.find(({ episode }) => episode.watched !== 1) ?? all[0];
+  // Several episodes can be part-watched (an abandoned start of season one, then season four tonight): resume the one touched last.
+  // With no times to go on (or a tie) the earliest wins, as before.
+  const resumable = all.filter(({ episode }) => episode.position_secs !== null && episode.watched !== 1 && shouldPromptResume(episode.position_secs, episode.duration_secs));
+  const latest = resumable.reduce<(typeof all)[number] | undefined>((best, entry) => (best === undefined || (progressAt.get(entry.episode.id) ?? 0) > (progressAt.get(best.episode.id) ?? 0) ? entry : best), undefined);
+  const upNext = latest ?? all.find(({ episode }) => episode.watched !== 1) ?? all[0];
   if (upNext === undefined) return undefined;
   const resume = upNext.episode.position_secs !== null && shouldPromptResume(upNext.episode.position_secs, upNext.episode.duration_secs);
   return { episode: upNext.episode, season: upNext.season, resume };
@@ -271,13 +289,14 @@ export interface UpNextSummary {
  */
 export function getUpNextEpisodes(db: Database.Database, seriesIds: readonly string[]): Map<string, UpNextSummary> {
   const out = new Map<string, UpNextSummary>();
-  type Row = { seriesId: string; seasonNumber: number; episodeNumber: number; positionSecs: number | null; durationSecs: number | null; watched: 0 | 1 };
+  type Row = { seriesId: string; seasonNumber: number; episodeNumber: number; positionSecs: number | null; durationSecs: number | null; watched: 0 | 1; at: number };
   for (let at = 0; at < seriesIds.length; at += 500) {
     const ids = seriesIds.slice(at, at + 500);
     const rows = db
       .prepare(
         `SELECT e.series_id AS seriesId, s.season_number AS seasonNumber, e.episode_number AS episodeNumber,
-                pp.position_secs AS positionSecs, COALESCE(e.duration_secs, pp.duration_secs) AS durationSecs, COALESCE(pp.watched, 0) AS watched
+                pp.position_secs AS positionSecs, COALESCE(e.duration_secs, pp.duration_secs) AS durationSecs, COALESCE(pp.watched, 0) AS watched,
+                COALESCE(pp.updated_at, 0) AS at
          FROM episodes e
          JOIN seasons s ON s.id = e.season_id
          LEFT JOIN playback_progress pp ON pp.item_type = 'episode' AND pp.item_id = e.id
@@ -294,7 +313,9 @@ export function getUpNextEpisodes(db: Database.Database, seriesIds: readonly str
     for (const [seriesId, all] of bySeries) {
       // The same choice as getUpNextEpisode.
       const pick =
-        all.find((row) => row.positionSecs !== null && row.watched !== 1 && shouldPromptResume(row.positionSecs, row.durationSecs)) ??
+        all
+          .filter((row) => row.positionSecs !== null && row.watched !== 1 && shouldPromptResume(row.positionSecs, row.durationSecs))
+          .reduce<Row | undefined>((best, row) => (best === undefined || row.at > best.at ? row : best), undefined) ??
         all.find((row) => row.watched !== 1) ??
         all[0];
       if (pick === undefined) continue;
