@@ -44,9 +44,12 @@ plays back through an embedded `mpv`, stores everything locally.
   "on". Browses live, films and series, with favourites, recents, resume and profiles synced with the apps; no local catalogue, and a daily streaming cap per account.
 - **Channel Variant** — one concrete stream a provider offers for a Channel — a specific
   resolution/framerate ("1080p50", "720p25") each with its own provider stream id and URL.
-  A Channel has one or more Variants. Providers routinely ship the same channel as five or
-  more separate playlist entries differing only by variant; grouping them is a normalisation
-  step, not a provider feature.
+  A Channel has one or more Variants: the entries a provider lists under the very same name
+  (one stream listed twice). Each quality a provider lists ("TNT Sports 1 (1080p50)",
+  "TNT Sports 1 (720p25)", "Sky Sports Main Event ᵁᴴᴰ") is its own Channel, so the viewer sees and
+  picks every one; an "(OFFLINE)" entry joins the Channel of its name, or else the family's lead.
+  The qualities of one channel form a family keyed on the Normalised name; the family's lead (its
+  best stream) keeps the family key as its id, which is what ids were when a family was one Channel.
 - **Multi view** — several live channels on one screen, on the TV app (ADR 0014). The pick is made one channel at a time from the Live
   TV guide's channel sheet. How many pictures play is `planTiles`: the device's cap (memory and hardware decoder), and per source the
   streams its account has free; each picture plays the Variant that fits its size, and one with sound (the others are muted with
@@ -79,12 +82,12 @@ plays back through an embedded `mpv`, stores everything locally.
   present. Absent for categories with no such prefix — those sit outside the country tree.
 - **Normalised name** — a Channel's name with unicode styling stripped (`ᵁᴴᴰ`,
   `ᴳᴬᴺᴶᴬ`, `ᴴᴰᴿ`, etc.), the quality suffix that identifies a Variant removed, and the
-  country prefix separated out (`parseName`). Variant grouping and Channel ids key on it, so
+  country prefix separated out (`parseName`). Channel families and ids key on it, so
   its rules are frozen: changing them would move ids and orphan Favourites.
 - **Display name** — how a Channel or Category name is shown and searched (`displayName`),
   written to cope with any provider's house style: country/language prefixes in any
   bracket or separator, borders and emoji, fancy lettering, branding tags and SHOUTING
-  tidied away; quality tags kept. Stored in `channels.normalised_name` (the column predates
+  tidied away; quality tags kept, a "(720p25)"-style one put back at the end. Stored in `channels.normalised_name` (the column predates
   the split) and redone on open when `DISPLAY_NAME_VERSION` changes; never part of an id.
 - **Now/Next** — the current and following Programme for a Channel, resolved from EPG data
   at read time (`nowNextForChannels` / `resolveNowNext`). Not stored as its own concept;

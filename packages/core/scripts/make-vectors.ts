@@ -228,6 +228,21 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
     rawEntry("s2", "c1", "7", "UK| TNT Sports 1 (1080p50)", { tvgId: "later" }),
   ];
   add("normalise", "groupVariants", [entries], groupVariants(entries));
+  // Each quality its own channel: the lead (best stream) listed second, styled tags, a name listed twice, offline
+  // entries with and without a live name of their own, and a family that is offline only.
+  const qualities = [
+    rawEntry("s1", "c1", "1", "UK| Sky Sports Main Event (720p25)"),
+    rawEntry("s1", "c1", "2", "UK| Sky Sports Main Event (1080p50)", { tvgId: "ssme" }),
+    rawEntry("s1", "c1", "3", "UK| Sky Sports Main Event ᵁᴴᴰ"),
+    rawEntry("s1", "c1", "4", "UK| Sky Sports Main Event ᵁᴴᴰ"),
+    rawEntry("s1", "c1", "5", "UK| Sky Sports Main Event (720p25) (OFFLINE)"),
+    rawEntry("s1", "c1", "6", "UK| Sky Sports Main Event  (OFFLINE)"),
+    rawEntry("s1", "c1", "7", "UK| TNT Sports ᴳᴬᴺᴶᴬ"),
+    rawEntry("s1", "c1", "8", "UK| TNT Sports ᴿᴬᵂ (sd)"),
+    rawEntry("s1", "c1", "9", "Gone (OFFLINE)"),
+    rawEntry("s1", "c1", "10", "Gone (HD) (OFFLINE)"),
+  ];
+  add("normalise", "groupVariants", [qualities], groupVariants(qualities));
 
   for (const text of M3U_SAMPLES) {
     for (const size of [text.length, 7, 1]) {

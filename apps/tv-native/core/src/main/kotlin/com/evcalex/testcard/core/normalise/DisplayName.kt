@@ -6,7 +6,7 @@ import java.util.Locale
  * Port of `packages/core/src/normalise/displayName.ts`: a provider's channel name made readable. Display only; ids key
  * on `parseName`. Keep `DISPLAY_NAME_VERSION` equal to the TypeScript constant.
  */
-const val DISPLAY_NAME_VERSION = 1
+const val DISPLAY_NAME_VERSION = 2
 
 private val LETTER_OR_DIGIT = Regex("[\\p{L}\\p{N}]")
 private val LEADING_NON_ALNUM = Regex("^[^\\p{L}\\p{N}(]+")
@@ -48,8 +48,12 @@ private const val EMOJI_BASE =
         "\\u274C\\u274E\\u2753-\\u2755\\u2757\\u2B50\\u2B55]|[\\u2300-\\u23FF\\u2600-\\u27BF\\u2B00-\\u2BFF]\\uFE0F)(?:\\uFE0F|[\\x{1F3FB}-\\x{1F3FF}])*"
 private val EMOJI = Regex("[\\x{1F1E6}-\\x{1F1FF}]{2}|$EMOJI_BASE(?:\\u200D$EMOJI_BASE)*")
 
-/** A channel's name, less the quality or "(OFFLINE)" mark that makes it one Variant of the channel rather than another. */
-fun channelDisplayName(rawName: String): String = displayName(dropVariantMarks(rawName))
+/** A channel's name, less its "(OFFLINE)" mark, with its "(720p25)"-style quality put back after the rest is tidied. Port of `channelDisplayName`. */
+fun channelDisplayName(rawName: String): String {
+    val name = displayName(dropVariantMarks(rawName))
+    val quality = parseName(rawName).quality ?: return name
+    return "$name (${if (quality[0] in '0'..'9' && quality != "4k") quality else quality.uppercase(Locale.ROOT)})"
+}
 
 // ---------------------------------------------------------------------------------------------
 // styled lettering

@@ -76,8 +76,8 @@ describe("displayName", () => {
 });
 
 describe("channelDisplayName", () => {
-  it("drops the marks that tell one variant from another", () => {
-    expect(channelDisplayName("TNT Sports 1 (1080p50)")).toBe("TNT Sports 1");
+  it("keeps the quality that tells one channel from another, and drops the offline mark", () => {
+    expect(channelDisplayName("TNT Sports 1 (1080p50)")).toBe("TNT Sports 1 (1080p50)");
     expect(channelDisplayName("UK| TNT Sports Ultimate (OFFLINE)")).toBe("TNT Sports Ultimate");
   });
 

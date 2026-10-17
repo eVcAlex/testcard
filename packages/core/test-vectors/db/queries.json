@@ -11,7 +11,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
     "raw_name": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1001.png",
@@ -19,10 +19,21 @@
     "is_favourite": 1
    },
    {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "is_favourite": 0
+   },
+   {
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
+    "normalised_name": "TNT Sports 2 (1080p50)",
     "raw_name": "UK| TNT Sports 2 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1004.png",
@@ -55,11 +66,22 @@
     "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "BT Sport 1",
+    "normalised_name": "BT Sport 1 (4K)",
     "raw_name": "UK| BT Sport 1 (4K)",
     "country": "UK",
     "logo_url": "http://img.example/1007.png",
     "channel_number": 7,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "BT Sport 1 (HD)",
+    "raw_name": "UK| BT Sport 1 (HD)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 8,
     "is_favourite": 0
    },
    {
@@ -88,7 +110,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "ITV 4",
+    "normalised_name": "ITV 4 (SD)",
     "raw_name": "UK| ITV 4 (SD)",
     "country": "UK",
     "logo_url": null,
@@ -107,6 +129,17 @@
    }
   ],
   "out": [
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 2 (1080p50)",
+    "raw_name": "UK| TNT Sports 2 (1080p50)",
+    "country": "UK",
+    "logo_url": "http://img.example/1004.png",
+    "channel_number": 4,
+    "is_favourite": 0
+   },
    {
     "id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Main Event HD\u0000UK",
     "source_id": "x1",
@@ -127,17 +160,6 @@
     "country": "UK",
     "logo_url": "http://img.example/1006.png",
     "channel_number": 6,
-    "is_favourite": 0
-   },
-   {
-    "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
-    "source_id": "x1",
-    "category_id": "x1:1",
-    "normalised_name": "BT Sport 1",
-    "raw_name": "UK| BT Sport 1 (4K)",
-    "country": "UK",
-    "logo_url": "http://img.example/1007.png",
-    "channel_number": 7,
     "is_favourite": 0
    }
   ]
@@ -165,11 +187,22 @@
     "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
     "source_id": "x1",
     "category_id": "x1:3",
-    "normalised_name": "Movie Channel B",
+    "normalised_name": "Movie Channel B (4K)",
     "raw_name": "|EN| Movie Channel B (4K)",
     "country": null,
     "logo_url": null,
     "channel_number": 20,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "normalised_name": "Movie Channel B (HD)",
+    "raw_name": "|EN| Movie Channel B (HD)",
+    "country": null,
+    "logo_url": "http://img.example/1021.png",
+    "channel_number": 21,
     "is_favourite": 0
    }
   ]
@@ -186,11 +219,22 @@
     "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
     "source_id": "m1",
     "category_id": "m1:cat:UK| NEWS",
-    "normalised_name": "BBC One",
+    "normalised_name": "BBC One (1080p50)",
     "raw_name": "UK| BBC One (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/bbc1.png",
     "channel_number": 101,
+    "is_favourite": 0
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25)",
+    "source_id": "m1",
+    "category_id": "m1:cat:UK| NEWS",
+    "normalised_name": "BBC One (720p25)",
+    "raw_name": "UK| BBC One (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": null,
     "is_favourite": 0
    },
    {
@@ -218,7 +262,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
     "raw_name": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1001.png",
@@ -226,10 +270,21 @@
     "is_favourite": 1
    },
    {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "is_favourite": 0
+   },
+   {
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
+    "normalised_name": "TNT Sports 2 (1080p50)",
     "raw_name": "UK| TNT Sports 2 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1004.png",
@@ -262,11 +317,22 @@
     "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "BT Sport 1",
+    "normalised_name": "BT Sport 1 (4K)",
     "raw_name": "UK| BT Sport 1 (4K)",
     "country": "UK",
     "logo_url": "http://img.example/1007.png",
     "channel_number": 7,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "BT Sport 1 (HD)",
+    "raw_name": "UK| BT Sport 1 (HD)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 8,
     "is_favourite": 0
    },
    {
@@ -295,7 +361,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "ITV 4",
+    "normalised_name": "ITV 4 (SD)",
     "raw_name": "UK| ITV 4 (SD)",
     "country": "UK",
     "logo_url": null,
@@ -306,11 +372,22 @@
     "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
     "source_id": "m1",
     "category_id": "m1:cat:UK| NEWS",
-    "normalised_name": "BBC One",
+    "normalised_name": "BBC One (1080p50)",
     "raw_name": "UK| BBC One (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/bbc1.png",
     "channel_number": 101,
+    "is_favourite": 0
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25)",
+    "source_id": "m1",
+    "category_id": "m1:cat:UK| NEWS",
+    "normalised_name": "BBC One (720p25)",
+    "raw_name": "UK| BBC One (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": null,
     "is_favourite": 0
    },
    {
@@ -338,7 +415,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
     "raw_name": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1001.png",
@@ -346,10 +423,21 @@
     "is_favourite": 1
    },
    {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "is_favourite": 0
+   },
+   {
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
+    "normalised_name": "TNT Sports 2 (1080p50)",
     "raw_name": "UK| TNT Sports 2 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1004.png",
@@ -382,11 +470,22 @@
     "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "BT Sport 1",
+    "normalised_name": "BT Sport 1 (4K)",
     "raw_name": "UK| BT Sport 1 (4K)",
     "country": "UK",
     "logo_url": "http://img.example/1007.png",
     "channel_number": 7,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "BT Sport 1 (HD)",
+    "raw_name": "UK| BT Sport 1 (HD)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 8,
     "is_favourite": 0
    },
    {
@@ -415,7 +514,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "ITV 4",
+    "normalised_name": "ITV 4 (SD)",
     "raw_name": "UK| ITV 4 (SD)",
     "country": "UK",
     "logo_url": null,
@@ -437,11 +536,22 @@
     "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
     "source_id": "x1",
     "category_id": "x1:3",
-    "normalised_name": "Movie Channel B",
+    "normalised_name": "Movie Channel B (4K)",
     "raw_name": "|EN| Movie Channel B (4K)",
     "country": null,
     "logo_url": null,
     "channel_number": 20,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "normalised_name": "Movie Channel B (HD)",
+    "raw_name": "|EN| Movie Channel B (HD)",
+    "country": null,
+    "logo_url": "http://img.example/1021.png",
+    "channel_number": 21,
     "is_favourite": 0
    },
    {
@@ -514,7 +624,7 @@
     "id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
     "source_id": "x1",
     "category_id": "x1:6",
-    "normalised_name": "TF1",
+    "normalised_name": "TF1 (HD)",
     "raw_name": "FR| TF1 (HD)",
     "country": "FR",
     "logo_url": "http://img.example/1028.png",
@@ -522,14 +632,36 @@
     "is_favourite": 0
    },
    {
+    "id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "normalised_name": "TF1",
+    "raw_name": "FR| TF1",
+    "country": "FR",
+    "logo_url": null,
+    "channel_number": 29,
+    "is_favourite": 0
+   },
+   {
     "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
     "source_id": "m1",
     "category_id": "m1:cat:UK| NEWS",
-    "normalised_name": "BBC One",
+    "normalised_name": "BBC One (1080p50)",
     "raw_name": "UK| BBC One (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/bbc1.png",
     "channel_number": 101,
+    "is_favourite": 0
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25)",
+    "source_id": "m1",
+    "category_id": "m1:cat:UK| NEWS",
+    "normalised_name": "BBC One (720p25)",
+    "raw_name": "UK| BBC One (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": null,
     "is_favourite": 0
    },
    {
@@ -579,11 +711,22 @@
     "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
     "source_id": "m1",
     "category_id": "m1:cat:UK| NEWS",
-    "normalised_name": "BBC One",
+    "normalised_name": "BBC One (1080p50)",
     "raw_name": "UK| BBC One (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/bbc1.png",
     "channel_number": 101,
+    "is_favourite": 0
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25)",
+    "source_id": "m1",
+    "category_id": "m1:cat:UK| NEWS",
+    "normalised_name": "BBC One (720p25)",
+    "raw_name": "UK| BBC One (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": null,
     "is_favourite": 0
    },
    {
@@ -633,7 +776,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
     "raw_name": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1001.png",
@@ -641,10 +784,21 @@
     "is_favourite": 1
    },
    {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "is_favourite": 0
+   },
+   {
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
+    "normalised_name": "TNT Sports 2 (1080p50)",
     "raw_name": "UK| TNT Sports 2 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1004.png",
@@ -677,11 +831,22 @@
     "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "BT Sport 1",
+    "normalised_name": "BT Sport 1 (4K)",
     "raw_name": "UK| BT Sport 1 (4K)",
     "country": "UK",
     "logo_url": "http://img.example/1007.png",
     "channel_number": 7,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "BT Sport 1 (HD)",
+    "raw_name": "UK| BT Sport 1 (HD)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 8,
     "is_favourite": 0
    },
    {
@@ -710,7 +875,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "ITV 4",
+    "normalised_name": "ITV 4 (SD)",
     "raw_name": "UK| ITV 4 (SD)",
     "country": "UK",
     "logo_url": null,
@@ -742,7 +907,7 @@
     "language": null,
     "service": null,
     "tags": "",
-    "channel_count": 8
+    "channel_count": 10
    },
    {
     "id": "x1:3",
@@ -752,7 +917,7 @@
     "language": "en",
     "service": null,
     "tags": "4k",
-    "channel_count": 2
+    "channel_count": 3
    },
    {
     "id": "x1:4",
@@ -782,7 +947,7 @@
     "language": "fr",
     "service": null,
     "tags": "",
-    "channel_count": 3
+    "channel_count": 4
    },
    {
     "id": "m1:cat:UK| NEWS",
@@ -792,7 +957,7 @@
     "language": null,
     "service": null,
     "tags": "",
-    "channel_count": 2
+    "channel_count": 3
    },
    {
     "id": "m1:cat:Sports",
@@ -830,7 +995,7 @@
     "language": null,
     "service": null,
     "tags": "",
-    "channel_count": 8
+    "channel_count": 10
    },
    {
     "id": "x1:3",
@@ -840,7 +1005,7 @@
     "language": "en",
     "service": null,
     "tags": "4k",
-    "channel_count": 2
+    "channel_count": 3
    },
    {
     "id": "x1:4",
@@ -870,7 +1035,7 @@
     "language": "fr",
     "service": null,
     "tags": "",
-    "channel_count": 3
+    "channel_count": 4
    }
   ]
  },
@@ -888,7 +1053,7 @@
     "language": null,
     "service": null,
     "tags": "",
-    "channel_count": 2
+    "channel_count": 3
    },
    {
     "id": "m1:cat:Sports",
@@ -948,7 +1113,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
     "raw_name": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1001.png",
@@ -963,15 +1128,15 @@
   "out": [
    {
     "country": "UK",
-    "count": 11
+    "count": 14
    },
    {
     "country": "US",
-    "count": 5
+    "count": 6
    },
    {
     "country": "FR",
-    "count": 3
+    "count": 4
    }
   ]
  },
@@ -983,7 +1148,7 @@
   "out": [
    {
     "country": "UK",
-    "count": 2
+    "count": 3
    }
   ]
  },
@@ -994,28 +1159,6 @@
   ],
   "out": [
    {
-    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
-    "source_id": "x1",
-    "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
-    "raw_name": "UK| TNT Sports 1 (1080p50)",
-    "country": "UK",
-    "logo_url": "http://img.example/1001.png",
-    "channel_number": 1,
-    "is_favourite": 1
-   },
-   {
-    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
-    "source_id": "x1",
-    "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
-    "raw_name": "UK| TNT Sports 2 (1080p50)",
-    "country": "UK",
-    "logo_url": "http://img.example/1004.png",
-    "channel_number": 4,
-    "is_favourite": 0
-   },
-   {
     "id": "m1:channel:m1\u0000m1:cat:Sports\u0000TNT Sports Ultimate\u0000",
     "source_id": "m1",
     "category_id": "m1:cat:Sports",
@@ -1024,6 +1167,39 @@
     "country": null,
     "logo_url": null,
     "channel_number": null,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
+    "raw_name": "UK| TNT Sports 1 (1080p50)",
+    "country": "UK",
+    "logo_url": "http://img.example/1001.png",
+    "channel_number": 1,
+    "is_favourite": 1
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 2 (1080p50)",
+    "raw_name": "UK| TNT Sports 2 (1080p50)",
+    "country": "UK",
+    "logo_url": "http://img.example/1004.png",
+    "channel_number": 4,
     "is_favourite": 0
    }
   ]
@@ -1068,11 +1244,22 @@
     "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
     "source_id": "m1",
     "category_id": "m1:cat:UK| NEWS",
-    "normalised_name": "BBC One",
+    "normalised_name": "BBC One (1080p50)",
     "raw_name": "UK| BBC One (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/bbc1.png",
     "channel_number": 101,
+    "is_favourite": 0
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25)",
+    "source_id": "m1",
+    "category_id": "m1:cat:UK| NEWS",
+    "normalised_name": "BBC One (720p25)",
+    "raw_name": "UK| BBC One (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": null,
     "is_favourite": 0
    }
   ]
@@ -1098,28 +1285,6 @@
   ],
   "out": [
    {
-    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
-    "source_id": "x1",
-    "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
-    "raw_name": "UK| TNT Sports 1 (1080p50)",
-    "country": "UK",
-    "logo_url": "http://img.example/1001.png",
-    "channel_number": 1,
-    "is_favourite": 1
-   },
-   {
-    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
-    "source_id": "x1",
-    "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
-    "raw_name": "UK| TNT Sports 2 (1080p50)",
-    "country": "UK",
-    "logo_url": "http://img.example/1004.png",
-    "channel_number": 4,
-    "is_favourite": 0
-   },
-   {
     "id": "m1:channel:m1\u0000m1:cat:Sports\u0000TNT Sports Ultimate\u0000",
     "source_id": "m1",
     "category_id": "m1:cat:Sports",
@@ -1128,6 +1293,39 @@
     "country": null,
     "logo_url": null,
     "channel_number": null,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
+    "raw_name": "UK| TNT Sports 1 (1080p50)",
+    "country": "UK",
+    "logo_url": "http://img.example/1001.png",
+    "channel_number": 1,
+    "is_favourite": 1
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 2 (1080p50)",
+    "raw_name": "UK| TNT Sports 2 (1080p50)",
+    "country": "UK",
+    "logo_url": "http://img.example/1004.png",
+    "channel_number": 4,
     "is_favourite": 0
    }
   ]
@@ -1153,11 +1351,22 @@
     "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
     "source_id": "x1",
     "category_id": "x1:3",
-    "normalised_name": "Movie Channel B",
+    "normalised_name": "Movie Channel B (4K)",
     "raw_name": "|EN| Movie Channel B (4K)",
     "country": null,
     "logo_url": null,
     "channel_number": 20,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "normalised_name": "Movie Channel B (HD)",
+    "raw_name": "|EN| Movie Channel B (HD)",
+    "country": null,
+    "logo_url": "http://img.example/1021.png",
+    "channel_number": 21,
     "is_favourite": 0
    }
   ]
@@ -1174,7 +1383,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
     "raw_name": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1001.png",
@@ -1182,25 +1391,25 @@
     "is_favourite": 1
    },
    {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "is_favourite": 0
+   },
+   {
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
+    "normalised_name": "TNT Sports 2 (1080p50)",
     "raw_name": "UK| TNT Sports 2 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1004.png",
     "channel_number": 4,
-    "is_favourite": 0
-   },
-   {
-    "id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
-    "source_id": "x1",
-    "category_id": "x1:1",
-    "normalised_name": "Premier Sports 1 FHD",
-    "raw_name": "UK| Premier Sports 1 FHD",
-    "country": "UK",
-    "logo_url": "http://img.example/1010.png",
-    "channel_number": 10,
     "is_favourite": 0
    }
   ]
@@ -1210,29 +1419,29 @@
   "in": [
    [
     "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
     "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Sky Sports Main Event HD\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
     "x1:channel:x1\u0000x1:1\u0000Eurosport 1\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
     "x1:channel:x1\u0000x1:2\u0000FOX NEWS\u0000US",
     "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
     "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "x1:channel:x1\u0000x1:2\u0000Newsmax\u0000US",
     "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
     "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel A\u0000",
     "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "x1:channel:x1\u0000x1:4\u0000XXX Channel 2\u0000",
     "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
-    "x1:channel:x1\u0000x1:5\u0000UFC 300 Main Card\u0000",
-    "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-    "x1:channel:x1\u0000x1:6\u0000Disney Junior\u0000FR",
-    "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-    "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK"
+    "x1:channel:x1\u0000x1:5\u0000UFC 300 Main Card\u0000"
    ],
    1790942400000
   ],
@@ -1257,6 +1466,25 @@
     }
    ],
    [
+    "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    {
+     "now": {
+      "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+      "title": "News & Weather 0",
+      "description": "About News & Weather 0",
+      "start_at": 1790942400000,
+      "end_at": 1790949600000
+     },
+     "next": {
+      "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+      "title": "Show 0-1",
+      "description": null,
+      "start_at": 1790949600000,
+      "end_at": 1790956800000
+     }
+    }
+   ],
+   [
     "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
     {
      "now": {
@@ -1314,6 +1542,25 @@
     }
    ],
    [
+    "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    {
+     "now": {
+      "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+      "title": "Show 1--1",
+      "description": null,
+      "start_at": 1790935800000,
+      "end_at": 1790943000000
+     },
+     "next": {
+      "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+      "title": "News & Weather 0",
+      "description": "About News & Weather 0",
+      "start_at": 1790943000000,
+      "end_at": 1790950200000
+     }
+    }
+   ],
+   [
     "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     {
      "now": {
@@ -1344,6 +1591,25 @@
      },
      "next": {
       "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+      "title": "News & Weather 0",
+      "description": "About News & Weather 0",
+      "start_at": 1790943000000,
+      "end_at": 1790950200000
+     }
+    }
+   ],
+   [
+    "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    {
+     "now": {
+      "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+      "title": "Show 1--1",
+      "description": null,
+      "start_at": 1790935800000,
+      "end_at": 1790943000000
+     },
+     "next": {
+      "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
       "title": "News & Weather 0",
       "description": "About News & Weather 0",
       "start_at": 1790943000000,
@@ -1420,6 +1686,25 @@
      },
      "next": {
       "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+      "title": "News & Weather 0",
+      "description": "About News & Weather 0",
+      "start_at": 1790945400000,
+      "end_at": 1790952600000
+     }
+    }
+   ],
+   [
+    "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    {
+     "now": {
+      "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+      "title": "Show 5--1",
+      "description": null,
+      "start_at": 1790938200000,
+      "end_at": 1790945400000
+     },
+     "next": {
+      "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
       "title": "News & Weather 0",
       "description": "About News & Weather 0",
       "start_at": 1790945400000,
@@ -1464,44 +1749,6 @@
       "end_at": 1790950800000
      }
     }
-   ],
-   [
-    "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-    {
-     "now": {
-      "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-      "title": "Show 4--1",
-      "description": null,
-      "start_at": 1790937600000,
-      "end_at": 1790944800000
-     },
-     "next": {
-      "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-      "title": "News & Weather 0",
-      "description": "About News & Weather 0",
-      "start_at": 1790944800000,
-      "end_at": 1790952000000
-     }
-    }
-   ],
-   [
-    "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-    {
-     "now": {
-      "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-      "title": "Show 6--1",
-      "description": null,
-      "start_at": 1790938800000,
-      "end_at": 1790946000000
-     },
-     "next": {
-      "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-      "title": "News & Weather 0",
-      "description": "About News & Weather 0",
-      "start_at": 1790946000000,
-      "end_at": 1790953200000
-     }
-    }
    ]
   ]
  },
@@ -1510,29 +1757,29 @@
   "in": [
    [
     "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
     "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Sky Sports Main Event HD\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
     "x1:channel:x1\u0000x1:1\u0000Eurosport 1\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
     "x1:channel:x1\u0000x1:2\u0000FOX NEWS\u0000US",
     "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
     "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "x1:channel:x1\u0000x1:2\u0000Newsmax\u0000US",
     "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
     "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel A\u0000",
     "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "x1:channel:x1\u0000x1:4\u0000XXX Channel 2\u0000",
     "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
-    "x1:channel:x1\u0000x1:5\u0000UFC 300 Main Card\u0000",
-    "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-    "x1:channel:x1\u0000x1:6\u0000Disney Junior\u0000FR",
-    "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-    "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK"
+    "x1:channel:x1\u0000x1:5\u0000UFC 300 Main Card\u0000"
    ],
    1790960400000
   ],
@@ -1557,6 +1804,25 @@
     }
    ],
    [
+    "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    {
+     "now": {
+      "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+      "title": "Show 0-2",
+      "description": null,
+      "start_at": 1790956800000,
+      "end_at": 1790964000000
+     },
+     "next": {
+      "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+      "title": "Show 0-3",
+      "description": "About Show 0-3",
+      "start_at": 1790964000000,
+      "end_at": 1790971200000
+     }
+    }
+   ],
+   [
     "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
     {
      "now": {
@@ -1614,6 +1880,25 @@
     }
    ],
    [
+    "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    {
+     "now": {
+      "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+      "title": "Show 1-2",
+      "description": null,
+      "start_at": 1790957400000,
+      "end_at": 1790964600000
+     },
+     "next": {
+      "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+      "title": "Show 1-3",
+      "description": "About Show 1-3",
+      "start_at": 1790964600000,
+      "end_at": 1790971800000
+     }
+    }
+   ],
+   [
     "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     {
      "now": {
@@ -1644,6 +1929,25 @@
      },
      "next": {
       "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+      "title": "Show 1-3",
+      "description": "About Show 1-3",
+      "start_at": 1790964600000,
+      "end_at": 1790971800000
+     }
+    }
+   ],
+   [
+    "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    {
+     "now": {
+      "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+      "title": "Show 1-2",
+      "description": null,
+      "start_at": 1790957400000,
+      "end_at": 1790964600000
+     },
+     "next": {
+      "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
       "title": "Show 1-3",
       "description": "About Show 1-3",
       "start_at": 1790964600000,
@@ -1720,6 +2024,25 @@
      },
      "next": {
       "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+      "title": "Show 5-3",
+      "description": "About Show 5-3",
+      "start_at": 1790967000000,
+      "end_at": 1790974200000
+     }
+    }
+   ],
+   [
+    "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    {
+     "now": {
+      "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+      "title": "Show 5-2",
+      "description": null,
+      "start_at": 1790959800000,
+      "end_at": 1790967000000
+     },
+     "next": {
+      "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
       "title": "Show 5-3",
       "description": "About Show 5-3",
       "start_at": 1790967000000,
@@ -1764,44 +2087,6 @@
       "end_at": 1790972400000
      }
     }
-   ],
-   [
-    "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-    {
-     "now": {
-      "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-      "title": "Show 4-2",
-      "description": null,
-      "start_at": 1790959200000,
-      "end_at": 1790966400000
-     },
-     "next": {
-      "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-      "title": "Show 4-3",
-      "description": "About Show 4-3",
-      "start_at": 1790966400000,
-      "end_at": 1790973600000
-     }
-    }
-   ],
-   [
-    "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-    {
-     "now": {
-      "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-      "title": "Show 6-2",
-      "description": null,
-      "start_at": 1790960400000,
-      "end_at": 1790967600000
-     },
-     "next": {
-      "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-      "title": "Show 6-3",
-      "description": "About Show 6-3",
-      "start_at": 1790967600000,
-      "end_at": 1790974800000
-     }
-    }
    ]
   ]
  },
@@ -1810,29 +2095,29 @@
   "in": [
    [
     "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+    "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
     "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Sky Sports Main Event HD\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
     "x1:channel:x1\u0000x1:1\u0000Eurosport 1\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
     "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "x1:channel:x1\u0000x1:2\u0000CNN\u0000US",
     "x1:channel:x1\u0000x1:2\u0000FOX NEWS\u0000US",
     "x1:channel:x1\u0000x1:2\u0000MSNBC\u0000US",
+    "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
     "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "x1:channel:x1\u0000x1:2\u0000Newsmax\u0000US",
     "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
     "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel A\u0000",
     "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "x1:channel:x1\u0000x1:4\u0000XXX Channel 2\u0000",
     "x1:channel:x1\u0000x1:5\u0000PPV 1\u0000",
-    "x1:channel:x1\u0000x1:5\u0000UFC 300 Main Card\u0000",
-    "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-    "x1:channel:x1\u0000x1:6\u0000Disney Junior\u0000FR",
-    "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-    "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK"
+    "x1:channel:x1\u0000x1:5\u0000UFC 300 Main Card\u0000"
    ],
    1790938800000,
    1790956800000
@@ -1860,6 +2145,27 @@
     "end_at": 1790956800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0--1",
+    "description": null,
+    "start_at": 1790935200000,
+    "end_at": 1790942400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790942400000,
+    "end_at": 1790949600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-1",
+    "description": null,
+    "start_at": 1790949600000,
+    "end_at": 1790956800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:1\u0000Premier Sports 1 FHD\u0000UK",
     "title": "Show 2--1",
     "description": null,
@@ -1923,6 +2229,27 @@
     "end_at": 1790957400000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1--1",
+    "description": null,
+    "start_at": 1790935800000,
+    "end_at": 1790943000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790943000000,
+    "end_at": 1790950200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-1",
+    "description": null,
+    "start_at": 1790950200000,
+    "end_at": 1790957400000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "title": "Show 3--1",
     "description": null,
@@ -1959,6 +2286,27 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "title": "Show 1-1",
+    "description": null,
+    "start_at": 1790950200000,
+    "end_at": 1790957400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1--1",
+    "description": null,
+    "start_at": 1790935800000,
+    "end_at": 1790943000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790943000000,
+    "end_at": 1790950200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
     "title": "Show 1-1",
     "description": null,
     "start_at": 1790950200000,
@@ -2043,6 +2391,27 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-1",
+    "description": null,
+    "start_at": 1790952600000,
+    "end_at": 1790959800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    "title": "Show 5--1",
+    "description": null,
+    "start_at": 1790938200000,
+    "end_at": 1790945400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790945400000,
+    "end_at": 1790952600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-1",
     "description": null,
     "start_at": 1790952600000,
@@ -2089,48 +2458,6 @@
     "description": null,
     "start_at": 1790950800000,
     "end_at": 1790958000000
-   },
-   {
-    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-    "title": "Show 4--1",
-    "description": null,
-    "start_at": 1790937600000,
-    "end_at": 1790944800000
-   },
-   {
-    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-    "title": "News & Weather 0",
-    "description": "About News & Weather 0",
-    "start_at": 1790944800000,
-    "end_at": 1790952000000
-   },
-   {
-    "channel_id": "x1:channel:x1\u0000x1:6\u0000Cartoon Network\u0000FR",
-    "title": "Show 4-1",
-    "description": null,
-    "start_at": 1790952000000,
-    "end_at": 1790959200000
-   },
-   {
-    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-    "title": "Show 6--1",
-    "description": null,
-    "start_at": 1790938800000,
-    "end_at": 1790946000000
-   },
-   {
-    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-    "title": "News & Weather 0",
-    "description": "About News & Weather 0",
-    "start_at": 1790946000000,
-    "end_at": 1790953200000
-   },
-   {
-    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
-    "title": "Show 6-1",
-    "description": null,
-    "start_at": 1790953200000,
-    "end_at": 1790960400000
    }
   ]
  },
@@ -2213,7 +2540,7 @@
   ],
   "out": {
    "channelId": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
-   "channelName": "BBC One",
+   "channelName": "BBC One (1080p50)",
    "variant": {
     "id": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK:http://host.example/u/p/101.ts",
     "sourceId": "m1",
@@ -2238,13 +2565,13 @@
    {
     "channelId": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
     "variantId": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK:http://host.example/u/p/101.ts",
-    "name": "BBC One",
+    "name": "BBC One (1080p50)",
     "quality": "1080p50"
    },
    {
-    "channelId": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
-    "variantId": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK:http://host.example/u/p/102.ts",
-    "name": "BBC One",
+    "channelId": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25)",
+    "variantId": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25):http://host.example/u/p/102.ts",
+    "name": "BBC One (720p25)",
     "quality": "720p25"
    }
   ]
@@ -2273,25 +2600,25 @@
    {
     "channelId": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1001",
-    "name": "TNT Sports 1",
+    "name": "TNT Sports 1 (1080p50)",
     "quality": "1080p50"
    },
    {
     "channelId": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
-    "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1002",
-    "name": "TNT Sports 1",
-    "quality": "720p25"
+    "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1003",
+    "name": "TNT Sports 1 (1080p50)",
+    "quality": null
    },
    {
-    "channelId": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
-    "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1003",
-    "name": "TNT Sports 1",
-    "quality": null
+    "channelId": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25):1002",
+    "name": "TNT Sports 1 (720p25)",
+    "quality": "720p25"
    },
    {
     "channelId": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
     "variantId": "x1:variant:x1\u0000x1:2\u0000TNT Sports 1\u0000UK:1018",
-    "name": "TNT Sports 1",
+    "name": "TNT Sports 1 (720p25)",
     "quality": "720p25"
    }
   ]
@@ -2305,13 +2632,13 @@
    {
     "channelId": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
     "variantId": "x1:variant:x1\u0000x1:1\u0000BT Sport 1\u0000UK:1007",
-    "name": "BT Sport 1",
+    "name": "BT Sport 1 (4K)",
     "quality": "4k"
    },
    {
-    "channelId": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
-    "variantId": "x1:variant:x1\u0000x1:1\u0000BT Sport 1\u0000UK:1008",
-    "name": "BT Sport 1",
+    "channelId": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "variantId": "x1:variant:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD):1008",
+    "name": "BT Sport 1 (HD)",
     "quality": "hd"
    }
   ]
@@ -10049,28 +10376,6 @@
    "series": [],
    "channels": [
     {
-     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
-     "source_id": "x1",
-     "category_id": "x1:1",
-     "normalised_name": "TNT Sports 1",
-     "raw_name": "UK| TNT Sports 1 (1080p50)",
-     "country": "UK",
-     "logo_url": "http://img.example/1001.png",
-     "channel_number": 1,
-     "is_favourite": 1
-    },
-    {
-     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
-     "source_id": "x1",
-     "category_id": "x1:1",
-     "normalised_name": "TNT Sports 2",
-     "raw_name": "UK| TNT Sports 2 (1080p50)",
-     "country": "UK",
-     "logo_url": "http://img.example/1004.png",
-     "channel_number": 4,
-     "is_favourite": 0
-    },
-    {
      "id": "m1:channel:m1\u0000m1:cat:Sports\u0000TNT Sports Ultimate\u0000",
      "source_id": "m1",
      "category_id": "m1:cat:Sports",
@@ -10079,6 +10384,39 @@
      "country": null,
      "logo_url": null,
      "channel_number": null,
+     "is_favourite": 0
+    },
+    {
+     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
+     "source_id": "x1",
+     "category_id": "x1:1",
+     "normalised_name": "TNT Sports 1 (1080p50)",
+     "raw_name": "UK| TNT Sports 1 (1080p50)",
+     "country": "UK",
+     "logo_url": "http://img.example/1001.png",
+     "channel_number": 1,
+     "is_favourite": 1
+    },
+    {
+     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+     "source_id": "x1",
+     "category_id": "x1:1",
+     "normalised_name": "TNT Sports 1 (720p25)",
+     "raw_name": "UK| TNT Sports 1 (720p25)",
+     "country": "UK",
+     "logo_url": null,
+     "channel_number": 2,
+     "is_favourite": 0
+    },
+    {
+     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
+     "source_id": "x1",
+     "category_id": "x1:1",
+     "normalised_name": "TNT Sports 2 (1080p50)",
+     "raw_name": "UK| TNT Sports 2 (1080p50)",
+     "country": "UK",
+     "logo_url": "http://img.example/1004.png",
+     "channel_number": 4,
      "is_favourite": 0
     }
    ]
@@ -10641,25 +10979,25 @@
    {
     "channelId": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1001",
-    "name": "TNT Sports 1",
+    "name": "TNT Sports 1 (1080p50)",
     "quality": "1080p50"
    },
    {
     "channelId": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
-    "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1002",
-    "name": "TNT Sports 1",
-    "quality": "720p25"
+    "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1003",
+    "name": "TNT Sports 1 (1080p50)",
+    "quality": null
    },
    {
-    "channelId": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
-    "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1003",
-    "name": "TNT Sports 1",
-    "quality": null
+    "channelId": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "variantId": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25):1002",
+    "name": "TNT Sports 1 (720p25)",
+    "quality": "720p25"
    },
    {
     "channelId": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
     "variantId": "x1:variant:x1\u0000x1:2\u0000TNT Sports 1\u0000UK:1018",
-    "name": "TNT Sports 1",
+    "name": "TNT Sports 1 (720p25)",
     "quality": "720p25"
    }
   ]
@@ -10676,7 +11014,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
     "raw_name": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1001.png",
@@ -10684,10 +11022,21 @@
     "is_favourite": 1
    },
    {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "is_favourite": 0
+   },
+   {
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
+    "normalised_name": "TNT Sports 2 (1080p50)",
     "raw_name": "UK| TNT Sports 2 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1004.png",
@@ -10720,11 +11069,22 @@
     "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "BT Sport 1",
+    "normalised_name": "BT Sport 1 (4K)",
     "raw_name": "UK| BT Sport 1 (4K)",
     "country": "UK",
     "logo_url": "http://img.example/1007.png",
     "channel_number": 7,
+    "is_favourite": 0
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "BT Sport 1 (HD)",
+    "raw_name": "UK| BT Sport 1 (HD)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 8,
     "is_favourite": 0
    },
    {
@@ -10753,7 +11113,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "ITV 4",
+    "normalised_name": "ITV 4 (SD)",
     "raw_name": "UK| ITV 4 (SD)",
     "country": "UK",
     "logo_url": null,

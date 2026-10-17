@@ -111,20 +111,20 @@
     "sort_order": 0
    },
    {
-    "id": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1002",
-    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
-    "provider_stream_id": "1002",
-    "quality": "720p25",
-    "is_offline": 0,
-    "sort_order": 1
-   },
-   {
     "id": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK:1003",
     "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "provider_stream_id": "1003",
     "quality": null,
     "is_offline": 1,
-    "sort_order": 2
+    "sort_order": 1
+   },
+   {
+    "id": "x1:variant:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25):1002",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "provider_stream_id": "1002",
+    "quality": "720p25",
+    "is_offline": 0,
+    "sort_order": 0
    },
    {
     "id": "x1:variant:x1\u0000x1:1\u0000TNT Sports 2\u0000UK:1004",
@@ -159,12 +159,12 @@
     "sort_order": 0
    },
    {
-    "id": "x1:variant:x1\u0000x1:1\u0000BT Sport 1\u0000UK:1008",
-    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
+    "id": "x1:variant:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD):1008",
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
     "provider_stream_id": "1008",
     "quality": "hd",
     "is_offline": 0,
-    "sort_order": 1
+    "sort_order": 0
    },
    {
     "id": "x1:variant:x1\u0000x1:1\u0000Eurosport 1\u0000UK:1009",
@@ -215,20 +215,20 @@
     "sort_order": 0
    },
    {
+    "id": "x1:variant:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25):1015",
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "provider_stream_id": "1015",
+    "quality": "720p25",
+    "is_offline": 0,
+    "sort_order": 0
+   },
+   {
     "id": "x1:variant:x1\u0000x1:2\u0000Bloomberg\u0000US:1016",
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "provider_stream_id": "1016",
     "quality": "1080p50",
     "is_offline": 0,
     "sort_order": 0
-   },
-   {
-    "id": "x1:variant:x1\u0000x1:2\u0000Bloomberg\u0000US:1015",
-    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
-    "provider_stream_id": "1015",
-    "quality": "720p25",
-    "is_offline": 0,
-    "sort_order": 1
    },
    {
     "id": "x1:variant:x1\u0000x1:2\u0000Newsmax\u0000US:1017",
@@ -263,12 +263,12 @@
     "sort_order": 0
    },
    {
-    "id": "x1:variant:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000:1021",
-    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "id": "x1:variant:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD):1021",
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "provider_stream_id": "1021",
     "quality": "hd",
     "is_offline": 0,
-    "sort_order": 1
+    "sort_order": 0
    },
    {
     "id": "x1:variant:x1\u0000x1:4\u0000XXX Channel 1\u0000:1022",
@@ -327,12 +327,12 @@
     "sort_order": 0
    },
    {
-    "id": "x1:variant:x1\u0000x1:6\u0000TF1\u0000FR:1029",
-    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "id": "x1:variant:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1:1029",
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "provider_stream_id": "1029",
     "quality": null,
     "is_offline": 0,
-    "sort_order": 1
+    "sort_order": 0
    },
    {
     "id": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK:http://host.example/u/p/101.ts",
@@ -343,12 +343,12 @@
     "sort_order": 0
    },
    {
-    "id": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK:http://host.example/u/p/102.ts",
-    "channel_id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
+    "id": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25):http://host.example/u/p/102.ts",
+    "channel_id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25)",
     "provider_stream_id": "http://host.example/u/p/102.ts",
     "quality": "720p25",
     "is_offline": 0,
-    "sort_order": 1
+    "sort_order": 0
    },
    {
     "id": "m1:variant:m1\u0000m1:cat:UK| NEWS\u0000Sky News\u0000UK:http://host.example/u/p/103.ts",
@@ -380,7 +380,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (1080p50)",
     "raw_name": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1001.png",
@@ -392,10 +392,25 @@
     "last_seen_at": 1790942400000
    },
    {
+    "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "TNT Sports 1 (720p25)",
+    "raw_name": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 2,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch1.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
     "id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 2\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "TNT Sports 2",
+    "normalised_name": "TNT Sports 2 (1080p50)",
     "raw_name": "UK| TNT Sports 2 (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/1004.png",
@@ -440,11 +455,26 @@
     "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "BT Sport 1",
+    "normalised_name": "BT Sport 1 (4K)",
     "raw_name": "UK| BT Sport 1 (4K)",
     "country": "UK",
     "logo_url": "http://img.example/1007.png",
     "channel_number": 7,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch0.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "source_id": "x1",
+    "category_id": "x1:1",
+    "normalised_name": "BT Sport 1 (HD)",
+    "raw_name": "UK| BT Sport 1 (HD)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": 8,
     "catchup_type": null,
     "catchup_days": null,
     "tvg_id": "ch0.guide",
@@ -485,7 +515,7 @@
     "id": "x1:channel:x1\u0000x1:1\u0000ITV 4\u0000UK",
     "source_id": "x1",
     "category_id": "x1:1",
-    "normalised_name": "ITV 4",
+    "normalised_name": "ITV 4 (SD)",
     "raw_name": "UK| ITV 4 (SD)",
     "country": "UK",
     "logo_url": null,
@@ -515,7 +545,7 @@
     "id": "x1:channel:x1\u0000x1:2\u0000FOX NEWS\u0000US",
     "source_id": "x1",
     "category_id": "x1:2",
-    "normalised_name": "FOX News",
+    "normalised_name": "FOX News (HD)",
     "raw_name": "US| FOX NEWS (HD)",
     "country": "US",
     "logo_url": "http://img.example/1013.png",
@@ -542,16 +572,31 @@
     "last_seen_at": 1790942400000
    },
    {
-    "id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
     "source_id": "x1",
     "category_id": "x1:2",
-    "normalised_name": "Bloomberg",
+    "normalised_name": "Bloomberg (720p25)",
     "raw_name": "US| Bloomberg (720p25)",
     "country": "US",
     "logo_url": "http://img.example/1015.png",
     "channel_number": 15,
     "catchup_type": "xtream",
     "catchup_days": 3,
+    "tvg_id": "ch1.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
+    "source_id": "x1",
+    "category_id": "x1:2",
+    "normalised_name": "Bloomberg (1080p50)",
+    "raw_name": "US| Bloomberg (1080p50)",
+    "country": "US",
+    "logo_url": "http://img.example/1016.png",
+    "channel_number": 16,
+    "catchup_type": null,
+    "catchup_days": null,
     "tvg_id": "ch1.guide",
     "first_seen_at": 1790942400000,
     "last_seen_at": 1790942400000
@@ -575,7 +620,7 @@
     "id": "x1:channel:x1\u0000x1:2\u0000TNT Sports 1\u0000UK",
     "source_id": "x1",
     "category_id": "x1:2",
-    "normalised_name": "TNT Sports 1",
+    "normalised_name": "TNT Sports 1 (720p25)",
     "raw_name": "UK| TNT Sports 1 (720p25)",
     "country": "UK",
     "logo_url": "http://img.example/1018.png",
@@ -605,13 +650,28 @@
     "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
     "source_id": "x1",
     "category_id": "x1:3",
-    "normalised_name": "Movie Channel B",
+    "normalised_name": "Movie Channel B (4K)",
     "raw_name": "|EN| Movie Channel B (4K)",
     "country": null,
     "logo_url": null,
     "channel_number": 20,
     "catchup_type": "xtream",
     "catchup_days": 3,
+    "tvg_id": "ch5.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    "source_id": "x1",
+    "category_id": "x1:3",
+    "normalised_name": "Movie Channel B (HD)",
+    "raw_name": "|EN| Movie Channel B (HD)",
+    "country": null,
+    "logo_url": "http://img.example/1021.png",
+    "channel_number": 21,
+    "catchup_type": null,
+    "catchup_days": null,
     "tvg_id": "ch5.guide",
     "first_seen_at": 1790942400000,
     "last_seen_at": 1790942400000
@@ -710,7 +770,7 @@
     "id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
     "source_id": "x1",
     "category_id": "x1:6",
-    "normalised_name": "TF1",
+    "normalised_name": "TF1 (HD)",
     "raw_name": "FR| TF1 (HD)",
     "country": "FR",
     "logo_url": "http://img.example/1028.png",
@@ -722,14 +782,44 @@
     "last_seen_at": 1790942400000
    },
    {
+    "id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
+    "source_id": "x1",
+    "category_id": "x1:6",
+    "normalised_name": "TF1",
+    "raw_name": "FR| TF1",
+    "country": "FR",
+    "logo_url": null,
+    "channel_number": 29,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "ch6.guide",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
     "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK",
     "source_id": "m1",
     "category_id": "m1:cat:UK| NEWS",
-    "normalised_name": "BBC One",
+    "normalised_name": "BBC One (1080p50)",
     "raw_name": "UK| BBC One (1080p50)",
     "country": "UK",
     "logo_url": "http://img.example/bbc1.png",
     "channel_number": 101,
+    "catchup_type": null,
+    "catchup_days": null,
+    "tvg_id": "bbc1.uk",
+    "first_seen_at": 1790942400000,
+    "last_seen_at": 1790942400000
+   },
+   {
+    "id": "m1:channel:m1\u0000m1:cat:UK| NEWS\u0000BBC One\u0000UK\u0000UK| BBC One (720p25)",
+    "source_id": "m1",
+    "category_id": "m1:cat:UK| NEWS",
+    "normalised_name": "BBC One (720p25)",
+    "raw_name": "UK| BBC One (720p25)",
+    "country": "UK",
+    "logo_url": null,
+    "channel_number": null,
     "catchup_type": null,
     "catchup_days": null,
     "tvg_id": "bbc1.uk",
@@ -2535,6 +2625,13 @@
     "end_at": 1790920800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0--4",
+    "description": null,
+    "start_at": 1790913600000,
+    "end_at": 1790920800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0--4",
     "description": null,
@@ -2549,6 +2646,13 @@
     "end_at": 1790928000000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0--3",
+    "description": "About Show 0--3",
+    "start_at": 1790920800000,
+    "end_at": 1790928000000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0--3",
     "description": "About Show 0--3",
@@ -2563,6 +2667,13 @@
     "end_at": 1790935200000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0--2",
+    "description": null,
+    "start_at": 1790928000000,
+    "end_at": 1790935200000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0--2",
     "description": null,
@@ -2577,6 +2688,13 @@
     "end_at": 1790942400000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0--1",
+    "description": null,
+    "start_at": 1790935200000,
+    "end_at": 1790942400000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0--1",
     "description": null,
@@ -2591,6 +2709,13 @@
     "end_at": 1790949600000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790942400000,
+    "end_at": 1790949600000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "News & Weather 0",
     "description": "About News & Weather 0",
@@ -2605,6 +2730,13 @@
     "end_at": 1790956800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-1",
+    "description": null,
+    "start_at": 1790949600000,
+    "end_at": 1790956800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-1",
     "description": null,
@@ -2619,6 +2751,13 @@
     "end_at": 1790964000000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-2",
+    "description": null,
+    "start_at": 1790956800000,
+    "end_at": 1790964000000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-2",
     "description": null,
@@ -2633,6 +2772,13 @@
     "end_at": 1790971200000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-3",
+    "description": "About Show 0-3",
+    "start_at": 1790964000000,
+    "end_at": 1790971200000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-3",
     "description": "About Show 0-3",
@@ -2647,6 +2793,13 @@
     "end_at": 1790978400000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-4",
+    "description": null,
+    "start_at": 1790971200000,
+    "end_at": 1790978400000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-4",
     "description": null,
@@ -2661,6 +2814,13 @@
     "end_at": 1790985600000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790978400000,
+    "end_at": 1790985600000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "News & Weather 5",
     "description": null,
@@ -2675,6 +2835,13 @@
     "end_at": 1790992800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-6",
+    "description": "About Show 0-6",
+    "start_at": 1790985600000,
+    "end_at": 1790992800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-6",
     "description": "About Show 0-6",
@@ -2689,6 +2856,13 @@
     "end_at": 1791000000000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-7",
+    "description": null,
+    "start_at": 1790992800000,
+    "end_at": 1791000000000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-7",
     "description": null,
@@ -2703,6 +2877,13 @@
     "end_at": 1791007200000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-8",
+    "description": null,
+    "start_at": 1791000000000,
+    "end_at": 1791007200000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-8",
     "description": null,
@@ -2717,6 +2898,13 @@
     "end_at": 1791014400000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-9",
+    "description": "About Show 0-9",
+    "start_at": 1791007200000,
+    "end_at": 1791014400000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-9",
     "description": "About Show 0-9",
@@ -2731,6 +2919,13 @@
     "end_at": 1791021600000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791014400000,
+    "end_at": 1791021600000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "News & Weather 10",
     "description": null,
@@ -2745,6 +2940,13 @@
     "end_at": 1791028800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000BT Sport 1\u0000UK\u0000UK| BT Sport 1 (HD)",
+    "title": "Show 0-11",
+    "description": null,
+    "start_at": 1791021600000,
+    "end_at": 1791028800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:4\u0000XXX Channel 1\u0000",
     "title": "Show 0-11",
     "description": null,
@@ -2759,6 +2961,20 @@
     "end_at": 1790921400000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1--4",
+    "description": null,
+    "start_at": 1790914200000,
+    "end_at": 1790921400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1--4",
+    "description": null,
+    "start_at": 1790914200000,
+    "end_at": 1790921400000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1--4",
     "description": null,
@@ -2773,6 +2989,20 @@
     "end_at": 1790928600000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1--3",
+    "description": "About Show 1--3",
+    "start_at": 1790921400000,
+    "end_at": 1790928600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1--3",
+    "description": "About Show 1--3",
+    "start_at": 1790921400000,
+    "end_at": 1790928600000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1--3",
     "description": "About Show 1--3",
@@ -2787,6 +3017,20 @@
     "end_at": 1790935800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1--2",
+    "description": null,
+    "start_at": 1790928600000,
+    "end_at": 1790935800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1--2",
+    "description": null,
+    "start_at": 1790928600000,
+    "end_at": 1790935800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1--2",
     "description": null,
@@ -2801,6 +3045,20 @@
     "end_at": 1790943000000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1--1",
+    "description": null,
+    "start_at": 1790935800000,
+    "end_at": 1790943000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1--1",
+    "description": null,
+    "start_at": 1790935800000,
+    "end_at": 1790943000000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1--1",
     "description": null,
@@ -2815,6 +3073,20 @@
     "end_at": 1790950200000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790943000000,
+    "end_at": 1790950200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790943000000,
+    "end_at": 1790950200000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "News & Weather 0",
     "description": "About News & Weather 0",
@@ -2829,6 +3101,20 @@
     "end_at": 1790957400000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-1",
+    "description": null,
+    "start_at": 1790950200000,
+    "end_at": 1790957400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-1",
+    "description": null,
+    "start_at": 1790950200000,
+    "end_at": 1790957400000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-1",
     "description": null,
@@ -2843,6 +3129,20 @@
     "end_at": 1790964600000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-2",
+    "description": null,
+    "start_at": 1790957400000,
+    "end_at": 1790964600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-2",
+    "description": null,
+    "start_at": 1790957400000,
+    "end_at": 1790964600000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-2",
     "description": null,
@@ -2857,6 +3157,20 @@
     "end_at": 1790971800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-3",
+    "description": "About Show 1-3",
+    "start_at": 1790964600000,
+    "end_at": 1790971800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-3",
+    "description": "About Show 1-3",
+    "start_at": 1790964600000,
+    "end_at": 1790971800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-3",
     "description": "About Show 1-3",
@@ -2871,6 +3185,20 @@
     "end_at": 1790979000000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-4",
+    "description": null,
+    "start_at": 1790971800000,
+    "end_at": 1790979000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-4",
+    "description": null,
+    "start_at": 1790971800000,
+    "end_at": 1790979000000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-4",
     "description": null,
@@ -2885,6 +3213,20 @@
     "end_at": 1790986200000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790979000000,
+    "end_at": 1790986200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790979000000,
+    "end_at": 1790986200000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "News & Weather 5",
     "description": null,
@@ -2899,6 +3241,20 @@
     "end_at": 1790993400000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-6",
+    "description": "About Show 1-6",
+    "start_at": 1790986200000,
+    "end_at": 1790993400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-6",
+    "description": "About Show 1-6",
+    "start_at": 1790986200000,
+    "end_at": 1790993400000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-6",
     "description": "About Show 1-6",
@@ -2913,6 +3269,20 @@
     "end_at": 1791000600000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-7",
+    "description": null,
+    "start_at": 1790993400000,
+    "end_at": 1791000600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-7",
+    "description": null,
+    "start_at": 1790993400000,
+    "end_at": 1791000600000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-7",
     "description": null,
@@ -2927,6 +3297,20 @@
     "end_at": 1791007800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-8",
+    "description": null,
+    "start_at": 1791000600000,
+    "end_at": 1791007800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-8",
+    "description": null,
+    "start_at": 1791000600000,
+    "end_at": 1791007800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-8",
     "description": null,
@@ -2941,6 +3325,20 @@
     "end_at": 1791015000000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-9",
+    "description": "About Show 1-9",
+    "start_at": 1791007800000,
+    "end_at": 1791015000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-9",
+    "description": "About Show 1-9",
+    "start_at": 1791007800000,
+    "end_at": 1791015000000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-9",
     "description": "About Show 1-9",
@@ -2955,6 +3353,20 @@
     "end_at": 1791022200000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791015000000,
+    "end_at": 1791022200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791015000000,
+    "end_at": 1791022200000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "News & Weather 10",
     "description": null,
@@ -2969,6 +3381,20 @@
     "end_at": 1791029400000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "title": "Show 1-11",
+    "description": null,
+    "start_at": 1791022200000,
+    "end_at": 1791029400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US\u0000US| Bloomberg (720p25)",
+    "title": "Show 1-11",
+    "description": null,
+    "start_at": 1791022200000,
+    "end_at": 1791029400000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:2\u0000Bloomberg\u0000US",
     "title": "Show 1-11",
     "description": null,
@@ -3662,6 +4088,13 @@
     "end_at": 1790923800000
    },
    {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
+    "title": "Show 5--4",
+    "description": null,
+    "start_at": 1790916600000,
+    "end_at": 1790923800000
+   },
+   {
     "channel_id": "x1:channel:x1\u0000x1:1\u0000Sky Sports Premier League\u0000UK",
     "title": "Show 5--3",
     "description": "About Show 5--3",
@@ -3670,6 +4103,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5--3",
+    "description": "About Show 5--3",
+    "start_at": 1790923800000,
+    "end_at": 1790931000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5--3",
     "description": "About Show 5--3",
     "start_at": 1790923800000,
@@ -3684,6 +4124,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5--2",
+    "description": null,
+    "start_at": 1790931000000,
+    "end_at": 1790938200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5--2",
     "description": null,
     "start_at": 1790931000000,
@@ -3698,6 +4145,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5--1",
+    "description": null,
+    "start_at": 1790938200000,
+    "end_at": 1790945400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5--1",
     "description": null,
     "start_at": 1790938200000,
@@ -3712,6 +4166,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790945400000,
+    "end_at": 1790952600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "News & Weather 0",
     "description": "About News & Weather 0",
     "start_at": 1790945400000,
@@ -3726,6 +4187,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-1",
+    "description": null,
+    "start_at": 1790952600000,
+    "end_at": 1790959800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-1",
     "description": null,
     "start_at": 1790952600000,
@@ -3740,6 +4208,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-2",
+    "description": null,
+    "start_at": 1790959800000,
+    "end_at": 1790967000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-2",
     "description": null,
     "start_at": 1790959800000,
@@ -3754,6 +4229,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-3",
+    "description": "About Show 5-3",
+    "start_at": 1790967000000,
+    "end_at": 1790974200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-3",
     "description": "About Show 5-3",
     "start_at": 1790967000000,
@@ -3768,6 +4250,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-4",
+    "description": null,
+    "start_at": 1790974200000,
+    "end_at": 1790981400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-4",
     "description": null,
     "start_at": 1790974200000,
@@ -3782,6 +4271,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790981400000,
+    "end_at": 1790988600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "News & Weather 5",
     "description": null,
     "start_at": 1790981400000,
@@ -3796,6 +4292,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-6",
+    "description": "About Show 5-6",
+    "start_at": 1790988600000,
+    "end_at": 1790995800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-6",
     "description": "About Show 5-6",
     "start_at": 1790988600000,
@@ -3810,6 +4313,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-7",
+    "description": null,
+    "start_at": 1790995800000,
+    "end_at": 1791003000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-7",
     "description": null,
     "start_at": 1790995800000,
@@ -3824,6 +4334,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-8",
+    "description": null,
+    "start_at": 1791003000000,
+    "end_at": 1791010200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-8",
     "description": null,
     "start_at": 1791003000000,
@@ -3838,6 +4355,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-9",
+    "description": "About Show 5-9",
+    "start_at": 1791010200000,
+    "end_at": 1791017400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-9",
     "description": "About Show 5-9",
     "start_at": 1791010200000,
@@ -3852,6 +4376,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791017400000,
+    "end_at": 1791024600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "News & Weather 10",
     "description": null,
     "start_at": 1791017400000,
@@ -3866,6 +4397,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000",
+    "title": "Show 5-11",
+    "description": null,
+    "start_at": 1791024600000,
+    "end_at": 1791031800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:3\u0000|EN| Movie Channel B\u0000\u0000|EN| Movie Channel B (HD)",
     "title": "Show 5-11",
     "description": null,
     "start_at": 1791024600000,
@@ -3880,6 +4418,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6--4",
+    "description": null,
+    "start_at": 1790917200000,
+    "end_at": 1790924400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6--4",
     "description": null,
     "start_at": 1790917200000,
@@ -3894,6 +4439,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6--3",
+    "description": "About Show 6--3",
+    "start_at": 1790924400000,
+    "end_at": 1790931600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6--3",
     "description": "About Show 6--3",
     "start_at": 1790924400000,
@@ -3908,6 +4460,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6--2",
+    "description": null,
+    "start_at": 1790931600000,
+    "end_at": 1790938800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6--2",
     "description": null,
     "start_at": 1790931600000,
@@ -3922,6 +4481,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6--1",
+    "description": null,
+    "start_at": 1790938800000,
+    "end_at": 1790946000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6--1",
     "description": null,
     "start_at": 1790938800000,
@@ -3936,6 +4502,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "News & Weather 0",
+    "description": "About News & Weather 0",
+    "start_at": 1790946000000,
+    "end_at": 1790953200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "News & Weather 0",
     "description": "About News & Weather 0",
     "start_at": 1790946000000,
@@ -3950,6 +4523,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-1",
+    "description": null,
+    "start_at": 1790953200000,
+    "end_at": 1790960400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-1",
     "description": null,
     "start_at": 1790953200000,
@@ -3964,6 +4544,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-2",
+    "description": null,
+    "start_at": 1790960400000,
+    "end_at": 1790967600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-2",
     "description": null,
     "start_at": 1790960400000,
@@ -3978,6 +4565,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-3",
+    "description": "About Show 6-3",
+    "start_at": 1790967600000,
+    "end_at": 1790974800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-3",
     "description": "About Show 6-3",
     "start_at": 1790967600000,
@@ -3992,6 +4586,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-4",
+    "description": null,
+    "start_at": 1790974800000,
+    "end_at": 1790982000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-4",
     "description": null,
     "start_at": 1790974800000,
@@ -4006,6 +4607,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "News & Weather 5",
+    "description": null,
+    "start_at": 1790982000000,
+    "end_at": 1790989200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "News & Weather 5",
     "description": null,
     "start_at": 1790982000000,
@@ -4020,6 +4628,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-6",
+    "description": "About Show 6-6",
+    "start_at": 1790989200000,
+    "end_at": 1790996400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-6",
     "description": "About Show 6-6",
     "start_at": 1790989200000,
@@ -4034,6 +4649,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-7",
+    "description": null,
+    "start_at": 1790996400000,
+    "end_at": 1791003600000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-7",
     "description": null,
     "start_at": 1790996400000,
@@ -4048,6 +4670,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-8",
+    "description": null,
+    "start_at": 1791003600000,
+    "end_at": 1791010800000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-8",
     "description": null,
     "start_at": 1791003600000,
@@ -4062,6 +4691,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-9",
+    "description": "About Show 6-9",
+    "start_at": 1791010800000,
+    "end_at": 1791018000000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-9",
     "description": "About Show 6-9",
     "start_at": 1791010800000,
@@ -4076,6 +4712,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "News & Weather 10",
+    "description": null,
+    "start_at": 1791018000000,
+    "end_at": 1791025200000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "News & Weather 10",
     "description": null,
     "start_at": 1791018000000,
@@ -4090,6 +4733,13 @@
    },
    {
     "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR",
+    "title": "Show 6-11",
+    "description": null,
+    "start_at": 1791025200000,
+    "end_at": 1791032400000
+   },
+   {
+    "channel_id": "x1:channel:x1\u0000x1:6\u0000TF1\u0000FR\u0000FR| TF1",
     "title": "Show 6-11",
     "description": null,
     "start_at": 1791025200000,
@@ -4104,7 +4754,7 @@
    },
    {
     "key": "display_name_version",
-    "value": "1"
+    "value": "2"
    },
    {
     "key": "classifier_version",
@@ -4598,14 +5248,14 @@
  "results": [
   {
    "categories": 6,
-   "channels": 23,
+   "channels": 28,
    "variants": 29,
    "movies": 63,
    "series": 16
   },
   {
    "categories": 3,
-   "channels": 4,
+   "channels": 5,
    "variants": 5,
    "movies": 2,
    "series": 2

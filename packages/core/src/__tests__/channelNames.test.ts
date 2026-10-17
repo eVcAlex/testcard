@@ -16,7 +16,7 @@ describe("renameChannels", () => {
     renameChannels(db);
     const names = db.prepare("SELECT id, normalised_name AS name FROM channels ORDER BY id").all();
     expect(names).toEqual([
-      { id: "one", name: "BBC One HD" },
+      { id: "one", name: "BBC One HD (1080p50)" },
       { id: "two", name: "Sky News" },
     ]);
     // Search follows the new name.

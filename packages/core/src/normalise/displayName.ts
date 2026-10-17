@@ -1,4 +1,4 @@
-import { dropVariantMarks } from "./parseName.js";
+import { dropVariantMarks, parseName } from "./parseName.js";
 
 /**
  * A provider's channel or category name made readable, whatever the provider's house style: its country
@@ -12,7 +12,7 @@ import { dropVariantMarks } from "./parseName.js";
  * Display only. Channel ids key on `parseName`, never on this, so these rules can change without orphaning
  * anyone's favourites. Bump `DISPLAY_NAME_VERSION` when a rule changes so stored channel names are redone on next open.
  */
-export const DISPLAY_NAME_VERSION = 1;
+export const DISPLAY_NAME_VERSION = 2;
 
 export function displayName(rawName: string): string {
   let text = unstyleOrDropTags(rawName).normalize("NFKC");
@@ -53,9 +53,15 @@ const EMOJI_BASE =
   "\u274C\u274E\u2753-\u2755\u2757\u2B50\u2B55]|[\u2300-\u23FF\u2600-\u27BF\u2B00-\u2BFF]\uFE0F)(?:\uFE0F|[\u{1F3FB}-\u{1F3FF}])*";
 const EMOJI = new RegExp(`[\u{1F1E6}-\u{1F1FF}]{2}|${EMOJI_BASE}(?:\u200D${EMOJI_BASE})*`, "u");
 
-/** A channel's name, less the quality or "(OFFLINE)" mark that makes it one Variant of the channel rather than another. */
+/**
+ * A channel's name, less its "(OFFLINE)" mark. Its "(720p25)"-style quality stays, put back after the rest is tidied
+ * ("TNT Sports 1 (720p25)"): each quality is its own Channel, so it is what tells them apart in a list.
+ */
 export function channelDisplayName(rawName: string): string {
-  return displayName(dropVariantMarks(rawName));
+  const name = displayName(dropVariantMarks(rawName));
+  const quality = parseName(rawName).quality;
+  if (quality === undefined) return name;
+  return `${name} (${/^[0-9]/.test(quality) && quality !== "4k" ? quality : quality.toUpperCase()})`;
 }
 
 // ---------------------------------------------------------------------------------------------

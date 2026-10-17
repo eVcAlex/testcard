@@ -12762,7 +12762,7 @@
   "in": [
    "TNT Sports 1 (1080p50)"
   ],
-  "out": "TNT Sports 1"
+  "out": "TNT Sports 1 (1080p50)"
  },
  {
   "fn": "categoryDisplayName",
@@ -12852,7 +12852,7 @@
   "in": [
    "TNT Sports 1 (720p25)"
   ],
-  "out": "TNT Sports 1"
+  "out": "TNT Sports 1 (720p25)"
  },
  {
   "fn": "categoryDisplayName",
@@ -12942,7 +12942,7 @@
   "in": [
    "Channel (4K)"
   ],
-  "out": "Channel"
+  "out": "Channel (4K)"
  },
  {
   "fn": "categoryDisplayName",
@@ -13034,7 +13034,7 @@
   "in": [
    "Channel (UHD)"
   ],
-  "out": "Channel"
+  "out": "Channel (UHD)"
  },
  {
   "fn": "categoryDisplayName",
@@ -13126,7 +13126,7 @@
   "in": [
    "Channel (FHD) (OFFLINE)"
   ],
-  "out": "Channel"
+  "out": "Channel (FHD)"
  },
  {
   "fn": "categoryDisplayName",
@@ -13485,7 +13485,7 @@
   "in": [
    "US| ESPN 2 (SD)"
   ],
-  "out": "ESPN 2"
+  "out": "ESPN 2 (SD)"
  },
  {
   "fn": "categoryDisplayName",
@@ -14021,7 +14021,7 @@
   "in": [
    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (1080p50)"
   ],
-  "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (1080p50)"
  },
  {
   "fn": "categoryDisplayName",
@@ -15137,7 +15137,7 @@
     "id": "channel:s1\u0000c1\u0000TNT Sports 1\u0000UK",
     "sourceId": "s1",
     "categoryId": "c1",
-    "normalisedName": "TNT Sports 1",
+    "normalisedName": "TNT Sports 1 (1080p50)",
     "rawName": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "logoUrl": "http://l/1.png",
@@ -15152,13 +15152,6 @@
       "isOffline": false
      },
      {
-      "id": "variant:s1\u0000c1\u0000TNT Sports 1\u0000UK:2",
-      "sourceId": "s1",
-      "providerStreamId": "2",
-      "quality": "720p25",
-      "isOffline": false
-     },
-     {
       "id": "variant:s1\u0000c1\u0000TNT Sports 1\u0000UK:3",
       "sourceId": "s1",
       "providerStreamId": "3",
@@ -15167,10 +15160,28 @@
     ]
    },
    {
+    "id": "channel:s1\u0000c1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25)",
+    "sourceId": "s1",
+    "categoryId": "c1",
+    "normalisedName": "TNT Sports 1 (720p25)",
+    "rawName": "UK| TNT Sports 1 (720p25)",
+    "country": "UK",
+    "tvgId": "tnt1",
+    "variants": [
+     {
+      "id": "variant:s1\u0000c1\u0000TNT Sports 1\u0000UK\u0000UK| TNT Sports 1 (720p25):2",
+      "sourceId": "s1",
+      "providerStreamId": "2",
+      "quality": "720p25",
+      "isOffline": false
+     }
+    ]
+   },
+   {
     "id": "channel:s1\u0000c2\u0000TNT Sports 1\u0000UK",
     "sourceId": "s1",
     "categoryId": "c2",
-    "normalisedName": "TNT Sports 1",
+    "normalisedName": "TNT Sports 1 (1080p50)",
     "rawName": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "variants": [
@@ -15187,7 +15198,7 @@
     "id": "channel:s1\u0000c1\u0000TNT Sports 1\u0000US",
     "sourceId": "s1",
     "categoryId": "c1",
-    "normalisedName": "TNT Sports 1",
+    "normalisedName": "TNT Sports 1 (4K)",
     "rawName": "US| TNT Sports 1 (4K)",
     "country": "US",
     "variants": [
@@ -15219,7 +15230,7 @@
     "id": "channel:s2\u0000c1\u0000TNT Sports 1\u0000UK",
     "sourceId": "s2",
     "categoryId": "c1",
-    "normalisedName": "TNT Sports 1",
+    "normalisedName": "TNT Sports 1 (1080p50)",
     "rawName": "UK| TNT Sports 1 (1080p50)",
     "country": "UK",
     "tvgId": "later",
@@ -15230,6 +15241,203 @@
       "providerStreamId": "7",
       "quality": "1080p50",
       "isOffline": false
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "fn": "groupVariants",
+  "in": [
+   [
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "1",
+     "rawName": "UK| Sky Sports Main Event (720p25)"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "2",
+     "rawName": "UK| Sky Sports Main Event (1080p50)",
+     "tvgId": "ssme"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "3",
+     "rawName": "UK| Sky Sports Main Event ᵁᴴᴰ"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "4",
+     "rawName": "UK| Sky Sports Main Event ᵁᴴᴰ"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "5",
+     "rawName": "UK| Sky Sports Main Event (720p25) (OFFLINE)"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "6",
+     "rawName": "UK| Sky Sports Main Event  (OFFLINE)"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "7",
+     "rawName": "UK| TNT Sports ᴳᴬᴺᴶᴬ"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "8",
+     "rawName": "UK| TNT Sports ᴿᴬᵂ (sd)"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "9",
+     "rawName": "Gone (OFFLINE)"
+    },
+    {
+     "sourceId": "s1",
+     "categoryId": "c1",
+     "providerStreamId": "10",
+     "rawName": "Gone (HD) (OFFLINE)"
+    }
+   ]
+  ],
+  "out": [
+   {
+    "id": "channel:s1\u0000c1\u0000Sky Sports Main Event\u0000UK\u0000UK| Sky Sports Main Event (720p25)",
+    "sourceId": "s1",
+    "categoryId": "c1",
+    "normalisedName": "Sky Sports Main Event (720p25)",
+    "rawName": "UK| Sky Sports Main Event (720p25)",
+    "country": "UK",
+    "tvgId": "ssme",
+    "variants": [
+     {
+      "id": "variant:s1\u0000c1\u0000Sky Sports Main Event\u0000UK\u0000UK| Sky Sports Main Event (720p25):1",
+      "sourceId": "s1",
+      "providerStreamId": "1",
+      "quality": "720p25",
+      "isOffline": false
+     },
+     {
+      "id": "variant:s1\u0000c1\u0000Sky Sports Main Event\u0000UK\u0000UK| Sky Sports Main Event (720p25):5",
+      "sourceId": "s1",
+      "providerStreamId": "5",
+      "quality": "720p25",
+      "isOffline": true
+     }
+    ]
+   },
+   {
+    "id": "channel:s1\u0000c1\u0000Sky Sports Main Event\u0000UK",
+    "sourceId": "s1",
+    "categoryId": "c1",
+    "normalisedName": "Sky Sports Main Event (1080p50)",
+    "rawName": "UK| Sky Sports Main Event (1080p50)",
+    "country": "UK",
+    "tvgId": "ssme",
+    "variants": [
+     {
+      "id": "variant:s1\u0000c1\u0000Sky Sports Main Event\u0000UK:2",
+      "sourceId": "s1",
+      "providerStreamId": "2",
+      "quality": "1080p50",
+      "isOffline": false
+     },
+     {
+      "id": "variant:s1\u0000c1\u0000Sky Sports Main Event\u0000UK:6",
+      "sourceId": "s1",
+      "providerStreamId": "6",
+      "isOffline": true
+     }
+    ]
+   },
+   {
+    "id": "channel:s1\u0000c1\u0000Sky Sports Main Event\u0000UK\u0000UK| Sky Sports Main Event ᵁᴴᴰ",
+    "sourceId": "s1",
+    "categoryId": "c1",
+    "normalisedName": "Sky Sports Main Event UHD",
+    "rawName": "UK| Sky Sports Main Event ᵁᴴᴰ",
+    "country": "UK",
+    "tvgId": "ssme",
+    "variants": [
+     {
+      "id": "variant:s1\u0000c1\u0000Sky Sports Main Event\u0000UK\u0000UK| Sky Sports Main Event ᵁᴴᴰ:3",
+      "sourceId": "s1",
+      "providerStreamId": "3",
+      "isOffline": false
+     },
+     {
+      "id": "variant:s1\u0000c1\u0000Sky Sports Main Event\u0000UK\u0000UK| Sky Sports Main Event ᵁᴴᴰ:4",
+      "sourceId": "s1",
+      "providerStreamId": "4",
+      "isOffline": false
+     }
+    ]
+   },
+   {
+    "id": "channel:s1\u0000c1\u0000TNT Sports\u0000UK\u0000UK| TNT Sports ᴳᴬᴺᴶᴬ",
+    "sourceId": "s1",
+    "categoryId": "c1",
+    "normalisedName": "TNT Sports",
+    "rawName": "UK| TNT Sports ᴳᴬᴺᴶᴬ",
+    "country": "UK",
+    "variants": [
+     {
+      "id": "variant:s1\u0000c1\u0000TNT Sports\u0000UK\u0000UK| TNT Sports ᴳᴬᴺᴶᴬ:7",
+      "sourceId": "s1",
+      "providerStreamId": "7",
+      "isOffline": false
+     }
+    ]
+   },
+   {
+    "id": "channel:s1\u0000c1\u0000TNT Sports\u0000UK",
+    "sourceId": "s1",
+    "categoryId": "c1",
+    "normalisedName": "TNT Sports (SD)",
+    "rawName": "UK| TNT Sports ᴿᴬᵂ (sd)",
+    "country": "UK",
+    "variants": [
+     {
+      "id": "variant:s1\u0000c1\u0000TNT Sports\u0000UK:8",
+      "sourceId": "s1",
+      "providerStreamId": "8",
+      "quality": "sd",
+      "isOffline": false
+     }
+    ]
+   },
+   {
+    "id": "channel:s1\u0000c1\u0000Gone\u0000",
+    "sourceId": "s1",
+    "categoryId": "c1",
+    "normalisedName": "Gone",
+    "rawName": "Gone (OFFLINE)",
+    "variants": [
+     {
+      "id": "variant:s1\u0000c1\u0000Gone\u0000:10",
+      "sourceId": "s1",
+      "providerStreamId": "10",
+      "quality": "hd",
+      "isOffline": true
+     },
+     {
+      "id": "variant:s1\u0000c1\u0000Gone\u0000:9",
+      "sourceId": "s1",
+      "providerStreamId": "9",
+      "isOffline": true
      }
     ]
    }
