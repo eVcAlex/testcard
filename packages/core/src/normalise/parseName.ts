@@ -46,6 +46,14 @@ export function dropVariantMarks(raw: string): string {
   return raw.replace(OFFLINE_SUFFIX, " ").replace(QUALITY_SUFFIX, " ").replace(/\s{2,}/g, " ").trim();
 }
 
+/**
+ * The name less only its "(OFFLINE)" mark, spaces tidied: what tells one Channel from another of the same family, so
+ * "TNT Sports 1 (1080p50)" and "TNT Sports 1 (720p25)" are listed apart. Channel ids key on it, so it must not drift.
+ */
+export function dropOfflineMark(raw: string): string {
+  return raw.replace(OFFLINE_SUFFIX, " ").replace(/\s{2,}/g, " ").trim();
+}
+
 export function parseName(raw: string): ParsedName {
   let working = raw.trim();
 

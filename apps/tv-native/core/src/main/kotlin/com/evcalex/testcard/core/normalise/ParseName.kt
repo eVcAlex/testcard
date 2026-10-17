@@ -15,6 +15,9 @@ private val TWO_OR_MORE_SPACES = Regex("[$WS]{2,}")
 fun dropVariantMarks(raw: String): String =
     raw.replace(OFFLINE_SUFFIX, " ").replace(QUALITY_SUFFIX, " ").replace(TWO_OR_MORE_SPACES, " ").jsTrim()
 
+/** The name less only its "(OFFLINE)" mark, spaces tidied: what tells one Channel of a family from another. Port of `dropOfflineMark`. */
+fun dropOfflineMark(raw: String): String = raw.replace(OFFLINE_SUFFIX, " ").replace(TWO_OR_MORE_SPACES, " ").jsTrim()
+
 fun parseName(raw: String): ParsedName {
     var working = raw.jsTrim()
 

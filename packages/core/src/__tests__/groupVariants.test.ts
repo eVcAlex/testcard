@@ -6,27 +6,42 @@ function entry(rawName: string, providerStreamId: string): RawChannelEntry {
 }
 
 describe("groupVariants", () => {
-  it("collapses the seven TNT Sports 1 quality variants seen from the real provider into one channel", () => {
+  it("lists each quality the provider offers as its own channel, best first", () => {
     const entries = [
+      entry("TNT Sports 1 (720p25)", "4"),
       entry("TNT Sports 1 (1080p50)", "1"),
       entry("TNT Sports 1 (1080p25)", "2"),
       entry("TNT Sports 1 (1080p25)", "3"), // provider genuinely lists this twice
-      entry("TNT Sports 1 (720p25)", "4"),
-      entry("TNT Sports 1 (720p25)", "5"),
       entry("TNT Sports 1 (576p25)", "6"),
-      entry("TNT Sports 1 (480p25)", "7"),
     ];
 
     const channels = groupVariants(entries);
 
-    expect(channels).toHaveLength(1);
-    expect(channels[0]?.variants).toHaveLength(7);
+    expect(channels.map((c) => c.normalisedName).sort()).toEqual([
+      "TNT Sports 1 (1080p25)",
+      "TNT Sports 1 (1080p50)",
+      "TNT Sports 1 (576p25)",
+      "TNT Sports 1 (720p25)",
+    ]);
+    // The same name listed twice is one channel with two streams to try.
+    expect(channels.find((c) => c.normalisedName === "TNT Sports 1 (1080p25)")?.variants).toHaveLength(2);
   });
 
-  it("orders variants best quality first", () => {
-    const entries = [entry("Ch (480p25)", "1"), entry("Ch (1080p50)", "2"), entry("Ch (720p25)", "3")];
-    const [channel] = groupVariants(entries);
-    expect(channel?.variants.map((v) => v.quality)).toEqual(["1080p50", "720p25", "480p25"]);
+  it("keeps the old id on the best quality, so a favourite of the merged channel still finds it", () => {
+    const merged = "channel:src1\u0000cat1\u0000TNT Sports 1\u0000";
+    const channels = groupVariants([entry("TNT Sports 1 (720p25)", "1"), entry("TNT Sports 1 (1080p50)", "2")]);
+    expect(channels.find((c) => c.id === merged)?.normalisedName).toBe("TNT Sports 1 (1080p50)");
+    expect(new Set(channels.map((c) => c.id)).size).toBe(2);
+  });
+
+  it("lists names that differ only in styled tags apart", () => {
+    const channels = groupVariants([entry("UK| Sky Sports Main Event ᵁᴴᴰ", "1"), entry("UK| Sky Sports Main Event", "2")]);
+    expect(channels.map((c) => c.normalisedName)).toEqual(["Sky Sports Main Event UHD", "Sky Sports Main Event"]);
+  });
+
+  it("gives every quality the family's guide id when its own entry has none", () => {
+    const channels = groupVariants([entry("Ch (720p25)", "1"), { ...entry("Ch (1080p50)", "2"), tvgId: "ch.uk" }]);
+    expect(channels.map((c) => c.tvgId)).toEqual(["ch.uk", "ch.uk"]);
   });
 
   it("keeps different channels in the same category separate", () => {
@@ -62,10 +77,10 @@ describe("groupVariants", () => {
   });
 
   it("takes the first non-empty tvg-id across a channel's variants", () => {
-    // The provider left tvg-id blank on the first-listed (HD) entry and set it on a later one.
+    // The provider left tvg-id blank on the first-listed copy and set it on a later one.
     const entries: RawChannelEntry[] = [
       { ...entry("TNT Sports 1 (1080p50)", "1") },
-      { ...entry("TNT Sports 1 (720p25)", "2"), tvgId: "tnt.sports.1.uk" },
+      { ...entry("TNT Sports 1 (1080p50)", "2"), tvgId: "tnt.sports.1.uk" },
     ];
     const [channel] = groupVariants(entries);
     expect(channel?.tvgId).toBe("tnt.sports.1.uk");
