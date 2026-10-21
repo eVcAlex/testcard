@@ -72,7 +72,7 @@ val AVATARS = listOf(
 fun avatarGlyph(profile: Profile): String? = AVATARS.firstOrNull { it.id == profile.avatar }?.glyph
 
 /** The `schema_meta` keys that are a profile's own and move with it. */
-val PROFILE_META_KEYS = listOf("ui:captions", "ui:audio", "ui:source")
+val PROFILE_META_KEYS = listOf("ui:captions", "ui:audio", "ui:source", "ui:search:recent") // the last is RecentSearches.kt's key
 
 private const val ACTIVE_KEY = "ui:profile"
 
