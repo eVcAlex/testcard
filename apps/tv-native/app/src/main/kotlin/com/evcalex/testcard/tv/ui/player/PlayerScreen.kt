@@ -179,6 +179,8 @@ fun BufferingScreen() {
 
 /** The device's decoder said no (a 4K or 10-bit stream on hardware that cannot do it) or the network did. */
 fun explain(raw: String): String {
+    // Media3 found bytes it could not read as video: a provider that answers a stream address with a web page or an error, e.g. an event that is not live.
+    if (Regex("PARSING_CONTAINER|PARSING_MANIFEST|contentIsMalformed|could read the stream").containsMatchIn(raw)) return "The provider sent something that isn't a video. The stream may be offline or not started yet."
     if (Regex("EXCEEDS_CAPABILITIES|MediaCodec|Decoder|decoder").containsMatchIn(raw)) return "This device can't decode this video (its format or resolution is beyond the hardware)."
     if (Regex("40[13]").containsMatchIn(raw)) return "The provider refused this stream."
     if (Regex("404|410").containsMatchIn(raw)) return "The provider has no stream at that address (it may have been removed)."
