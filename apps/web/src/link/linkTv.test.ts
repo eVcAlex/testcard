@@ -34,6 +34,16 @@ describe("linkTv", () => {
     expect(api.linkApprove).toHaveBeenCalledWith({ lookup: "lookup", blob: "blob", iv: "iv" });
   });
 
+  it("accepts ordinary addresses, including ones with the letter s", async () => {
+    await linkTv({ ...good, email: "alex.mcguiness1@gmail.com" });
+    expect(api.signIn).toHaveBeenCalledWith("alex.mcguiness1@gmail.com", "hunter22");
+  });
+
+  it("rejects an address that is not one, before any request", async () => {
+    for (const email of ["nobody", "a@b", "a b@c.co", "@b.co", "a@.co"]) await expect(linkTv({ ...good, email })).rejects.toMatchObject({ field: "email" });
+    expect(api.linkSession).not.toHaveBeenCalled();
+  });
+
   it("rejects a malformed code before any request", async () => {
     await expect(linkTv({ ...good, code: "NOPE" })).rejects.toMatchObject({ field: "code" });
     expect(api.linkSession).not.toHaveBeenCalled();
