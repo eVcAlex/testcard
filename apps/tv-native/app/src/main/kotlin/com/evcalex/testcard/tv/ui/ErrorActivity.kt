@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.evcalex.testcard.tv.MainActivity
 import com.evcalex.testcard.tv.ui.components.AppButton
@@ -34,8 +35,9 @@ class ErrorActivity : ComponentActivity() {
                 LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
                 Column(Modifier.fillMaxSize().background(Palette.background).padding(horizontal = 120.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically)) {
                     AppText("Something went wrong", 40, Palette.foreground, FontWeight.SemiBold)
-                    AppText(message, 22, Palette.faint, maxLines = 4)
-                    if (where.isNotEmpty()) AppText(where, 16, Palette.faint, maxLines = 4)
+                    AppText("Testcard hit a problem and needs to restart. Your sources and profiles are safe.", 28, Palette.muted, align = TextAlign.Center)
+                    // Kept small for a photo of the screen: it is what says which screen failed.
+                    AppText(listOf(message, where).filter { it.isNotEmpty() }.joinToString("\n"), 16, Palette.faint, maxLines = 6, align = TextAlign.Center)
                     AppButton("Try again", {
                         startActivity(Intent(this@ErrorActivity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
                         finish()

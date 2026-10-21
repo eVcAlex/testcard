@@ -62,7 +62,13 @@ import com.evcalex.testcard.tv.ui.home.progressOf
 import com.evcalex.testcard.tv.ui.shell.ShellActions
 import com.evcalex.testcard.tv.ui.theme.Inter
 import com.evcalex.testcard.tv.ui.theme.Palette
+import com.evcalex.testcard.core.playback.readRecentSearches
+import com.evcalex.testcard.core.playback.withRecentSearch
+import com.evcalex.testcard.core.playback.writeRecentSearches
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** What was typed last, so coming back from a film's page lands on the same results. */
 private var remembered = ""
@@ -92,13 +98,34 @@ fun SearchScreen(app: AppController, sourceId: String?, openKeyboard: Int, actio
     val short = text.length < MIN_SEARCH_LENGTH
     val results = found?.results
 
+    // Searches that found something are kept (newest first) and offered again while the box is empty.
+    var recent by remember { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(Unit) { recent = withContext(Dispatchers.Default) { app.db.read { it.readRecentSearches() } } }
+    val foundSomething = results != null && (results.movies.isNotEmpty() || results.series.isNotEmpty() || results.channels.isNotEmpty())
+    LaunchedEffect(found) {
+        if (!foundSomething) return@LaunchedEffect
+        // Restarted by every new result, so only a search the viewer stopped on is kept, not each word on the way to it.
+        delay(1500)
+        val next = withRecentSearch(recent, text)
+        if (next != recent) { recent = next; withContext(Dispatchers.Default) { app.db.write { it.writeRecentSearches(next) } } }
+    }
+
     Row(Modifier.fillMaxSize().padding(start = 44.dp, end = 44.dp, top = 112.dp), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
         Column(Modifier.width(570.dp)) { SearchBar(query, { remembered = it; query = it }, openKeyboard, active) }
         Box(Modifier.weight(1f).fillMaxHeight()) {
             val movies = results?.movies?.map { PosterItem(it.id, it.name, it.posterUrl, progressOf(it.positionSecs, it.durationSecs)) } ?: emptyList()
             val series = results?.series?.map { PosterItem(it.id, it.name, it.posterUrl) } ?: emptyList()
             val channels = results?.channels ?: emptyList()
-            if (movies.isEmpty() && series.isEmpty() && channels.isEmpty()) {
+            if (text.isEmpty() && recent.isNotEmpty()) {
+                RecentList(recent, { remembered = it; query = it }, { gone ->
+                    val next = recent - gone
+                    recent = next
+                    app.scope.launch { app.db.write { it.writeRecentSearches(next) } }
+                }) {
+                    recent = emptyList()
+                    app.scope.launch { app.db.write { it.writeRecentSearches(emptyList()) } }
+                }
+            } else if (movies.isEmpty() && series.isEmpty() && channels.isEmpty()) {
                 Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
                     AppText(if (short) "Search movies, series and channels" else if (results == null) "" else "Nothing found for \"$text\"", 34, Palette.muted, FontWeight.Medium)
                     if (short) AppText("Type at least two letters. Results appear as you go.", 24, Palette.faint)
@@ -155,6 +182,25 @@ private fun SearchBar(value: String, onChange: (String) -> Unit, openKeyboard: I
                     },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun RecentList(recent: List<String>, onPick: (String) -> Unit, onRemove: (String) -> Unit, onClear: () -> Unit) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        AppText("Recent searches", 32, Palette.foreground, FontWeight.SemiBold, Modifier.padding(start = 8.dp), letterSpacing = -0.3f)
+        AppText("Hold select on one to remove it", 20, Palette.faint, modifier = Modifier.padding(start = 8.dp))
+        for (term in recent) {
+            Focusable({ onPick(term) }, Modifier.fillMaxWidth(), RoundedCornerShape(16.dp), onLongClick = { onRemove(term) }, background = Palette.raised, focusedBackground = Palette.card) { _ ->
+                Row(Modifier.padding(horizontal = 20.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    GlyphIcon(Glyph.Search, Palette.muted, 26.dp)
+                    AppText(term, 26, Palette.foreground, FontWeight.Medium, maxLines = 1)
+                }
+            }
+        }
+        Focusable(onClear, Modifier.padding(top = 8.dp), RoundedCornerShape(16.dp), background = Palette.raised, focusedBackground = Palette.card) { _ ->
+            AppText("Clear recent searches", 22, Palette.muted, FontWeight.Medium, Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
         }
     }
 }
