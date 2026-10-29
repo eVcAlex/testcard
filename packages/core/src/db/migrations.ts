@@ -386,6 +386,13 @@ CREATE TABLE IF NOT EXISTS hidden_channels (
       if (columns.length > 0 && !columns.some((entry) => entry.name === "backup_urls")) db.exec(`ALTER TABLE sources ADD COLUMN backup_urls TEXT`);
     },
   },
+  {
+    version: 16,
+    up: (db) => {
+      // Optional guide matching by name for channels whose tvg-id misses (off for every existing source).
+      addColumn(db, "sources", "epg_optimise INTEGER NOT NULL DEFAULT 0");
+    },
+  },
 ];
 
 /** The migrations still needed to bring a database at `fromVersion` up to date. Pure. */

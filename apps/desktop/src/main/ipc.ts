@@ -78,6 +78,7 @@ import {
   IPC_TASK_CHANNEL,
   type NowNextLite,
   type ProgrammeLite,
+  type GuideMatching,
   type RefreshResult,
   type SourceContent,
   type SourceListItem,
@@ -118,7 +119,7 @@ function toProgrammeLite(row: ProgrammeRow): ProgrammeLite {
  * Fetches and imports the source's EPG. URL priority: an explicit user-supplied URL, else the
  * adapter's auto-detected one (`url-tvg` / `xmltv.php`). A credential-free discovered URL is
  * persisted so the UI can show it; Xtream's credential-bearing `xmltv.php` is re-derived every
- * refresh and never stored. Returns the programme count, or undefined when no EPG URL exists.
+ * refresh and never stored. Returns the programme count (and, with `optimise`, how channels matched), or undefined when no EPG URL exists.
  * Throws on a fetch/parse failure — the caller downgrades that to a non-fatal task event.
  */
 async function refreshEpg(
@@ -127,7 +128,8 @@ async function refreshEpg(
   adapter: SourceAdapter,
   storedEpgUrl: string | null,
   emitTask: (event: TaskEvent) => void,
-): Promise<number | undefined> {
+  optimise: boolean,
+): Promise<{ readonly programmes: number; readonly matching?: GuideMatching } | undefined> {
   const stored = storedEpgUrl?.trim() ?? "";
   const epgUrl = stored !== "" ? stored : await adapter.probeEpgUrl?.(source);
   if (!epgUrl) return undefined;
@@ -147,10 +149,11 @@ async function refreshEpg(
   emitTask({ type: "epg", sourceId: source.id, phase: "parsing", programmes: 0 });
   const result = await importEpg(db, source.id, response.body, {
     gzipped,
+    optimise,
     onProgress: (programmes) => emitTask({ type: "epg", sourceId: source.id, phase: "parsing", programmes }),
   });
   emitTask({ type: "epg", sourceId: source.id, phase: "done", programmes: result.programmes });
-  return result.programmes;
+  return { programmes: result.programmes, ...(result.matching !== undefined ? { matching: result.matching } : {}) };
 }
 
 type VerifiedSource =
@@ -328,7 +331,8 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       const row = db
         .prepare(
           `SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl,
-                  include_live as includeLive, include_movies as includeMovies, include_series as includeSeries
+                  include_live as includeLive, include_movies as includeMovies, include_series as includeSeries,
+                  epg_optimise as epgOptimise
            FROM sources WHERE id = ?`,
         )
         .get(sourceId) as
@@ -336,6 +340,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
             baseUrl?: string;
             playlistUrl?: string;
             epgUrl?: string | null;
+            epgOptimise: number;
             includeLive: number;
             includeMovies: number;
             includeSeries: number;
@@ -352,7 +357,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       });
 
       // EPG is best-effort: a bad or missing guide URL must not fail the playlist refresh.
-      const programmes = row.includeLive === 0 ? undefined : await refreshEpg(db, row, adapter, row.epgUrl ?? null, emitTask).catch((error: unknown) => {
+      const guide = row.includeLive === 0 ? undefined : await refreshEpg(db, row, adapter, row.epgUrl ?? null, emitTask, row.epgOptimise !== 0).catch((error: unknown) => {
         emitTask({
           type: "epg",
           sourceId,
@@ -362,7 +367,11 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         return undefined;
       });
 
-      return { ...catalogue, ...(programmes !== undefined ? { programmes } : {}) };
+      return {
+        ...catalogue,
+        ...(guide !== undefined ? { programmes: guide.programmes } : {}),
+        ...(guide?.matching !== undefined ? { guideMatching: guide.matching } : {}),
+      };
     } finally {
       refreshingSourceIds.delete(sourceId);
     }
@@ -373,6 +382,17 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
    * favourites/progress rows are left alone, and re-attach by id if it's turned back on); turning
    * one on imports it now.
    */
+  /**
+   * Switches guide matching by name on or off for a source (this device only: it is not synced). A change reloads the
+   * source in the background so the guide is rebuilt the new way; nothing about its channels or streams is touched.
+   * `undefined` leaves it as it is. A source mid-refresh picks the new setting up at its next refresh.
+   */
+  function applyEpgOptimise(sourceId: string, next: boolean | undefined): void {
+    if (next === undefined) return;
+    const { changes } = db.prepare(`UPDATE sources SET epg_optimise = ? WHERE id = ? AND epg_optimise <> ?`).run(next ? 1 : 0, sourceId, next ? 1 : 0);
+    if (changes > 0 && !refreshingSourceIds.has(sourceId)) refreshInBackground(sourceId);
+  }
+
   function applyContentChange(sourceId: string, next: SourceContent): void {
     const prev = db
       .prepare(`SELECT include_live AS live, include_movies AS movies, include_series AS series FROM sources WHERE id = ?`)
@@ -415,7 +435,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           .prepare(
             `SELECT id, kind, name, base_url as baseUrl, playlist_url as playlistUrl, epg_url as epgUrl,
                     backup_urls as backupUrls, created_at as createdAt, last_refreshed_at as lastRefreshedAt,
-                    refresh_interval_hours as refreshIntervalHours,
+                    refresh_interval_hours as refreshIntervalHours, epg_optimise as epgOptimise,
                     include_live as includeLive, include_movies as includeMovies, include_series as includeSeries
              FROM sources ORDER BY sort_order IS NULL, sort_order, created_at`,
           )
@@ -423,6 +443,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           includeLive: number;
           includeMovies: number;
           includeSeries: number;
+          epgOptimise: number;
           id: string;
           kind: "xtream" | "m3u";
           name: string;
@@ -450,6 +471,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
               name: row.name,
               createdAt: row.createdAt,
               content: { live: row.includeLive !== 0, movies: row.includeMovies !== 0, series: row.includeSeries !== 0 },
+              ...(row.epgOptimise !== 0 ? { epgOptimise: true } : {}),
               ...(refreshingSourceIds.has(row.id) ? { refreshing: true } : {}),
               ...(refreshErrors.has(row.id) ? { refreshError: refreshErrors.get(row.id)! } : {}),
               ...(row.kind === "xtream" ? { baseUrl: servers.get(row.id) ?? row.baseUrl! } : { playlistUrl: row.playlistUrl! }),
@@ -504,6 +526,8 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
             );
           }
 
+          if (input.epgOptimise === true) db.prepare(`UPDATE sources SET epg_optimise = 1 WHERE id = ?`).run(id);
+
           const source: Source = {
             id,
             kind: "xtream",
@@ -527,6 +551,8 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
             id,
           );
         }
+
+        if (input.epgOptimise === true) db.prepare(`UPDATE sources SET epg_optimise = 1 WHERE id = ?`).run(id);
 
         const source: Source = {
           id,
@@ -590,6 +616,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           );
 
           if (patch.content !== undefined) applyContentChange(sourceId, patch.content);
+          applyEpgOptimise(sourceId, patch.epgOptimise);
 
           const source: Source = { id: sourceId, kind: "m3u", name, playlistUrl, ...(epg !== null ? { epgUrl: epg } : {}) };
           return source;
@@ -635,6 +662,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
         recheckServer(sourceId);
 
         if (patch.content !== undefined) applyContentChange(sourceId, patch.content);
+        applyEpgOptimise(sourceId, patch.epgOptimise);
 
         const source: Source = {
           id: sourceId,

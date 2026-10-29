@@ -3,7 +3,7 @@ package com.evcalex.testcard.core.db
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-const val SCHEMA_VERSION = 15
+const val SCHEMA_VERSION = 16
 
 /**
  * Builds a fresh database from `schema.sql` (generated verbatim from `SCHEMA_SQL` by the TypeScript vectors test).

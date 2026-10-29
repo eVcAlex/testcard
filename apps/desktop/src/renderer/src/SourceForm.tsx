@@ -43,6 +43,7 @@ export function SourceForm({
   const [name, setName] = useState(source?.name ?? "");
   const [pastedUrl, setPastedUrl] = useState(source?.kind === "m3u" ? source.playlistUrl : "");
   const [epgUrl, setEpgUrl] = useState(source?.epgUrl ?? "");
+  const [epgOptimise, setEpgOptimise] = useState(source?.epgOptimise === true);
   const [xtreamBaseUrl, setXtreamBaseUrl] = useState(source?.kind === "xtream" ? source.baseUrl : "");
   const [backupUrls, setBackupUrls] = useState(source?.backupUrls?.join(", ") ?? "");
   const [xtreamUsername, setXtreamUsername] = useState("");
@@ -92,6 +93,7 @@ export function SourceForm({
             ...(backups.length > 0 ? { backupUrls: backups } : {}),
             content,
             ...(epg !== "" ? { epgUrl: epg } : {}),
+            ...(epgOptimise ? { epgOptimise } : {}),
             ...(interval !== undefined ? { refreshIntervalHours: interval } : {}),
           });
         }
@@ -101,6 +103,7 @@ export function SourceForm({
           pastedUrl,
           content,
           ...(epg !== "" ? { epgUrl: epg } : {}),
+          ...(epgOptimise ? { epgOptimise } : {}),
           ...(interval !== undefined ? { refreshIntervalHours: interval } : {}),
         });
       }
@@ -110,6 +113,7 @@ export function SourceForm({
         section === "settings"
           ? {
               epgUrl: epg,
+              epgOptimise,
               refreshIntervalHours: interval ?? null,
               content,
             }
@@ -292,6 +296,15 @@ export function SourceForm({
       {showSettings && (
         <>
       <h4 className="pw-form-section">Guide and updates</h4>
+      <div className="pw-toggles">
+        <label className="pw-toggle">
+          <span className="pw-toggle-text">
+            <b>Improve TV guide matching</b>
+            <small>Finds the guide for channels the playlist doesn't link to one. Your channels and streams are not changed.</small>
+          </span>
+          <input type="checkbox" role="switch" checked={epgOptimise} onChange={(e) => setEpgOptimise(e.target.checked)} />
+        </label>
+      </div>
       <label className="field">
         <span>XMLTV / EPG URL</span>
         <input className="input" value={epgUrl} onChange={(e) => setEpgUrl(e.target.value)} />

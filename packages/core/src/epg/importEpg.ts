@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { parseXmltv } from "./parseXmltv.js";
+import { matchGuide, type GuideChannel, type GuideMatchStats } from "./matchGuide.js";
 import { yieldToEventLoop } from "../db/applyInSlices.js";
 
 export interface EpgImportResult {
@@ -7,6 +8,8 @@ export interface EpgImportResult {
   readonly channels: number;
   readonly programmes: number;
   readonly durationMs: number;
+  /** Present only when the import was asked to improve matching: how the playlist's channels fared against the guide. */
+  readonly matching?: GuideMatchStats;
 }
 
 /** Programmes older than this before "now" are dropped after every import. */
@@ -35,6 +38,11 @@ export async function importEpg(
     readonly onProgress?: (programmesSoFar: number) => void;
     /** Leaves out programmes starting further ahead than this: a small device need not hold a fortnight of listings. */
     readonly horizonMs?: number;
+    /**
+     * Also links channels whose own `tvg-id` is missing or unknown to the guide channel that is plainly the same one
+     * (see `matchGuide`). Off by default: the import then behaves exactly as it always has.
+     */
+    readonly optimise?: boolean;
   } = {},
 ): Promise<EpgImportResult> {
   const startedAt = Date.now();
@@ -43,14 +51,44 @@ export async function importEpg(
   // and each of them gets the listings; the parser is handed the guide id itself and it is fanned out below.
   const channelsByGuideId = new Map<string, string[]>();
   const channelRows = db
-    .prepare(`SELECT tvg_id AS tvgId, id FROM channels WHERE source_id = ? AND tvg_id IS NOT NULL AND tvg_id <> ''`)
-    .all(sourceId) as { tvgId: string; id: string }[];
+    .prepare(`SELECT tvg_id AS tvgId, id, raw_name AS rawName, country FROM channels WHERE source_id = ?`)
+    .all(sourceId) as { tvgId: string | null; id: string; rawName: string; country: string | null }[];
   for (const row of channelRows) {
+    if (row.tvgId === null || row.tvgId === "") continue;
     const ids = channelsByGuideId.get(row.tvgId);
     if (ids === undefined) channelsByGuideId.set(row.tvgId, [row.id]);
     else ids.push(row.id);
   }
   const channelIdMap = new Map([...channelsByGuideId.keys()].map((guideId) => [guideId, guideId]));
+
+  // With optimising on, the guide's own channel list (read first) is matched to the channels the playlist's `tvg-id`s
+  // missed, and those join the same fan-out. A failure here must not cost the guide: it carries on as if off.
+  const declared: GuideChannel[] = [];
+  let matching: GuideMatchStats | undefined;
+  const optimise = options.optimise === true
+    ? {
+        onChannel: (id: string, names: readonly string[]) => void declared.push({ id, names }),
+        onChannelsEnd: () => {
+          // A guide that names no channels gives nothing to match against, and no verdict on the playlist's.
+          if (declared.length === 0) return;
+          try {
+            const result = matchGuide(
+              channelRows.map((row) => ({ id: row.id, rawName: row.rawName, country: row.country, tvgId: row.tvgId })),
+              declared,
+            );
+            for (const [channelId, match] of result.matches) {
+              const ids = channelsByGuideId.get(match.guideId);
+              if (ids === undefined) channelsByGuideId.set(match.guideId, [channelId]);
+              else ids.push(channelId);
+              channelIdMap.set(match.guideId, match.guideId);
+            }
+            matching = result.stats;
+          } catch {
+            matching = undefined;
+          }
+        },
+      }
+    : {};
 
   const insert = db.prepare(
     `INSERT INTO programmes (channel_id, title, description, start_at, end_at) VALUES (?, ?, ?, ?, ?)`,
@@ -69,7 +107,7 @@ export async function importEpg(
   const { gzipped } = options;
   const oldest = Date.now() - KEEP_PAST_MS;
   const furthest = options.horizonMs !== undefined ? Date.now() + options.horizonMs : Number.POSITIVE_INFINITY;
-  for await (const programme of parseXmltv(body, channelIdMap, gzipped !== undefined ? { gzipped } : {})) {
+  for await (const programme of parseXmltv(body, channelIdMap, { ...(gzipped !== undefined ? { gzipped } : {}), ...optimise })) {
     if (programme.end.getTime() < oldest || programme.start.getTime() > furthest) continue;
     for (const channelId of channelsByGuideId.get(programme.channelId) ?? []) {
       buffer.push([
@@ -95,7 +133,12 @@ export async function importEpg(
 
   await deleteInSlices(db, `SELECT rowid FROM programmes WHERE end_at < ?`, [Date.now() - KEEP_PAST_MS]);
 
-  return { channels: touchedChannels.size, programmes, durationMs: Date.now() - startedAt };
+  return {
+    channels: touchedChannels.size,
+    programmes,
+    durationMs: Date.now() - startedAt,
+    ...(matching !== undefined ? { matching } : {}),
+  };
 }
 
 /** Rows deleted per statement: a guide can hold hundreds of thousands, and one DELETE of them all blocks for seconds. */

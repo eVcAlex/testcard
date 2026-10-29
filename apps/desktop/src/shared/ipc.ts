@@ -50,6 +50,8 @@ export type AddSourceInput = {
    * `url-tvg` header, or Xtream `xmltv.php`).
    */
   readonly epgUrl?: string;
+  /** Also match channels to the guide by name when their `tvg-id` misses. Absent means off. */
+  readonly epgOptimise?: boolean;
   /** Hours between automatic refreshes. Absent (or `undefined`) means manual refresh only. */
   readonly refreshIntervalHours?: number;
 } & (
@@ -83,6 +85,8 @@ export interface UpdateSourceInput {
   readonly content?: SourceContent;
   /** Omit to leave unchanged; `""` clears the stored EPG URL. */
   readonly epgUrl?: string;
+  /** Omit to leave unchanged. A change reloads the source so the guide is rebuilt the new way. */
+  readonly epgOptimise?: boolean;
   /** M3U only: a replacement playlist URL. Omit to keep the current one. */
   readonly playlistUrl?: string;
   /**
@@ -103,6 +107,8 @@ export interface UpdateSourceInput {
 /** A source as listed in the sidebar — the domain `Source` plus desktop-only bookkeeping. */
 export type SourceListItem = Source & {
   readonly content: SourceContent;
+  /** Guide matching by name is on for this source (this device only). */
+  readonly epgOptimise?: boolean;
   /** True while main is importing this source (a manual refresh, the first import after adding, a scheduled one). */
   readonly refreshing?: boolean;
   /** Why the last background import failed. Cleared when the next one starts. */
@@ -114,6 +120,15 @@ export type SourceListItem = Source & {
   readonly refreshIntervalHours?: number;
 };
 
+/** Counts from `matchGuide`: channels linked by their own `tvg-id`, by name, left unlinked as ambiguous, and with no guide. */
+export interface GuideMatching {
+  readonly channels: number;
+  readonly exact: number;
+  readonly matched: number;
+  readonly ambiguous: number;
+  readonly unmatched: number;
+}
+
 export interface RefreshResult {
   readonly categories: number;
   readonly channels: number;
@@ -121,6 +136,8 @@ export interface RefreshResult {
   readonly durationMs: number;
   /** Programme rows imported from EPG, when a guide URL was available. */
   readonly programmes?: number;
+  /** How the playlist's channels fared against the guide, when matching by name is on and the guide listed its channels. */
+  readonly guideMatching?: GuideMatching;
   /** Movies imported, when the source is Xtream (design spec "Import strategy"). */
   readonly movies?: number;
   /** Series imported, when the source is Xtream. */

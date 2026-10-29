@@ -333,6 +333,11 @@ CREATE TABLE IF NOT EXISTS hidden_channels (
         val columns = db.columnsOf("sources")
         if (columns.isNotEmpty() && "backup_urls" !in columns) db.execSQL("ALTER TABLE sources ADD COLUMN backup_urls TEXT")
     },
+    Migration(16) { db ->
+        // Optional guide matching by name for channels whose tvg-id misses (off for every existing source).
+        val columns = db.columnsOf("sources")
+        if (columns.isNotEmpty() && "epg_optimise" !in columns) db.execSQL("ALTER TABLE sources ADD COLUMN epg_optimise INTEGER NOT NULL DEFAULT 0")
+    },
 )
 
 /** The migrations still needed to bring a database at [from] up to date. */

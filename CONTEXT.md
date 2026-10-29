@@ -114,6 +114,9 @@ plays back through an embedded `mpv`, stores everything locally.
   `refresh_interval_hours` (Off/6h/12h/24h), checked every 15 minutes by a background
   scheduler (`main/refreshScheduler.ts`) that's guarded against double-running a Source
   that's already mid-refresh.
+- **Guide matching** — an optional per-source switch ("Improve TV guide matching", `sources.epg_optimise`) that also links channels whose
+  `tvg-id` is missing or unknown to the guide channel that is plainly the same one (`matchGuide`), by cleaned name and country. Never
+  changes channels or streams; an ambiguous channel is left unlinked. See `docs/adr/0018-guide-matching-by-name.md`.
 - **Favourite** — a user-starred Channel. Survives Refresh (see above).
 - **Recent** — a Channel the user has played, most-recent-first. Survives Refresh.
 

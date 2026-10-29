@@ -75,6 +75,11 @@ export function SourceCard({
     onSuccess: (result) => {
       const parts = [`${result.channels.toLocaleString()} channels · ${result.categories} categories`];
       if (result.programmes !== undefined) parts.push(`${result.programmes.toLocaleString()} programmes`);
+      const matching = result.guideMatching;
+      if (matching !== undefined) {
+        const linked = matching.exact + matching.matched;
+        parts.push(`${linked.toLocaleString()} of ${matching.channels.toLocaleString()} channels have a guide`);
+      }
       setRefreshMsg(parts.join(" · "));
       void queryClient.invalidateQueries({ queryKey: ["channels"] });
       void queryClient.invalidateQueries({ queryKey: ["categories"] });
