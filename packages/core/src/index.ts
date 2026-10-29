@@ -41,5 +41,6 @@ export * from "./sync/sourceRemoval.js";
 export * from "./sync/sourceOrder.js";
 export * from "./sync/syncController.js";
 export * from "./sync/sourcePins.js";
+export * from "./sync/setupCrypto.js";
 export * from "./db/startRows.js";
 export { listWatchedLately } from "./db/homeQueries.js";

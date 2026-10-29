@@ -5,6 +5,7 @@ import { handleRegisterGuide } from "./routes/guides.js";
 import { handleWatchProxy } from "./routes/watch.js";
 import { handlePull } from "./routes/pull.js";
 import { handlePush } from "./routes/push.js";
+import { handleShareClaim, handleShareCreate, handleShareList, handleShareRevoke } from "./routes/setup.js";
 import { handleWaitlist } from "./routes/waitlist.js";
 import { handleRelease } from "./routes/release.js";
 import { handleGetSalt, handleSetSalt } from "./routes/salt.js";
@@ -62,6 +63,12 @@ app.post("/link/start", handleLinkStart);
 app.get("/link/session", handleLinkSession);
 app.post("/link/approve", handleLinkApprove);
 app.get("/link/poll", handleLinkPoll);
+
+// Sources shared by link. Claiming needs no session (the receiving device has no account); the rest are the sender's.
+app.post("/share/claim", handleShareClaim);
+app.post("/share", requireSession, handleShareCreate);
+app.get("/share", requireSession, handleShareList);
+app.delete("/share/:id", requireSession, handleShareRevoke);
 
 app.post("/waitlist", handleWaitlist);
 
