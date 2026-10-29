@@ -20,8 +20,9 @@ if (installer === undefined || version === undefined) throw new Error("release/l
 if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(installer)) throw new Error(`Installer name "${installer}" has characters the release bucket will not serve.`);
 if (!existsSync(join(RELEASE_DIR, installer))) throw new Error(`release/${installer} is missing.`);
 
+// --remote: wrangler 4 writes to a local stand-in for the bucket without it, and the upload "succeeds" with nothing published.
 const put = (key, file, contentType) =>
-  run("pnpm", ["--filter", "@testcard/sync-worker", "exec", "wrangler", "r2", "object", "put", `${BUCKET}/${key}`, "--file", resolve(file), "--content-type", contentType]);
+  run("pnpm", ["--filter", "@testcard/sync-worker", "exec", "wrangler", "r2", "object", "put", `${BUCKET}/${key}`, "--remote", "--file", resolve(file), "--content-type", contentType]);
 
 // The installer first, so a running app never reads a manifest that points at a file that is not there yet.
 console.log(`Uploading ${installer}`);
