@@ -40,6 +40,11 @@ import com.evcalex.testcard.core.setup.SetupProgress
 import com.evcalex.testcard.core.setup.Wants
 import com.evcalex.testcard.core.setup.describeSetup
 import com.evcalex.testcard.core.sync.ServerPicker
+import com.evcalex.testcard.core.sync.SetupProfile
+import com.evcalex.testcard.core.sync.SetupSource
+import com.evcalex.testcard.core.sync.SourceContent
+import com.evcalex.testcard.core.sync.remoteKeyFor
+import com.evcalex.testcard.core.sync.remoteKeyForPlaylist
 import com.evcalex.testcard.core.sync.SourceDraft
 import com.evcalex.testcard.core.sync.SourceLogins
 import com.evcalex.testcard.core.sync.SyncAccount
@@ -96,6 +101,17 @@ private const val SERVERS_AFTER_LAUNCH_MS = 10_000L
 
 /** Where the source pick is kept between launches: this device's own setting, not synced. */
 internal const val SOURCE_PICK_KEY = "ui:source"
+
+/** Where "use this TV without an account" is kept: "1" is on. This device's own choice, not synced. */
+internal const val LOCAL_MODE_KEY = "ui:local"
+
+/** What came of adding a source someone shared. */
+sealed interface SharedAdd {
+    data object Added : SharedAdd
+
+    /** This provider is already here; nothing was added or changed. */
+    class Duplicate(val name: String) : SharedAdd
+}
 
 /** Where the "switch feed when it buffers" choice is kept: "0" is off. */
 private const val SWITCH_ON_BUFFERING_KEY = "ui:switchOnBuffering"
@@ -168,6 +184,10 @@ class AppController(context: Context) {
     var sourcePick by mutableStateOf<String?>(null)
         internal set
 
+    /** True when this TV is used without an account: sources and history stay on this TV, and can join an account later by signing in. */
+    var localMode by mutableStateOf(false)
+        private set
+
     /** The channels picked for Multi view, in the order picked (the first is the main picture). Kept while the app runs; not synced. */
     val multiQueue = androidx.compose.runtime.mutableStateListOf<com.evcalex.testcard.core.playback.PlayItem>()
 
@@ -223,6 +243,7 @@ class AppController(context: Context) {
         audioLanguage = db.read { it.readAudioLanguage() }
         switchOnBuffering = db.read { connection -> connection.one("SELECT value FROM schema_meta WHERE key = ?", SWITCH_ON_BUFFERING_KEY) { it.getText(0) } } != "0"
         sourcePick = db.read { connection -> connection.one("SELECT value FROM schema_meta WHERE key = ?", SOURCE_PICK_KEY) { it.getText(0) }?.takeIf { it != "" } }
+        localMode = db.read { connection -> connection.one("SELECT value FROM schema_meta WHERE key = ?", LOCAL_MODE_KEY) { it.getText(0) } } == "1"
         // An update in place from the React Native app brings its logins along before sync looks for them.
         runCatching { Adoption.adoptSecrets(appContext, db, secrets) }
         sync = SyncController(db, logins, secrets, syncScope, baseUrl = BuildConfig.SYNC_URL, http = client, onSourcesAdded = { ids -> ids.forEach { id -> scope.launch { refreshSource(id) } } }, profile = first)
@@ -345,6 +366,7 @@ class AppController(context: Context) {
         sync.signIn(email, password)
         status = sync.status.value
         launching = false
+        changeLocalMode(false)
         bump()
     }
 
@@ -352,7 +374,44 @@ class AppController(context: Context) {
         sync.signUp(email, password)
         status = sync.status.value
         launching = false
+        changeLocalMode(false)
         bump()
+    }
+
+    /** Uses this TV without an account. Sources added here stay on this TV; signing in later brings them to the account, merged by provider rather than copied. */
+    fun useWithoutAccount() = changeLocalMode(true)
+
+    /** Back to the sign-in screen, for someone who has been using this TV without an account. */
+    fun leaveLocalMode() = changeLocalMode(false)
+
+    private fun changeLocalMode(on: Boolean) {
+        if (localMode == on) return
+        localMode = on
+        scope.launch { db.write { it.run("INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)", LOCAL_MODE_KEY, if (on) "1" else "0") } }
+    }
+
+    /**
+     * Adds a source someone shared, once the person has agreed. A provider already here is reported and left alone, never overwritten or
+     * added twice. The login is checked with the provider, as for a typed source. Throws a message to show.
+     */
+    suspend fun addSharedSource(profile: SetupProfile): SharedAdd {
+        val key = when (val source = profile.source) {
+            is SetupSource.Playlist -> remoteKeyForPlaylist(source.playlistUrl)
+            is SetupSource.Xtream -> remoteKeyFor(source.host, "source")
+        }
+        val existing = db.read { connection -> connection.one("SELECT name FROM sources WHERE remote_key = ? AND sync_deleted_at IS NULL", key) { it.getText(0) } }
+        if (existing != null) return SharedAdd.Duplicate(existing)
+        val everything = SourceContent(live = true, movies = true, series = true)
+        val draft = when (val source = profile.source) {
+            is SetupSource.Playlist -> SourceDraft("m3u", profile.name, playlistUrl = source.playlistUrl, epgUrl = source.epgUrl ?: "", content = source.content ?: everything, epgOptimise = profile.epgOptimise)
+            is SetupSource.Xtream -> SourceDraft(
+                "xtream", profile.name, server = source.host, username = source.username, password = source.password,
+                epgUrl = source.epgUrl ?: "", backupUrls = source.backupHosts.joinToString(", "), content = source.content ?: everything, epgOptimise = profile.epgOptimise,
+            )
+        }
+        saveSource(null, draft)
+        if (status.account != SyncAccount.SignedIn) changeLocalMode(true)
+        return SharedAdd.Added
     }
 
     suspend fun signOut() {

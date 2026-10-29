@@ -39,7 +39,7 @@ export function Privacy() {
       <section id="sync" aria-labelledby="sync-h" className="block">
         <h2 id="sync-h">Account sync</h2>
         <p>If you sign in, your account stores your sources, favourites, recently watched, progress, profiles and hidden items so they stay in step across devices. You don't have to sign in to use the app on one device.</p>
-        <p>Provider credentials are synced only encrypted, with a key derived from your account password. We hold the encrypted copy and not the key, so we can't read your provider logins. That is also why a forgotten password can't be recovered.</p>
+        <p>Provider credentials are synced only encrypted, with a key derived from your account password. We hold the encrypted copy and not the key, so we can't read your provider logins. If you forget your password you can reset it by email, but because only the password can unlock that copy, your synced sources and profiles are cleared when you do, and your devices put them back.</p>
         <p>To sign in a TV, you enter a code on <Link to="/link">evicted.dev/link</Link>. Your password is checked by the service, then scrambled in the page before it is passed to the TV. Only the TV can unscramble that copy, and only for 10 minutes.</p>
         <p>The account itself stores your email address, a hash of your password (never the password), the name you gave it if any, and a record of each sign-in: when it happened, the network address and the browser or app it came from. Sign-in records expire on their own. It is all held on Cloudflare (Workers, D1 database and R2 storage), which hosts this service.</p>
       </section>

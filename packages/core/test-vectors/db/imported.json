@@ -4750,7 +4750,7 @@
   "schema_meta": [
    {
     "key": "version",
-    "value": "15"
+    "value": "16"
    },
    {
     "key": "display_name_version",
@@ -5220,7 +5220,8 @@
     "include_movies": 1,
     "include_series": 1,
     "sort_order": null,
-    "backup_urls": null
+    "backup_urls": null,
+    "epg_optimise": 0
    },
    {
     "id": "m1",
@@ -5239,7 +5240,8 @@
     "include_movies": 1,
     "include_series": 1,
     "sort_order": null,
-    "backup_urls": null
+    "backup_urls": null,
+    "epg_optimise": 0
    }
   ],
   "sync_state": [],

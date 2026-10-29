@@ -26,7 +26,7 @@ routes = [
 directory = "../web/dist"
 not_found_handling = "404-page"
 html_handling = "drop-trailing-slash" # canonical URLs have no trailing slash: /download is the page, /download/ redirects to it
-run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/approve", "/link/poll", "/sync/*", "/guides/*", "/watch/p", "/waitlist"]
+run_worker_first = ["/app/*", "/auth/*", "/link/start", "/link/session", "/link/approve", "/link/poll", "/sync/*", "/guides/*", "/share", "/share/*", "/watch/p", "/waitlist"]
 
 # SYNC_AUTH_SECRET (better-auth signing/encryption secret) is deliberately NOT declared here: a [vars]
 # entry is deployed as a plain var and replaces the real secret. Deployed: `wrangler secret put

@@ -149,10 +149,12 @@ internal fun AccountPane(app: AppController) {
         AppText("Account and updates", 40, Palette.foreground, FontWeight.Bold)
         Card {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                AppText(status.email ?: "Signed out", 26, Palette.foreground, FontWeight.Medium, maxLines = 1)
+                AppText(status.email ?: if (app.localMode) "No account: your sources are on this TV only" else "Signed out", 26, Palette.foreground, FontWeight.Medium, maxLines = 2)
                 status.lastSyncedAt?.let { AppText("✓ Synced ${ago(it)}", 22, Palette.faint) }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (app.localMode && status.account != com.evcalex.testcard.core.sync.SyncAccount.SignedIn) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                SmallButton("Sign in or create an account", { app.leaveLocalMode() }, primary = true)
+            } else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SmallButton("Sync now", { scope.launch { withContext(Dispatchers.Default) { app.sync.triggerNow() } } })
                 SmallButton("Sign out", { confirmingSignOut = true })
             }

@@ -21,7 +21,16 @@ const SLICE_MS = 30;
 export async function* parseXmltv(
   body: ReadableStream<Uint8Array>,
   channelIdMap: ReadonlyMap<string, string>,
-  _options: { readonly gzipped?: boolean } = {},
+  options: {
+    readonly gzipped?: boolean;
+    /** Called for each `<channel>` the guide declares, with its `display-name`s. */
+    readonly onChannel?: (guideId: string, names: readonly string[]) => void;
+    /**
+     * Called once, just before the first `<programme>` is read (XMLTV lists its channels first). `channelIdMap` may be
+     * added to here, and is read afresh for every programme after it.
+     */
+    readonly onChannelsEnd?: () => void;
+  } = {},
 ): AsyncGenerator<Programme> {
   const parser = sax.parser(true, { trim: true, lowercase: true });
   const ready: Programme[] = [];
@@ -34,10 +43,25 @@ export async function* parseXmltv(
   let currentDescription = "";
   let inTitle = false;
   let inDesc = false;
+  let channelsEnded = false;
+  let declaredId: string | null = null;
+  let declaredNames: string[] = [];
+  let inDisplayName = false;
+  let displayName = "";
 
   parser.onopentag = (node) => {
     const name = node.name;
-    if (name === "programme") {
+    if (name === "channel") {
+      declaredId = String(node.attributes["id"] ?? "");
+      declaredNames = [];
+    } else if (name === "display-name" && declaredId !== null) {
+      inDisplayName = true;
+      displayName = "";
+    } else if (name === "programme") {
+      if (!channelsEnded) {
+        channelsEnded = true;
+        options.onChannelsEnd?.();
+      }
       currentChannel = String(node.attributes["channel"] ?? "");
       currentStart = parseXmltvDate(String(node.attributes["start"] ?? ""));
       currentStop = parseXmltvDate(String(node.attributes["stop"] ?? ""));
@@ -52,10 +76,17 @@ export async function* parseXmltv(
   parser.ontext = (text) => {
     if (inTitle) currentTitle += text;
     if (inDesc) currentDescription += text;
+    if (inDisplayName) displayName += text;
   };
   parser.oncdata = parser.ontext;
   parser.onclosetag = (name) => {
-    if (name === "title") inTitle = false;
+    if (name === "display-name" && inDisplayName) {
+      inDisplayName = false;
+      if (displayName !== "") declaredNames.push(displayName);
+    } else if (name === "channel" && declaredId !== null) {
+      if (declaredId !== "") options.onChannel?.(declaredId, declaredNames);
+      declaredId = null;
+    } else if (name === "title") inTitle = false;
     else if (name === "desc") inDesc = false;
     else if (name === "programme") {
       const channelId = currentChannel !== null ? channelIdMap.get(currentChannel) : undefined;

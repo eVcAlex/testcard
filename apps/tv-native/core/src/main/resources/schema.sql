@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS sources (
   include_movies  INTEGER NOT NULL DEFAULT 1,
   include_series  INTEGER NOT NULL DEFAULT 1,
   sort_order      INTEGER,      -- position in the source list (synced); NULL = not placed yet, after the placed ones
-  backup_urls     TEXT          -- xtream: JSON array of other server addresses for the same account (synced); NULL = none
+  backup_urls     TEXT,         -- xtream: JSON array of other server addresses for the same account (synced); NULL = none
+  epg_optimise    INTEGER NOT NULL DEFAULT 0  -- 1 = also link channels to the guide by name when their tvg-id misses (this device only)
 );
 CREATE INDEX IF NOT EXISTS idx_sources_remote_key ON sources(remote_key);
 

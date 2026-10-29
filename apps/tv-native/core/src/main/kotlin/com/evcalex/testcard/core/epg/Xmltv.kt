@@ -74,7 +74,15 @@ private fun XmlPullParser.attribute(name: String): String? {
  *
  * Like the TypeScript, the text of every `<title>` and `<desc>` of a programme is joined, trimmed piece by piece.
  */
-fun parseXmltv(input: InputStream, wanted: (String) -> Boolean, onProgramme: (XmltvProgramme) -> Unit) {
+fun parseXmltv(
+    input: InputStream,
+    wanted: (String) -> Boolean,
+    /** Called for each `<channel>` the guide declares, with its `display-name`s (`onChannel` in `parseXmltv.ts`). */
+    onChannel: ((guideId: String, names: List<String>) -> Unit)? = null,
+    /** Called once, just before the first `<programme>` is read (XMLTV lists its channels first); `wanted` may start accepting more here. */
+    onChannelsEnd: (() -> Unit)? = null,
+    onProgramme: (XmltvProgramme) -> Unit,
+) {
     val parser = XmlPullParserFactory.newInstance().newPullParser()
     runCatching { parser.setFeature("http://xmlpull.org/v1/doc/features.html#relaxed", true) }
     parser.setInput(openMaybeGzipped(input), "UTF-8")
@@ -86,6 +94,11 @@ fun parseXmltv(input: InputStream, wanted: (String) -> Boolean, onProgramme: (Xm
     var description = StringBuilder()
     var inTitle = false
     var inDesc = false
+    var channelsEnded = false
+    var declaredId: String? = null
+    var declaredNames = ArrayList<String>()
+    var inDisplayName = false
+    var displayName = StringBuilder()
     var yielded = 0
     var parseError: Exception? = null
     try {
@@ -93,7 +106,19 @@ fun parseXmltv(input: InputStream, wanted: (String) -> Boolean, onProgramme: (Xm
         while (event != XmlPullParser.END_DOCUMENT) {
             when (event) {
                 XmlPullParser.START_TAG -> when (parser.name.lowercase(Locale.ROOT)) {
+                    "channel" -> {
+                        declaredId = parser.attribute("id") ?: ""
+                        declaredNames = ArrayList()
+                    }
+                    "display-name" -> if (declaredId != null) {
+                        inDisplayName = true
+                        displayName = StringBuilder()
+                    }
                     "programme" -> {
+                        if (!channelsEnded) {
+                            channelsEnded = true
+                            onChannelsEnd?.invoke()
+                        }
                         channel = parser.attribute("channel") ?: ""
                         start = parseXmltvDate(parser.attribute("start") ?: "")
                         stop = parseXmltvDate(parser.attribute("stop") ?: "")
@@ -108,9 +133,18 @@ fun parseXmltv(input: InputStream, wanted: (String) -> Boolean, onProgramme: (Xm
                     if (text.isNotEmpty()) {
                         if (inTitle) title.append(text)
                         if (inDesc) description.append(text)
+                        if (inDisplayName) displayName.append(text)
                     }
                 }
                 XmlPullParser.END_TAG -> when (parser.name.lowercase(Locale.ROOT)) {
+                    "display-name" -> if (inDisplayName) {
+                        inDisplayName = false
+                        if (displayName.isNotEmpty()) declaredNames.add(displayName.toString())
+                    }
+                    "channel" -> declaredId?.let { id ->
+                        if (id.isNotEmpty()) onChannel?.invoke(id, declaredNames)
+                        declaredId = null
+                    }
                     "title" -> inTitle = false
                     "desc" -> inDesc = false
                     "programme" -> {

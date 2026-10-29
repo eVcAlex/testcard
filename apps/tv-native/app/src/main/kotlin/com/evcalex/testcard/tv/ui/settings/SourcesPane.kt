@@ -30,6 +30,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.evcalex.testcard.core.nowMs
+import com.evcalex.testcard.core.sync.LinkExpiredException
+import com.evcalex.testcard.core.sync.LinkSecrets
+import com.evcalex.testcard.core.sync.LinkSetup
+import com.evcalex.testcard.core.sync.SetupLinkException
+import com.evcalex.testcard.core.sync.SetupProfile
+import com.evcalex.testcard.core.sync.claimSetupLink
+import com.evcalex.testcard.core.sync.formatLinkCode
+import com.evcalex.testcard.core.sync.parseSetupFragment
+import com.evcalex.testcard.core.sync.startLinkSession
 import com.evcalex.testcard.core.sync.SourceDraft
 import com.evcalex.testcard.core.sync.SyncAccount
 import com.evcalex.testcard.core.sync.emptyDraft
@@ -37,6 +47,8 @@ import com.evcalex.testcard.core.sync.readDraft
 import com.evcalex.testcard.core.text.plainReason
 import com.evcalex.testcard.core.xtream.describeAccount
 import com.evcalex.testcard.tv.AppController
+import com.evcalex.testcard.tv.BuildConfig
+import com.evcalex.testcard.tv.ui.signin.SharedSourceOffer
 import com.evcalex.testcard.tv.saveSource
 import com.evcalex.testcard.tv.removeSource
 import com.evcalex.testcard.tv.refreshSource
@@ -53,6 +65,7 @@ import com.evcalex.testcard.tv.ui.components.withCommas
 import com.evcalex.testcard.tv.ui.theme.Palette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /** Only the kinds of content a source actually has: a live-only provider does not say "0 movies". */
@@ -73,14 +86,18 @@ internal fun SourcesPane(app: AppController) {
     // The source being edited: an id, "new" for one being added, or nothing.
     var editing by remember { mutableStateOf<String?>(null) }
     val signedIn = app.status.account == SyncAccount.SignedIn
+    // Without an account, sources still load and live on this TV alone.
+    val usable = signedIn || app.localMode
+    var receiving by remember { mutableStateOf(false) }
     PaneColumn {
         Row(horizontalArrangement = Arrangement.spacedBy(32.dp), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 AppText("Sources", 40, Palette.foreground, FontWeight.Bold)
-                AppText(if (signedIn) "Adding, editing or removing a source here changes it on all your devices." else "Sign in to load your sources.", 22, Palette.muted)
+                AppText(if (signedIn) "Adding, editing or removing a source here changes it on all your devices." else if (app.localMode) "These sources are on this TV only. Sign in from Account and updates to keep them on all your devices." else "Sign in to load your sources.", 22, Palette.muted)
             }
-            if (signedIn) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (usable) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (app.sources.size > 1) SmallButton(if (app.sources.any { it.refreshing }) "Refreshing all" else "Refresh all", { scope.launch { app.refreshAll() } }, enabled = app.sources.none { it.refreshing })
+                SmallButton("Add with a code", { receiving = true })
                 SmallButton("Add source", { editing = "new" }, primary = true)
             }
         }
@@ -115,6 +132,7 @@ internal fun SourcesPane(app: AppController) {
         }
     }
     editing?.let { id -> SourceFormDialog(app, if (id == "new") null else id) { editing = null } }
+    if (receiving) SetupByCodeDialog(app) { receiving = false }
 }
 
 /**
@@ -212,6 +230,8 @@ fun SourceFormDialog(app: AppController, sourceId: String?, onClose: () -> Unit)
                         )
                     }
                     AppField("TV guide address (optional)", shown.epgUrl, { change(shown.copy(epgUrl = it)) }, keyboardType = KeyboardType.Uri, placeholder = "Empty uses the source's own guide")
+                    Chip((if (shown.epgOptimise) "✓  " else "○  ") + "Improve TV guide matching", shown.epgOptimise, { change(shown.copy(epgOptimise = !shown.epgOptimise)) })
+                    AppText("Finds the guide for channels the playlist doesn't link to one. Your channels and streams are not changed.", 20, Palette.faint)
                     AppText("Load", 22, Palette.muted, modifier = Modifier.padding(top = 8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         for ((key, label) in CONTENT) {
@@ -227,6 +247,69 @@ fun SourceFormDialog(app: AppController, sourceId: String?, onClose: () -> Unit)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End)) {
                     AppButton("Cancel", onClose)
                     AppButton(if (saving) "Checking..." else if (adding) "Add source" else "Save", { save() }, primary = true, enabled = !saving && draft != null)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Add a source someone shared by link, without typing anything: the TV shows a code, the person opens the setup link on a phone and
+ * types the code there, and the TV claims the source itself and asks before adding it. A sign-in sent to this code is not used here.
+ */
+@Composable
+fun SetupByCodeDialog(app: AppController, onClose: () -> Unit) {
+    var offer by remember { mutableStateOf<Pair<String, Long>?>(null) }
+    var offered by remember { mutableStateOf<SetupProfile?>(null) }
+    var message by remember { mutableStateOf<String?>(null) }
+    var round by remember { mutableStateOf(0) }
+    var secondsLeft by remember { mutableStateOf(0) }
+    val close = remember { FocusRequester() }
+    LaunchedEffect(offered) { if (offered == null) runCatching { close.requestFocus() } }
+    LaunchedEffect(round) {
+        offer = null; offered = null; message = null
+        try {
+            withContext(Dispatchers.Default) {
+                val session = startLinkSession(BuildConfig.SYNC_URL, app.http)
+                offer = session.code to session.expiresAt
+                when (val outcome = session.waitForApproval()) {
+                    is LinkSecrets -> message = "That was a sign-in, not a setup link. To sign in, use Account and updates."
+                    is LinkSetup -> {
+                        val link = parseSetupFragment(outcome.link) ?: throw SetupLinkException("This link is damaged or incomplete. Ask whoever sent it for a new one.")
+                        offered = claimSetupLink(link, BuildConfig.SYNC_URL, app.http)
+                    }
+                }
+            }
+        } catch (failure: Exception) {
+            if (failure is kotlinx.coroutines.CancellationException) throw failure
+            if (failure is LinkExpiredException) { round += 1; return@LaunchedEffect }
+            message = failure.message ?: "That didn't work."
+        }
+    }
+    LaunchedEffect(offer) {
+        val expires = offer?.second ?: return@LaunchedEffect
+        while (true) {
+            secondsLeft = maxOf(0L, Math.round((expires - nowMs()) / 1000.0)).toInt()
+            delay(1000)
+        }
+    }
+    Modal(onClose) {
+        Box(Modifier.fillMaxSize().background(Color(0xD905080B)), contentAlignment = Alignment.Center) {
+            Column(
+                Modifier.width(1000.dp).trapFocus().background(Palette.raised, RoundedCornerShape(18.dp)).border(1.dp, Palette.border, RoundedCornerShape(18.dp)).padding(40.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                val shared = offered
+                if (shared != null) SharedSourceOffer(app, shared) { added -> if (added) onClose() else round += 1 }
+                else {
+                    AppText("Add with a code", 36, Palette.foreground, FontWeight.SemiBold)
+                    AppText("On your phone, open the setup link you were sent and enter this code:", 22, Palette.muted)
+                    AppText(offer?.let { formatLinkCode(it.first) } ?: "........", 80, Palette.foreground, FontWeight.SemiBold, letterSpacing = 8f)
+                    AppText(message ?: if (offer == null) "Getting a code..." else "Waiting for you. The code lasts ${secondsLeft / 60}:${(secondsLeft % 60).toString().padStart(2, '0')} more.", 22, if (message != null) Palette.fault else Palette.muted)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End)) {
+                        if (message != null) AppButton("Try again", { round += 1 })
+                        AppButton("Cancel", onClose, primary = true, focusRequester = close)
+                    }
                 }
             }
         }

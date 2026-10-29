@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "../components/ConfirmDialog.js";
+import { ShareDialog } from "./ShareDialog.js";
 import { Icon } from "../components/Icon.js";
 import { opensUp } from "../lib/menu.js";
 import { formatRelative } from "../lib/time.js";
@@ -28,6 +29,7 @@ export function SourceCard({
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuUp, setMenuUp] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -75,6 +77,11 @@ export function SourceCard({
     onSuccess: (result) => {
       const parts = [`${result.channels.toLocaleString()} channels · ${result.categories} categories`];
       if (result.programmes !== undefined) parts.push(`${result.programmes.toLocaleString()} programmes`);
+      const matching = result.guideMatching;
+      if (matching !== undefined) {
+        const linked = matching.exact + matching.matched;
+        parts.push(`${linked.toLocaleString()} of ${matching.channels.toLocaleString()} channels have a guide`);
+      }
       setRefreshMsg(parts.join(" · "));
       void queryClient.invalidateQueries({ queryKey: ["channels"] });
       void queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -231,6 +238,17 @@ export function SourceCard({
             <button
               type="button"
               role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                setSharing(true);
+              }}
+            >
+              <Icon name="plus" />
+              Share setup link…
+            </button>
+            <button
+              type="button"
+              role="menuitem"
               className="pw-source-menu-danger"
               disabled={remove.isPending}
               onClick={() => {
@@ -244,6 +262,7 @@ export function SourceCard({
           </div>
         )}
       </div>
+      {sharing && <ShareDialog source={source} onClose={() => setSharing(false)} />}
       {confirmingRemove && (
         <ConfirmDialog
           title={`Remove ${source.name}?`}

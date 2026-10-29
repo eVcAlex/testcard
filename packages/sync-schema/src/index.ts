@@ -1,5 +1,6 @@
 import { z } from "zod";
 export * from "./guide.js";
+export * from "./setup.js";
 
 /**
  * A source's secret as it exists client-side, before encryption: an Xtream login, or an M3U

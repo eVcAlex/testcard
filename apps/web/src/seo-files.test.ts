@@ -34,4 +34,6 @@ it("_headers carries the security set and keeps Cache-Control off the catch-all 
   for (const path of ["/", "/features", "/download", "/setup", "/faq", "/privacy", "/terms", "/changelog", "/404.html"]) expect(headers).toContain(`\n${path}\n  Cache-Control: no-cache\n`);
   expect(headers).toMatch(/\/fonts\/\*\n\s+Cache-Control: public, max-age=31536000, immutable/);
   expect(headers).toMatch(/\/link\n\s+Cache-Control: no-store/);
+  expect(headers).toMatch(/\/reset\n\s+Cache-Control: no-store/);
+  expect(headers).toMatch(/\/s\n\s+Cache-Control: no-store/);
 });

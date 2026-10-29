@@ -1,4 +1,4 @@
-import { deriveLinkLookup, isValidLinkCode, normaliseLinkCode, sealLinkSecrets } from "@testcard/core/src/sync/linkCrypto.ts";
+import { deriveLinkLookup, isValidLinkCode, normaliseLinkCode, sealLinkSecrets, sealLinkSetup } from "@testcard/core/src/sync/linkCrypto.ts";
 import { errorMessage, errorStatus, linkApprove, linkSession, signIn, signUp } from "../api.ts";
 
 export type Mode = "signin" | "signup";
@@ -66,6 +66,33 @@ export async function linkTv(input: { code: string; email: string; password: str
         created,
         created,
       );
+    }
+  } catch (e) {
+    if (e instanceof LinkError) throw e;
+    throw new LinkError(OFFLINE);
+  }
+}
+
+/**
+ * Hands a TV the setup link this page was opened with (`<id>.<secret>`), sealed under the code the TV is showing so only that TV
+ * can read it. The page never claims or opens the shared source: the TV does that, after asking the person. No account is involved.
+ */
+export async function sendSetupToTv(input: { code: string; fragment: string }): Promise<void> {
+  const code = normaliseLinkCode(input.code);
+  if (!isValidLinkCode(code)) throw new LinkError("That code is not 8 letters and numbers. Check your TV and try again.", "code");
+  try {
+    const lookup = await deriveLinkLookup(code);
+    let session: { salt: string };
+    try {
+      session = await linkSession(lookup);
+    } catch (e) {
+      throw errorStatus(e) !== undefined ? new LinkError(CODE_GONE, "code") : e;
+    }
+    const sealed = await sealLinkSetup(input.fragment, code, session.salt);
+    try {
+      await linkApprove({ lookup, ...sealed });
+    } catch (e) {
+      throw errorStatus(e) !== undefined ? new LinkError(CODE_GONE, "code") : e;
     }
   } catch (e) {
     if (e instanceof LinkError) throw e;

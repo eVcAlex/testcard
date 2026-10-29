@@ -32,10 +32,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.evcalex.testcard.core.nowMs
 import com.evcalex.testcard.core.sync.LinkExpiredException
+import com.evcalex.testcard.core.sync.LinkSecrets
+import com.evcalex.testcard.core.sync.LinkSetup
+import com.evcalex.testcard.core.sync.SetupLinkException
+import com.evcalex.testcard.core.sync.SetupProfile
+import com.evcalex.testcard.core.sync.claimSetupLink
+import com.evcalex.testcard.core.sync.displayHost
+import com.evcalex.testcard.core.sync.parseSetupFragment
 import com.evcalex.testcard.core.sync.formatLinkCode
 import com.evcalex.testcard.core.sync.startLinkSession
 import com.evcalex.testcard.tv.AppController
 import com.evcalex.testcard.tv.BuildConfig
+import com.evcalex.testcard.tv.SharedAdd
 import com.evcalex.testcard.tv.ui.components.AppButton
 import com.evcalex.testcard.tv.ui.components.AppField
 import com.evcalex.testcard.tv.ui.components.AppText
@@ -118,6 +126,7 @@ private fun FormSignIn(app: AppController, onUseCode: () -> Unit) {
                 AppField("Email", email, { email = it }, keyboardType = KeyboardType.Email, focusRequester = first)
                 AppField("Password", password, { password = it }, password = true)
                 error?.let { AppText(it, 22, Palette.fault) }
+                AppText("Forgot your password? On your phone or computer, go to evicted.dev/reset.", 22, Palette.muted)
                 val blocked = busy != null || email.trim() == "" || password == ""
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End)) {
                     AppButton("Use a code instead", onUseCode)
@@ -140,6 +149,8 @@ private fun CodeSignIn(app: AppController, onTypeInstead: () -> Unit) {
     var phase by remember { mutableStateOf("starting") }
     var message by remember { mutableStateOf<String?>(null) }
     var secondsLeft by remember { mutableIntStateOf(0) }
+    // A source someone shared, claimed from the code and waiting for the person to say yes.
+    var offered by remember { mutableStateOf<SetupProfile?>(null) }
     val typeInstead = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { typeInstead.requestFocus() } }
 
@@ -153,14 +164,24 @@ private fun CodeSignIn(app: AppController, onTypeInstead: () -> Unit) {
                 val session = startLinkSession(BuildConfig.SYNC_URL, app.http)
                 offer = session.code to session.expiresAt
                 phase = "waiting"
-                val secrets = session.waitForApproval()
-                phase = "signing"
-                app.signIn(secrets.email, secrets.password)
+                when (val outcome = session.waitForApproval()) {
+                    is LinkSecrets -> {
+                        phase = "signing"
+                        app.signIn(outcome.email, outcome.password)
+                    }
+                    is LinkSetup -> {
+                        // The phone sent a setup link. This TV claims the source itself, then asks before adding it.
+                        phase = "claiming"
+                        val link = parseSetupFragment(outcome.link) ?: throw SetupLinkException("This link is damaged or incomplete. Ask whoever sent it for a new one.")
+                        offered = claimSetupLink(link, BuildConfig.SYNC_URL, app.http)
+                        phase = "offered"
+                    }
+                }
             }
         } catch (failure: Exception) {
             if (failure is kotlinx.coroutines.CancellationException) throw failure
             // A code that ran out is replaced with a new one without the person asking.
-            if (failure is LinkExpiredException) { round += 1; return@LaunchedEffect }
+            if (failure is LinkExpiredException && offered == null) { round += 1; return@LaunchedEffect }
             phase = "failed"
             message = failure.message ?: "That didn't work."
         }
@@ -179,16 +200,22 @@ private fun CodeSignIn(app: AppController, onTypeInstead: () -> Unit) {
             Modifier.fillMaxWidth(0.78f).widthIn(max = 1400.dp).background(Palette.raised, RoundedCornerShape(24.dp)).border(1.dp, Palette.border, RoundedCornerShape(24.dp)).padding(56.dp),
             horizontalArrangement = Arrangement.spacedBy(64.dp),
         ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            val shared = offered
+            if (shared != null && phase == "offered") Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Brand()
+                SharedSourceOffer(app, shared, onDone = { added -> if (!added) { offered = null; round += 1 } })
+            } else Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Brand()
                 AppText("Sign in or create an account with your phone", 40, Palette.foreground, FontWeight.Bold)
                 AppText("On your phone or computer, go to", 22, Palette.muted)
                 AppText(LINK_ADDRESS, 36, Palette.accent, FontWeight.SemiBold)
                 AppText("and enter this code:", 22, Palette.muted)
                 AppText(offer?.let { formatLinkCode(it.first) } ?: "........", 96, Palette.foreground, FontWeight.SemiBold, letterSpacing = 8f, modifier = Modifier.padding(vertical = 8.dp))
+                AppText("Were you sent a setup link? Open it on your phone and enter this code there instead.", 22, Palette.faint)
                 AppText(
                     when (phase) {
                         "signing" -> "Signing you in..."
+                        "claiming" -> "Getting your source..."
                         "failed" -> message ?: "That didn't work."
                         "waiting" -> "Waiting for you. The code lasts ${secondsLeft / 60}:${(secondsLeft % 60).toString().padStart(2, '0')} more."
                         else -> "Getting a code..."
@@ -198,13 +225,52 @@ private fun CodeSignIn(app: AppController, onTypeInstead: () -> Unit) {
                 Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (phase == "failed") AppButton("Try again", { round += 1 }, primary = true)
                     AppButton("Use email and password", onTypeInstead, focusRequester = typeInstead)
+                    AppButton("Use without an account", { app.useWithoutAccount() })
                 }
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)) {
-                if (url != null && phase != "failed") QrCode(url, 380.dp)
+                if (url != null && phase != "failed" && phase != "offered") QrCode(url, 380.dp)
                 else Box(Modifier.size(380.dp).background(Palette.card, RoundedCornerShape(16.dp)))
                 AppText("Or scan this with your phone", 24, Palette.muted)
             }
         }
+    }
+}
+
+/**
+ * A source someone shared, claimed and opened, waiting for a yes. Shows its name and the provider's host, never a login, and adds nothing
+ * until the person agrees; adding checks the login with the provider like a typed source. [onDone] says whether it was added
+ * (or was already here), so the caller can carry on.
+ */
+@Composable
+internal fun SharedSourceOffer(app: AppController, profile: SetupProfile, onDone: (added: Boolean) -> Unit) {
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+    var failed by remember { mutableStateOf(false) }
+    val add = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { add.requestFocus() } }
+    AppText("Add \"${profile.name}\"?", 40, Palette.foreground, FontWeight.Bold)
+    val host = profile.source.displayHost()
+    AppText("Someone shared this with you${if (host != "") ", on $host" else ""}. Adding it loads its channels onto this TV. Only add it if you trust whoever sent the link.", 22, Palette.muted)
+    message?.let { AppText(it, 22, if (failed) Palette.fault else Palette.muted) }
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        AppButton(if (busy) "Adding..." else "Add source", {
+            if (busy) return@AppButton
+            busy = true; message = null; failed = false
+            scope.launch {
+                try {
+                    val result = withContext(Dispatchers.Default) { app.addSharedSource(profile) }
+                    if (result is SharedAdd.Duplicate) { message = "You already have \"${result.name}\", so nothing was added."; onDone(true) } else onDone(true)
+                } catch (error: Exception) {
+                    if (error is kotlinx.coroutines.CancellationException) throw error
+                    failed = true
+                    message = error.message ?: "That source couldn't be added."
+                } finally {
+                    busy = false
+                }
+            }
+        }, primary = true, focusRequester = add)
+        AppButton("Not now", { onDone(false) })
     }
 }

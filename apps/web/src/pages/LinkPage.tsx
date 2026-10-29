@@ -138,13 +138,14 @@ export function LinkPage() {
                   <input id="link-confirm" name="confirm-password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Type it again" aria-invalid={invalid("confirm")} aria-describedby={describedBy("confirm")} />
                 </div>
               )}
+              {!signup && <p className="note"><a href="/reset">Forgot your password?</a></p>}
               <div id="link-error" className="error" role="alert">{error?.message}</div>
               <button className="btn wide" type="submit" disabled={link.isPending}>
                 {link.isPending ? "Linking..." : signup ? "Create account and link TV" : "Link this TV"}
               </button>
             </form>
           </div>
-          <p className="note link-note">Your password is checked by Testcard, then scrambled in this page before it is passed to your TV. Only your TV can unscramble that copy, and only for the next 10 minutes. Your sources are encrypted with your password, so keep it safe: it cannot be recovered.</p>
+          <p className="note link-note">Your password is checked by Testcard, then scrambled in this page before it is passed to your TV. Only your TV can unscramble that copy, and only for the next 10 minutes. Your sources are encrypted with your password. If you forget it, you can reset it by email, but your sources are cleared and have to be put back from a device that still has them.</p>
         </div>
       </div>
     </section>

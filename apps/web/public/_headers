@@ -43,3 +43,11 @@
   Cache-Control: no-store
 /link/
   Cache-Control: no-store
+/reset
+  Cache-Control: no-store
+/s
+  Cache-Control: no-store
+/s/
+  Cache-Control: no-store
+/reset/
+  Cache-Control: no-store

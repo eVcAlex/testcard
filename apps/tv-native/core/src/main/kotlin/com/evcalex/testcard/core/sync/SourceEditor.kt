@@ -34,6 +34,8 @@ data class SourceDraft(
     /** Xtream: other server addresses for the same account, comma or space separated as typed. */
     val backupUrls: String = "",
     val content: SourceContent = SourceContent(live = true, movies = true, series = true),
+    /** Also link channels to the guide by name when their `tvg-id` misses (`epg/GuideMatch.kt`). On this device only; not synced. */
+    val epgOptimise: Boolean = false,
 )
 
 fun emptyDraft(kind: String) = SourceDraft(kind)
@@ -42,11 +44,11 @@ fun emptyDraft(kind: String) = SourceDraft(kind)
 class SourceEditError(message: String) : Exception(message)
 
 suspend fun readDraft(db: Db, logins: SourceLogins, sourceId: String): SourceDraft? {
-    class Row(val kind: String, val name: String, val playlistUrl: String?, val epgUrl: String?, val backupUrls: String?, val live: Boolean, val movies: Boolean, val series: Boolean)
+    class Row(val kind: String, val name: String, val playlistUrl: String?, val epgUrl: String?, val backupUrls: String?, val live: Boolean, val movies: Boolean, val series: Boolean, val optimise: Boolean)
     val row = db.read {
         it.one(
-            "SELECT kind, name, playlist_url, epg_url, backup_urls, include_live, include_movies, include_series FROM sources WHERE id = ?", sourceId,
-        ) { r -> Row(r.getText(0), r.getText(1), r.textOrNull(2), r.textOrNull(3), r.textOrNull(4), r.getLong(5) != 0L, r.getLong(6) != 0L, r.getLong(7) != 0L) }
+            "SELECT kind, name, playlist_url, epg_url, backup_urls, include_live, include_movies, include_series, epg_optimise FROM sources WHERE id = ?", sourceId,
+        ) { r -> Row(r.getText(0), r.getText(1), r.textOrNull(2), r.textOrNull(3), r.textOrNull(4), r.getLong(5) != 0L, r.getLong(6) != 0L, r.getLong(7) != 0L, r.getLong(8) != 0L) }
     } ?: return null
     val login = if (row.kind == "xtream") runCatching { logins.stored(sourceId) }.getOrNull() else null
     return SourceDraft(
@@ -59,6 +61,7 @@ suspend fun readDraft(db: Db, logins: SourceLogins, sourceId: String): SourceDra
         epgUrl = row.epgUrl ?: "",
         backupUrls = parseBackupUrls(row.backupUrls).joinToString(", "),
         content = SourceContent(row.live, row.movies, row.series),
+        epgOptimise = row.optimise,
     )
 }
 
@@ -140,6 +143,7 @@ suspend fun saveSource(db: Db, logins: SourceLogins, http: OkHttpClient, sourceI
             }
         }
         db.write { it.applySourceContent(id, draft.content) }
+        db.write { it.run("UPDATE sources SET epg_optimise = ? WHERE id = ?", if (draft.epgOptimise) 1 else 0, id) }
         return SavedSource(id, true)
     }
 
@@ -174,5 +178,7 @@ suspend fun saveSource(db: Db, logins: SourceLogins, http: OkHttpClient, sourceI
         db.write { it.run("UPDATE sources SET name = ?, playlist_url = ?, epg_url = ?, sync_updated_at = ? WHERE id = ?", name, url, epg, now, sourceId) }
     }
     if (db.write { it.applySourceContent(sourceId, draft.content) }) reload = true
+    // Not part of what syncs and not a reload of the channels: the guide is read again the new way because its record changes.
+    db.write { it.run("UPDATE sources SET epg_optimise = ? WHERE id = ?", if (draft.epgOptimise) 1 else 0, sourceId) }
     return SavedSource(sourceId, reload)
 }

@@ -109,7 +109,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     // Signed out (or the session ended): only the sign-in screen makes sense.
     // Whether this run began signed out: a viewer who has just signed in is asked who is watching once, to add a profile or carry on.
     val signedOutThisRun = remember { mutableStateOf(false) }
-    if (status.account != SyncAccount.SignedIn) { signedOutThisRun.value = true; SignInScreen(app); return }
+    if (status.account != SyncAccount.SignedIn && !app.localMode) { signedOutThisRun.value = true; SignInScreen(app); return }
 
     val sources = app.sources
     val pickedSource = app.sourcePick

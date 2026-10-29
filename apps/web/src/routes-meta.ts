@@ -58,6 +58,18 @@ export const ROUTES: readonly RouteMeta[] = [
     description: `Enter the code shown on your TV to sign in to ${PRODUCT_NAME}.`,
     noindex: true,
   },
+  {
+    path: "/s",
+    title: `Set up Testcard | ${PRODUCT_NAME}`,
+    description: `Someone has shared a Testcard setup link with you. Install Testcard and open it to add your channels.`,
+    noindex: true,
+  },
+  {
+    path: "/reset",
+    title: `Reset your password | ${PRODUCT_NAME}`,
+    description: `Forgot your ${PRODUCT_NAME} password? Get a link by email to choose a new one.`,
+    noindex: true,
+  },
 ];
 
 export const NOT_FOUND_META: RouteMeta = {
