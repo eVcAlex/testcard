@@ -24,6 +24,8 @@ class EpgImportResult(
     val channels: Int,
     val programmes: Int,
     val durationMs: Long,
+    /** Present only when the import was asked to improve matching and the guide listed its channels: how the playlist's channels fared. */
+    val matching: GuideMatchStats? = null,
 )
 
 /** Programmes older than this before "now" are dropped after every import. */
@@ -55,7 +57,7 @@ suspend fun deleteProgrammesInSlices(db: Db, select: String, vararg params: Any?
 }
 
 /** A guide id can be shared by several channels (a playlist lists a channel under more than one group, or in HD and SD); each gets the listings. */
-private suspend fun channelsByGuideId(db: Db, sourceId: String): Map<String, List<String>> {
+private suspend fun channelsByGuideId(db: Db, sourceId: String): MutableMap<String, MutableList<String>> {
     val out = LinkedHashMap<String, MutableList<String>>()
     db.read { connection ->
         connection.query("SELECT tvg_id, id FROM channels WHERE source_id = ? AND tvg_id IS NOT NULL AND tvg_id <> ''", sourceId) { out.getOrPut(it.getText(0)) { mutableListOf() }.add(it.getText(1)) }
@@ -69,17 +71,38 @@ private suspend fun flush(db: Db, rows: List<Pending>) = db.transaction { connec
     }
 }
 
+/** Every channel of a source with what the matcher needs, for [importEpg] with `optimise`. */
+private suspend fun matchableChannels(db: Db, sourceId: String): List<MatchableChannel> = db.read { connection ->
+    val out = ArrayList<MatchableChannel>()
+    connection.query("SELECT id, raw_name, country, tvg_id FROM channels WHERE source_id = ?", sourceId) {
+        out.add(MatchableChannel(it.getText(0), it.getText(1), if (it.isNull(2)) null else it.getText(2), if (it.isNull(3)) null else it.getText(3)))
+    }
+    out
+}
+
 /**
  * Streams an XMLTV document into the `programmes` table for one source (`importEpg.ts`). The caller fetches the URL and
  * hands the body in; the credential-bearing Xtream `xmltv.php` address is built and used only by the caller, never stored.
  * Delete-then-insert per source makes a re-import idempotent without a key on `programmes`. The file expands to far more
  * rows than there are channels, so it is flushed in batches while the next is parsed. `horizonMs` leaves out programmes
- * starting further ahead than that: a small device need not hold a fortnight of listings.
+ * starting further ahead than that: a small device need not hold a fortnight of listings. With `optimise`, channels whose own
+ * `tvg-id` is missing or unknown to the guide are also linked to the guide channel that is plainly the same one
+ * (`matchGuide`); off, the import behaves exactly as it always has.
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-suspend fun importEpg(db: Db, sourceId: String, body: InputStream, horizonMs: Long? = null, onProgress: (programmesSoFar: Int) -> Unit = {}): EpgImportResult = coroutineScope {
+suspend fun importEpg(
+    db: Db,
+    sourceId: String,
+    body: InputStream,
+    horizonMs: Long? = null,
+    optimise: Boolean = false,
+    onProgress: (programmesSoFar: Int) -> Unit = {},
+): EpgImportResult = coroutineScope {
     val startedAt = nowMs()
     val channels = channelsByGuideId(db, sourceId)
+    // With optimising on, the guide's own channel list (read first) is matched to the channels the playlist's `tvg-id`s missed, and
+    // those join the same fan-out (`GuideMatching`). A failure there must not cost the guide: it carries on as if off.
+    val matching = if (optimise) GuideMatching(matchableChannels(db, sourceId), channels) else null
     deleteProgrammesInSlices(db, "SELECT p.rowid FROM programmes p JOIN channels c ON c.id = p.channel_id WHERE c.source_id = ?", sourceId)
 
     val touched = HashSet<String>()
@@ -89,7 +112,7 @@ suspend fun importEpg(db: Db, sourceId: String, body: InputStream, horizonMs: Lo
     val batches = produce(Dispatchers.IO, capacity = 2) {
         body.use {
             var buffer = ArrayList<Pending>()
-            parseXmltv(it, { id -> id in channels }) { programme ->
+            parseXmltv(it, { id -> id in channels }, matching?.let { m -> m::onChannel }, matching?.let { m -> m::onChannelsEnd }) { programme ->
                 if (programme.endMs < oldest || programme.startMs > furthest) return@parseXmltv
                 for (channelId in channels.getValue(programme.channel)) {
                     buffer.add(Pending(channelId, programme.title, programme.description, programme.startMs, programme.endMs))
@@ -110,7 +133,7 @@ suspend fun importEpg(db: Db, sourceId: String, body: InputStream, horizonMs: Lo
         yieldBetweenSlices()
     }
     deleteProgrammesInSlices(db, "SELECT rowid FROM programmes WHERE end_at < ?", nowMs() - KEEP_PAST_MS)
-    EpgImportResult(touched.size, programmes, nowMs() - startedAt)
+    EpgImportResult(touched.size, programmes, nowMs() - startedAt, matching?.stats)
 }
 
 /**

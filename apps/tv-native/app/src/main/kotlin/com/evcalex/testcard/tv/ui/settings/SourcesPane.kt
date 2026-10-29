@@ -212,6 +212,8 @@ fun SourceFormDialog(app: AppController, sourceId: String?, onClose: () -> Unit)
                         )
                     }
                     AppField("TV guide address (optional)", shown.epgUrl, { change(shown.copy(epgUrl = it)) }, keyboardType = KeyboardType.Uri, placeholder = "Empty uses the source's own guide")
+                    Chip((if (shown.epgOptimise) "✓  " else "○  ") + "Improve TV guide matching", shown.epgOptimise, { change(shown.copy(epgOptimise = !shown.epgOptimise)) })
+                    AppText("Finds the guide for channels the playlist doesn't link to one. Your channels and streams are not changed.", 20, Palette.faint)
                     AppText("Load", 22, Palette.muted, modifier = Modifier.padding(top = 8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         for ((key, label) in CONTENT) {

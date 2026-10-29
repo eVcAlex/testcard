@@ -67,7 +67,13 @@ private const val HEADERS_TIMEOUT_S = 60L
 /** A shared file older than this is no better than reading the guide oneself. */
 private const val SHARED_MOST_AGE_MS = 48L * 60 * 60 * 1000
 
-private class GuideSource(val id: String, val name: String, val kind: String, val playlistUrl: String?, val epgUrl: String?)
+private class GuideSource(val id: String, val name: String, val kind: String, val playlistUrl: String?, val epgUrl: String?, val optimise: Boolean)
+
+/**
+ * Added to what a guide was read from when matching by name was on, so switching it on or off makes the guide stale and it is read
+ * again the new way. The shared guide files carry no channel names, so a source with it on always reads the guide itself.
+ */
+private const val MATCHING_MARK = "|match"
 
 /** What a source with no address of its own is recorded under: its guide is the provider's, found when it is read. */
 private const val OWN_GUIDE = "own"
@@ -117,13 +123,13 @@ class GuideImporter(
 
     private suspend fun guideSources(): List<GuideSource> = db.read {
         it.query(
-            """SELECT id, name, kind, playlist_url, epg_url FROM sources
+            """SELECT id, name, kind, playlist_url, epg_url, epg_optimise FROM sources
                WHERE include_live = 1 AND EXISTS (SELECT 1 FROM channels WHERE source_id = sources.id)""",
-        ) { r -> GuideSource(r.getText(0), r.getText(1), r.getText(2), if (r.isNull(3)) null else r.getText(3), if (r.isNull(4)) null else r.getText(4)) }
+        ) { r -> GuideSource(r.getText(0), r.getText(1), r.getText(2), if (r.isNull(3)) null else r.getText(3), if (r.isNull(4)) null else r.getText(4), r.getLong(5) != 0L) }
     }
 
     /** What the last read is compared with: the address set, or [OWN_GUIDE]. */
-    private fun setAddress(source: GuideSource) = source.epgUrl?.jsTrim()?.takeIf { it.isNotEmpty() } ?: OWN_GUIDE
+    private fun setAddress(source: GuideSource) = (source.epgUrl?.jsTrim()?.takeIf { it.isNotEmpty() } ?: OWN_GUIDE) + if (source.optimise) MATCHING_MARK else ""
 
     private suspend fun ownGuide(source: GuideSource): String? = try {
         when {
@@ -174,7 +180,7 @@ class GuideImporter(
         // Recorded only once it has worked (or failed cleanly): on a Fire Stick the read takes many minutes, and one the app
         // was closed in the middle of must be started again next time, not counted as done for 12 hours.
         try {
-            val shared = sharedGuide(url)
+            val shared = if (source.optimise) null else sharedGuide(url)
             if (shared != null) {
                 importGuideFile(db, source.id, shared)
                 record(source.id, recorded, nowMs())
@@ -182,7 +188,7 @@ class GuideImporter(
             }
             http.newCall(Request.Builder().url(url).header("User-Agent", "node").build()).await().use { response ->
                 if (!response.isSuccessful) throw IllegalStateException("The guide address responded with HTTP ${response.code}.")
-                importEpg(db, source.id, response.body.byteStream(), HORIZON_MS)
+                importEpg(db, source.id, response.body.byteStream(), HORIZON_MS, source.optimise)
             }
             record(source.id, recorded, nowMs())
         } catch (error: Exception) {

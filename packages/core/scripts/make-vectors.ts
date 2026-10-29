@@ -10,6 +10,7 @@ import { classifyCategory } from "../src/normalise/classifyCategory.js";
 import { categoryDisplayName, channelDisplayName, displayName, fallbackRank, sameChannelKey } from "../src/normalise/displayName.js";
 import { groupVariants, type RawChannelEntry } from "../src/normalise/groupVariants.js";
 import { dropVariantMarks, parseName } from "../src/normalise/parseName.js";
+import { guideKey, matchGuide, type GuideChannel, type MatchableChannel } from "../src/epg/matchGuide.js";
 import { splitTitle } from "../src/normalise/splitTitle.js";
 import { isDatedTitle, titleKey } from "../src/normalise/titleKey.js";
 import { classifyEntry, movieKey, seriesKey, urlExtension } from "../src/source/m3u/classifyEntry.js";
@@ -279,6 +280,52 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
     const programmes = [];
     for await (const programme of parseXmltv(streamOf(text), map)) programmes.push(programme);
     add("xmltv", "parseXmltv", [text, { tnt1: "channel-1" }], programmes);
+    // Guide matching by name: the native app must key names and pick guide channels exactly as the TypeScript does.
+    for (const name of [...names, "ITV1 +1 HD", "ITV 1 + 1", "Comedy & Drama", "Café Sport HD", "UK| BBC One FHD", "Sky Sports Main Event ᵁᴴᴰ", "  Dave  ", "###", ""]) {
+      add("guideMatch", "guideKey", [name], guideKey(name));
+    }
+    const declared: { id: string; names: string[] }[] = [];
+    const guideXml = `<?xml version="1.0"?><tv>
+  <channel id="BBCOne.uk"><display-name>BBC One</display-name><display-name lang="en">BBC 1</display-name></channel>
+  <channel id="Odd &amp; Co.uk"><display-name>Odd &amp; Co</display-name></channel>
+  <channel id=""><display-name>No id</display-name></channel>
+  <channel id="Bare.uk"/>
+  <programme start="20990101120000 +0000" stop="20990101130000 +0000" channel="BBCOne.uk"><title>News</title></programme>
+  <channel id="Late.uk"><display-name>Late</display-name></channel>
+</tv>`;
+    let ended = 0;
+    for await (const _ of parseXmltv(new Response(guideXml).body!, new Map(), { onChannel: (id, names) => declared.push({ id, names: [...names] }), onChannelsEnd: () => void (ended += 1) })) void _;
+    add("guideMatch", "xmltvChannels", [guideXml], { channels: declared, endedOnce: ended === 1 });
+    const guide: GuideChannel[] = [
+      { id: "BBCOne.uk", names: ["BBC One", "BBC 1"] },
+      { id: "Sky1.uk", names: ["Sky 1"] },
+      { id: "Sky1.de", names: ["Sky 1"] },
+      { id: "Dave.uk", names: ["Dave"] },
+      { id: "ITV1.uk", names: ["ITV1"] },
+      { id: "ITV1plus1.uk", names: ["ITV1 +1"] },
+      { id: "CNN.us", names: ["CNN"] },
+      { id: "CNN.uk", names: ["CNN"] },
+      { id: "NoMarket", names: ["Mystery Channel"] },
+    ];
+    const channels: MatchableChannel[] = [
+      { id: "c1", rawName: "UK| BBC One HD", country: "UK", tvgId: null },
+      { id: "c2", rawName: "Dave", country: null, tvgId: "gone.id" },
+      { id: "c3", rawName: "Whatever", country: null, tvgId: "Dave.uk" },
+      { id: "c4", rawName: "ITV1 +1 HD", country: "UK", tvgId: "" },
+      { id: "c5", rawName: "Sky 1", country: "UK", tvgId: null },
+      { id: "c6", rawName: "Sky 1", country: "DE", tvgId: null },
+      { id: "c7", rawName: "Sky 1", country: null, tvgId: null },
+      { id: "c8", rawName: "Sky 1", country: "US", tvgId: null },
+      { id: "c9", rawName: "CNN", country: "GB", tvgId: null },
+      { id: "c10", rawName: "The Beeb", country: null, tvgId: null },
+      { id: "c11", rawName: "Ghost", country: null, tvgId: null },
+      { id: "c12", rawName: "Mystery Channel", country: "UK", tvgId: null },
+      { id: "c13", rawName: "###", country: null, tvgId: null },
+      { id: "c14", rawName: "Nothing Like It", country: null, tvgId: null },
+    ];
+    const aliases = { [guideKey("The Beeb")]: "BBCOne.uk", [guideKey("Ghost")]: "nope.uk" };
+    const result = matchGuide(channels, guide, { aliases: new Map(Object.entries(aliases)) });
+    add("guideMatch", "matchGuide", [{ channels, guide, aliases }], { matches: Object.fromEntries(result.matches), stats: result.stats });
   }
 
   for (const [position, duration] of [

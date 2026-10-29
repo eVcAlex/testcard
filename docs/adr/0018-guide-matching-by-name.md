@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-10-29). Windows only so far; the Fire TV app has the column (schema v16) but not the matcher.
+Accepted (2026-10-29). Built for Windows and for Fire TV (a Kotlin port that must reproduce `test-vectors/guideMatch.json`).
 
 ## Context
 
@@ -33,5 +33,9 @@ and Recents hang off, drops entries it cannot place, and is built around one pro
 
 - Playback is untouched; a failure in matching falls back to the plain import.
 - Curated aliases are supported by `matchGuide` but nothing supplies them yet.
-- Sync of the switch, the Fire TV matcher (to be ported to Kotlin against shared vectors) and a tidy-up layer for
-  categories and ordering are still to do.
+- The Fire TV port (`epg/GuideMatch.kt`, `Xmltv.kt`, `EpgImport.kt`) shares the vectors, so the two cannot drift. Its matcher, XMLTV
+  channel reading and import glue run in JVM tests; the database-backed import and the settings switch could only be
+  type-read, not built, where this was written (Google's Maven host was unreachable).
+- A source with it on always reads the guide itself, because the Worker's shared guide files carry no channel names; switching it
+  on or off marks the recorded guide stale so it is read again the new way.
+- Sync of the switch, curated aliases and a tidy-up layer for categories and ordering are still to do.

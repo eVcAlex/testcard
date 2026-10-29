@@ -1,0 +1,2942 @@
+[
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| 4K CHILDREN"
+  ],
+  "out": "4kchildren"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| 4K CLASSIC MOVIES"
+  ],
+  "out": "4kclassicmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| 4K MOVIES"
+  ],
+  "out": "4kmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ACTION/THRILLER"
+  ],
+  "out": "actionthriller"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ACTORS & DIRECTORS"
+  ],
+  "out": "actorsanddirectors"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ADVENTURE MOVIES"
+  ],
+  "out": "adventuremovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ANIME"
+  ],
+  "out": "anime"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| BET/ALLBLK MOVIES"
+  ],
+  "out": "betallblkmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| BROADWAY/MUSICAL"
+  ],
+  "out": "broadwaymusical"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| CHILDREN/FAMILY"
+  ],
+  "out": "childrenfamily"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| CHRISTMAS MOVIES"
+  ],
+  "out": "christmasmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| CLASSIC MOVIES COLLECTION"
+  ],
+  "out": "classicmoviescollection"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| COLLECTIONS"
+  ],
+  "out": "collections"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| COMEDY"
+  ],
+  "out": "comedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DISNEY+"
+  ],
+  "out": "disney"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DOCUMENTARY"
+  ],
+  "out": "documentary"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DRAMA"
+  ],
+  "out": "drama"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DRAMA/COMEDY"
+  ],
+  "out": "dramacomedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DRAMA/CRIME"
+  ],
+  "out": "dramacrime"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DRAMA/ROMANCE"
+  ],
+  "out": "dramaromance"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| FOREIGN MOVIES"
+  ],
+  "out": "foreignmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| FRENCH MOVIES / ENG SUB"
+  ],
+  "out": "frenchmoviesengsub"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| HBO MAX"
+  ],
+  "out": "hbomax"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| HORROR/THRILLER"
+  ],
+  "out": "horrorthriller"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| HULU"
+  ],
+  "out": "hulu"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ITALIAN MOVIES / ENG SUB"
+  ],
+  "out": "italianmoviesengsub"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| MOVIES 2018-2021"
+  ],
+  "out": "movies20182021"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| MUSIC/CONCERTS"
+  ],
+  "out": "musicconcerts"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| NETFLIX"
+  ],
+  "out": "netflix"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| SCIENCE FICTION/FANTASTY"
+  ],
+  "out": "sciencefictionfantasty"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| STAND-UP COMEDY"
+  ],
+  "out": "standupcomedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| WAR"
+  ],
+  "out": "war"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| WESTERNS"
+  ],
+  "out": "westerns"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|SPT| SPORT UFC"
+  ],
+  "out": "sptsportufc"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|SPT| SPORT WWE"
+  ],
+  "out": "sptsportwwe"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽️ FIFA+"
+  ],
+  "out": "fifa"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽️ MLS Direct Kick"
+  ],
+  "out": "mlsdirectkic"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽️ Sports PPV"
+  ],
+  "out": "sportsppv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽️ UEFA"
+  ],
+  "out": "uefa"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚾️ B/R Max Sports"
+  ],
+  "out": "brmaxsports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚾️ MILB.tv"
+  ],
+  "out": "milbtv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚾️ MLB.tv"
+  ],
+  "out": "mlbtv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⛳️ Golf"
+  ],
+  "out": "golf"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🌍| World Sports ⬇️"
+  ],
+  "out": "worldsports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🎶 Music Videos"
+  ],
+  "out": "musicvideos"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🎾 Tennis"
+  ],
+  "out": "tennis"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🏀 NBA League Pass"
+  ],
+  "out": "nbaleaguepass"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🏀 WNBA League Pass "
+  ],
+  "out": "wnbaleaguepass"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "📰 News Networks"
+  ],
+  "out": "newsnetworks"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "📻 Music Streaming"
+  ],
+  "out": "musicstreaming"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🤠 Westerns ᴳᴬᴺᴶᴬ"
+  ],
+  "out": "westerns"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🧸 Kids Channels"
+  ],
+  "out": "kidschannels"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 ACTION & ADVENTURE VIP"
+  ],
+  "out": "247actionandadventurevip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 COMEDY VIP"
+  ],
+  "out": "247comedyvip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 DRAMA VIP"
+  ],
+  "out": "247dramavip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 KIDS/FAMILY VIP"
+  ],
+  "out": "247kidsfamilyvip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 REALITY VIP"
+  ],
+  "out": "247realityvip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON DOCU-MOVIES"
+  ],
+  "out": "amazondocumovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "amazondocumovies4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON DOCU-SERIES"
+  ],
+  "out": "amazondocuseries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "amazondocuseries4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON KIDS"
+  ],
+  "out": "amazonkids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON KIDS ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "amazonkids4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON REALITY"
+  ],
+  "out": "amazonreality"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON REALITY ᴰᴼᴸᴮʸ ᴬᵁᴰᴵᴼ ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "amazonreality3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "APPLE+ DOCU-SERIES"
+  ],
+  "out": "appledocuseries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "APPLE+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "appledocuseries4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "APPLE+ KIDS"
+  ],
+  "out": "applekids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "APPLE+ KIDS ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "applekids4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| DOCUMENTARY EN"
+  ],
+  "out": "documentaryen"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| DOCUMENTARY FR"
+  ],
+  "out": "documentaryfr"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| Kids"
+  ],
+  "out": "kids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| KIDS"
+  ],
+  "out": "kids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| MUSIC FR"
+  ],
+  "out": "musicfr"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| News"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| NEWS EN"
+  ],
+  "out": "newsen"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ DOCU-MOVIES"
+  ],
+  "out": "disneydocumovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "disneydocumovies4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ DOCU-SERIES"
+  ],
+  "out": "disneydocuseries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "disneydocuseries4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ REALITY"
+  ],
+  "out": "disneyreality"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ STAND-UP COMEDY"
+  ],
+  "out": "disneystandupcomedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DREAMWORKS ANIMATION"
+  ],
+  "out": "dreamworksanimation"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - ACTION"
+  ],
+  "out": "action"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - ADVENTURE"
+  ],
+  "out": "adventure"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - CHRISTMAS"
+  ],
+  "out": "christmas"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - COMEDY"
+  ],
+  "out": "comedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - CONCERTS"
+  ],
+  "out": "concerts"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - DOCUMENTARIES"
+  ],
+  "out": "documentaries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - DRAMA"
+  ],
+  "out": "drama"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - HORROR"
+  ],
+  "out": "horror"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - MANGA/ANIME"
+  ],
+  "out": "mangaanime"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - MUSICAL"
+  ],
+  "out": "musical"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - ROMANCE"
+  ],
+  "out": "romance"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - SCIENCE FICTION"
+  ],
+  "out": "sciencefiction"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - THRILLER"
+  ],
+  "out": "thriller"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - WESTERNS"
+  ],
+  "out": "westerns"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "ENGLISH REALITY SERIES"
+  ],
+  "out": "englishrealityseries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "JAMES BOND 007"
+  ],
+  "out": "jamesbond007"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX ANIME"
+  ],
+  "out": "netflixanime"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX ANIMI"
+  ],
+  "out": "netflixanimi"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX MUSIC"
+  ],
+  "out": "netflixmusic"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX REALITY"
+  ],
+  "out": "netflixreality"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX STAND-UP COMEDY"
+  ],
+  "out": "netflixstandupcomedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| MUSIC"
+  ],
+  "out": "music"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| MUSIC ᴴᴰ/ᴿᴬᵂ"
+  ],
+  "out": "music"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| News"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| NEWS"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| NEWS ᴴᴰ/ᴿᴬᵂ"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| NEWS ʰᵉᵛᶜ"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| REALITY SHOW TV"
+  ],
+  "out": "realityshowtv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| REALITY SHOW TV ᴿᴬᵂ"
+  ],
+  "out": "realityshowtv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| 24/7 ACTION/ADVENTURE ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "247actionadventure"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| 24/7 COMEDY ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "247comedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| 24/7 REALITY ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "247reality"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| NEWS ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| NEWS NETWORK"
+  ],
+  "out": "newsnetwor"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   ""
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   " "
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   " UK| Sky Sports "
+  ],
+  "out": "skysports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "﻿UK| BOM Channel"
+  ],
+  "out": "bomchannel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "　UK| Ideographic Space　"
+  ],
+  "out": "ideographicspace"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| Sky Sports Main Event ᵁᴴᴰ ᴴᴰᴿ"
+  ],
+  "out": "skysportsmainevent"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| TNT Sports ᴳᴬᴺᴶᴬ"
+  ],
+  "out": "tntsports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🔥 Fire Channel 🔥"
+  ],
+  "out": "firechannel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": "sports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": "movies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": "movies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": "romance"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": "romance"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": "family"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": "picks"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": "kids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": "verified"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": "adult"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": "newreleases"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "İstanbul TV"
+  ],
+  "out": "istanbultv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "STRASSE ß HD"
+  ],
+  "out": "strasse"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "##### PPV #####"
+  ],
+  "out": "ppv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "##### PPV HD/4K #####"
+  ],
+  "out": "ppv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "TNT Sports Ultimate (OFFLINE)"
+  ],
+  "out": "tntsportsultimate"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "TNT Sports 1 (1080p50)"
+  ],
+  "out": "tntsports1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "TNT Sports 1 (720p25)"
+  ],
+  "out": "tntsports1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Channel (4K)"
+  ],
+  "out": "channel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Channel (UHD)"
+  ],
+  "out": "channel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Channel (FHD) (OFFLINE)"
+  ],
+  "out": "channel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| BBC One HD"
+  ],
+  "out": "bbcone"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "[UK] BBC Two"
+  ],
+  "out": "bbctwo"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|UK| ITV 1"
+  ],
+  "out": "itv1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| ESPN 2 (SD)"
+  ],
+  "out": "espn2"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "FR | TF1"
+  ],
+  "out": "tf1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "The Wire S01E02"
+  ],
+  "out": "thewires01e02"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "The.Wire.S01E02E03.1080p"
+  ],
+  "out": "thewires01e02e03"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Show 1x02"
+  ],
+  "out": "show1x02"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  ],
+  "out": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (1080p50)"
+  ],
+  "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Plain name"
+  ],
+  "out": "plainname"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "  spaced   out   name  "
+  ],
+  "out": "spacedoutname"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Movie Title (2019)"
+  ],
+  "out": "movietitle2019"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Movie Title (2019) 4K"
+  ],
+  "out": "movietitle2019"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK: Movie Title - 2019"
+  ],
+  "out": "movietitle2019"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Le Film: Épisode 1"
+  ],
+  "out": "lefilmepisode1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| MILB PPV"
+  ],
+  "out": "milbppv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "XXX ADULT"
+  ],
+  "out": "xxxadult"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "VIP | PREMIUM"
+  ],
+  "out": "premium"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "RAW 4K"
+  ],
+  "out": "raw"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "-----"
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "ITV1 +1 HD"
+  ],
+  "out": "itv1plus1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "ITV 1 + 1"
+  ],
+  "out": "itv1plus1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Comedy & Drama"
+  ],
+  "out": "comedyanddrama"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Café Sport HD"
+  ],
+  "out": "cafesport"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| BBC One FHD"
+  ],
+  "out": "bbcone"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Sky Sports Main Event ᵁᴴᴰ"
+  ],
+  "out": "skysportsmainevent"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "  Dave  "
+  ],
+  "out": "dave"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "###"
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   ""
+  ],
+  "out": ""
+ },
+ {
+  "fn": "xmltvChannels",
+  "in": [
+   "<?xml version=\"1.0\"?><tv>\n  <channel id=\"BBCOne.uk\"><display-name>BBC One</display-name><display-name lang=\"en\">BBC 1</display-name></channel>\n  <channel id=\"Odd &amp; Co.uk\"><display-name>Odd &amp; Co</display-name></channel>\n  <channel id=\"\"><display-name>No id</display-name></channel>\n  <channel id=\"Bare.uk\"/>\n  <programme start=\"20990101120000 +0000\" stop=\"20990101130000 +0000\" channel=\"BBCOne.uk\"><title>News</title></programme>\n  <channel id=\"Late.uk\"><display-name>Late</display-name></channel>\n</tv>"
+  ],
+  "out": {
+   "channels": [
+    {
+     "id": "BBCOne.uk",
+     "names": [
+      "BBC One",
+      "BBC 1"
+     ]
+    },
+    {
+     "id": "Odd & Co.uk",
+     "names": [
+      "Odd & Co"
+     ]
+    },
+    {
+     "id": "Bare.uk",
+     "names": []
+    },
+    {
+     "id": "Late.uk",
+     "names": [
+      "Late"
+     ]
+    }
+   ],
+   "endedOnce": true
+  }
+ },
+ {
+  "fn": "matchGuide",
+  "in": [
+   {
+    "channels": [
+     {
+      "id": "c1",
+      "rawName": "UK| BBC One HD",
+      "country": "UK",
+      "tvgId": null
+     },
+     {
+      "id": "c2",
+      "rawName": "Dave",
+      "country": null,
+      "tvgId": "gone.id"
+     },
+     {
+      "id": "c3",
+      "rawName": "Whatever",
+      "country": null,
+      "tvgId": "Dave.uk"
+     },
+     {
+      "id": "c4",
+      "rawName": "ITV1 +1 HD",
+      "country": "UK",
+      "tvgId": ""
+     },
+     {
+      "id": "c5",
+      "rawName": "Sky 1",
+      "country": "UK",
+      "tvgId": null
+     },
+     {
+      "id": "c6",
+      "rawName": "Sky 1",
+      "country": "DE",
+      "tvgId": null
+     },
+     {
+      "id": "c7",
+      "rawName": "Sky 1",
+      "country": null,
+      "tvgId": null
+     },
+     {
+      "id": "c8",
+      "rawName": "Sky 1",
+      "country": "US",
+      "tvgId": null
+     },
+     {
+      "id": "c9",
+      "rawName": "CNN",
+      "country": "GB",
+      "tvgId": null
+     },
+     {
+      "id": "c10",
+      "rawName": "The Beeb",
+      "country": null,
+      "tvgId": null
+     },
+     {
+      "id": "c11",
+      "rawName": "Ghost",
+      "country": null,
+      "tvgId": null
+     },
+     {
+      "id": "c12",
+      "rawName": "Mystery Channel",
+      "country": "UK",
+      "tvgId": null
+     },
+     {
+      "id": "c13",
+      "rawName": "###",
+      "country": null,
+      "tvgId": null
+     },
+     {
+      "id": "c14",
+      "rawName": "Nothing Like It",
+      "country": null,
+      "tvgId": null
+     }
+    ],
+    "guide": [
+     {
+      "id": "BBCOne.uk",
+      "names": [
+       "BBC One",
+       "BBC 1"
+      ]
+     },
+     {
+      "id": "Sky1.uk",
+      "names": [
+       "Sky 1"
+      ]
+     },
+     {
+      "id": "Sky1.de",
+      "names": [
+       "Sky 1"
+      ]
+     },
+     {
+      "id": "Dave.uk",
+      "names": [
+       "Dave"
+      ]
+     },
+     {
+      "id": "ITV1.uk",
+      "names": [
+       "ITV1"
+      ]
+     },
+     {
+      "id": "ITV1plus1.uk",
+      "names": [
+       "ITV1 +1"
+      ]
+     },
+     {
+      "id": "CNN.us",
+      "names": [
+       "CNN"
+      ]
+     },
+     {
+      "id": "CNN.uk",
+      "names": [
+       "CNN"
+      ]
+     },
+     {
+      "id": "NoMarket",
+      "names": [
+       "Mystery Channel"
+      ]
+     }
+    ],
+    "aliases": {
+     "thebeeb": "BBCOne.uk",
+     "ghost": "nope.uk"
+    }
+   }
+  ],
+  "out": {
+   "matches": {
+    "c1": {
+     "guideId": "BBCOne.uk",
+     "method": "name"
+    },
+    "c2": {
+     "guideId": "Dave.uk",
+     "method": "name"
+    },
+    "c4": {
+     "guideId": "ITV1plus1.uk",
+     "method": "name"
+    },
+    "c5": {
+     "guideId": "Sky1.uk",
+     "method": "name"
+    },
+    "c6": {
+     "guideId": "Sky1.de",
+     "method": "name"
+    },
+    "c9": {
+     "guideId": "CNN.uk",
+     "method": "name"
+    },
+    "c10": {
+     "guideId": "BBCOne.uk",
+     "method": "alias"
+    },
+    "c12": {
+     "guideId": "NoMarket",
+     "method": "name"
+    }
+   },
+   "stats": {
+    "channels": 14,
+    "exact": 1,
+    "matched": 8,
+    "ambiguous": 1,
+    "unmatched": 4
+   }
+  }
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| 4K CHILDREN"
+  ],
+  "out": "4kchildren"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| 4K CLASSIC MOVIES"
+  ],
+  "out": "4kclassicmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| 4K MOVIES"
+  ],
+  "out": "4kmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ACTION/THRILLER"
+  ],
+  "out": "actionthriller"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ACTORS & DIRECTORS"
+  ],
+  "out": "actorsanddirectors"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ADVENTURE MOVIES"
+  ],
+  "out": "adventuremovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ANIME"
+  ],
+  "out": "anime"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| BET/ALLBLK MOVIES"
+  ],
+  "out": "betallblkmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| BROADWAY/MUSICAL"
+  ],
+  "out": "broadwaymusical"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| CHILDREN/FAMILY"
+  ],
+  "out": "childrenfamily"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| CHRISTMAS MOVIES"
+  ],
+  "out": "christmasmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| CLASSIC MOVIES COLLECTION"
+  ],
+  "out": "classicmoviescollection"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| COLLECTIONS"
+  ],
+  "out": "collections"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| COMEDY"
+  ],
+  "out": "comedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DISNEY+"
+  ],
+  "out": "disney"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DOCUMENTARY"
+  ],
+  "out": "documentary"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DRAMA"
+  ],
+  "out": "drama"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DRAMA/COMEDY"
+  ],
+  "out": "dramacomedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DRAMA/CRIME"
+  ],
+  "out": "dramacrime"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| DRAMA/ROMANCE"
+  ],
+  "out": "dramaromance"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| FOREIGN MOVIES"
+  ],
+  "out": "foreignmovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| FRENCH MOVIES / ENG SUB"
+  ],
+  "out": "frenchmoviesengsub"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| HBO MAX"
+  ],
+  "out": "hbomax"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| HORROR/THRILLER"
+  ],
+  "out": "horrorthriller"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| HULU"
+  ],
+  "out": "hulu"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| ITALIAN MOVIES / ENG SUB"
+  ],
+  "out": "italianmoviesengsub"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| MOVIES 2018-2021"
+  ],
+  "out": "movies20182021"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| MUSIC/CONCERTS"
+  ],
+  "out": "musicconcerts"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| NETFLIX"
+  ],
+  "out": "netflix"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| SCIENCE FICTION/FANTASTY"
+  ],
+  "out": "sciencefictionfantasty"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| STAND-UP COMEDY"
+  ],
+  "out": "standupcomedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| WAR"
+  ],
+  "out": "war"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| WESTERNS"
+  ],
+  "out": "westerns"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|SPT| SPORT UFC"
+  ],
+  "out": "sptsportufc"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|SPT| SPORT WWE"
+  ],
+  "out": "sptsportwwe"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽️ FIFA+"
+  ],
+  "out": "fifa"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽️ MLS Direct Kick"
+  ],
+  "out": "mlsdirectkic"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽️ Sports PPV"
+  ],
+  "out": "sportsppv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽️ UEFA"
+  ],
+  "out": "uefa"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚾️ B/R Max Sports"
+  ],
+  "out": "brmaxsports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚾️ MILB.tv"
+  ],
+  "out": "milbtv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚾️ MLB.tv"
+  ],
+  "out": "mlbtv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⛳️ Golf"
+  ],
+  "out": "golf"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🌍| World Sports ⬇️"
+  ],
+  "out": "worldsports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🎶 Music Videos"
+  ],
+  "out": "musicvideos"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🎾 Tennis"
+  ],
+  "out": "tennis"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🏀 NBA League Pass"
+  ],
+  "out": "nbaleaguepass"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🏀 WNBA League Pass "
+  ],
+  "out": "wnbaleaguepass"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "📰 News Networks"
+  ],
+  "out": "newsnetworks"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "📻 Music Streaming"
+  ],
+  "out": "musicstreaming"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🤠 Westerns ᴳᴬᴺᴶᴬ"
+  ],
+  "out": "westerns"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🧸 Kids Channels"
+  ],
+  "out": "kidschannels"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 ACTION & ADVENTURE VIP"
+  ],
+  "out": "247actionandadventurevip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 COMEDY VIP"
+  ],
+  "out": "247comedyvip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 DRAMA VIP"
+  ],
+  "out": "247dramavip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 KIDS/FAMILY VIP"
+  ],
+  "out": "247kidsfamilyvip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "24/7 REALITY VIP"
+  ],
+  "out": "247realityvip"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON DOCU-MOVIES"
+  ],
+  "out": "amazondocumovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "amazondocumovies4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON DOCU-SERIES"
+  ],
+  "out": "amazondocuseries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "amazondocuseries4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON KIDS"
+  ],
+  "out": "amazonkids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON KIDS ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "amazonkids4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON REALITY"
+  ],
+  "out": "amazonreality"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AMAZON REALITY ᴰᴼᴸᴮʸ ᴬᵁᴰᴵᴼ ⁴ᴷ ³⁸⁴⁰ᴾ"
+  ],
+  "out": "amazonreality3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "APPLE+ DOCU-SERIES"
+  ],
+  "out": "appledocuseries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "APPLE+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "appledocuseries4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "APPLE+ KIDS"
+  ],
+  "out": "applekids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "APPLE+ KIDS ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "applekids4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| DOCUMENTARY EN"
+  ],
+  "out": "documentaryen"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| DOCUMENTARY FR"
+  ],
+  "out": "documentaryfr"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| Kids"
+  ],
+  "out": "kids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| KIDS"
+  ],
+  "out": "kids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| MUSIC FR"
+  ],
+  "out": "musicfr"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| News"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "CA| NEWS EN"
+  ],
+  "out": "newsen"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ DOCU-MOVIES"
+  ],
+  "out": "disneydocumovies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ DOCU-MOVIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "disneydocumovies4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ DOCU-SERIES"
+  ],
+  "out": "disneydocuseries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ DOCU-SERIES ⁴ᴷ ³⁸⁴⁰ᴾ ᴰᵒˡᵇʸ ⱽᶦˢᶦᵒⁿ"
+  ],
+  "out": "disneydocuseries4k3"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ REALITY"
+  ],
+  "out": "disneyreality"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DISNEY+ STAND-UP COMEDY"
+  ],
+  "out": "disneystandupcomedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "DREAMWORKS ANIMATION"
+  ],
+  "out": "dreamworksanimation"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - ACTION"
+  ],
+  "out": "action"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - ADVENTURE"
+  ],
+  "out": "adventure"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - CHRISTMAS"
+  ],
+  "out": "christmas"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - COMEDY"
+  ],
+  "out": "comedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - CONCERTS"
+  ],
+  "out": "concerts"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - DOCUMENTARIES"
+  ],
+  "out": "documentaries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - DRAMA"
+  ],
+  "out": "drama"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - HORROR"
+  ],
+  "out": "horror"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - MANGA/ANIME"
+  ],
+  "out": "mangaanime"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - MUSICAL"
+  ],
+  "out": "musical"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - ROMANCE"
+  ],
+  "out": "romance"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - SCIENCE FICTION"
+  ],
+  "out": "sciencefiction"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - THRILLER"
+  ],
+  "out": "thriller"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "EN - WESTERNS"
+  ],
+  "out": "westerns"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "ENGLISH REALITY SERIES"
+  ],
+  "out": "englishrealityseries"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "JAMES BOND 007"
+  ],
+  "out": "jamesbond007"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX ANIME"
+  ],
+  "out": "netflixanime"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX ANIMI"
+  ],
+  "out": "netflixanimi"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX MUSIC"
+  ],
+  "out": "netflixmusic"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX REALITY"
+  ],
+  "out": "netflixreality"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "NETFLIX STAND-UP COMEDY"
+  ],
+  "out": "netflixstandupcomedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| MUSIC"
+  ],
+  "out": "music"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| MUSIC ᴴᴰ/ᴿᴬᵂ"
+  ],
+  "out": "music"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| News"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| NEWS"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| NEWS ᴴᴰ/ᴿᴬᵂ"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| NEWS ʰᵉᵛᶜ"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| REALITY SHOW TV"
+  ],
+  "out": "realityshowtv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| REALITY SHOW TV ᴿᴬᵂ"
+  ],
+  "out": "realityshowtv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| 24/7 ACTION/ADVENTURE ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "247actionadventure"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| 24/7 COMEDY ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "247comedy"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| 24/7 REALITY ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "247reality"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| NEWS ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ"
+  ],
+  "out": "news"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| NEWS NETWORK"
+  ],
+  "out": "newsnetwor"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   ""
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   " "
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   " UK| Sky Sports "
+  ],
+  "out": "skysports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "﻿UK| BOM Channel"
+  ],
+  "out": "bomchannel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "　UK| Ideographic Space　"
+  ],
+  "out": "ideographicspace"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| Sky Sports Main Event ᵁᴴᴰ ᴴᴰᴿ"
+  ],
+  "out": "skysportsmainevent"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| TNT Sports ᴳᴬᴺᴶᴬ"
+  ],
+  "out": "tntsports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🔥 Fire Channel 🔥"
+  ],
+  "out": "firechannel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽ UK| SPORTS ⚽"
+  ],
+  "out": "sports"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🇬🇧 UK | Movies"
+  ],
+  "out": "movies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| Movies 🇬🇧"
+  ],
+  "out": "movies"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "❤️ ROMANCE"
+  ],
+  "out": "romance"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "❤ ROMANCE"
+  ],
+  "out": "romance"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "👨‍👩‍👧 FAMILY"
+  ],
+  "out": "family"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "👍🏽 Picks"
+  ],
+  "out": "picks"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⚽⚽⚽"
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|EN| KIDS 🧸"
+  ],
+  "out": "kids"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "✔ VERIFIED"
+  ],
+  "out": "verified"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "⛔️ ADULT"
+  ],
+  "out": "adult"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "🆕 NEW RELEASES"
+  ],
+  "out": "newreleases"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "İstanbul TV"
+  ],
+  "out": "istanbultv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "STRASSE ß HD"
+  ],
+  "out": "strasse"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "##### PPV #####"
+  ],
+  "out": "ppv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "##### PPV HD/4K #####"
+  ],
+  "out": "ppv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "TNT Sports Ultimate (OFFLINE)"
+  ],
+  "out": "tntsportsultimate"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "TNT Sports 1 (1080p50)"
+  ],
+  "out": "tntsports1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "TNT Sports 1 (720p25)"
+  ],
+  "out": "tntsports1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Channel (4K)"
+  ],
+  "out": "channel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Channel (UHD)"
+  ],
+  "out": "channel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Channel (FHD) (OFFLINE)"
+  ],
+  "out": "channel"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| BBC One HD"
+  ],
+  "out": "bbcone"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "[UK] BBC Two"
+  ],
+  "out": "bbctwo"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "|UK| ITV 1"
+  ],
+  "out": "itv1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| ESPN 2 (SD)"
+  ],
+  "out": "espn2"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "FR | TF1"
+  ],
+  "out": "tf1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "The Wire S01E02"
+  ],
+  "out": "thewires01e02"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "The.Wire.S01E02E03.1080p"
+  ],
+  "out": "thewires01e02e03"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Show 1x02"
+  ],
+  "out": "show1x02"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  ],
+  "out": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (1080p50)"
+  ],
+  "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Plain name"
+  ],
+  "out": "plainname"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "  spaced   out   name  "
+  ],
+  "out": "spacedoutname"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Movie Title (2019)"
+  ],
+  "out": "movietitle2019"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Movie Title (2019) 4K"
+  ],
+  "out": "movietitle2019"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK: Movie Title - 2019"
+  ],
+  "out": "movietitle2019"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Le Film: Épisode 1"
+  ],
+  "out": "lefilmepisode1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "US| MILB PPV"
+  ],
+  "out": "milbppv"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "XXX ADULT"
+  ],
+  "out": "xxxadult"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "VIP | PREMIUM"
+  ],
+  "out": "premium"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "RAW 4K"
+  ],
+  "out": "raw"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "-----"
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "ITV1 +1 HD"
+  ],
+  "out": "itv1plus1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "ITV 1 + 1"
+  ],
+  "out": "itv1plus1"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Comedy & Drama"
+  ],
+  "out": "comedyanddrama"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Café Sport HD"
+  ],
+  "out": "cafesport"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "UK| BBC One FHD"
+  ],
+  "out": "bbcone"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "Sky Sports Main Event ᵁᴴᴰ"
+  ],
+  "out": "skysportsmainevent"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "  Dave  "
+  ],
+  "out": "dave"
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   "###"
+  ],
+  "out": ""
+ },
+ {
+  "fn": "guideKey",
+  "in": [
+   ""
+  ],
+  "out": ""
+ },
+ {
+  "fn": "xmltvChannels",
+  "in": [
+   "<?xml version=\"1.0\"?><tv>\n  <channel id=\"BBCOne.uk\"><display-name>BBC One</display-name><display-name lang=\"en\">BBC 1</display-name></channel>\n  <channel id=\"Odd &amp; Co.uk\"><display-name>Odd &amp; Co</display-name></channel>\n  <channel id=\"\"><display-name>No id</display-name></channel>\n  <channel id=\"Bare.uk\"/>\n  <programme start=\"20990101120000 +0000\" stop=\"20990101130000 +0000\" channel=\"BBCOne.uk\"><title>News</title></programme>\n  <channel id=\"Late.uk\"><display-name>Late</display-name></channel>\n</tv>"
+  ],
+  "out": {
+   "channels": [
+    {
+     "id": "BBCOne.uk",
+     "names": [
+      "BBC One",
+      "BBC 1"
+     ]
+    },
+    {
+     "id": "Odd & Co.uk",
+     "names": [
+      "Odd & Co"
+     ]
+    },
+    {
+     "id": "Bare.uk",
+     "names": []
+    },
+    {
+     "id": "Late.uk",
+     "names": [
+      "Late"
+     ]
+    }
+   ],
+   "endedOnce": true
+  }
+ },
+ {
+  "fn": "matchGuide",
+  "in": [
+   {
+    "channels": [
+     {
+      "id": "c1",
+      "rawName": "UK| BBC One HD",
+      "country": "UK",
+      "tvgId": null
+     },
+     {
+      "id": "c2",
+      "rawName": "Dave",
+      "country": null,
+      "tvgId": "gone.id"
+     },
+     {
+      "id": "c3",
+      "rawName": "Whatever",
+      "country": null,
+      "tvgId": "Dave.uk"
+     },
+     {
+      "id": "c4",
+      "rawName": "ITV1 +1 HD",
+      "country": "UK",
+      "tvgId": ""
+     },
+     {
+      "id": "c5",
+      "rawName": "Sky 1",
+      "country": "UK",
+      "tvgId": null
+     },
+     {
+      "id": "c6",
+      "rawName": "Sky 1",
+      "country": "DE",
+      "tvgId": null
+     },
+     {
+      "id": "c7",
+      "rawName": "Sky 1",
+      "country": null,
+      "tvgId": null
+     },
+     {
+      "id": "c8",
+      "rawName": "Sky 1",
+      "country": "US",
+      "tvgId": null
+     },
+     {
+      "id": "c9",
+      "rawName": "CNN",
+      "country": "GB",
+      "tvgId": null
+     },
+     {
+      "id": "c10",
+      "rawName": "The Beeb",
+      "country": null,
+      "tvgId": null
+     },
+     {
+      "id": "c11",
+      "rawName": "Ghost",
+      "country": null,
+      "tvgId": null
+     },
+     {
+      "id": "c12",
+      "rawName": "Mystery Channel",
+      "country": "UK",
+      "tvgId": null
+     },
+     {
+      "id": "c13",
+      "rawName": "###",
+      "country": null,
+      "tvgId": null
+     },
+     {
+      "id": "c14",
+      "rawName": "Nothing Like It",
+      "country": null,
+      "tvgId": null
+     }
+    ],
+    "guide": [
+     {
+      "id": "BBCOne.uk",
+      "names": [
+       "BBC One",
+       "BBC 1"
+      ]
+     },
+     {
+      "id": "Sky1.uk",
+      "names": [
+       "Sky 1"
+      ]
+     },
+     {
+      "id": "Sky1.de",
+      "names": [
+       "Sky 1"
+      ]
+     },
+     {
+      "id": "Dave.uk",
+      "names": [
+       "Dave"
+      ]
+     },
+     {
+      "id": "ITV1.uk",
+      "names": [
+       "ITV1"
+      ]
+     },
+     {
+      "id": "ITV1plus1.uk",
+      "names": [
+       "ITV1 +1"
+      ]
+     },
+     {
+      "id": "CNN.us",
+      "names": [
+       "CNN"
+      ]
+     },
+     {
+      "id": "CNN.uk",
+      "names": [
+       "CNN"
+      ]
+     },
+     {
+      "id": "NoMarket",
+      "names": [
+       "Mystery Channel"
+      ]
+     }
+    ],
+    "aliases": {
+     "thebeeb": "BBCOne.uk",
+     "ghost": "nope.uk"
+    }
+   }
+  ],
+  "out": {
+   "matches": {
+    "c1": {
+     "guideId": "BBCOne.uk",
+     "method": "name"
+    },
+    "c2": {
+     "guideId": "Dave.uk",
+     "method": "name"
+    },
+    "c4": {
+     "guideId": "ITV1plus1.uk",
+     "method": "name"
+    },
+    "c5": {
+     "guideId": "Sky1.uk",
+     "method": "name"
+    },
+    "c6": {
+     "guideId": "Sky1.de",
+     "method": "name"
+    },
+    "c9": {
+     "guideId": "CNN.uk",
+     "method": "name"
+    },
+    "c10": {
+     "guideId": "BBCOne.uk",
+     "method": "alias"
+    },
+    "c12": {
+     "guideId": "NoMarket",
+     "method": "name"
+    }
+   },
+   "stats": {
+    "channels": 14,
+    "exact": 1,
+    "matched": 8,
+    "ambiguous": 1,
+    "unmatched": 4
+   }
+  }
+ }
+]
