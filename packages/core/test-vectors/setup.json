@@ -1,0 +1,105 @@
+[
+ {
+  "fn": "setupProof",
+  "in": [
+   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ],
+  "out": {
+   "proof": "r1bDhpkUeFGxCUZh5m5MLAkyBMfLEEk23ETNOYfc2LU",
+   "claimHash": "cJ7Aye2Yz0SplOvOvGlVWJ6B7zca29eH1YxZCvrg7ZE"
+  }
+ },
+ {
+  "fn": "openSetupProfile",
+  "in": [
+   {
+    "blob": "R+W1GqqqkO4Ukl2Vk/Y3eMMCln9GjMU+64t95nzgqDU/TJ5E8Zs+7CJG/DdibX6a/vScdTUHN6+z+u2W4V7Kk2sU4Gjcs8wUgLViVO+dZQ65i5dZfF6ASPjloN1KN7yYBkz5RF/GgogM4fXGlGX7Le1EPFhIYHg2XrLSg6C68Dr9fyN1HI38egopmIdkgKepWDLofe4lKIYnEqN/SxaVzF+JrCKUYF5yE32cuFr00sp7+2rNBYurKHKp/uwjWbRKQaIVIcLOKmFxPy4YJY4XcqviWCgmWyRBR5QYRe7hDu4FleeGPGExyOYXdSxAmKLsbxgQl1PRa65ozUdfKGn//h1XZp+yHm9EpH5TE8GY3XhHfbw23y9+zCGsqRSA0Q==",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   {
+    "id": "AAAAAAAAAAAAAAAAAAAAAA",
+    "secret": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+   }
+  ],
+  "out": {
+   "v": 1,
+   "name": "Living room",
+   "epgOptimise": true,
+   "source": {
+    "host": "http://tv.example.com:8080",
+    "username": "ünï",
+    "password": "p\"w'\\",
+    "backupHosts": [
+     "http://b.example.com"
+    ],
+    "epgUrl": "https://g.example.com/epg.xml.gz",
+    "content": {
+     "live": true,
+     "movies": false,
+     "series": true
+    }
+   }
+  }
+ },
+ {
+  "fn": "openSetupProfile",
+  "in": [
+   {
+    "blob": "R+W1GqqqkO4Ukl2Vk/Y3eMMHizMNjsQ+8ZQ8r3y/o3AAUItU8Js+/VUO5GctKjrM+evTKHkSO/CwueiJ/k/GyiYRu3vJ/c1LnLNzROSZehC0g9wHchXKEbuu55AUcfSJQUPqjRHQmGhdYfNDuo7nA1OLfg==",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   {
+    "id": "AAAAAAAAAAAAAAAAAAAAAA",
+    "secret": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+   }
+  ],
+  "out": {
+   "v": 1,
+   "name": "List",
+   "source": {
+    "playlistUrl": "http://p.example.com/get.php?username=a&password=b"
+   }
+  }
+ },
+ {
+  "fn": "parseSetupFragment",
+  "in": [
+   "AAAAAAAAAAAAAAAAAAAAAA.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ],
+  "out": {
+   "id": "AAAAAAAAAAAAAAAAAAAAAA",
+   "secret": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+ },
+ {
+  "fn": "parseSetupFragment",
+  "in": [
+   "#AAAAAAAAAAAAAAAAAAAAAA.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ],
+  "out": {
+   "id": "AAAAAAAAAAAAAAAAAAAAAA",
+   "secret": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+ },
+ {
+  "fn": "parseSetupFragment",
+  "in": [
+   "nonsense"
+  ],
+  "out": null
+ },
+ {
+  "fn": "parseSetupFragment",
+  "in": [
+   ""
+  ],
+  "out": null
+ },
+ {
+  "fn": "parseSetupFragment",
+  "in": [
+   "AAAAAAAAAAAAAAAAAAAAA.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ],
+  "out": null
+ }
+]

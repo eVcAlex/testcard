@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
+import { formatLinkCode, normaliseLinkCode } from "@testcard/core/src/sync/linkCrypto.ts";
+import { LinkError, sendSetupToTv } from "../link/linkTv.ts";
 import { BackChip, Meta } from "../ui/parts.tsx";
 
 /**
@@ -15,6 +17,9 @@ const FRAGMENT = /^#?([A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43})$/;
 export function SetupLinkPage() {
   const [fragment, setFragment] = useState<string | null | undefined>(undefined);
   const [copied, setCopied] = useState(false);
+  const [code, setCode] = useState("");
+  const [tv, setTv] = useState<"idle" | "sending" | "sent">("idle");
+  const [tvError, setTvError] = useState<string>();
 
   // Read after mount so the prerendered page and the first client render match.
   useEffect(() => {
@@ -27,6 +32,20 @@ export function SetupLinkPage() {
       setCopied(true);
     } catch {
       setCopied(false);
+    }
+  };
+
+  const sendToTv = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!fragment) return;
+    setTvError(undefined);
+    setTv("sending");
+    try {
+      await sendSetupToTv({ code, fragment });
+      setTv("sent");
+    } catch (e) {
+      setTv("idle");
+      setTvError(e instanceof LinkError ? e.message : "Something went wrong. Try again.");
     }
   };
 
@@ -65,10 +84,25 @@ export function SetupLinkPage() {
           <p><button type="button" className="btn" onClick={copy}>{copied ? "Copied" : "Copy this link"}</button></p>
         </li>
       </ol>
-      <p className="note">
-        Using a Fire TV? Add the source on your PC or phone first, signed in to a Testcard account, and it follows you to the TV when you sign in there.
-        Creating an account is optional on a PC: without one, the source stays on that computer.
-      </p>
+      <div className="lform" data-rise>
+        {tv === "sent" ? (
+          <div role="status">
+            <h2>Sent to your TV</h2>
+            <p>Your TV will ask you to confirm before it adds anything. You can close this page.</p>
+          </div>
+        ) : (
+          <form className="lform-in" onSubmit={sendToTv} noValidate>
+            <h2>Using a Fire TV?</h2>
+            <p>Open Testcard on the TV. A new TV shows a code on its first screen; on a TV that is already set up, go to <b>Settings, Sources, Add with a code</b>. Type the code here and the TV asks you to confirm, then adds the source itself. No account is needed.</p>
+            <div className="fld">
+              <label htmlFor="setup-code">Code on your TV</label>
+              <input id="setup-code" className="codein" value={code} onChange={(e) => { const c = normaliseLinkCode(e.target.value).slice(0, 8); setCode(c.length > 4 ? formatLinkCode(c) : c); }} autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX" maxLength={9} disabled={!fragment} />
+            </div>
+            <div className="error" role="alert">{tvError}</div>
+            <button className="btn wide" type="submit" disabled={tv === "sending" || !fragment}>{tv === "sending" ? "Sending..." : "Send to my TV"}</button>
+          </form>
+        )}
+      </div>
       <p className="note">Treat this link like a password: whoever has it can add the source until it's used or expires. Don't post it publicly.</p>
     </section>
   );

@@ -59,3 +59,17 @@ describe("lookup", () => {
     expect(LINK_ITERATIONS).toBe(210_000);
   });
 });
+
+describe("link payloads", () => {
+  it("hands a TV a setup link sealed under its code, and tells it apart from a sign-in", async () => {
+    const { generateLinkSalt, openLinkPayload, sealLinkSetup, sealLinkSecrets } = await import("../sync/linkCrypto.js");
+    const salt = generateLinkSalt();
+    const fragment = `${"A".repeat(22)}.${"b".repeat(43)}`;
+    const setup = await sealLinkSetup(fragment, "ABCD2345", salt);
+    expect(await openLinkPayload(setup, "ABCD2345", salt)).toEqual({ kind: "setup", link: fragment });
+    expect(JSON.stringify(setup)).not.toContain("bbbb");
+    await expect(openLinkPayload(setup, "ABCD2346", salt)).rejects.toThrow();
+    const signin = await sealLinkSecrets({ email: "a@b.c", password: "pw" }, "ABCD2345", salt);
+    expect(await openLinkPayload(signin, "ABCD2345", salt)).toEqual({ kind: "signin", email: "a@b.c", password: "pw" });
+  });
+});

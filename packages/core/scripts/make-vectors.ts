@@ -10,6 +10,7 @@ import { classifyCategory } from "../src/normalise/classifyCategory.js";
 import { categoryDisplayName, channelDisplayName, displayName, fallbackRank, sameChannelKey } from "../src/normalise/displayName.js";
 import { groupVariants, type RawChannelEntry } from "../src/normalise/groupVariants.js";
 import { dropVariantMarks, parseName } from "../src/normalise/parseName.js";
+import { openSetupProfile, parseSetupFragment, sealSetupProfile, setupProof } from "../src/sync/setupCrypto.js";
 import { guideKey, matchGuide, type GuideChannel, type MatchableChannel } from "../src/epg/matchGuide.js";
 import { splitTitle } from "../src/normalise/splitTitle.js";
 import { isDatedTitle, titleKey } from "../src/normalise/titleKey.js";
@@ -33,8 +34,10 @@ import {
   generateLinkCode,
   isValidLinkCode,
   normaliseLinkCode,
+  openLinkPayload,
   openLinkSecrets,
   sealLinkSecrets,
+  sealLinkSetup,
 } from "../src/sync/linkCrypto.js";
 
 export interface Vector {
@@ -402,6 +405,28 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
       add("link", "deriveLinkLookup", [code], await deriveLinkLookup(code));
     }
     add("link", "generateLinkCode", [], generateLinkCode());
+
+    // A setup link sealed under the TV's code, for the TV to open (and then claim with the setup vectors below).
+    const setupFragment = `${"A".repeat(22)}.${"b".repeat(43)}`;
+    const setupSealed = await sealLinkSetup(setupFragment, "ABCD2345", salt);
+    add("link", "sealLinkSetup", [setupFragment, "ABCD2345", salt], setupSealed);
+    add("link", "openLinkPayload", [setupSealed, "ABCD2345", salt], await openLinkPayload(setupSealed, "ABCD2345", salt));
+    const signinSealed = await sealLinkSecrets({ email: "a@b.c", password: "pw" }, "ABCD2345", salt);
+    add("link", "openLinkPayload", [signinSealed, "ABCD2345", salt], await openLinkPayload(signinSealed, "ABCD2345", salt));
+
+    // Sources shared by link: the proof the Worker checks, and a sealed profile the TV opens after claiming it.
+    const setupLink = { id: "A".repeat(22), secret: "b".repeat(43) };
+    add("setup", "setupProof", [setupLink.secret], await setupProof(setupLink.secret));
+    for (const payload of [
+      { v: 1 as const, name: "Living room", epgOptimise: true, source: { host: "http://tv.example.com:8080", username: "ünï", password: "p\"w'\\", backupHosts: ["http://b.example.com"], epgUrl: "https://g.example.com/epg.xml.gz", content: { live: true, movies: false, series: true } } },
+      { v: 1 as const, name: "List", source: { playlistUrl: "http://p.example.com/get.php?username=a&password=b" } },
+    ]) {
+      const sealed = await sealSetupProfile(payload, setupLink);
+      add("setup", "openSetupProfile", [sealed, setupLink], await openSetupProfile(sealed, setupLink));
+    }
+    for (const text of [`${setupLink.id}.${setupLink.secret}`, `#${setupLink.id}.${setupLink.secret}`, "nonsense", "", `${"A".repeat(21)}.${"b".repeat(43)}`]) {
+      add("setup", "parseSetupFragment", [text], parseSetupFragment(text));
+    }
   });
   add("link", "constants", [], { LINK_ALPHABET, LINK_CODE_LENGTH, LINK_ITERATIONS, LINK_LOOKUP_SALT });
   for (const typed of ["k7m4-qx2p", " K7M4 QX2P ", "k7m4_qx2p!", "", "ABCDEFGH"]) {

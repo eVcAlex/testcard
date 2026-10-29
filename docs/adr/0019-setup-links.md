@@ -3,7 +3,7 @@
 ## Status
 
 Accepted (2026-10-29). The Worker API, the sealing, the `/s` website page and the Windows app (share, shared links, import by
-`testcard://` or paste) are built. The Fire TV entry is not.
+`testcard://` or paste) are built. Fire TV receives a link by code (below).
 
 ## Context
 
@@ -40,9 +40,14 @@ and must not give the receiver anything of the sender's Testcard account.
   use), shows the person the name and the provider's host, and adds nothing until they agree, through the normal add-source path
   (login checked with the provider, kept in secure storage). A provider the device already has is reported and left alone, never
   overwritten or added twice. A link that is claimed but declined or fails is spent; the sender makes another.
-- **Fire TV is not covered.** It has no deep links and always requires an account, and a 256-bit secret cannot be typed with a remote.
-  The honest path today is to add the source on a PC or phone signed in to the account, which syncs to the TV; a short single-use
-  code entered on the TV is the next step.
+- **Fire TV.** It has no deep links and a 256-bit secret cannot be typed with a remote, so the TV's own code screen (the one used to sign in
+  with a phone) is the entry. The friend opens the `/s` link on a phone and types the TV's code; the page seals the link (`<id>.<secret>`)
+  under that code (`sealLinkSetup`) and the Worker passes it on unread. The TV opens it, **claims the source itself** from the Worker with
+  the proof, opens and strictly validates it, shows the name and host, and adds nothing until the person agrees. The page never claims or
+  opens the source. A new TV shows the code on its first screen; a TV already set up has **Settings, Sources, Add with a code**.
+- **Without an account.** The first-run code screen has "Use without an account": sources then live on that TV only (`localMode`, kept in
+  `schema_meta`), nothing syncs, and **Account and updates** offers "Sign in or create an account". Signing in later merges the TV's sources
+  into the account by provider key rather than copying them. A provider already on the TV is reported and not added twice.
 - Delivery notes from the design: a `/s` page that hands off to the app (`testcard://s#...`, needing a protocol registration and
   single-instance handling on desktop, which does not exist yet) or shows the download; on Fire TV, entering the link's
   code at first run. Sharing a provider login may breach the provider's terms or connection limits; the share screen should say so.

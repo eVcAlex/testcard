@@ -15,6 +15,13 @@ export interface LinkSecrets {
   readonly password: string;
 }
 
+/**
+ * What a link page can hand a TV: the person's sign-in, or a setup link (`<id>.<secret>`, see `setupCrypto.ts`) for the TV to claim
+ * and add itself. The setup link travels sealed under the TV's code, so the Worker cannot read it, and the TV validates what
+ * it claims; the page never opens the shared source.
+ */
+export type LinkPayload = ({ readonly kind: "signin" } & LinkSecrets) | { readonly kind: "setup"; readonly link: string };
+
 function toBase64(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes));
 }
@@ -67,6 +74,22 @@ export async function sealLinkSecrets(secrets: LinkSecrets, code: string, saltBa
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const sealed = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await deriveKey(code, saltBase64, "encrypt"), new TextEncoder().encode(JSON.stringify(secrets)));
   return { blob: toBase64(new Uint8Array(sealed)), iv: toBase64(iv) };
+}
+
+/** Seals a setup link (`<id>.<secret>`) so only the holder of the TV's code can read it. */
+export async function sealLinkSetup(link: string, code: string, saltBase64: string): Promise<{ blob: string; iv: string }> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const sealed = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await deriveKey(code, saltBase64, "encrypt"), new TextEncoder().encode(JSON.stringify({ setup: link })));
+  return { blob: toBase64(new Uint8Array(sealed)), iv: toBase64(iv) };
+}
+
+/** Opens what the page sealed, whichever kind it is. Throws if the code is wrong, the blob was altered or it is neither kind. */
+export async function openLinkPayload(sealed: { blob: string; iv: string }, code: string, saltBase64: string): Promise<LinkPayload> {
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromBase64(sealed.iv) }, await deriveKey(code, saltBase64, "decrypt"), fromBase64(sealed.blob));
+  const parsed = JSON.parse(new TextDecoder().decode(plain)) as { email?: unknown; password?: unknown; setup?: unknown };
+  if (typeof parsed.setup === "string") return { kind: "setup", link: parsed.setup };
+  if (typeof parsed.email === "string" && typeof parsed.password === "string") return { kind: "signin", email: parsed.email, password: parsed.password };
+  throw new Error("The link did not carry anything to use.");
 }
 
 /** Opens what the page sealed. Throws if the code is wrong or the blob was altered. */

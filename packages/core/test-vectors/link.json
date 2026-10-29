@@ -79,6 +79,49 @@
   "out": "MSX49EKQ"
  },
  {
+  "fn": "sealLinkSetup",
+  "in": [
+   "AAAAAAAAAAAAAAAAAAAAAA.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "ABCD2345",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "blob": "9lOW2VSC1hYashP8V1nD+H1sjq1T42kJRpbamUg2ljqKmmlchG2ktMX37bAHZNNYMDwJHPTG6GXUwJmuqexCnzqeDaRWKRLZkNzamdK8LSS8Ryw1ZTAnZd46ue2EwA==",
+   "iv": "CzBVep/E6Q4zWH2i"
+  }
+ },
+ {
+  "fn": "openLinkPayload",
+  "in": [
+   {
+    "blob": "9lOW2VSC1hYashP8V1nD+H1sjq1T42kJRpbamUg2ljqKmmlchG2ktMX37bAHZNNYMDwJHPTG6GXUwJmuqexCnzqeDaRWKRLZkNzamdK8LSS8Ryw1ZTAnZd46ue2EwA==",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "ABCD2345",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "kind": "setup",
+   "link": "AAAAAAAAAAAAAAAAAAAAAA.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+ },
+ {
+  "fn": "openLinkPayload",
+  "in": [
+   {
+    "blob": "9lOA0UGeyhYasjP9dDbhmxAPv41h0V8ndbO54isHoFnZ8eVejWCh/D9HcboxFf+Bjg==",
+    "iv": "CzBVep/E6Q4zWH2i"
+   },
+   "ABCD2345",
+   "CzBVep/E6Q4zWH2ix+wRNg=="
+  ],
+  "out": {
+   "kind": "signin",
+   "email": "a@b.c",
+   "password": "pw"
+  }
+ },
+ {
   "fn": "constants",
   "in": [],
   "out": {

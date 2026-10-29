@@ -21,8 +21,24 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import kotlin.coroutines.coroutineContext
 
-/** What the link page sealed: the person's sign-in. */
-class LinkSecrets(val email: String, val password: String)
+/** What a link page can hand the TV. */
+sealed interface LinkOutcome
+
+/** The person's sign-in. */
+class LinkSecrets(val email: String, val password: String) : LinkOutcome
+
+/** A setup link (`<id>.<secret>`) for the TV to claim and add the shared source itself (`setupCrypto.ts`). */
+class LinkSetup(val link: String) : LinkOutcome
+
+/** Reads what the page sealed: `{ "email", "password" }` or `{ "setup" }`. Throws if it is neither. */
+fun parseLinkOutcome(json: String): LinkOutcome {
+    val parsed = Json.parseToJsonElement(json) as JsonObject
+    (parsed["setup"] as? JsonPrimitive)?.takeIf { it.isString }?.let { return LinkSetup(it.content) }
+    val email = (parsed["email"] as? JsonPrimitive)?.takeIf { it.isString }?.content
+    val password = (parsed["password"] as? JsonPrimitive)?.takeIf { it.isString }?.content
+    if (email == null || password == null) throw IllegalStateException("The link did not carry anything to use.")
+    return LinkSecrets(email, password)
+}
 
 class LinkExpiredException : Exception("The code ran out.")
 
@@ -41,8 +57,8 @@ class LinkSession(
     private val pollEveryMs: Long,
     private val now: () -> Long,
 ) {
-    /** Resolves with the person's sign-in once the page has sent it. Throws `LinkExpiredException` when the code runs out. */
-    suspend fun waitForApproval(): LinkSecrets {
+    /** Resolves with what the page sent (a sign-in, or a setup link) once it has. Throws `LinkExpiredException` when the code runs out. */
+    suspend fun waitForApproval(): LinkOutcome {
         while (true) {
             coroutineContext.ensureActive()
             val reply = try {
@@ -67,13 +83,7 @@ class LinkSession(
         }
     }
 
-    private fun openSecrets(sealed: Sealed): LinkSecrets {
-        val parsed = Json.parseToJsonElement(openLinkSecrets(sealed, code, salt)) as JsonObject
-        val email = (parsed["email"] as? JsonPrimitive)?.takeIf { it.isString }?.content
-        val password = (parsed["password"] as? JsonPrimitive)?.takeIf { it.isString }?.content
-        if (email == null || password == null) throw IllegalStateException("The link did not carry a sign-in.")
-        return LinkSecrets(email, password)
-    }
+    private fun openSecrets(sealed: Sealed): LinkOutcome = parseLinkOutcome(openLinkSecrets(sealed, code, salt))
 }
 
 /** Asks the server for a link session. A 409 is the one-in-a-trillion case of a live code that is already taken: the caller just asks again. */
