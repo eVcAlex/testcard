@@ -59,6 +59,12 @@ export const ROUTES: readonly RouteMeta[] = [
     noindex: true,
   },
   {
+    path: "/s",
+    title: `Set up Testcard | ${PRODUCT_NAME}`,
+    description: `Someone has shared a Testcard setup link with you. Install Testcard and open it to add your channels.`,
+    noindex: true,
+  },
+  {
     path: "/reset",
     title: `Reset your password | ${PRODUCT_NAME}`,
     description: `Forgot your ${PRODUCT_NAME} password? Get a link by email to choose a new one.`,

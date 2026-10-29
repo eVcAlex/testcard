@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 import {
   IPC_CHANNEL,
   IPC_EVENT_CHANNEL,
+  IPC_SETUP_CHANNEL,
   IPC_TASK_CHANNEL,
   IPC_UPDATE_CHANNEL,
   type PlaybackEvent,
@@ -35,6 +36,17 @@ const api: TestcardApi = {
     move: bind("sources.move"),
     refresh: bind("sources.refresh"),
     remove: bind("sources.remove"),
+  },
+  setup: {
+    preview: bind("setup.preview"),
+    pending: bind("setup.pending"),
+    confirm: bind("setup.confirm"),
+    cancel: bind("setup.cancel"),
+  },
+  share: {
+    create: bind("share.create"),
+    list: bind("share.list"),
+    revoke: bind("share.revoke"),
   },
   channels: {
     listByCategory: bind("channels.listByCategory"),
@@ -160,6 +172,13 @@ const api: TestcardApi = {
       ipcRenderer.on(IPC_TASK_CHANNEL, handler);
       return () => {
         ipcRenderer.off(IPC_TASK_CHANNEL, handler);
+      };
+    },
+    onSetup(listener: () => void): () => void {
+      const handler = () => listener();
+      ipcRenderer.on(IPC_SETUP_CHANNEL, handler);
+      return () => {
+        ipcRenderer.off(IPC_SETUP_CHANNEL, handler);
       };
     },
   },

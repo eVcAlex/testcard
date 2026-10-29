@@ -6,6 +6,8 @@ import { EmptyState } from "../components/EmptyState.js";
 import { SourceForm, type SourceSection } from "../SourceForm.js";
 import { formatRelative } from "../lib/time.js";
 import { SourceCard } from "./SourceCard.js";
+import { SETUP_CHECK_EVENT } from "./SetupLinkHost.js";
+import { SharedLinksPanel } from "./SharedLinksPanel.js";
 import { ProfilesPanel } from "./ProfilesPanel.js";
 import { UpdatePanel } from "./UpdatePanel.js";
 
@@ -286,7 +288,41 @@ function SyncPanel() {
   );
 }
 
-type Pane = { mode: "list" } | { mode: "add" } | { mode: "edit"; section: SourceSection; source: SourceListItem };
+type Pane = { mode: "list" } | { mode: "add" } | { mode: "link" } | { mode: "shared" } | { mode: "edit"; section: SourceSection; source: SourceListItem };
+
+/** Paste a setup link someone sent. The question "add this?" is asked by `SetupLinkHost`, wherever the link came from. */
+function SetupLinkForm({ onDone }: { onDone: () => void }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(undefined);
+    window.testcard.setup
+      .preview(text)
+      .then(() => {
+        window.dispatchEvent(new Event(SETUP_CHECK_EVENT));
+        onDone();
+      })
+      .catch((failure: unknown) => setError(failure instanceof Error ? failure.message : "That link couldn't be opened."))
+      .finally(() => setBusy(false));
+  };
+  return (
+    <form className="pw-form" onSubmit={submit}>
+      <label className="field">
+        <span>Setup link</span>
+        <input className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder="https://evicted.dev/s#…" autoComplete="off" spellCheck={false} disabled={busy} />
+        <p className="msg msg--hint">Paste the link you were sent. You'll be asked before anything is added.</p>
+      </label>
+      {error && <p className="msg msg--error">{error}</p>}
+      <div className="form-actions">
+        <button type="button" className="btn btn--ghost" onClick={onDone}>Cancel</button>
+        <button type="submit" className="btn btn--primary" disabled={busy || text.trim() === ""}>{busy ? "Opening…" : "Continue"}</button>
+      </div>
+    </form>
+  );
+}
 
 /** Add, edit, refresh and remove the providers this account watches from. */
 function SourcesPanel() {
@@ -297,6 +333,22 @@ function SourcesPanel() {
     // Poll while an import runs so the card shows its progress and settles when it finishes.
     refetchInterval: (query) => (query.state.data?.some((source) => source.refreshing === true) ? 1500 : false),
   });
+
+  if (pane.mode === "link" || pane.mode === "shared") {
+    return (
+      <section className="pw-panel">
+        <div className="pw-panel-head">
+          <button type="button" className="btn btn--ghost btn--icon" aria-label="Back to sources" onClick={() => setPane({ mode: "list" })}>
+            <Icon name="back" />
+          </button>
+          <h3>{pane.mode === "link" ? "Add from a setup link" : "Shared links"}</h3>
+        </div>
+        <div className="pw-source-form-wrap">
+          {pane.mode === "link" ? <SetupLinkForm onDone={() => setPane({ mode: "list" })} /> : <SharedLinksPanel />}
+        </div>
+      </section>
+    );
+  }
 
   if (pane.mode !== "list") {
     return (
@@ -323,6 +375,14 @@ function SourcesPanel() {
     <section className="pw-panel">
       <div className="pw-panel-head">
         <h3>Sources</h3>
+        <button type="button" className="btn btn--ghost pw-panel-action" onClick={() => setPane({ mode: "link" })}>
+          Add from a link
+        </button>
+        {list.length > 0 && (
+          <button type="button" className="btn btn--ghost pw-panel-action" onClick={() => setPane({ mode: "shared" })}>
+            Shared links
+          </button>
+        )}
         {list.length > 0 && (
           <button type="button" className="btn btn--ghost pw-panel-action" onClick={() => setPane({ mode: "add" })}>
             <Icon name="plus" /> Add source

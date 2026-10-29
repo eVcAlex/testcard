@@ -2,8 +2,8 @@
 
 ## Status
 
-Accepted (2026-10-29). The Worker API, the schema and the sealing are built; the web page, the desktop sharing and import
-screens and the Fire TV entry are not yet.
+Accepted (2026-10-29). The Worker API, the sealing, the `/s` website page and the Windows app (share, shared links, import by
+`testcard://` or paste) are built. The Fire TV entry is not.
 
 ## Context
 
@@ -35,6 +35,14 @@ and must not give the receiver anything of the sender's Testcard account.
   revoked; the sender's list shows how often it has been claimed.
 - A single-use link whose import fails after the claim is spent; the sender makes a new one.
 - `/setup` is already the website's help page, so the API lives under `/share` and the page at `/s`.
-- Delivery still to build: a `/s` page that hands off to the app (`testcard://s#...`, needing a protocol registration and
+- **Windows delivery.** The `/s` page only offers `testcard://s#…`; it claims nothing, so a chat app previewing the page cannot use a
+  link up. The app registers the scheme (single-instance lock, so a link opens the running copy), previews the link (which counts one
+  use), shows the person the name and the provider's host, and adds nothing until they agree, through the normal add-source path
+  (login checked with the provider, kept in secure storage). A provider the device already has is reported and left alone, never
+  overwritten or added twice. A link that is claimed but declined or fails is spent; the sender makes another.
+- **Fire TV is not covered.** It has no deep links and always requires an account, and a 256-bit secret cannot be typed with a remote.
+  The honest path today is to add the source on a PC or phone signed in to the account, which syncs to the TV; a short single-use
+  code entered on the TV is the next step.
+- Delivery notes from the design: a `/s` page that hands off to the app (`testcard://s#...`, needing a protocol registration and
   single-instance handling on desktop, which does not exist yet) or shows the download; on Fire TV, entering the link's
   code at first run. Sharing a provider login may breach the provider's terms or connection limits; the share screen should say so.

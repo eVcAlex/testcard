@@ -9,6 +9,7 @@
  * renderer.
  */
 import type {
+  SetupSummary,
   CategoryRow,
   Channel,
   ChannelCountry,
@@ -102,6 +103,22 @@ export interface UpdateSourceInput {
   };
   /** Omit to leave unchanged; `null` turns auto-refresh off (manual only). */
   readonly refreshIntervalHours?: number | null;
+}
+
+/** What the window should show for a link the system opened the app with. */
+export type SetupOutcome =
+  | { readonly kind: "ready"; readonly id: string; readonly summary: SetupSummary }
+  | { readonly kind: "error"; readonly message: string };
+
+/** One link the person made, as listed to them: no secret, and nothing that opens it. */
+export interface SharedLink {
+  readonly id: string;
+  readonly label: string;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+  readonly maxClaims: number;
+  readonly claims: number;
+  readonly revokedAt: number | null;
 }
 
 /** A source as listed in the sidebar — the domain `Source` plus desktop-only bookkeeping. */
@@ -402,6 +419,23 @@ export interface TestcardApi {
     toggleFullscreen(): Promise<void>;
     isFullscreen(): Promise<boolean>;
   };
+  /** Sources shared with this person by link. The login never reaches the renderer: only a name and a host to show. */
+  setup: {
+    /** Opens a pasted link (the Worker counts a use) and holds it for `confirm`. Rejects with a sentence to show. */
+    preview(text: string): Promise<{ readonly id: string; readonly summary: SetupSummary }>;
+    /** What to show now for a link the system opened the app with, once; null when there is nothing. */
+    pending(): Promise<SetupOutcome | null>;
+    /** Adds the source the person agreed to. A provider already on this device is not added again. */
+    confirm(id: string): Promise<{ readonly status: "added" | "duplicate"; readonly name: string }>;
+    cancel(id: string): Promise<void>;
+  };
+  /** Links this person has made to share their own sources. Needs the account. */
+  share: {
+    create(sourceId: string, options?: { readonly expiresInDays?: number; readonly maxClaims?: number }): Promise<{ readonly id: string; readonly url: string; readonly expiresAt: number }>;
+    list(): Promise<readonly SharedLink[]>;
+    /** Stops the link working at once and discards what was stored for it. */
+    revoke(id: string): Promise<void>;
+  };
   sync: {
     status(): Promise<SyncStatus>;
     signUp(email: string, password: string): Promise<SyncStatus>;
@@ -448,6 +482,8 @@ export interface TestcardApi {
     onPlayback(listener: (event: PlaybackEvent) => void): () => void;
     /** Subscribes to background-task progress (EPG import). Returns an unsubscribe function. */
     onTask(listener: (event: TaskEvent) => void): () => void;
+    /** Fires when a setup link is opened with the app; ask `setup.pending()` what to show. */
+    onSetup(listener: () => void): () => void;
   };
 }
 
@@ -462,3 +498,5 @@ export const IPC_EVENT_CHANNEL = "testcard:event" as const;
 export const IPC_UPDATE_CHANNEL = "testcard:update" as const;
 /** IPC channel name for main-initiated background-task progress. */
 export const IPC_TASK_CHANNEL = "testcard:task" as const;
+/** IPC channel name for "a setup link was opened": the window then asks `setup.pending()` what to show. No payload. */
+export const IPC_SETUP_CHANNEL = "testcard:setup" as const;

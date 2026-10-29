@@ -1,4 +1,5 @@
 import { PlayerScreen } from "./player/PlayerScreen.js";
+import { SetupLinkHost } from "./player/SetupLinkHost.js";
 
 /**
  * The whole app: a sidebar picks Live / Guide / Favourites / Recent (and a category); a
@@ -8,5 +9,10 @@ import { PlayerScreen } from "./player/PlayerScreen.js";
  * XMLTV EPG (now/next lines, progress bars, the guide) imports on source refresh.
  */
 export function App() {
-  return <PlayerScreen />;
+  return (
+    <>
+      <PlayerScreen />
+      <SetupLinkHost />
+    </>
+  );
 }

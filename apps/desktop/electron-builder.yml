@@ -9,6 +9,11 @@ extraResources:
   - from: resources/mpv
     to: mpv
     filter: ["**/*"]
+# The installer registers testcard:// so a setup link opens the app (ADR 0019).
+protocols:
+  - name: Testcard setup link
+    schemes:
+      - testcard
 win:
   target: nsis
   # Unsigned for now — see the plan's "Ship" decision. SmartScreen will warn once on install;

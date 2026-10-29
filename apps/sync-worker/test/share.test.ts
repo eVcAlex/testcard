@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { env, createExecutionContext } from "cloudflare:test";
 import { Hono } from "hono";
+import { buildSetupPayload, parseSetupLinkText, setupLinkUrl, summariseSetup } from "../../../packages/core/src/sync/setupLink.js";
 import { generateSetupLink, sealSetupProfile, setupProof, openSetupProfile } from "../../../packages/core/src/sync/setupCrypto.js";
 import { handleShareClaim, handleShareCreate, handleShareList, handleShareRevoke, MAX_CLAIMS_PER_NETWORK_PER_DAY } from "../src/routes/setup.js";
 import type { Env } from "../src/index.js";
@@ -31,6 +32,27 @@ async function share(app: ReturnType<typeof appAs>, extra: Record<string, unknow
 }
 
 describe("sharing a source by link", () => {
+  it("works end to end the way the apps use it: build, seal, send the link text, parse it, claim, open", async () => {
+    const shared = buildSetupPayload({
+      name: "Dad's playlist",
+      epgOptimise: true,
+      source: { kind: "m3u", playlistUrl: "http://p.example.com/get.php?username=dad&password=letmein" },
+    });
+    const link = generateSetupLink();
+    const { claimHash, proof: senderProof } = await setupProof(link.secret);
+    const created = await send(appAs("sender"), "POST", "/share", { id: link.id, claimHash, label: shared.name, ...(await sealSetupProfile(shared, link)) });
+    expect(created.status).toBe(200);
+
+    // The receiver has only the text of the link.
+    const received = parseSetupLinkText(setupLinkUrl(link))!;
+    const { proof } = await setupProof(received.secret);
+    expect(proof).toBe(senderProof);
+    const claim = await send(appAs("nobody"), "POST", "/share/claim", { id: received.id, proof });
+    const opened = await openSetupProfile((await claim.json()) as { blob: string; iv: string }, received);
+    expect(opened).toEqual(shared);
+    expect(summariseSetup(opened)).toEqual({ name: "Dad's playlist", kind: "m3u", host: "p.example.com", epgOptimise: true });
+  });
+
   it("lets a device claim the sealed source and open it with the link", async () => {
     const owner = appAs("sender");
     const { link, proof, response } = await share(owner);

@@ -86,6 +86,7 @@ import {
   type TestcardApi,
   type UpdateSourceInput,
 } from "../shared/ipc.js";
+import { cancelSetupLink, confirmSetupLink, createShare, holdSetupOutcome, listShares, previewSetupLink, revokeShare, takeSetupOutcome } from "./setupLinks.js";
 import { deleteCredentials, getCredentials, getStoredCredentials, saveCredentials } from "./credentials.js";
 import { ensureServer, loadServersInUse, recheckServer } from "./hosts.js";
 import { purgeCachedLogos } from "./logoCache.js";
@@ -244,6 +245,7 @@ const SYNCED_MUTATIONS: ReadonlySet<string> = new Set([
   "series.removeFromHistory",
   "home.togglePin",
   "sources.add",
+  "setup.confirm",
   "sources.update",
   "sources.move",
   "progress.set",
@@ -705,6 +707,35 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           ...moviePosterRows.map((row) => row.poster_url),
           ...seriesPosterRows.map((row) => row.poster_url),
         ]).catch(() => undefined);
+      },
+    },
+
+    setup: {
+      async preview(text) {
+        const opened = await previewSetupLink(text);
+        holdSetupOutcome(opened.id, opened.summary);
+        return opened;
+      },
+      async pending() {
+        return takeSetupOutcome();
+      },
+      async confirm(id) {
+        return confirmSetupLink(db, id, (input) => api.sources.add(input));
+      },
+      async cancel(id) {
+        cancelSetupLink(id);
+      },
+    },
+
+    share: {
+      async create(sourceId, options) {
+        return createShare(db, sourceId, options);
+      },
+      async list() {
+        return listShares(db);
+      },
+      async revoke(id) {
+        return revokeShare(db, id);
       },
     },
 

@@ -2,6 +2,8 @@ import { app, BrowserWindow, shell } from "electron";
 import { join } from "node:path";
 import { is } from "@electron-toolkit/utils";
 import { registerIpcHandlers, stopActiveRefreshScheduler } from "./ipc.js";
+import { IPC_SETUP_CHANNEL } from "../shared/ipc.js";
+import { receiveSetupLink } from "./setupLinks.js";
 import { getDatabase } from "./database.js";
 import { registerLogoProtocol, registerLogoScheme } from "./logoCache.js";
 import { startUpdateChecks } from "./updater.js";
@@ -49,12 +51,48 @@ function createMainWindow(): BrowserWindow {
   return window;
 }
 
+// `testcard://s#...` opens a setup link (docs/adr/0019-setup-links.md). The text is hostile until proven otherwise: it is only ever
+// handed to `receiveSetupLink`, which accepts nothing but our own link shape and asks the person before anything is added.
+const SETUP_SCHEME = "testcard";
+if (process.defaultApp) {
+  if (process.argv[1] !== undefined) app.setAsDefaultProtocolClient(SETUP_SCHEME, process.execPath, [join(process.cwd(), process.argv[1])]);
+} else {
+  app.setAsDefaultProtocolClient(SETUP_SCHEME);
+}
+
+const linkIn = (argv: readonly string[]): string | undefined => argv.find((arg) => arg.toLowerCase().startsWith(`${SETUP_SCHEME}:`));
+
+/** Reads the link and tells the window there is something to show; the window also asks on start-up, so neither order is missed. */
+async function openSetupLink(text: string): Promise<void> {
+  await receiveSetupLink(text);
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed()) window.webContents.send(IPC_SETUP_CHANNEL);
+  }
+}
+
+// One copy of the app: a second launch (Windows opens a new process for a link) hands its link to the first and exits.
+const isFirstInstance = app.requestSingleInstanceLock();
+if (!isFirstInstance) app.quit();
+
+app.on("second-instance", (_event, argv) => {
+  const [window] = BrowserWindow.getAllWindows();
+  if (window !== undefined) {
+    if (window.isMinimized()) window.restore();
+    window.focus();
+  }
+  const link = linkIn(argv);
+  if (link !== undefined) void openSetupLink(link);
+});
+
 void app.whenReady().then(() => {
+  if (!isFirstInstance) return;
   registerLogoProtocol();
   const db = getDatabase();
   const mainWindow = createMainWindow();
   registerIpcHandlers(db, mainWindow);
   startUpdateChecks();
+  const launchLink = linkIn(process.argv);
+  if (launchLink !== undefined) void openSetupLink(launchLink);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
