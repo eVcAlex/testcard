@@ -9,15 +9,10 @@ import { SourceCredentialsPayloadSchema, type SourceCredentialsPayload } from "@
  *
  * CHANGING the account password — not just losing it — has the same effect: the AES-GCM key is
  * derived from the password, so a new password derives a *different* key and every previously
- * synced credential becomes permanently undecryptable on every device. `better-auth`'s
- * `emailAndPassword: { enabled: true }` in `apps/sync-worker/src/auth.ts` means a change-password
- * endpoint is already live, and nothing currently guards this.
- *
- * Whoever wires up a password-change flow (a future task — deliberately not built speculatively
- * here) MUST account for it, by either:
- *   - blocking password changes while any synced source exists, or
- *   - re-encrypting every source with the new derived key as part of the change, and only
- *     committing the password change once that re-upload has succeeded.
+ * synced credential becomes permanently undecryptable. So the Worker refuses `/auth/change-password`,
+ * and the only way to a new password is the emailed reset (docs/adr/0020-password-reset.md), which
+ * clears the account's sealed sources and profiles and signs every device out; each device then
+ * signs in again and seals what it still holds under the new key.
  */
 
 export interface EncryptedPayload {

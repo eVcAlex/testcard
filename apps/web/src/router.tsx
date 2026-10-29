@@ -38,9 +38,10 @@ const faq = at("/faq", lazyRouteComponent(() => import("./pages/Faq.tsx"), "Faq"
 const privacy = at("/privacy", lazyRouteComponent(() => import("./pages/Privacy.tsx"), "Privacy"));
 const terms = at("/terms", lazyRouteComponent(() => import("./pages/Terms.tsx"), "Terms"));
 const changelog = at("/changelog", lazyRouteComponent(() => import("./pages/Changelog.tsx"), "Changelog"));
+const reset = at("/reset", lazyRouteComponent(() => import("./pages/ResetPage.tsx"), "ResetPage"));
 const link = at("/link", lazyRouteComponent(() => import("./pages/LinkRoute.tsx"), "LinkRoute"));
 
-const routeTree = root.addChildren([at("/", Home), features, download, setup, faq, privacy, terms, changelog, link]);
+const routeTree = root.addChildren([at("/", Home), features, download, setup, faq, privacy, terms, changelog, link, reset]);
 
 export const createAppRouter = (opts: { history?: RouterHistory; isServer?: boolean } = {}) =>
   createRouter({ routeTree, defaultNotFoundComponent: NotFound, defaultPreload: "intent", ...opts });

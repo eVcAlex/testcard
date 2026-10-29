@@ -118,6 +118,7 @@ private fun FormSignIn(app: AppController, onUseCode: () -> Unit) {
                 AppField("Email", email, { email = it }, keyboardType = KeyboardType.Email, focusRequester = first)
                 AppField("Password", password, { password = it }, password = true)
                 error?.let { AppText(it, 22, Palette.fault) }
+                AppText("Forgot your password? On your phone or computer, go to evicted.dev/reset.", 22, Palette.muted)
                 val blocked = busy != null || email.trim() == "" || password == ""
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End)) {
                     AppButton("Use a code instead", onUseCode)

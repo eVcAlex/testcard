@@ -43,11 +43,24 @@ app.use("*", async (c, next) => {
 });
 
 /** better-auth's `baseURL` taken from the request rather than its own inference (which its docs flag as "not recommended"). */
-function authFor(c: { env: Env; req: { url: string } }) {
-  return createAuth(c.env.DB, c.env.SYNC_AUTH_SECRET, new URL(c.req.url).origin, c.env.AUTH_TRUSTED_ORIGINS);
+function authFor(c: { env: Env; req: { url: string } }, background?: (work: Promise<unknown>) => void) {
+  const { EMAIL } = c.env;
+  return createAuth(c.env.DB, c.env.SYNC_AUTH_SECRET, new URL(c.req.url).origin, c.env.AUTH_TRUSTED_ORIGINS, EMAIL === undefined ? undefined : (message) => EMAIL.send(message), background);
 }
 
-app.on(["GET", "POST"], "/auth/*", (c) => authFor(c).handler(c.req.raw));
+// Changing a password while signed in would leave every synced source sealed under the old key (see credentialCrypto.ts).
+// The reset flow is the supported way, because it clears them and signs every device out.
+app.all("/auth/change-password", (c) => c.json({ error: "use the forgot-password link to change your password" }, 404));
+
+app.on(["GET", "POST"], "/auth/*", (c) => {
+  let ctx: Pick<ExecutionContext, "waitUntil"> | undefined;
+  try {
+    ctx = c.executionCtx; // Hono throws when the request came without one (as in tests)
+  } catch {
+    ctx = undefined;
+  }
+  return authFor(c, ctx === undefined ? undefined : (work) => ctx.waitUntil(work)).handler(c.req.raw);
+});
 
 const requireSession: MiddlewareHandler<AppEnv> = async (c, next) => {
   const session = await authFor(c).api.getSession({ headers: c.req.raw.headers });

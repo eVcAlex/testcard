@@ -265,7 +265,12 @@ function SyncPanel() {
         </label>
         {mode === "signUp" && (
           <p className="msg msg--hint">
-            Your password also locks your provider logins before they leave this device, so it can't be reset. Keep it somewhere safe.
+            Your password also locks your provider logins before they leave this device. If you forget it you can reset it by email, but your saved sources are then cleared and have to be put back from a device that still has them. Keep it somewhere safe.
+          </p>
+        )}
+        {mode === "signIn" && (
+          <p className="msg msg--hint">
+            <a href="https://evicted.dev/reset" target="_blank" rel="noreferrer">Forgot your password?</a>
           </p>
         )}
         {formError && <p className="msg msg--error">{formError}</p>}
