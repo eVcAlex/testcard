@@ -74,6 +74,7 @@ internal fun sectionsOf(lists: List<GuideList>): List<Pair<String, Int>> =
 
 /** A section's key: its heading is "Pinned" or the source name; a pinned one in a source's rail reads "Pinned · Source". */
 internal const val PINNED_SECTION = "Pinned"
+internal const val GUIDE_SECTION = "TV Guide"
 
 /** What the collapsed rail draws for a list. */
 internal sealed interface RailMark {

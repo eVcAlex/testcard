@@ -299,8 +299,8 @@ export function SourceForm({
       <div className="pw-toggles">
         <label className="pw-toggle">
           <span className="pw-toggle-text">
-            <b>Improve TV guide matching</b>
-            <small>Finds the guide for channels the playlist doesn't link to one. Your channels and streams are not changed.</small>
+            <b>Tidy playlist and improve TV guide</b>
+            <small>Finds the guide for channels the playlist doesn't link to one, and adds a TV Guide list for each country in Live TV. Your channels, streams and the provider's own groups are not changed.</small>
           </span>
           <input type="checkbox" role="switch" checked={epgOptimise} onChange={(e) => setEpgOptimise(e.target.checked)} />
         </label>

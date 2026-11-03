@@ -1,7 +1,10 @@
 package com.evcalex.testcard.core
 
+import com.evcalex.testcard.core.epg.GuideChannel
 import com.evcalex.testcard.core.epg.GuideMatching
 import com.evcalex.testcard.core.epg.MatchableChannel
+import com.evcalex.testcard.core.epg.isPlaceholderGuideId
+import com.evcalex.testcard.core.epg.matchGuide
 import com.evcalex.testcard.core.epg.parseXmltv
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -51,6 +54,17 @@ class GuideMatchingTest {
         assertEquals(mapOf("ch-good" to listOf("Quiz"), "ch-bbc" to listOf("News")), got)
         val stats = matching.stats!!
         assertEquals(listOf(3, 1, 1, 0, 1), listOf(stats.channels, stats.exact, stats.matched, stats.ambiguous, stats.unmatched))
+    }
+
+    @Test
+    fun aPlaceholderGuideChannelIsNeverMatched() {
+        val dave = listOf(MatchableChannel("c1", "UK| Dave HD", "UK", "dummy-12"))
+        val real = matchGuide(dave, listOf(GuideChannel("dummy-12", listOf("Dave")), GuideChannel("Dave.uk", listOf("Dave"))))
+        assertEquals("Dave.uk", real.matches["c1"]?.guideId)
+        val none = matchGuide(listOf(MatchableChannel("c1", "UK| Dave HD", "UK", null)), listOf(GuideChannel("dummy-1", listOf("Dave"))))
+        assertEquals(0, none.matches.size)
+        assertEquals(true, isPlaceholderGuideId("dummy-1613123"))
+        assertEquals(false, isPlaceholderGuideId("Dave.uk"))
     }
 
     @Test

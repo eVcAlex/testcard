@@ -1,3 +1,5 @@
+import { GUIDE_SECTION, guideListId, guideListLabel, type GuideCountry } from "./guideListLabels.js";
+
 /** One programme in a guide row, times in epoch ms. */
 export interface Airing {
   readonly title: string;
@@ -50,6 +52,8 @@ export interface RailInput {
   readonly categories: Readonly<Record<string, readonly { id: string; label: string; count: number }[]>>;
   readonly favourites: number;
   readonly recents: number;
+  /** The countries a "TV Guide" list is offered for, keyed like `categories` (none for a source that is not tidied). */
+  readonly guideCountries?: Readonly<Record<string, readonly GuideCountry[]>>;
 }
 
 /**
@@ -58,6 +62,8 @@ export interface RailInput {
  * Empty categories are left out. Mirrors the Fire TV rail (Guide.kt).
  */
 export function railLists(input: RailInput): RailList[] {
+  const guideLists = (key: string, section: string | undefined, sourceId?: string): RailList[] =>
+    (input.guideCountries?.[key] ?? []).filter((g) => g.count > 0).map((g) => ({ id: guideListId(g.country, sourceId), label: guideListLabel(g.country), count: g.count, ...(section !== undefined ? { section } : {}) }));
   const out: RailList[] = [
     { id: "favourites", label: "Favourites", count: input.favourites },
     { id: "recent", label: "Recently watched", count: input.recents },
@@ -67,14 +73,18 @@ export function railLists(input: RailInput): RailList[] {
     for (const source of withChannels) {
       const own = (input.categories[source.id] ?? []).filter((c) => c.count > 0);
       if (own.length === 0) continue;
+      out.push(...guideLists(source.id, source.name, source.id));
       out.push({ id: `all:${source.id}`, label: "All channels", count: own.reduce((n, c) => n + c.count, 0), section: source.name });
       for (const c of own) out.push({ id: c.id, label: c.label, count: c.count, section: source.name });
     }
     return out;
   }
   const all = input.categories[input.sourceId ?? ""] ?? [];
-  for (const c of all) if (c.count > 0) out.push({ id: c.id, label: c.label, count: c.count });
-  out.push({ id: "all", label: "All channels", count: all.reduce((n, c) => n + c.count, 0) });
+  // With "TV Guide" lists the rail reads TV Guide, then Categories: two named sections, as on the Fire TV.
+  const guide = guideLists(input.sourceId ?? "", GUIDE_SECTION);
+  out.push(...guide);
+  for (const c of all) if (c.count > 0) out.push({ id: c.id, label: c.label, count: c.count, ...(guide.length > 0 ? { section: "Categories" } : {}) });
+  out.push({ id: "all", label: "All channels", count: all.reduce((n, c) => n + c.count, 0), ...(guide.length > 0 ? { section: "Categories" } : {}) });
   return out;
 }
 

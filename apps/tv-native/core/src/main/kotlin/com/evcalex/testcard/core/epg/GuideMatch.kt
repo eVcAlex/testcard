@@ -47,6 +47,13 @@ fun guideKey(name: String): String {
 }
 
 private val MARKET_SUFFIX = Regex("[.\\-_]([a-z]{2})\\z", RegexOption.IGNORE_CASE)
+private val PLACEHOLDER_ID = Regex("^dummy[-_]", RegexOption.IGNORE_CASE)
+
+/**
+ * A guide channel that only stands in for a playlist channel with no real listings, so that every channel has *some* guide
+ * id ("dummy-1613123", whose one listing reads "NO EVENT STREAMING"). Linking to one would only fake coverage.
+ */
+fun isPlaceholderGuideId(guideId: String): Boolean = PLACEHOLDER_ID.containsMatchIn(guideId)
 
 /** Guide ids often end in the market: "BBCOne.uk", "CNN.us". `gb` is read as `uk`. */
 private fun marketOf(guideId: String): String? {
@@ -67,9 +74,10 @@ private fun countryOf(country: String?): String? {
  * as ambiguous and left unlinked. Nothing here changes a channel: the result says which guide id to read its listings from.
  */
 fun matchGuide(channels: List<MatchableChannel>, guide: List<GuideChannel>, aliases: Map<String, String> = emptyMap()): GuideMatchResult {
-    val guideIds = guide.mapTo(HashSet()) { it.id }
+    val real = guide.filter { !isPlaceholderGuideId(it.id) }
+    val guideIds = real.mapTo(HashSet()) { it.id }
     val byKey = HashMap<String, LinkedHashSet<String>>()
-    for (entry in guide) for (name in entry.names) {
+    for (entry in real) for (name in entry.names) {
         val key = guideKey(name)
         if (key.isEmpty()) continue
         byKey.getOrPut(key) { LinkedHashSet() }.add(entry.id)

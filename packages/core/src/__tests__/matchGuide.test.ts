@@ -25,6 +25,17 @@ describe("guideKey", () => {
   });
 });
 
+describe("matchGuide placeholders", () => {
+  it("never matches a placeholder guide channel", () => {
+    const { matches } = matchGuide([channel("c1", "UK| Dave HD", "UK")], [{ id: "dummy-1", names: ["Dave"] }]);
+    expect(matches.size).toBe(0);
+  });
+  it("prefers the real channel when a placeholder carries the same name", () => {
+    const { matches } = matchGuide([channel("c1", "UK| Dave HD", "UK")], [{ id: "dummy-1", names: ["Dave"] }, ...guide]);
+    expect(matches.get("c1")?.guideId).toBe("Dave.uk");
+  });
+});
+
 describe("matchGuide", () => {
   it("leaves a channel whose own tvg-id the guide knows alone", () => {
     const { matches, stats } = matchGuide([channel("c1", "Whatever", null, "Dave.uk")], guide);
@@ -142,6 +153,21 @@ describe("importEpg with optimising", () => {
     await importEpg(db, "s1", streamOf(xmltv));
     expect(titlesFor(db, "ch-bbc")).toEqual([]);
     expect(titlesFor(db, "ch-good")).toEqual(["Quiz"]);
+  });
+
+  it("does not link to a placeholder guide channel, and gives a placeholder tvg-id no listings", async () => {
+    const db = seeded();
+    db.prepare("UPDATE channels SET tvg_id = 'dummy-12' WHERE id = 'ch-good'").run();
+    const withPlaceholders = `<?xml version="1.0"?><tv>
+<channel id="dummy-12"><display-name>Dave</display-name></channel>
+<channel id="dummy-99"><display-name>BBC One</display-name></channel>
+<programme start="${stamp(now - 3600_000)}" stop="${stamp(now + 3600_000)}" channel="dummy-12"><title>NO EVENT STREAMING</title></programme>
+<programme start="${stamp(now - 3600_000)}" stop="${stamp(now + 3600_000)}" channel="dummy-99"><title>NO EVENT STREAMING</title></programme>
+</tv>`;
+    const result = await importEpg(db, "s1", streamOf(withPlaceholders), { optimise: true });
+    expect(titlesFor(db, "ch-good")).toEqual([]);
+    expect(titlesFor(db, "ch-bbc")).toEqual([]);
+    expect(result.matching?.matched).toBe(0);
   });
 
   it("still imports a guide that has no channel list", async () => {

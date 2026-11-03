@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChannelRow } from "@testcard/core";
 import { railLists, segmentsFor, startList, type Airing, type RailList } from "@testcard/core/src/epg/guideGrid.js";
+import { parseGuideListId } from "@testcard/core/src/epg/guideListLabels.js";
+import { decodeTags } from "@testcard/core/src/normalise/classifyCategory.js";
 import type { ProgrammeLite } from "../../../shared/ipc.js";
 import { Icon } from "../components/Icon.js";
 import { logoSrc } from "../lib/logo.js";
@@ -64,6 +66,15 @@ export function GuideView({
     })),
   });
   const categoryStamp = categoryQueries.map((q) => q.dataUpdatedAt).join();
+  // The "TV Guide" lists of sources with Tidy playlist on: none for the rest. A guide arriving later fills them in.
+  const guideQueries = useQueries({
+    queries: categoryKeys.map((key) => ({
+      queryKey: ["categories", "guide", key === "" ? undefined : key],
+      queryFn: () => window.testcard.channels.guideCountries(key === "" ? undefined : key),
+      staleTime: 30_000,
+    })),
+  });
+  const guideStamp = guideQueries.map((q) => q.dataUpdatedAt).join();
   const favouritesQuery = useQuery({ queryKey: ["channels", "favourites"], queryFn: () => window.testcard.channels.favourites() });
   const recentQuery = useQuery({ queryKey: ["channels", "recent"], queryFn: () => window.testcard.channels.recent() });
   const own = useCallback((rows: readonly ChannelRow[] | undefined) => (rows ?? []).filter((c) => sourceId === null || c.source_id === sourceId), [sourceId]);
@@ -78,14 +89,21 @@ export function GuideView({
           channels: (categoryQueries[categoryKeys.indexOf(s.id)]?.data ?? []).reduce((n, c) => n + c.channel_count, 0),
         })),
         categories: Object.fromEntries(
-          categoryKeys.map((key, i) => [key, (categoryQueries[i]?.data ?? []).map((c) => ({ id: c.id, label: c.name, count: c.channel_count }))]),
+          // Separator rows, junk and adult categories stay out of the rail, as on the Fire TV.
+          categoryKeys.map((key, i) => [
+            key,
+            (categoryQueries[i]?.data ?? [])
+              .filter((c) => !decodeTags(c.tags).some((tag) => tag === "junk" || tag === "separator" || tag === "adult"))
+              .map((c) => ({ id: c.id, label: c.name, count: c.channel_count })),
+          ]),
         ),
         favourites: own(favouritesQuery.data).length,
         recents: own(recentQuery.data).length,
+        guideCountries: Object.fromEntries(categoryKeys.map((key, i) => [key, guideQueries[i]?.data ?? []])),
       }),
     // categoryQueries is a new array every render; when its data last changed is what matters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sourceId, sourceList, categoryKeys, categoryStamp, favouritesQuery.data, recentQuery.data, own],
+    [sourceId, sourceList, categoryKeys, categoryStamp, guideStamp, favouritesQuery.data, recentQuery.data, own],
   );
   const ready = favouritesQuery.isSuccess && recentQuery.isSuccess && sources.isSuccess && categoryQueries.every((q) => q.isSuccess);
 
@@ -117,6 +135,8 @@ export function GuideView({
       if (shown === "recent") return own(await api.recent());
       if (shown === "all") return api.browse({ limit: CHANNELS_MOST, ...(sourceId !== null ? { sourceId } : {}) });
       if (shown.startsWith("all:")) return api.browse({ limit: CHANNELS_MOST, sourceId: shown.slice(4) });
+      const guide = parseGuideListId(shown);
+      if (guide !== null) return api.browseGuide(guide.country, guide.sourceId ?? sourceId ?? undefined);
       return api.browse({ limit: CHANNELS_MOST, categoryId: shown, ...(sourceId !== null ? { sourceId } : {}) });
     },
   });

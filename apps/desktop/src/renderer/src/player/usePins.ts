@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PinKind } from "@testcard/core";
 
 /** Rail entries that are not one provider category, so there is nothing to pin. */
-export const isPinnable = (id: string): boolean => !["home", "all", "favourites", "recent"].includes(id) && !id.startsWith("all:");
+export const isPinnable = (id: string): boolean => !["home", "all", "favourites", "recent"].includes(id) && !id.startsWith("all:") && !id.startsWith("guide:");
 
 /** The categories of one kind pinned to Home, and a way to pin or unpin one. */
 export function usePins(kind: PinKind) {

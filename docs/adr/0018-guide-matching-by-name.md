@@ -26,7 +26,7 @@ and Recents hang off, drops entries it cannot place, and is built around one pro
    rather than invented ones. It does not apply to the daily prebuilt guide files (`importGuideFile`), which carry
    no channel names.
 4. **A per-source switch, off by default**, `sources.epg_optimise` (schema v16), shown as "Improve TV guide matching" on
-   the source form. It is not synced yet. Changing it reloads the source in the background. After a refresh the source
+   the source form (renamed "Tidy playlist and improve TV guide" by ADR 0021). It is not synced yet. Changing it reloads the source in the background. After a refresh the source
    card says how many channels have a guide.
 
 ## Consequences

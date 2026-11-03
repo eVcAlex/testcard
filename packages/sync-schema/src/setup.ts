@@ -53,7 +53,7 @@ export const SetupProfilePayloadSchema = z
     v: z.literal(1),
     /** How the source is named on the receiving device. */
     name: z.string().trim().min(1).max(60),
-    /** Turn on guide matching by name for the source. */
+    /** Turn on "Tidy playlist and improve TV guide" for the source (guide matching by name, and the TV Guide lists). */
     epgOptimise: z.boolean().optional(),
     source: z.union([SetupXtreamSourceSchema, SetupPlaylistSourceSchema]),
   })

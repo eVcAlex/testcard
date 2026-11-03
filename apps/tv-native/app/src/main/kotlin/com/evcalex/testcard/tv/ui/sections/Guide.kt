@@ -51,6 +51,11 @@ import androidx.compose.ui.unit.dp
 import com.evcalex.testcard.core.db.CategoryKind
 import com.evcalex.testcard.core.db.ChannelRow
 import com.evcalex.testcard.core.db.browseChannels
+import com.evcalex.testcard.core.db.browseGuideChannels
+import com.evcalex.testcard.core.db.guideListId
+import com.evcalex.testcard.core.db.guideListLabel
+import com.evcalex.testcard.core.db.listGuideCountries
+import com.evcalex.testcard.core.db.parseGuideListId
 import com.evcalex.testcard.core.db.listCategories
 import com.evcalex.testcard.core.db.listFavouriteChannels
 import com.evcalex.testcard.core.db.listRecentChannels
@@ -145,6 +150,8 @@ fun GuideScreen(ctx: SectionContext) {
         val bySource = if (sourceId == null) app.sources.filter { it.channels > 0 }.takeIf { it.size > 1 } else null
         val categories = if (bySource != null) emptyList() else app.memoByCatalogue("live-categories", sourceId) { it.listCategories(sourceId).browsable() }
         val (favourites, recents) = app.db.read { c -> c.listFavouriteChannels().count(::own) to c.listRecentChannels(60).count(::own) }
+        // "TV Guide" lists of the sources the viewer has tidied (Settings, Sources): one per country, each station once. None for the rest.
+        val guideCountries = app.db.read { c -> if (bySource != null) emptyList() else c.listGuideCountries(sourceId) }
         // Categories pinned to Home come first in the rail (in the order they were pinned), then the rest as the provider lists them.
         val pinOrder = app.db.read { c -> c.pinnedCategoryIds(CategoryKind.Live).toList() }
         fun <T> pinnedFirst(items: List<T>, idOf: (T) -> String): List<T> = items.sortedBy { item -> pinOrder.indexOf(idOf(item)).let { if (it < 0) Int.MAX_VALUE else it } }
@@ -155,6 +162,7 @@ fun GuideScreen(ctx: SectionContext) {
             if (bySource != null) for (source in bySource) {
                 val own = pinnedFirst(app.memoByCatalogue("live-categories", source.id) { it.listCategories(source.id).browsable() }.filter { it.count > 0 }) { it.id }
                 if (own.isEmpty()) continue
+                for (g in app.db.read { c -> c.listGuideCountries(source.id) }) add(GuideList(guideListId(g.country, source.id), guideListLabel(g.country), g.count, RailMark.Icon(Glyph.Versions), source.name))
                 // The viewer's pinned categories get a section of their own ahead of the source's, tagged with the source they belong to.
                 for (c in own) if (c.id in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), "$PINNED_SECTION · ${source.name}"))
                 add(GuideList("all:${source.id}", "All channels", own.sumOf { it.count }, RailMark.Letters("All"), source.name))
@@ -162,8 +170,10 @@ fun GuideScreen(ctx: SectionContext) {
             } else {
                 // With any pins, the rail reads Pinned, then Categories: two named sections, so pins are easy to tell apart.
                 val ordered = pinnedFirst(categories.filter { it.count > 0 }) { it.id }
-                val sectioned = ordered.any { it.id in pinOrder }
-                for (c in ordered) add(GuideList(c.id, c.label, c.count, mark(c.label), if (!sectioned) null else if (c.id in pinOrder) PINNED_SECTION else "Categories"))
+                val sectioned = guideCountries.isNotEmpty() || ordered.any { it.id in pinOrder }
+                for (c in ordered) if (c.id in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), PINNED_SECTION))
+                for (g in guideCountries) add(GuideList(guideListId(g.country), guideListLabel(g.country), g.count, RailMark.Icon(Glyph.Versions), GUIDE_SECTION))
+                for (c in ordered) if (c.id !in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), if (!sectioned) null else "Categories"))
                 add(GuideList("all", "All channels", categories.sumOf { it.count }, RailMark.Letters("All")))
             }
         }
@@ -187,7 +197,8 @@ fun GuideScreen(ctx: SectionContext) {
                 "recent" -> c.listRecentChannels(60).filter(::own)
                 "all" -> c.browseChannels(limit = ALL_CHANNELS_MOST, sourceId = sourceId)
                 else -> if (id.startsWith("all:")) c.browseChannels(limit = ALL_CHANNELS_MOST, sourceId = id.removePrefix("all:"))
-                else c.browseChannels(categoryId = id, limit = ALL_CHANNELS_MOST, sourceId = sourceId)
+                else parseGuideListId(id)?.let { g -> c.browseGuideChannels(g.country, g.sourceId ?: sourceId, ALL_CHANNELS_MOST) }
+                    ?: c.browseChannels(categoryId = id, limit = ALL_CHANNELS_MOST, sourceId = sourceId)
             }
         }
         channelsFor = id

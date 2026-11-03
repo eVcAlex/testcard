@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { parseXmltv } from "./parseXmltv.js";
-import { matchGuide, type GuideChannel, type GuideMatchStats } from "./matchGuide.js";
+import { isPlaceholderGuideId, matchGuide, type GuideChannel, type GuideMatchStats } from "./matchGuide.js";
 import { yieldToEventLoop } from "../db/applyInSlices.js";
 
 export interface EpgImportResult {
@@ -55,6 +55,8 @@ export async function importEpg(
     .all(sourceId) as { tvgId: string | null; id: string; rawName: string; country: string | null }[];
   for (const row of channelRows) {
     if (row.tvgId === null || row.tvgId === "") continue;
+    // Tidying leaves a placeholder id's "no event" listings out: a channel with no real listings shows none, honestly.
+    if (options.optimise === true && isPlaceholderGuideId(row.tvgId)) continue;
     const ids = channelsByGuideId.get(row.tvgId);
     if (ids === undefined) channelsByGuideId.set(row.tvgId, [row.id]);
     else ids.push(row.id);

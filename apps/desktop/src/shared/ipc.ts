@@ -13,6 +13,7 @@ import type {
   CategoryRow,
   Channel,
   ChannelCountry,
+  GuideCountry,
   ChannelRow,
   CountryNode,
   MovieCategoryRow,
@@ -323,6 +324,10 @@ export interface TestcardApi {
     categoryList(sourceId?: string): Promise<readonly CategoryRow[]>;
     /** Distinct channel countries with counts, for the filter chips. */
     countryList(sourceId?: string): Promise<readonly ChannelCountry[]>;
+    /** The countries a "TV Guide" list is offered for: sources with Tidy playlist on, each station once. */
+    guideCountries(sourceId?: string): Promise<readonly GuideCountry[]>;
+    /** The channels of one country's "TV Guide" list. */
+    browseGuide(country: string, sourceId?: string): Promise<readonly ChannelRow[]>;
     toggleFavourite(channelId: string): Promise<boolean>;
   };
   epg: {

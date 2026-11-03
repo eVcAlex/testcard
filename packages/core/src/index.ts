@@ -20,6 +20,8 @@ export * from "./db/migrateDatabase.js";
 export * from "./db/categoryClassification.js";
 export * from "./db/importSource.js";
 export * from "./db/queries.js";
+export * from "./db/tidyLists.js";
+export * from "./epg/guideListLabels.js";
 export * from "./source/xtream/vod.js";
 export * from "./db/importVod.js";
 export * from "./db/importSeries.js";

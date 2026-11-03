@@ -20,6 +20,8 @@ import {
   importCatalogue,
   listCategories,
   listChannelCountries,
+  listGuideCountries,
+  browseGuideChannels,
   listFavouriteChannels,
   listFavouriteMovies,
   listFavouriteSeries,
@@ -799,6 +801,14 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
       async countryList(sourceId) {
         return listChannelCountries(db, sourceId);
+      },
+
+      async guideCountries(sourceId) {
+        return listGuideCountries(db, sourceId);
+      },
+
+      async browseGuide(country, sourceId) {
+        return browseGuideChannels(db, { country, ...(sourceId !== undefined ? { sourceId } : {}) });
       },
 
       async toggleFavourite(channelId) {
