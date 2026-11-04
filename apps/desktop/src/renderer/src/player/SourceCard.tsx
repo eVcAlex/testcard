@@ -30,6 +30,10 @@ export function SourceCard({
   const [menuUp, setMenuUp] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
+  // Parts of a refresh that failed (movies, series, guide) while the rest worked: they arrive as events, and a refresh that
+  // still succeeds must not wipe them, or a source with no films or no guide looks fine and says nothing.
+  const [problems, setProblems] = useState<Record<string, string>>({});
+  const noteProblem = (part: string, message: string) => setProblems((prev) => ({ ...prev, [part]: message }));
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,22 +62,25 @@ export function SourceCard({
         if (event.phase === "parsing" && event.programmes) {
           setRefreshMsg(`Guide: ${event.programmes.toLocaleString()} programmes…`);
         } else if (event.phase === "error" && event.message) {
-          setRefreshMsg(`Guide: ${event.message}`);
+          noteProblem("Guide", event.message);
         }
       } else if (event.type === "vod") {
         if (event.phase === "fetching") setRefreshMsg("Movies: updating…");
-        else if (event.phase === "error" && event.message) setRefreshMsg(`Movies: ${event.message}`);
+        else if (event.phase === "error" && event.message) noteProblem("Movies", event.message);
       } else if (event.type === "series") {
         if (event.phase === "fetching") setRefreshMsg("Series: updating…");
-        else if (event.phase === "error" && event.message) setRefreshMsg(`Series: ${event.message}`);
+        else if (event.phase === "error" && event.message) noteProblem("Series", event.message);
       }
     });
   }, [source.id]);
 
   const refresh = useMutation({
     mutationFn: () => window.testcard.sources.refresh(source.id),
+    onMutate: () => setProblems({}),
     onSuccess: (result) => {
       const parts = [`${result.channels.toLocaleString()} channels · ${result.categories} categories`];
+      if (result.movies !== undefined) parts.push(`${result.movies.toLocaleString()} movies`);
+      if (result.series !== undefined) parts.push(`${result.series.toLocaleString()} series`);
       if (result.programmes !== undefined) parts.push(`${result.programmes.toLocaleString()} programmes`);
       setRefreshMsg(parts.join(" · "));
       void queryClient.invalidateQueries({ queryKey: ["channels"] });
@@ -94,7 +101,10 @@ export function SourceCard({
   const wasRefreshing = useRef(false);
   useEffect(() => {
     const now = source.refreshing === true;
-    if (now && !wasRefreshing.current) setRefreshMsg(null);
+    if (now && !wasRefreshing.current) {
+      setRefreshMsg(null);
+      setProblems({});
+    }
     if (!now && wasRefreshing.current) {
       for (const key of ["channels", "categories", "epg", "movies", "series"]) {
         void queryClient.invalidateQueries({ queryKey: [key] });
@@ -148,6 +158,12 @@ export function SourceCard({
 
         {importing && <p className="pw-refresh-note">{refreshMsg ?? "Fetching playlist…"}</p>}
         {!importing && refreshMsg !== null && <p className="pw-refresh-note">{refreshMsg}</p>}
+        {!importing &&
+          Object.entries(problems).map(([part, message]) => (
+            <p className="msg msg--error" key={part}>
+              {part}: {message}
+            </p>
+          ))}
         {!importing && refreshMsg === null && source.refreshError !== undefined && (
           <p className="msg msg--error">{source.refreshError}</p>
         )}
