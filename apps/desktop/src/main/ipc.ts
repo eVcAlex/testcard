@@ -63,6 +63,7 @@ import {
   upNextIn,
   writeActiveProfile,
   SyncController,
+  explainFailure,
   fetchResponding,
   fetchShortEpg,
   getPlaybackTarget,
@@ -166,9 +167,17 @@ type VerifiedSource =
 /** An auth check against `player_api.php`, throwing the message the add/edit form should show. */
 async function verifyXtreamCredentials(credentials: XtreamCredentials): Promise<void> {
   const auth = await probeXtream(credentials);
-  if (!auth.authenticated) {
-    throw new Error("Those credentials didn't authenticate against the provider.");
-  }
+  if (!auth.authenticated) throw loginNotAccepted(auth);
+}
+
+/**
+ * Why a login check failed. Only a provider that answered 200 with "not authenticated", or 401, says the login is wrong; any
+ * other error status (403 for a blocked network, 429, 5xx) says something about the provider or the network, and calling it a
+ * wrong login sent people off to retype a working password.
+ */
+function loginNotAccepted(auth: { readonly status?: number }): Error {
+  if (auth.status !== undefined && auth.status !== 401) return new Error(explainFailure(`Xtream login check failed: HTTP ${auth.status}`));
+  return new Error("Those credentials didn't authenticate against the provider.");
 }
 
 /**
@@ -187,7 +196,8 @@ async function verifyPlaylistUrl(url: string): Promise<string> {
     throw new Error("A playlist URL must start with http:// or https://.");
   }
 
-  const probe = await fetch(url, { method: "GET" });
+  // Through `fetchResponding`, so a source can be added on a network that blocks the provider (the list relay behind it).
+  const probe = await fetchResponding(url);
   void probe.body?.cancel();
   if (!probe.ok) {
     throw new Error(`The playlist URL responded with HTTP ${probe.status}.`);
@@ -619,9 +629,7 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
           credentials.password !== current.password;
         if (changed) {
           const auth = await probeXtream(credentials);
-          if (!auth.authenticated) {
-            throw new Error("Those credentials didn't authenticate against the provider.");
-          }
+          if (!auth.authenticated) throw loginNotAccepted(auth);
           await saveCredentials(sourceId, credentials);
         }
 

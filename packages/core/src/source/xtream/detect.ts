@@ -9,6 +9,8 @@
  * detect credentials for.
  */
 
+import { fetchResponding } from "../fetchResponding.js";
+
 export interface XtreamCredentials {
   readonly baseUrl: string;
   readonly username: string;
@@ -48,20 +50,29 @@ export function extractXtreamCredentials(url: string): XtreamCredentials | null 
 
 export interface XtreamAuthResult {
   readonly authenticated: boolean;
+  /** The provider's HTTP status when it answered with an error, so a refusal of the network (403) is not mistaken for a wrong login (401, or auth 0). */
+  readonly status?: number;
   readonly serverInfo?: Record<string, unknown>;
 }
+
+/**
+ * `fetch` for a provider's API with the sync Worker's relay behind it (`fetchResponding`): a viewer whose network blocks the
+ * provider can still add or check a source. Callers that pass their own `fetchImpl` (the backup-address probe) keep that.
+ */
+const providerFetch: typeof fetch = (input, init) =>
+  fetchResponding(typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url, init);
 
 /** Confirms the credentials work against `player_api.php` with no `action` (an auth check). */
 export async function probeXtream(
   credentials: XtreamCredentials,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: typeof fetch = providerFetch,
 ): Promise<XtreamAuthResult> {
   const url = new URL(`${credentials.baseUrl}/player_api.php`);
   url.searchParams.set("username", credentials.username);
   url.searchParams.set("password", credentials.password);
 
   const response = await fetchImpl(url.toString(), { method: "GET" });
-  if (!response.ok) return { authenticated: false };
+  if (!response.ok) return { authenticated: false, status: response.status };
 
   const body = (await response.json().catch(() => null)) as
     | { user_info?: { auth?: number }; server_info?: Record<string, unknown> }
@@ -90,7 +101,7 @@ const numberOrNull = (value: unknown): number | null => {
 };
 
 /** The account's `user_info` from `player_api.php`. Null when the provider does not answer with one. */
-export async function fetchXtreamAccount(credentials: XtreamCredentials, fetchImpl: typeof fetch = fetch): Promise<XtreamAccount | null> {
+export async function fetchXtreamAccount(credentials: XtreamCredentials, fetchImpl: typeof fetch = providerFetch): Promise<XtreamAccount | null> {
   const url = new URL(`${credentials.baseUrl}/player_api.php`);
   url.searchParams.set("username", credentials.username);
   url.searchParams.set("password", credentials.password);

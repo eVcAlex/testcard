@@ -1,3 +1,4 @@
+import { explainFailure } from "@testcard/core/src/source/explainFailure.js";
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SourceContent, SourceListItem } from "../../shared/ipc.js";
@@ -326,7 +327,7 @@ export function SourceForm({
         </button>
       </div>
 
-      {mutation.isError && <p className="msg msg--error">{(mutation.error as Error).message}</p>}
+      {mutation.isError && <p className="msg msg--error">{explainFailure((mutation.error as Error).message)}</p>}
     </form>
   );
 }

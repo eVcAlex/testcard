@@ -27,12 +27,44 @@ describe("fetchResponding with the list relay", () => {
     expect(relay).not.toHaveBeenCalled();
   });
 
-  it("does not relay an answer from the provider, whatever its status", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("no", { status: 403 })));
-    const relay = vi.fn(async () => new Response("relayed"));
-    setListRelay(relay);
+  it("does not relay an answer that is not a refusal of the viewer's address", async () => {
+    for (const status of [401, 404, 500]) {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response("no", { status })));
+      const relay = vi.fn(async () => new Response("relayed"));
+      setListRelay(relay);
+      expect((await fetchResponding("http://provider.test/a")).status).toBe(status);
+      expect(relay).not.toHaveBeenCalled();
+    }
+  });
+
+  it("asks the relay when the provider refuses the viewer with a 403, and uses its answer", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("Forbidden", { status: 403 })));
+    setListRelay(async () => new Response("#EXTM3U"));
+    const response = await fetchResponding("http://provider.test/a");
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("#EXTM3U");
+  });
+
+  it("keeps the provider's own 403 when the relay cannot do better", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("Forbidden", { status: 403 })));
+    setListRelay(async () => new Response("{}", { status: 403 }));
     expect((await fetchResponding("http://provider.test/a")).status).toBe(403);
-    expect(relay).not.toHaveBeenCalled();
+  });
+
+  it("asks the relay again when it is refused in a way that may pass", async () => {
+    vi.stubGlobal("fetch", blocked());
+    const relay = vi.fn().mockResolvedValueOnce(new Response("{}", { status: 403 })).mockResolvedValueOnce(new Response("ok"));
+    setListRelay(relay);
+    expect(await (await fetchResponding("http://provider.test/a")).text()).toBe("ok");
+    expect(relay).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not keep asking when the relay says it is switched off or the account is not accepted", async () => {
+    vi.stubGlobal("fetch", blocked());
+    const relay = vi.fn(async () => new Response("{}", { status: 401 }));
+    setListRelay(relay);
+    await expect(fetchResponding("http://provider.test/a")).rejects.toThrow("fetch failed (relay: HTTP 401)");
+    expect(relay).toHaveBeenCalledTimes(1);
   });
 
   it("throws the direct failure when signed out", async () => {
