@@ -3,6 +3,7 @@ import type { Category, ChannelVariant, Source, SourceAdapter } from "../types.j
 import type { XtreamCredentials } from "./detect.js";
 import { groupVariants, type RawChannelEntry } from "../../normalise/groupVariants.js";
 import { fetchResponding } from "../fetchResponding.js";
+import { asList } from "./asList.js";
 
 /** Looks up a Source's credentials from wherever the caller is storing secrets (the OS keychain in the desktop app). */
 export type CredentialsLookup = (sourceId: string) => Promise<XtreamCredentials>;
@@ -50,7 +51,7 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
     kind: "xtream",
 
     async fetchCategories(source) {
-      const dtos = await call<XtreamCategoryDTO[]>(source, "get_live_categories");
+      const dtos = asList<XtreamCategoryDTO>(await call<unknown>(source, "get_live_categories"), "get_live_categories");
       return dtos.map(
         (dto): Category => ({
           id: idFor(source.id, dto.category_id),
@@ -62,9 +63,10 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
     },
 
     async fetchChannels(source, category) {
-      const dtos = await call<XtreamLiveStreamDTO[]>(source, "get_live_streams", {
-        category_id: category.providerId,
-      });
+      const dtos = asList<XtreamLiveStreamDTO>(
+        await call<unknown>(source, "get_live_streams", { category_id: category.providerId }),
+        "get_live_streams",
+      );
 
       const entries: RawChannelEntry[] = dtos.map((dto) => ({
         sourceId: source.id,
