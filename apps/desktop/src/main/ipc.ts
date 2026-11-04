@@ -63,6 +63,7 @@ import {
   upNextIn,
   writeActiveProfile,
   SyncController,
+  fetchResponding,
   fetchShortEpg,
   getPlaybackTarget,
   type Channel,
@@ -114,6 +115,9 @@ function toProgrammeLite(row: ProgrammeRow): ProgrammeLite {
   };
 }
 
+/** How long a guide's host gets to start answering before the fetch is given up (or, signed in, handed to the Worker). */
+const GUIDE_RESPONSE_TIMEOUT_MS = 60_000;
+
 /**
  * Fetches and imports the source's EPG. URL priority: an explicit user-supplied URL, else the
  * adapter's auto-detected one (`url-tvg` / `xmltv.php`). A credential-free discovered URL is
@@ -137,7 +141,9 @@ async function refreshEpg(
   }
 
   emitTask({ type: "epg", sourceId: source.id, phase: "fetching" });
-  const response = await fetch(epgUrl);
+  // Through `fetchResponding` so a network that blocks the guide's host falls back to the Worker (see core's listRelay). A guide can take a
+  // while to start answering (the provider builds the whole file first), so it gets longer than a list request does.
+  const response = await fetchResponding(epgUrl, {}, GUIDE_RESPONSE_TIMEOUT_MS);
   if (!response.ok || response.body === null) {
     throw new Error(`The EPG URL responded with HTTP ${response.status}.`);
   }
