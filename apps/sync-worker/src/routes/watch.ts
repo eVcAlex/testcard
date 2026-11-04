@@ -17,7 +17,7 @@ const MAX_PLAYLIST_BYTES = 2_000_000;
 /** How long a provider has to answer with headers; the body that follows may stream for as long as the viewer watches. */
 const HEADERS_WITHIN_MS = 20_000;
 /** Providers filter on User-Agent and answer 403 to ones they do not know; the apps send `node` on every provider request, so this does too. */
-const UPSTREAM_USER_AGENT = "node";
+export const UPSTREAM_USER_AGENT = "node";
 
 /** True for names that mean this machine or a private network. A Worker cannot reach those anyway; this is belt and braces. */
 export function isPrivateHost(hostname: string): boolean {
@@ -60,7 +60,7 @@ export function rewritePlaylist(text: string, base: URL, proxyBase: string): str
 
 const isPlaylist = (response: Response, url: URL) => /mpegurl/i.test(response.headers.get("content-type") ?? "") || /\.m3u8?$/i.test(url.pathname);
 
-async function follow(first: URL, headers: Headers, allowPrivate: boolean): Promise<{ response: Response; url: URL } | { refused: string }> {
+export async function follow(first: URL, headers: Headers, allowPrivate: boolean): Promise<{ response: Response; url: URL } | { refused: string }> {
   let url = first;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
     const why = refusal(url, allowPrivate);

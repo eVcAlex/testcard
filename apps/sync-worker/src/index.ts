@@ -3,6 +3,7 @@ import { createAuth } from "./auth.js";
 import { handleLinkApprove, handleLinkPoll, handleLinkSession, handleLinkStart } from "./routes/link.js";
 import { handleRegisterGuide } from "./routes/guides.js";
 import { handleWatchProxy } from "./routes/watch.js";
+import { handleRelayList } from "./routes/relay.js";
 import { handlePull } from "./routes/pull.js";
 import { handlePush } from "./routes/push.js";
 import { handleWaitlist } from "./routes/waitlist.js";
@@ -19,6 +20,8 @@ export interface Env {
   readonly EMAIL?: { send(message: { from: string | { email: string; name?: string }; to: string; subject: string; text: string; html?: string }): Promise<unknown> };
   /** "on" lets signed-in accounts use the web player's stream proxy (`/watch/p`); anything else answers 404. Set in wrangler.toml. */
   readonly WEB_PLAYER?: string;
+  /** "on" lets signed-in accounts fetch a provider's playlist or guide through `/relay/list`, for a viewer whose network blocks the provider; anything else answers 404. */
+  readonly LIST_RELAY?: string;
   /** "1" lets the proxy fetch private addresses. Tests only: never set in wrangler.toml. */
   readonly WATCH_ALLOW_PRIVATE?: string;
   /** Megabytes of proxied video one account may use per UTC day on the web player; unset or 0 for no cap. */
@@ -71,5 +74,6 @@ app.get("/sync/salt", requireSession, handleGetSalt);
 app.post("/sync/salt", requireSession, handleSetSalt);
 app.post("/guides/register", requireSession, handleRegisterGuide);
 app.on(["GET", "HEAD"], "/watch/p", requireSession, handleWatchProxy);
+app.get("/relay/list", requireSession, handleRelayList);
 
 export default app;
