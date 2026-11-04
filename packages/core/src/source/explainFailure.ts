@@ -29,6 +29,10 @@ export function explainFailure(raw: string, who = "the provider"): string {
   if (/did not respond|timed? ?out|ETIMEDOUT|UND_ERR_CONNECT_TIMEOUT/i.test(message)) {
     return `${who} didn't answer in time. Its server may be down or slow${relayClause(relay)}.`;
   }
+  // mpv's own word when it cannot open a stream: the channel is off, or the viewer's network or the provider is refusing it.
+  if (/loading failed|could not be opened|Failed to open|unrecognized file format/i.test(message)) {
+    return `Couldn't open the stream. The channel may be offline, or this network (or ${who}) may be blocking it. Try another channel, or another network or a VPN.`;
+  }
   if (/fetch failed|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|Network request failed|socket hang up|certificate|SSL|TLS/i.test(message)) {
     return `Couldn't reach ${who}. Its server may be down, or this network may be blocking it${relayClause(relay)}.`;
   }

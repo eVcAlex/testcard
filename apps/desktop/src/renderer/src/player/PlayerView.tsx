@@ -79,6 +79,7 @@ export function PlayerView({
             channelName={state.channelName}
             {...(state.message !== undefined ? { message: state.message } : {})}
             onRetry={onRetry}
+            onBack={onBack}
             onOpenInVlc={() => window.testcard.playback.openInVlc()}
             vlcAvailable={vlcAvailable}
           />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { explainFailure } from "@testcard/core/src/source/explainFailure.js";
 
 /**
  * The seven-bar SMPTE colour-bar sequence, in broadcast order. Used once here and nowhere
@@ -16,12 +17,15 @@ export function NoSignal({
   channelName,
   message,
   onRetry,
+  onBack,
   onOpenInVlc,
   vlcAvailable,
 }: {
   channelName: string;
   message?: string;
   onRetry: () => void;
+  /** Leaves the player: the dead plate hides the transport controls, so it needs its own way out (Esc does the same). */
+  onBack: () => void;
   onOpenInVlc: () => Promise<void>;
   vlcAvailable: boolean;
 }) {
@@ -44,12 +48,15 @@ export function NoSignal({
       <div className="pw-nosignal-title">{message !== undefined ? "Couldn’t play this channel" : "Channel didn’t respond"}</div>
       <p className="pw-nosignal-detail">
         {message !== undefined
-          ? message
+          ? explainFailure(message)
           : `${channelName ? channelName : "This channel"} sent no video within 10 seconds. Provider channels drop in and out. It may work on a retry, or another player may handle the stream.`}
       </p>
       <div className="pw-nosignal-actions">
         <button type="button" className="btn btn--primary" onClick={onRetry}>
           Try again
+        </button>
+        <button type="button" className="btn" onClick={onBack}>
+          Back
         </button>
         {vlcAvailable && (
           <button

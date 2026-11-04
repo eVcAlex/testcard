@@ -42,6 +42,11 @@ describe("explainFailure", () => {
     expect(explainFailure("fetch failed", "A")).toContain("Signing in lets Testcard try another route");
   });
 
+  it("explains a stream the player could not open", () => {
+    expect(explainFailure("loading failed")).toContain("Couldn't open the stream");
+    expect(explainFailure("The stream could not be opened.")).toContain("another network or a VPN");
+  });
+
   it("passes the unrecognised through tidied", () => {
     expect(explainFailure("Error: something odd happened")).toBe("Something odd happened.");
     expect(explainFailure("")).toBe("That didn't work. Try again.");
