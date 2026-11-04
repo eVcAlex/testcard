@@ -1,6 +1,6 @@
 import type { Category, Episode, Movie, Season, Series, Source } from "../types.js";
 import type { CredentialsLookup } from "./client.js";
-import { fetchResponding } from "../fetchResponding.js";
+import { CATALOGUE_RESPONSE_TIMEOUT_MS, fetchResponding } from "../fetchResponding.js";
 import { asList } from "./asList.js";
 
 /**
@@ -88,7 +88,9 @@ async function call<T>(
   url.searchParams.set("action", action);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
-  const response = await fetchResponding(url.toString());
+  // Listing calls (a whole category) get longer to start answering than the one-item detail calls a viewer waits on.
+  const detail = action === "get_vod_info" || action === "get_series_info";
+  const response = await fetchResponding(url.toString(), {}, detail ? undefined : CATALOGUE_RESPONSE_TIMEOUT_MS);
   if (!response.ok) throw new Error(`Xtream ${action} failed: HTTP ${response.status}`);
   return (await response.json()) as T;
 }

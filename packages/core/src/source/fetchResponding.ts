@@ -3,6 +3,12 @@ import { getListRelay, markRelayFirst, relayFirstFor, type ListRelay } from "./l
 /** How long a provider gets to start answering before the request is given up. */
 export const RESPONSE_TIMEOUT_MS = 20_000;
 
+/**
+ * The same for a catalogue list (live streams, films or series of a whole category) fetched by an import running in the background: a big
+ * category can take a provider well over 20 seconds to assemble, and the first one that does fails the whole import.
+ */
+export const CATALOGUE_RESPONSE_TIMEOUT_MS = 60_000;
+
 /** One request with the wait for the response bounded; body reading is not (see `fetchResponding`). */
 async function respondingWithin<T>(timeoutMs: number, run: (signal: AbortSignal) => Promise<T>): Promise<T> {
   const controller = new AbortController();

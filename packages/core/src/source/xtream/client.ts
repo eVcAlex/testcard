@@ -2,7 +2,7 @@ import { fetchAll } from "../inTurn.js";
 import type { Category, ChannelVariant, Source, SourceAdapter } from "../types.js";
 import type { XtreamCredentials } from "./detect.js";
 import { groupVariants, type RawChannelEntry } from "../../normalise/groupVariants.js";
-import { fetchResponding } from "../fetchResponding.js";
+import { CATALOGUE_RESPONSE_TIMEOUT_MS, fetchResponding } from "../fetchResponding.js";
 import { asList } from "./asList.js";
 
 /** Looks up a Source's credentials from wherever the caller is storing secrets (the OS keychain in the desktop app). */
@@ -38,7 +38,7 @@ export function createXtreamAdapter(getCredentials: CredentialsLookup): SourceAd
     url.searchParams.set("action", action);
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
-    const response = await fetchResponding(url.toString());
+    const response = await fetchResponding(url.toString(), {}, CATALOGUE_RESPONSE_TIMEOUT_MS);
     if (!response.ok) {
       // The provider's own words ("blocked", "too many connections") are what tell a user why. Never the URL: it carries the login.
       const reason = (await response.text().catch(() => "")).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
