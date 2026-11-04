@@ -23,6 +23,25 @@ describe("SyncClient", () => {
     expect(init.headers).toMatchObject({ "Content-Type": "application/json" });
   });
 
+  it("relayList asks /relay/list with the session and the address encoded, and hands back the response as it is", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("#EXTM3U", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new SyncClient({ baseUrl: "https://sync.example.com", getSessionToken: () => "tok" });
+    const response = await client.relayList("http://p.test/get.php?username=u&password=p", new AbortController().signal);
+    expect(await response.text()).toBe("#EXTM3U");
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://sync.example.com/relay/list?u=http%3A%2F%2Fp.test%2Fget.php%3Fusername%3Du%26password%3Dp");
+    expect(init.headers).toMatchObject({ Authorization: "Bearer tok", Origin: "https://sync.example.com" });
+  });
+
+  it("relayList refuses without sending anything when signed out", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new SyncClient({ baseUrl: "https://sync.example.com", getSessionToken: () => undefined });
+    await expect(client.relayList("http://p.test/a", new AbortController().signal)).rejects.toThrow("Not signed in");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("fails with the server's own reply and the status, for the controller to word", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ message: "Invalid email or password" }, 401)));
     const client = new SyncClient({ baseUrl: "https://sync.example.com", getSessionToken: () => undefined });

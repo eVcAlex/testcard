@@ -10,6 +10,7 @@ import { applySourcePosition } from "./sourceOrder.js";
 import { applySourcePins, applySourceSkips, holdPinsForMain } from "./sourcePins.js";
 import { MAIN_PROFILE } from "../db/profiles.js";
 import type { SourcePin } from "@testcard/sync-schema";
+import { setListRelay } from "../source/listRelay.js";
 import { applyRemoteChanges, clearTombstones, collectLocalChanges, getSyncState, setSyncState } from "./localChanges.js";
 
 export type SyncAccountStatus = "signed-out" | "signed-in" | "needs-password";
@@ -117,6 +118,8 @@ export class SyncController {
     this.paused = options.paused ?? false;
     this.profile = options.profile ?? MAIN_PROFILE;
     this.client = new SyncClient({ baseUrl: platform.baseUrl, getSessionToken: () => this.sessionToken() });
+    // Provider requests that fail directly (a network that blocks the provider) are retried through the Worker while an account is signed in.
+    setListRelay((url, signal) => (this.sessionToken() === undefined ? Promise.resolve(undefined) : this.client.relayList(url, signal)));
     const row = this.db.prepare(`SELECT sync_salt, account_email FROM sync_state WHERE id = 1`).get() as
       | { sync_salt: string | null; account_email: string | null }
       | undefined;

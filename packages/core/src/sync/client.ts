@@ -108,6 +108,19 @@ export class SyncClient {
     await this.request("/sync/salt", { body: { salt }, authed: true });
   }
 
+  /**
+   * Asks the Worker to fetch a provider's playlist, guide or API list for a network that blocks the provider (`/relay/list`).
+   * Answers the Worker's response as it is, status and streamed body included, for the caller to judge; throws when signed out.
+   */
+  async relayList(address: string, signal: AbortSignal): Promise<Response> {
+    const token = this.config.getSessionToken();
+    if (token === undefined) throw new Error("Not signed in");
+    return fetch(`${this.config.baseUrl}/relay/list?u=${encodeURIComponent(address)}`, {
+      headers: { Origin: this.config.baseUrl, Authorization: `Bearer ${token}` },
+      signal,
+    });
+  }
+
   /** Tells the Worker a public guide address, so its daily job builds a small file for it. Answers the file's name. */
   async registerGuide(url: string): Promise<string> {
     return ((await (await this.request("/guides/register", { body: { url }, authed: true })).json()) as { file: string }).file;
