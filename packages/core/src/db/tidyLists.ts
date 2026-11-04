@@ -2,7 +2,7 @@ import type Database from "better-sqlite3";
 import { channelShown } from "../sync/hidden.js";
 import { fallbackRank, sameChannelKey } from "../normalise/displayName.js";
 import { CHANNEL_COLUMNS, type ChannelRow } from "./queries.js";
-import type { GuideCountry } from "../epg/guideListLabels.js";
+import { channelGuideCountry, type GuideCountry } from "../epg/guideListLabels.js";
 
 interface Lead {
   readonly id: string;
@@ -14,24 +14,28 @@ interface Lead {
  * The channels of tidy sources (`sources.epg_optimise`) that really have listings, one per station and country: of a
  * station's qualities and of the copies a provider files under other groups, the one to show (HD before an unmarked
  * one, SD, then 4K; the first listed on a tie). The others stay reachable as that channel's feeds. A station is not
- * merged across sources, and a channel without a parsed country is left to the provider's own groups.
+ * merged across sources, and a channel with no known country (its own, its category's, or a "UK:" prefix of its name) is
+ * left to the provider's own groups.
  */
 function guideLeads(db: Database.Database, sourceId?: string): Lead[] {
   const rows = db
     .prepare(
-      `SELECT c.id, c.source_id AS sourceId, c.country, c.normalised_name AS name
+      `SELECT c.id, c.source_id AS sourceId, c.country, cat.country AS categoryCountry, c.raw_name AS rawName, c.normalised_name AS name
        FROM channels c JOIN sources s ON s.id = c.source_id AND s.epg_optimise = 1
-       WHERE c.country IS NOT NULL AND ${channelShown(db, "c")}${sourceId !== undefined ? " AND c.source_id = ?" : ""}
+       LEFT JOIN categories cat ON cat.id = c.category_id
+       WHERE ${channelShown(db, "c")}${sourceId !== undefined ? " AND c.source_id = ?" : ""}
          AND EXISTS (SELECT 1 FROM programmes p WHERE p.channel_id = c.id)
        ORDER BY c.rowid`,
     )
-    .all(...(sourceId !== undefined ? [sourceId] : [])) as { id: string; sourceId: string; country: string; name: string }[];
+    .all(...(sourceId !== undefined ? [sourceId] : [])) as { id: string; sourceId: string; country: string | null; categoryCountry: string | null; rawName: string; name: string }[];
   const best = new Map<string, { lead: Lead; rank: number }>();
   for (const row of rows) {
-    const key = `${row.sourceId}\u0000${row.country}\u0000${sameChannelKey(row.name)}`;
+    const country = channelGuideCountry(row.country, row.categoryCountry, row.rawName);
+    if (country === null) continue;
+    const key = `${row.sourceId}\u0000${country}\u0000${sameChannelKey(row.name)}`;
     const rank = fallbackRank(row.name);
     const held = best.get(key);
-    if (held === undefined || rank < held.rank) best.set(key, { lead: { id: row.id, country: row.country, name: row.name }, rank });
+    if (held === undefined || rank < held.rank) best.set(key, { lead: { id: row.id, country, name: row.name }, rank });
   }
   return [...best.values()].map((entry) => entry.lead).sort((a, b) => a.name.localeCompare(b.name));
 }

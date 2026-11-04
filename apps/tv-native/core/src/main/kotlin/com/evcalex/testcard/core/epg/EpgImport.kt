@@ -2,6 +2,7 @@ package com.evcalex.testcard.core.epg
 
 import com.evcalex.testcard.core.nowMs
 import com.evcalex.testcard.core.db.Db
+import com.evcalex.testcard.core.db.channelGuideCountry
 import com.evcalex.testcard.core.db.changes
 import com.evcalex.testcard.core.db.exec
 import com.evcalex.testcard.core.db.query
@@ -77,8 +78,14 @@ private suspend fun flush(db: Db, rows: List<Pending>) = db.transaction { connec
 /** Every channel of a source with what the matcher needs, for [importEpg] with `optimise`. */
 private suspend fun matchableChannels(db: Db, sourceId: String): List<MatchableChannel> = db.read { connection ->
     val out = ArrayList<MatchableChannel>()
-    connection.query("SELECT id, raw_name, country, tvg_id FROM channels WHERE source_id = ?", sourceId) {
-        out.add(MatchableChannel(it.getText(0), it.getText(1), if (it.isNull(2)) null else it.getText(2), if (it.isNull(3)) null else it.getText(3)))
+    connection.query(
+        "SELECT c.id, c.raw_name, c.country, c.tvg_id, cat.country FROM channels c LEFT JOIN categories cat ON cat.id = c.category_id WHERE c.source_id = ?",
+        sourceId,
+    ) {
+        val own = if (it.isNull(2)) null else it.getText(2)
+        // The country tells apart a channel's copies in different markets: its own, its category's, or a "UK:" name prefix.
+        val country = channelGuideCountry(own, if (it.isNull(4)) null else it.getText(4), it.getText(1)) ?: own
+        out.add(MatchableChannel(it.getText(0), it.getText(1), country, if (it.isNull(3)) null else it.getText(3)))
     }
     out
 }

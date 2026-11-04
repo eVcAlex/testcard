@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import Database from "better-sqlite3";
 import { migrateDatabase } from "../db/migrateDatabase.js";
 import { browseGuideChannels, listGuideCountries } from "../db/tidyLists.js";
-import { guideListId, guideListLabel, parseGuideListId } from "../epg/guideListLabels.js";
+import { channelGuideCountry, guideCountryFromName, guideCountryOf, guideListId, guideListLabel, parseGuideListId } from "../epg/guideListLabels.js";
 
 function setup() {
   const db = migrateDatabase(new Database(":memory:"));
@@ -73,6 +73,44 @@ describe("TV Guide lists", () => {
     const { db, add } = setup();
     add("off", "t", "Offsource", "UK");
     expect(listGuideCountries(db)).toEqual([]);
+  });
+});
+
+describe("TV Guide countries", () => {
+  it("reads the country from the channel's category when the channel has none", () => {
+    const { db, add } = setup();
+    db.prepare("UPDATE categories SET country = 'UK' WHERE id = 's:c'").run();
+    add("a", "s", "Alpha", null);
+    expect(listGuideCountries(db)).toEqual([{ country: "UK", count: 1 }]);
+  });
+
+  it("reads a 'UK:' prefix of the name, which the stored country does not know", () => {
+    const { db, add } = setup();
+    add("a", "s", "UK: Alpha", null);
+    add("b", "s", "US - Beta", null);
+    add("c", "s", "CA| Gamma", null);
+    expect(listGuideCountries(db).map((c) => c.country).sort()).toEqual(["CA", "UK", "US"]);
+  });
+
+  it("does not make a list of a league or service prefix, and reads GB as UK", () => {
+    const { db, add } = setup();
+    add("a", "s", "NBA: Lakers", null);
+    add("b", "s", "PRIME: Movie Channel", "PRIME");
+    add("c", "s", "Gamma", "GB");
+    add("d", "s", "Delta", "UK");
+    expect(listGuideCountries(db)).toEqual([{ country: "UK", count: 2 }]);
+  });
+
+  it("knows what a country code is, and takes the channel's own before its category's before its name", () => {
+    expect(guideCountryOf("gb")).toBe("UK");
+    expect(guideCountryOf("NHL")).toBeNull();
+    expect(guideCountryOf(null)).toBeNull();
+    expect(guideCountryFromName("US: NBC 5")).toBe("US");
+    expect(guideCountryFromName("4K: Sky Primafila")).toBeNull();
+    expect(guideCountryFromName("TV: Funniest Videos")).toBeNull();
+    expect(channelGuideCountry("CA", "UK", "US: X")).toBe("CA");
+    expect(channelGuideCountry(null, "UK", "US: X")).toBe("UK");
+    expect(channelGuideCountry("NHL", null, "US: X")).toBe("US");
   });
 });
 

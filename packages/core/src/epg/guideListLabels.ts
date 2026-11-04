@@ -12,6 +12,31 @@ const COUNTRY_NAMES: Readonly<Record<string, string>> = {
   CH: "Switzerland", AT: "Austria", GR: "Greece", TR: "Turkey", BR: "Brazil", MX: "Mexico", IN: "India", ZA: "South Africa",
 };
 
+/**
+ * A country code the "TV Guide" lists know, in its one spelling ("GB" is "UK"), or null for anything else: a prefix such as
+ * "NBA", "PRIME" or "VIP" is a league or a service, not a country, and must not become a list of its own.
+ */
+export function guideCountryOf(code: string | null | undefined): string | null {
+  if (code === null || code === undefined) return null;
+  const upper = code.trim().toUpperCase();
+  const known = upper === "GB" ? "UK" : upper;
+  return Object.prototype.hasOwnProperty.call(COUNTRY_NAMES, known) ? known : null;
+}
+
+/** "UK: BBC One", "US - NBC" or "CA| CTV": the country a provider put in front of a channel's name, when it is a known one. */
+export function guideCountryFromName(rawName: string): string | null {
+  const match = /^\s*([A-Za-z]{2,3})\s*[:|\-]\s*/.exec(rawName);
+  return match?.[1] === undefined ? null : guideCountryOf(match[1]);
+}
+
+/**
+ * The country a channel's "TV Guide" list is by: its own parsed one, else its category's ("UK| SPORT"), else a prefix of its
+ * name. Providers write the country in different places, and the stored `channels.country` only knows the `XX|` form.
+ */
+export function channelGuideCountry(channelCountry: string | null, categoryCountry: string | null, rawName: string): string | null {
+  return guideCountryOf(channelCountry) ?? guideCountryOf(categoryCountry) ?? guideCountryFromName(rawName);
+}
+
 /** The flag of a two-letter country code ("UK" is read as GB), or nothing for anything else. */
 function flagOf(country: string): string {
   const code = country.toUpperCase() === "UK" ? "GB" : country.toUpperCase();

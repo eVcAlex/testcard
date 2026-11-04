@@ -203,7 +203,24 @@ class XEpisode(
 
 private fun JsonElement?.obj(): JsonObject? = this as? JsonObject
 
-fun mapCategories(reply: JsonElement, sourceId: String): List<XCategory> = (reply as JsonArray).map { item ->
+/**
+ * A list a panel answered (`reply.ts`): the array it asked for, or an empty list when the panel says "nothing here" with `{}`. Any
+ * other answer is not usable and is said in words a person can act on, with the provider's own words when it gave some. It is never
+ * read as an empty list: an import that took an error for "no channels" would drop what the app has. [what] completes "...for its movies".
+ */
+fun JsonElement.asReplyList(what: String): JsonArray {
+    if (this is JsonArray) return this
+    if (this is JsonObject) {
+        if (isEmpty()) return JsonArray(emptyList())
+        val auth = (this["user_info"] as? JsonObject)?.get("auth") as? JsonPrimitive
+        if (auth != null && (auth.content == "0" || auth.content == "false")) throw IllegalStateException("The provider rejected the login.")
+        val said = listOf("message", "error", "msg", "status", "reason").firstNotNullOfOrNull { key -> (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() } }
+        throw IllegalStateException("The provider sent a reply the app couldn't read for $what${if (said != null) ". It said: \"${said.trim().take(100)}\"" else ""}.")
+    }
+    throw IllegalStateException("The provider sent a reply the app couldn't read for $what.")
+}
+
+fun mapCategories(reply: JsonElement, sourceId: String, what: String = "its channels"): List<XCategory> = reply.asReplyList(what).map { item ->
     val dto = item as JsonObject
     val providerId = dto["category_id"].jsString() ?: ""
     XCategory("$sourceId:$providerId", sourceId, providerId, dto["category_name"].jsString() ?: "")
@@ -278,15 +295,15 @@ fun mapVodDetails(reply: JsonObject): VodDetails {
     return VodDetails(info?.get("plot").nonEmpty(), info?.get("duration_secs").positiveNumber(), reply["movie_data"].obj()?.get("container_extension").nonEmpty())
 }
 
-suspend fun XtreamApi.fetchVodCategories(sourceId: String) = mapCategories(call("get_vod_categories"), sourceId)
+suspend fun XtreamApi.fetchVodCategories(sourceId: String) = mapCategories(call("get_vod_categories"), sourceId, "its movies")
 
 suspend fun XtreamApi.fetchMovies(sourceId: String, category: XCategory): List<XMovie> =
-    (call("get_vod_streams", mapOf("category_id" to category.providerId)) as JsonArray).map { mapMovieDto(it as JsonObject, sourceId, category) }
+    call("get_vod_streams", mapOf("category_id" to category.providerId)).asReplyList("its movies").map { mapMovieDto(it as JsonObject, sourceId, category) }
 
-suspend fun XtreamApi.fetchSeriesCategories(sourceId: String) = mapCategories(call("get_series_categories"), sourceId)
+suspend fun XtreamApi.fetchSeriesCategories(sourceId: String) = mapCategories(call("get_series_categories"), sourceId, "its series")
 
 suspend fun XtreamApi.fetchSeriesList(sourceId: String, category: XCategory): List<XSeries> =
-    (call("get_series", mapOf("category_id" to category.providerId)) as JsonArray).map { mapSeriesDto(it as JsonObject, sourceId, category) }
+    call("get_series", mapOf("category_id" to category.providerId)).asReplyList("its series").map { mapSeriesDto(it as JsonObject, sourceId, category) }
 
 /** `get_series_info`: one API call per series, made lazily. */
 suspend fun XtreamApi.fetchSeriesDetails(series: XSeries): SeriesDetails = mapSeriesDetails(call("get_series_info", mapOf("series_id" to series.providerSeriesId)) as JsonObject, series)

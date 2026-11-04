@@ -1,6 +1,7 @@
 import type { Category, Episode, Movie, Season, Series, Source } from "../types.js";
 import type { CredentialsLookup } from "./client.js";
 import { fetchResponding } from "../fetchResponding.js";
+import { asReplyList } from "./reply.js";
 
 /**
  * VOD/series methods live outside `SourceAdapter` — Xtream-only, so there's no M3U
@@ -166,22 +167,26 @@ export function mapSeriesDetailsDto(dto: XtreamSeriesInfoDTO, series: Series): {
 }
 
 export async function fetchVodCategories(source: Source, getCredentials: CredentialsLookup): Promise<Category[]> {
-  const dtos = await call<XtreamCategoryDTO[]>(source, "get_vod_categories", {}, getCredentials);
+  const reply = await call<unknown>(source, "get_vod_categories", {}, getCredentials);
+  const dtos = asReplyList<XtreamCategoryDTO>(reply, "its movies");
   return dtos.map((dto) => mapCategoryDto(dto, source));
 }
 
 export async function fetchMovies(source: Source, category: Category, getCredentials: CredentialsLookup): Promise<Movie[]> {
-  const dtos = await call<XtreamVodStreamDTO[]>(source, "get_vod_streams", { category_id: category.providerId }, getCredentials);
+  const reply = await call<unknown>(source, "get_vod_streams", { category_id: category.providerId }, getCredentials);
+  const dtos = asReplyList<XtreamVodStreamDTO>(reply, "its movies");
   return dtos.map((dto) => mapMovieDto(dto, source, category));
 }
 
 export async function fetchSeriesCategories(source: Source, getCredentials: CredentialsLookup): Promise<Category[]> {
-  const dtos = await call<XtreamCategoryDTO[]>(source, "get_series_categories", {}, getCredentials);
+  const reply = await call<unknown>(source, "get_series_categories", {}, getCredentials);
+  const dtos = asReplyList<XtreamCategoryDTO>(reply, "its series");
   return dtos.map((dto) => mapCategoryDto(dto, source));
 }
 
 export async function fetchSeriesList(source: Source, category: Category, getCredentials: CredentialsLookup): Promise<Series[]> {
-  const dtos = await call<XtreamSeriesListDTO[]>(source, "get_series", { category_id: category.providerId }, getCredentials);
+  const reply = await call<unknown>(source, "get_series", { category_id: category.providerId }, getCredentials);
+  const dtos = asReplyList<XtreamSeriesListDTO>(reply, "its series");
   return dtos.map((dto) => mapSeriesDto(dto, source, category));
 }
 

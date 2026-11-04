@@ -10,28 +10,33 @@ class GuideCountry(val country: String, val count: Int)
 
 private class Lead(val id: String, val country: String, val name: String)
 
+private class GuideRow(val id: String, val source: String, val country: String?, val categoryCountry: String?, val rawName: String, val name: String)
+
 /**
  * The channels of tidy sources (`sources.epg_optimise`) that really have listings, one per station and country (`tidyLists.ts`):
  * of a station's qualities and of the copies a provider files under other groups, the one to show (HD before an unmarked one, SD,
  * then 4K; the first listed on a tie). The others stay reachable as that channel's feeds. A station is not merged across
- * sources, and a channel without a parsed country is left to the provider's own groups.
+ * sources, and a channel with no known country (its own, its category's, or a "UK:" prefix of its name) is left to the provider's
+ * own groups.
  */
 private fun SQLiteConnection.guideLeads(sourceId: String?): List<Lead> {
     val rows = query(
-        """SELECT c.id, c.source_id AS sourceId, c.country, c.normalised_name AS name
+        """SELECT c.id, c.source_id AS sourceId, c.country, cat.country AS categoryCountry, c.raw_name AS rawName, c.normalised_name AS name
            FROM channels c JOIN sources s ON s.id = c.source_id AND s.epg_optimise = 1
-           WHERE c.country IS NOT NULL AND ${channelShown("c")}${if (sourceId != null) " AND c.source_id = ?" else ""}
+           LEFT JOIN categories cat ON cat.id = c.category_id
+           WHERE ${channelShown("c")}${if (sourceId != null) " AND c.source_id = ?" else ""}
              AND EXISTS (SELECT 1 FROM programmes p WHERE p.channel_id = c.id)
            ORDER BY c.rowid""",
         *listOfNotNull(sourceId).toTypedArray(),
-    ) { arrayOf(it.getText(0), it.getText(1), it.getText(2), it.getText(3)) }
+    ) { GuideRow(it.getText(0), it.getText(1), it.textOrNull(2), it.textOrNull(3), it.getText(4), it.getText(5)) }
     class Held(val lead: Lead, val rank: Int)
     val best = LinkedHashMap<String, Held>()
-    for ((id, source, country, name) in rows) {
-        val key = "$source\u0000$country\u0000${sameChannelKey(name)}"
-        val rank = fallbackRank(name)
+    for (row in rows) {
+        val country = channelGuideCountry(row.country, row.categoryCountry, row.rawName) ?: continue
+        val key = "${row.source}\u0000$country\u0000${sameChannelKey(row.name)}"
+        val rank = fallbackRank(row.name)
         val held = best[key]
-        if (held == null || rank < held.rank) best[key] = Held(Lead(id, country, name), rank)
+        if (held == null || rank < held.rank) best[key] = Held(Lead(row.id, country, row.name), rank)
     }
     val collator = java.text.Collator.getInstance()
     return best.values.map { it.lead }.sortedWith { a, b -> collator.compare(a.name, b.name) }
@@ -60,6 +65,29 @@ private val COUNTRY_NAMES = mapOf(
     "NO" to "Norway", "DK" to "Denmark", "FI" to "Finland", "BE" to "Belgium", "CH" to "Switzerland", "AT" to "Austria", "GR" to "Greece",
     "TR" to "Turkey", "BR" to "Brazil", "MX" to "Mexico", "IN" to "India", "ZA" to "South Africa",
 )
+
+private val NAME_COUNTRY = Regex("^[\\s]*([A-Za-z]{2,3})[\\s]*[:|\\-][\\s]*")
+
+/**
+ * A country code the "TV Guide" lists know, in its one spelling ("GB" is "UK"), or null for anything else: a prefix such as "NBA",
+ * "PRIME" or "VIP" is a league or a service, not a country, and must not become a list of its own (`guideCountryOf`).
+ */
+fun guideCountryOf(code: String?): String? {
+    if (code == null) return null
+    val upper = code.trim().uppercase(Locale.ROOT)
+    val known = if (upper == "GB") "UK" else upper
+    return if (known in COUNTRY_NAMES) known else null
+}
+
+/** "UK: BBC One", "US - NBC" or "CA| CTV": the country a provider put in front of a channel's name, when it is a known one. */
+fun guideCountryFromName(rawName: String): String? = NAME_COUNTRY.find(rawName)?.groupValues?.get(1)?.let(::guideCountryOf)
+
+/**
+ * The country a channel's "TV Guide" list is by: its own parsed one, else its category's ("UK| SPORT"), else a prefix of its name.
+ * Providers write the country in different places, and the stored `channels.country` only knows the `XX|` form.
+ */
+fun channelGuideCountry(channelCountry: String?, categoryCountry: String?, rawName: String): String? =
+    guideCountryOf(channelCountry) ?: guideCountryOf(categoryCountry) ?: guideCountryFromName(rawName)
 
 /** The flag of a two-letter country code ("UK" is read as GB), or nothing for anything else. */
 private fun flagOf(country: String): String {

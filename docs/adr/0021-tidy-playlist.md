@@ -22,8 +22,12 @@ placeholders) are dropped; placeholder guide ids (`dummy-...`) stand in for chan
    groups stay in the rail underneath.
 2. **"TV Guide" lists.** For a source with the switch on (`sources.epg_optimise`, now labelled "Tidy playlist and improve TV guide"; no
    new column), the Live TV rail gets one list per country: the channels that really have listings (programmes), one per station
-   (`sameChannelKey`) and country, the best quality first (`fallbackRank`), by name. A station is not merged across sources; a channel
-   with no parsed country is left to the provider's groups. The other copies stay reachable as that channel's feeds (ADR 0015).
+   (`sameChannelKey`) and country, the best quality first (`fallbackRank`), by name. A station is not merged across sources.
+   The country is the channel's own parsed one (`XX|`), else its category's ("UK| SPORT"), else a prefix of its name ("UK: BBC One",
+   "US - NBC"), and only a known country code counts (`guideCountryOf`): "NBA", "PRIME" or "VIP" prefixes are leagues and services,
+   not lists. A channel with no known country is left to the provider's groups. The stored `channels.country` is not widened,
+   because it feeds channel ids (and so Favourites); the Strong provider writes "UK: ..." in channel names, which it never read.
+   The guide matcher is given the same country, so a channel's copies in other markets are told apart. The other copies stay reachable as that channel's feeds (ADR 0015).
    `listGuideCountries` and `browseGuideChannels` (`db/tidyLists.ts`, `core/db/TidyLists.kt`); the rail id is `guide:<country>`, or
    `guide:<country>@<source>` inside one source's section.
 3. **Placeholders are not listings.** Guide channels called `dummy-...` only stand in for channels with no real listings
@@ -41,4 +45,5 @@ placeholders) are dropped; placeholder guide ids (`dummy-...`) stand in for chan
   that lists provider spellings (the community `epg6` guide does) links far more than the provider's own.
 - Not yet built: merging categories that mean the same thing (24/7, network groups), friendlier names and logos from the guide,
   hiding "No event" placeholder channels, stepping through a station's copies by hand, and syncing the switch between devices.
-- The country is the one parsed from the provider's name prefix (`UK|`), so a provider with no prefixes gets no country lists.
+- A provider that writes the country nowhere (no category prefix, no name prefix) gets no country lists. A big country's list can be
+  large (about 1,300 US channels for Strong, mostly local affiliates); grouping them by network is the next stage.

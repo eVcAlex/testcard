@@ -2,6 +2,9 @@ package com.evcalex.testcard.core
 
 import com.evcalex.testcard.core.db.Db
 import com.evcalex.testcard.core.db.browseGuideChannels
+import com.evcalex.testcard.core.db.channelGuideCountry
+import com.evcalex.testcard.core.db.guideCountryFromName
+import com.evcalex.testcard.core.db.guideCountryOf
 import com.evcalex.testcard.core.db.guideListId
 import com.evcalex.testcard.core.db.guideListLabel
 import com.evcalex.testcard.core.db.listGuideCountries
@@ -80,6 +83,31 @@ class TidyListsTest {
         val db = setup()
         db.add("off", "t", "Offsource", "UK")
         assertEquals(emptyList<Pair<String, Int>>(), db.countries())
+    }
+
+    @Test fun `reads the country from the channel's category when the channel has none`() {
+        val db = setup()
+        runBlocking { db.write { it.run("UPDATE categories SET country = 'UK' WHERE id = 's:c'") } }
+        db.add("a", "s", "Alpha", null)
+        assertEquals(listOf("UK" to 1), db.countries())
+    }
+
+    @Test fun `reads a UK colon prefix of the name, which the stored country does not know`() {
+        val db = setup()
+        db.add("a", "s", "UK: Alpha", null); db.add("b", "s", "US - Beta", null); db.add("c", "s", "CA| Gamma", null)
+        assertEquals(listOf("CA", "UK", "US"), db.countries().map { it.first }.sorted())
+    }
+
+    @Test fun `does not make a list of a league or service prefix, and reads GB as UK`() {
+        val db = setup()
+        db.add("a", "s", "NBA: Lakers", null); db.add("b", "s", "PRIME: Movie Channel", "PRIME"); db.add("c", "s", "Gamma", "GB"); db.add("d", "s", "Delta", "UK")
+        assertEquals(listOf("UK" to 2), db.countries())
+    }
+
+    @Test fun `knows what a country code is, and takes the channel's own before its category's before its name`() {
+        assertEquals("UK", guideCountryOf("gb")); assertNull(guideCountryOf("NHL")); assertNull(guideCountryOf(null))
+        assertEquals("US", guideCountryFromName("US: NBC 5")); assertNull(guideCountryFromName("4K: Sky Primafila")); assertNull(guideCountryFromName("TV: Funniest Videos"))
+        assertEquals("CA", channelGuideCountry("CA", "UK", "US: X")); assertEquals("UK", channelGuideCountry(null, "UK", "US: X")); assertEquals("US", channelGuideCountry("NHL", null, "US: X"))
     }
 
     @Test fun `names a list by flag and country`() {
