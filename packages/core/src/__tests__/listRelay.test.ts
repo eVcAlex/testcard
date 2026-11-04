@@ -69,4 +69,12 @@ describe("fetchResponding with the list relay", () => {
     await expect(fetchResponding("http://provider.test/a", { method: "POST" })).rejects.toThrow("fetch failed");
     expect(relay).not.toHaveBeenCalled();
   });
+
+  it("notes why the relay failed on the direct error, without the address", async () => {
+    vi.stubGlobal("fetch", blocked());
+    setListRelay(async () => new Response(JSON.stringify({ error: "could not reach the provider", detail: "http://p.test/get.php?password=secret" }), { status: 502 }));
+    const error = await fetchResponding("http://p.test/get.php?password=secret").catch((e: Error) => e);
+    expect((error as Error).message).toBe("fetch failed (relay: HTTP 502, could not reach the provider)");
+    expect((error as Error).message).not.toContain("secret");
+  });
 });

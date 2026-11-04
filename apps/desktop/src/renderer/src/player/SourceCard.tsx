@@ -1,3 +1,4 @@
+import { explainFailure } from "@testcard/core/src/source/explainFailure.js";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "../components/ConfirmDialog.js";
@@ -33,7 +34,7 @@ export function SourceCard({
   // Parts of a refresh that failed (movies, series, guide) while the rest worked: they arrive as events, and a refresh that
   // still succeeds must not wipe them, or a source with no films or no guide looks fine and says nothing.
   const [problems, setProblems] = useState<Record<string, string>>({});
-  const noteProblem = (part: string, message: string) => setProblems((prev) => ({ ...prev, [part]: message }));
+  const noteProblem = (part: string, message: string) => setProblems((prev) => ({ ...prev, [part]: explainFailure(message, source.name) }));
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,7 +92,7 @@ export function SourceCard({
       void queryClient.invalidateQueries({ queryKey: ["sources"] });
     },
     onError: (error: unknown) => {
-      setRefreshMsg(error instanceof Error ? error.message : "Refresh failed.");
+      setRefreshMsg(error instanceof Error ? explainFailure(error.message, source.name) : "Refresh failed.");
     },
   });
 
@@ -165,7 +166,7 @@ export function SourceCard({
             </p>
           ))}
         {!importing && refreshMsg === null && source.refreshError !== undefined && (
-          <p className="msg msg--error">{source.refreshError}</p>
+          <p className="msg msg--error">{explainFailure(source.refreshError, source.name)}</p>
         )}
         {remove.isError && <p className="msg msg--error">{(remove.error as Error).message}</p>}
       </div>
