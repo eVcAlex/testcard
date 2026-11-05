@@ -17,41 +17,6 @@ export type StreamProbe =
  */
 export const STREAM_USER_AGENT = "VLC/3.0.21 LibVLC/3.0.21";
 
-/**
- * Other ways into the same live channel when the first address is turned away. Many providers (and the Cloudflare rules in front of
- * them) refuse a raw `.ts` over plain http but serve the same channel as HLS (`.m3u8`) or over https on 443. Listed in the order to
- * try; only the ones that differ from `url`, and only the ones that are safe to guess: https is tried on its default port only.
- */
-export type StreamRoute = "m3u8" | "https" | "https-m3u8";
-
-const LIVE_TS = /^(\/live\/[^/]+\/[^/]+\/[^/]+)\.ts$/;
-
-export function applyStreamRoute(url: string, route: StreamRoute): string {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return url;
-  }
-  const hls = route === "m3u8" || route === "https-m3u8";
-  const secure = route === "https" || route === "https-m3u8";
-  if (hls) {
-    const match = LIVE_TS.exec(parsed.pathname);
-    if (match === null) return url;
-    parsed.pathname = `${match[1]}.m3u8`;
-  }
-  if (secure) {
-    if (parsed.protocol !== "http:" || parsed.port !== "") return url;
-    parsed.protocol = "https:";
-  }
-  return parsed.toString();
-}
-
-export function streamRoutes(url: string): { readonly route: StreamRoute; readonly url: string }[] {
-  const routes: StreamRoute[] = ["m3u8", "https", "https-m3u8"];
-  return routes.map((route) => ({ route, url: applyStreamRoute(url, route) })).filter((r) => r.url !== url);
-}
-
 export interface ProbeOptions {
   readonly fetchImpl?: typeof fetch;
   /** How long the provider gets to start answering. */
