@@ -81,6 +81,7 @@ export function PlayerView({
             onRetry={onRetry}
             onBack={onBack}
             onOpenInVlc={() => window.testcard.playback.openInVlc()}
+            onDiagnose={() => window.testcard.playback.diagnose()}
             vlcAvailable={vlcAvailable}
           />
         )}

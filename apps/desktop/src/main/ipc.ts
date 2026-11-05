@@ -949,6 +949,9 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
       async openInVlc() {
         await playback.openInVlc();
       },
+      async diagnose() {
+        return playback.diagnoseStream();
+      },
       async vlcAvailable() {
         return isVlcAvailable();
       },

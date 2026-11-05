@@ -19,6 +19,7 @@ export function NoSignal({
   onRetry,
   onBack,
   onOpenInVlc,
+  onDiagnose,
   vlcAvailable,
 }: {
   channelName: string;
@@ -27,6 +28,8 @@ export function NoSignal({
   /** Leaves the player: the dead plate hides the transport controls, so it needs its own way out (Esc does the same). */
   onBack: () => void;
   onOpenInVlc: () => Promise<void>;
+  /** Tests the stream and says why it will not play. */
+  onDiagnose: () => Promise<string>;
   vlcAvailable: boolean;
 }) {
   const [vlcBusy, setVlcBusy] = useState(false);
@@ -36,6 +39,20 @@ export function NoSignal({
     setVlcBusy(false);
     setVlcError(null);
   }, [channelName]);
+
+  // Works out why while the plate is showing, so nobody has to read a log: what the provider or the network does with the stream.
+  const [diagnosis, setDiagnosis] = useState<string | null>(null);
+  useEffect(() => {
+    let current = true;
+    setDiagnosis(null);
+    onDiagnose()
+      .then((text) => current && setDiagnosis(text))
+      .catch(() => current && setDiagnosis("Couldn’t check the stream from this PC."));
+    return () => {
+      current = false;
+    };
+    // Once per failure: a retry that fails again mounts this plate afresh.
+  }, []);
 
   return (
     <div className="pw-nosignal">
@@ -51,6 +68,7 @@ export function NoSignal({
           ? explainFailure(message)
           : `${channelName ? channelName : "This channel"} sent no video within 10 seconds. Provider channels drop in and out. It may work on a retry, or another player may handle the stream.`}
       </p>
+      <p className="pw-nosignal-detail">{diagnosis === null ? "Checking the stream…" : diagnosis}</p>
       <div className="pw-nosignal-actions">
         <button type="button" className="btn btn--primary" onClick={onRetry}>
           Try again

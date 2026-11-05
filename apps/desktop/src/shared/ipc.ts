@@ -377,6 +377,8 @@ export interface TestcardApi {
     setAudioTrack(trackId: number): Promise<void>;
     /** Opens the current channel's stream in VLC (for a channel mpv couldn't play). */
     openInVlc(): Promise<void>;
+    /** Why the current stream will not play, in words (fetches its first bytes and says what came back). */
+    diagnose(): Promise<string>;
     /** Whether an "Open in VLC" action can succeed on this machine. */
     vlcAvailable(): Promise<boolean>;
   };

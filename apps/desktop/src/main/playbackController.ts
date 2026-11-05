@@ -30,6 +30,7 @@ import { resolveMpvPath } from "./mpv/mpvPath.js";
 import { VideoRegionWindow } from "./videoRegionWindow.js";
 import { OverlayWindow } from "./overlayWindow.js";
 import { openInVlc as spawnVlc } from "./externalPlayer.js";
+import { describeStreamProbe, probeStream } from "@testcard/core";
 
 interface Adapters {
   readonly xtream: SourceAdapter;
@@ -308,6 +309,17 @@ export class PlaybackController {
 
   async setAudioTrack(trackId: number): Promise<void> {
     await this.mpv?.setAudioTrack(trackId);
+  }
+
+  /**
+   * Why the current stream will not play, in words: fetches its first bytes directly from this app (the stack the catalogue calls
+   * use) and says what came back. A stream that answers here but fails in mpv is a player problem; a refusal, a cut or a silence is
+   * the provider or the network. The address (it carries the login) never leaves this method.
+   */
+  async diagnoseStream(): Promise<string> {
+    if (!this.current) return "No channel is selected.";
+    const who = this.current.kind === "channel" ? this.current.target.source.name : undefined;
+    return describeStreamProbe(await probeStream(this.current.streamUrl), who);
   }
 
   async openInVlc(): Promise<void> {

@@ -99,6 +99,7 @@ const api: TestcardApi = {
     setSubtitleTrack: bind("playback.setSubtitleTrack"),
     setAudioTrack: bind("playback.setAudioTrack"),
     openInVlc: bind("playback.openInVlc"),
+    diagnose: bind("playback.diagnose"),
     vlcAvailable: bind("playback.vlcAvailable"),
   },
   view: {
