@@ -30,7 +30,7 @@ import { resolveMpvPath } from "./mpv/mpvPath.js";
 import { VideoRegionWindow } from "./videoRegionWindow.js";
 import { OverlayWindow } from "./overlayWindow.js";
 import { openInVlc as spawnVlc } from "./externalPlayer.js";
-import { describeStreamProbe, probeStream } from "@testcard/core";
+import { applyStreamRoute, describeStreamProbe, probeStream, streamRoutes, type StreamRoute } from "@testcard/core";
 
 interface Adapters {
   readonly xtream: SourceAdapter;
@@ -143,7 +143,11 @@ export class PlaybackController {
     if (!target) throw new Error("That channel could not be found.");
 
     const adapter = target.source.kind === "xtream" ? this.adapters.xtream : this.adapters.m3u;
-    const streamUrl = await adapter.buildStreamUrl(target.source, target.variant);
+    let streamUrl = await adapter.buildStreamUrl(target.source, target.variant);
+    // A provider that turned the first address away and let another in (see `tryOtherRoutes`) is asked that way first from then on.
+    const route = this.preferredRoute.get(target.source.id);
+    if (route !== undefined) streamUrl = applyStreamRoute(streamUrl, route);
+    this.alternativesTried = false;
     this.current = { kind: "channel", target, streamUrl };
     this.preview = preview;
     this.tracks = [];
@@ -457,8 +461,35 @@ export class PlaybackController {
     }
   }
 
+  /** Per source, the way into its channels that worked after the first one failed (HLS, https), for this run of the app. */
+  private readonly preferredRoute = new Map<string, StreamRoute>();
+  private alternativesTried = false;
+
+  /**
+   * A live channel failed to start: before calling it dead, try the other ways into it (HLS, https), one at a time (an account may allow
+   * a single connection), and play the first that sends data. Falls back to the original failure if none does.
+   */
+  private async tryOtherRoutes(current: Extract<CurrentPlayback, { kind: "channel" }>, failure: MpvEvent): Promise<void> {
+    for (const alternative of streamRoutes(current.streamUrl)) {
+      const probe = await probeStream(alternative.url, { responseMs: 6_000, dataMs: 4_000 });
+      if (this.current !== current) return; // the viewer moved on while this was being tried
+      if (probe.kind !== "data") continue;
+      this.preferredRoute.set(current.target.source.id, alternative.route);
+      this.current = { ...current, streamUrl: alternative.url };
+      await this.mpv?.play(alternative.url);
+      return;
+    }
+    this.onMpvEvent(failure);
+  }
+
   private onMpvEvent(event: MpvEvent): void {
     const current = this.current;
+
+    if ((event.type === "timeout" || event.type === "error") && current?.kind === "channel" && !this.preview && !this.alternativesTried) {
+      this.alternativesTried = true;
+      void this.tryOtherRoutes(current, event);
+      return;
+    }
 
     switch (event.type) {
       case "playing": {
