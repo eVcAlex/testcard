@@ -2,7 +2,6 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { join } from "node:path";
 import { app } from "electron";
-import { STREAM_USER_AGENT } from "@testcard/core";
 import { MpvIpcClient } from "./mpvIpc.js";
 
 /** How long to wait for the first video frame before treating a stream as dead. See ADR 0001 / CONTEXT.md "Dead channel". */
@@ -66,7 +65,6 @@ export class MpvPlayer extends EventEmitter<{ event: [MpvEvent] }> {
         `--wid=${wid}`,
         `--input-ipc-server=${pipeName}`,
         "--no-config", // a stray global mpv.conf must not change how the app behaves
-        `--user-agent=${STREAM_USER_AGENT}`, // see STREAM_USER_AGENT: some providers turn away mpv's own
         "--no-osc",
         "--no-input-default-bindings",
         "--idle=yes",
