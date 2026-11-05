@@ -110,26 +110,6 @@ function reasonOf(error: unknown): "reset" | "refused" | "dns" | "tls" | "other"
   return "other";
 }
 
-/**
- * What the sync Worker's own address gets from a provider's video server, read from the list relay's answer for a stream address
- * (the relay refuses video itself, answering 415 once the provider has started to send it, and passes the provider's own status
- * through otherwise). Tells whether relaying video through the Worker could get past a provider that refuses this PC. `null`: the
- * relay could not be asked (signed out, switched off, over its limit), so there is nothing to say.
- */
-export function describeRelayedStream(status: number, error: string | null, who = "the provider"): string | null {
-  if (status === 415 && /video or audio stream/i.test(error ?? "")) {
-    return `Through your account's relay (Cloudflare), ${who} accepted the connection and started sending video. So relaying video through the Worker could get past the block.`;
-  }
-  if (status >= 200 && status < 300) {
-    return `Through your account's relay (Cloudflare), ${who} answered normally. So relaying through the Worker could get past the block.`;
-  }
-  if (error !== null && /unauthori[sz]ed|not found|daily limit/i.test(error)) return null;
-  if (status === 502 && /could not reach/i.test(error ?? "")) {
-    return `Through your account's relay (Cloudflare), ${who} could not be reached either.`;
-  }
-  return `Through your account's relay (Cloudflare), ${who} also refused (HTTP ${status}), so relaying video through the Worker would not get past it.`;
-}
-
 /** The probe in words a viewer can act on. `who` names the provider. Never includes the address. */
 export function describeStreamProbe(probe: StreamProbe, who = "the provider"): string {
   switch (probe.kind) {

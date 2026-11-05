@@ -30,7 +30,7 @@ import { resolveMpvPath } from "./mpv/mpvPath.js";
 import { VideoRegionWindow } from "./videoRegionWindow.js";
 import { OverlayWindow } from "./overlayWindow.js";
 import { openInVlc as spawnVlc } from "./externalPlayer.js";
-import { applyStreamRoute, describeRelayedStream, describeStreamProbe, getListRelay, probeStream, streamRoutes, type StreamRoute } from "@testcard/core";
+import { applyStreamRoute, describeStreamProbe, probeStream, streamRoutes, type StreamRoute } from "@testcard/core";
 
 interface Adapters {
   readonly xtream: SourceAdapter;
@@ -323,38 +323,7 @@ export class PlaybackController {
   async diagnoseStream(): Promise<string> {
     if (!this.current) return "No channel is selected.";
     const who = this.current.kind === "channel" ? this.current.target.source.name : undefined;
-    const direct = describeStreamProbe(await probeStream(this.current.streamUrl), who);
-    const viaWorker = await this.askRelayAboutStream(this.current.streamUrl, who);
-    return viaWorker === null ? direct : `${direct} ${viaWorker}`;
-  }
-
-  /**
-   * Asks the sync Worker's list relay for the stream address, to learn whether the provider lets the Worker's address in when it turns this
-   * PC away. The relay never carries the video (it refuses it once the provider starts sending it), so this moves a few bytes at most.
-   */
-  private async askRelayAboutStream(streamUrl: string, who: string | undefined): Promise<string | null> {
-    const relay = getListRelay();
-    if (relay === undefined) return null;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15_000);
-    try {
-      const response = await relay(streamUrl, controller.signal);
-      if (response === undefined) return null;
-      const text = await response.text().catch(() => "");
-      let error: string | null = null;
-      try {
-        const parsed = JSON.parse(text.slice(0, 500)) as { error?: unknown };
-        if (typeof parsed.error === "string") error = parsed.error;
-      } catch {
-        /* not JSON: the provider's own page */
-      }
-      return describeRelayedStream(response.status, error, who);
-    } catch {
-      return null;
-    } finally {
-      clearTimeout(timer);
-      controller.abort();
-    }
+    return describeStreamProbe(await probeStream(this.current.streamUrl), who);
   }
 
   async openInVlc(): Promise<void> {
