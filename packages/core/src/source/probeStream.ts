@@ -10,6 +10,13 @@ export type StreamProbe =
   | { readonly kind: "silent"; readonly status: number }
   | { readonly kind: "unreachable"; readonly reason: "timeout" | "reset" | "refused" | "dns" | "tls" | "other" };
 
+/**
+ * How the app introduces itself to a provider's video server, for the player and for `probeStream` alike. IPTV providers (and the
+ * Cloudflare rules in front of many of them) let VLC through and often turn away an unknown or generic client, which showed as
+ * 403s and 5xx for streams that play fine elsewhere.
+ */
+export const STREAM_USER_AGENT = "VLC/3.0.21 LibVLC/3.0.21";
+
 export interface ProbeOptions {
   readonly fetchImpl?: typeof fetch;
   /** How long the provider gets to start answering. */
@@ -27,7 +34,7 @@ export async function probeStream(url: string, options: ProbeOptions = {}): Prom
   try {
     let response: Response;
     try {
-      response = await fetchImpl(url, { method: "GET", signal: controller.signal, headers: { "user-agent": "Testcard", accept: "*/*" } });
+      response = await fetchImpl(url, { method: "GET", signal: controller.signal, headers: { "user-agent": STREAM_USER_AGENT, accept: "*/*" } });
     } catch (error) {
       return { kind: "unreachable", reason: controller.signal.aborted ? "timeout" : reasonOf(error) };
     }
