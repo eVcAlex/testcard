@@ -7,6 +7,7 @@ export * from "./normalise/displayName.js";
 export * from "./source/fetchResponding.js";
 export * from "./source/explainFailure.js";
 export * from "./source/probeStream.js";
+export { getListRelay } from "./source/listRelay.js";
 export * from "./source/m3u/parseM3U.js";
 export * from "./source/m3u/adapter.js";
 export * from "./source/xtream/detect.js";

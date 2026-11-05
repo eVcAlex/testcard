@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyStreamRoute, describeStreamProbe, probeStream, streamRoutes } from "../source/probeStream.js";
+import { applyStreamRoute, describeRelayedStream, describeStreamProbe, probeStream, streamRoutes } from "../source/probeStream.js";
 
 const streaming = (chunk: number) =>
   (async () => new Response(new ReadableStream({ start: (c) => c.enqueue(new Uint8Array(chunk).fill(0x47)) }), { status: 200, headers: { "content-type": "video/mp2t" } })) as unknown as typeof fetch;
@@ -61,5 +61,24 @@ describe("streamRoutes", () => {
   it("applies one route to an address", () => {
     expect(applyStreamRoute("http://p.test/live/u/pw/42.ts", "https-m3u8")).toBe("https://p.test/live/u/pw/42.m3u8");
     expect(applyStreamRoute("http://p.test/live/u/pw/42.m3u8", "m3u8")).toBe("http://p.test/live/u/pw/42.m3u8");
+  });
+});
+
+describe("describeRelayedStream", () => {
+  it("says the Worker could get through when the provider started sending video", () => {
+    expect(describeRelayedStream(415, "that is a video or audio stream, not a list", "TREX")).toContain("TREX accepted the connection and started sending video");
+    expect(describeRelayedStream(200, null)).toContain("answered normally");
+  });
+
+  it("says when the provider refuses the Worker too", () => {
+    expect(describeRelayedStream(403, null, "TREX")).toContain("also refused (HTTP 403)");
+    expect(describeRelayedStream(511, null)).toContain("would not get past it");
+    expect(describeRelayedStream(502, "could not reach the provider")).toContain("could not be reached either");
+  });
+
+  it("stays silent when the relay itself could not be used", () => {
+    expect(describeRelayedStream(401, "unauthorized")).toBeNull();
+    expect(describeRelayedStream(404, "not found")).toBeNull();
+    expect(describeRelayedStream(429, "daily limit reached")).toBeNull();
   });
 });
