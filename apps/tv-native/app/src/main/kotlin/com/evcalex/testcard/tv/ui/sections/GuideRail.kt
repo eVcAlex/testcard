@@ -49,7 +49,7 @@ internal class GuideList(val id: String, val label: String, val count: Int, val 
 internal fun GuideList.isAll() = id == "all" || id.startsWith("all:")
 
 /** Whether the list is built from several provider categories or from the guide (a "TV Guide" or tidy list): there is no one category to pin or hide. */
-internal fun GuideList.isDerived() = id.startsWith("guide:") || id.startsWith("tidy:")
+internal fun GuideList.isDerived() = id.startsWith("guide:") || id.startsWith("tidy:") || id.startsWith("league:") || id.startsWith("local:")
 
 /**
  * The lists the rail draws: those in a collapsed section are left out, except [current], which stays so the remote has

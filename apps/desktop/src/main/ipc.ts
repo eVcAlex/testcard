@@ -24,6 +24,8 @@ import {
   browseGuideChannels,
   listTidyCategories,
   browseTidyCategory,
+  listFacetLists,
+  browseFacetList,
   listFavouriteChannels,
   listFavouriteMovies,
   listFavouriteSeries,
@@ -815,6 +817,14 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
       async tidyCategories(sourceId) {
         return listTidyCategories(db, sourceId);
+      },
+
+      async facetLists(sourceId) {
+        return listFacetLists(db, sourceId);
+      },
+
+      async browseFacet(id, sourceId) {
+        return browseFacetList(db, { id, ...(sourceId !== undefined ? { sourceId } : {}) });
       },
 
       async browseTidy(id) {

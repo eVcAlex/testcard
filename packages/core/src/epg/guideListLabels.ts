@@ -87,6 +87,30 @@ export interface TidyCategory {
   readonly count: number;
 }
 
+/** A list the rail builds from what channel names say: the channels of one league, or one network's local stations. */
+export interface FacetList {
+  /** `league:<key>` or `local:<key>`, with `@<source>` inside one source's section (`facetListId`). */
+  readonly id: string;
+  readonly label: string;
+  readonly kind: "league" | "local";
+  /** Stations in the list: each is counted once, whatever quality or category it was filed under. */
+  readonly count: number;
+}
+
+/** The rail sections these lists sit in. */
+export const SPORTS_SECTION = "Sports";
+export const LOCAL_SECTION = "Local stations";
+
+/** The id of a league or local-stations list in the Live TV rail. */
+export const facetListId = (kind: "league" | "local", key: string, sourceId?: string): string => `${kind}:${key}${sourceId !== undefined ? `@${sourceId}` : ""}`;
+
+/** Reads a league or local-stations list's id back, or null when it is not one. */
+export function parseFacetListId(id: string): { kind: "league" | "local"; key: string; sourceId?: string } | null {
+  const match = /^(league|local):([^@]+)(?:@(.+))?$/s.exec(id);
+  if (match === null) return null;
+  return { kind: match[1] as "league" | "local", key: match[2]!, ...(match[3] !== undefined ? { sourceId: match[3] } : {}) };
+}
+
 const TIDY_PREFIX = "tidy:";
 const TIDY_SEPARATOR = "\u001f";
 

@@ -62,6 +62,8 @@ const api: TestcardApi = {
     browseGuide: bind("channels.browseGuide"),
     tidyCategories: bind("channels.tidyCategories"),
     browseTidy: bind("channels.browseTidy"),
+    facetLists: bind("channels.facetLists"),
+    browseFacet: bind("channels.browseFacet"),
     toggleFavourite: bind("channels.toggleFavourite"),
   },
   epg: {

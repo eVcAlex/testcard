@@ -1,4 +1,4 @@
-import { GUIDE_SECTION, guideCountryHeading, guideListId, guideListLabel, type GuideCountry, type TidyCategory } from "./guideListLabels.js";
+import { GUIDE_SECTION, LOCAL_SECTION, SPORTS_SECTION, guideCountryHeading, guideListId, guideListLabel, type FacetList, type GuideCountry, type TidyCategory } from "./guideListLabels.js";
 
 /** One programme in a guide row, times in epoch ms. */
 export interface Airing {
@@ -56,6 +56,8 @@ export interface RailInput {
   readonly guideCountries?: Readonly<Record<string, readonly GuideCountry[]>>;
   /** The tidy lists of tidied sources (`listTidyCategories`), keyed like `categories`. */
   readonly tidyCategories?: Readonly<Record<string, readonly TidyCategory[]>>;
+  /** The league and local-station lists of tidied sources (`listFacetLists`), keyed like `categories`. */
+  readonly facetLists?: Readonly<Record<string, readonly FacetList[]>>;
 }
 
 /**
@@ -86,9 +88,13 @@ export function railLists(input: RailInput): RailList[] {
   // TV Guide, then a section per country (and its events), then the provider's own groups, so nothing the provider lists is lost.
   const guide = guideLists(input.sourceId ?? "", GUIDE_SECTION);
   out.push(...guide);
+  // Then what channel names say: the leagues, then each network's local stations.
+  const facets = (input.facetLists?.[input.sourceId ?? ""] ?? []).filter((f) => f.count > 0);
+  for (const f of facets.filter((f) => f.kind === "league")) out.push({ id: f.id, label: f.label, count: f.count, section: SPORTS_SECTION });
+  for (const f of facets.filter((f) => f.kind === "local")) out.push({ id: f.id, label: f.label, count: f.count, section: LOCAL_SECTION });
   const tidy = (input.tidyCategories?.[input.sourceId ?? ""] ?? []).filter((c) => c.count > 0);
   for (const c of tidy) out.push({ id: c.id, label: c.label, count: c.count, section: c.ppv ? `${guideCountryHeading(c.country)} · Events` : guideCountryHeading(c.country) });
-  const rest = tidy.length > 0 ? "Provider groups" : guide.length > 0 ? "Categories" : undefined;
+  const rest = tidy.length > 0 || facets.length > 0 ? "Provider groups" : guide.length > 0 ? "Categories" : undefined;
   for (const c of all) if (c.count > 0) out.push({ id: c.id, label: c.label, count: c.count, ...(rest !== undefined ? { section: rest } : {}) });
   out.push({ id: "all", label: "All channels", count: all.reduce((n, c) => n + c.count, 0), ...(rest !== undefined ? { section: rest } : {}) });
   return out;

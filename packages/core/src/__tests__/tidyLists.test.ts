@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import Database from "better-sqlite3";
 import { migrateDatabase } from "../db/migrateDatabase.js";
-import { browseGuideChannels, browseTidyCategory, listGuideCountries, listTidyCategories } from "../db/tidyLists.js";
+import { browseFacetList, browseGuideChannels, browseTidyCategory, listFacetLists, listGuideCountries, listTidyCategories } from "../db/tidyLists.js";
 import { classifyCategory, encodeTags } from "../normalise/classifyCategory.js";
 import { parseName } from "../normalise/parseName.js";
+import { channelDisplayName } from "../normalise/displayName.js";
 import { channelGuideCountry, guideCountryFromName, guideCountryHeading, guideCountryOf, guideListId, guideListLabel, parseGuideListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel } from "../epg/guideListLabels.js";
 
 function setup() {
@@ -224,5 +225,74 @@ describe("tidy category names and ids", () => {
     expect(guideCountryHeading(null)).toBe("Other");
     expect(parseTidyCategoryId(tidyCategoryId(["s:1", "s:2"]))).toEqual(["s:1", "s:2"]);
     expect(parseTidyCategoryId("guide:UK")).toBeNull();
+  });
+});
+
+describe("league and local-station lists", () => {
+  function world() {
+    const db = migrateDatabase(new Database(":memory:"));
+    db.prepare("INSERT INTO sources (id, kind, name, base_url, created_at, epg_optimise) VALUES ('s', 'xtream', 's', 'http://x', 1, 1)").run();
+    db.prepare("INSERT INTO sources (id, kind, name, base_url, created_at, epg_optimise) VALUES ('t', 'xtream', 't', 'http://x', 1, 0)").run();
+    const category = db.prepare("INSERT INTO categories (id, source_id, provider_id, raw_name, country, tags) VALUES (?, ?, ?, ?, ?, ?)");
+    const channel = db.prepare("INSERT INTO channels (id, source_id, category_id, normalised_name, raw_name, country, first_seen_at, last_seen_at) VALUES (?, ?, ?, ?, ?, NULL, 1, 1)");
+    let n = 0;
+    const add = (source: string, categoryRaw: string, raws: string[]) => {
+      const id = `${source}:cat${++n}`;
+      category.run(id, source, String(n), categoryRaw, (parseName(categoryRaw) as { country?: string }).country ?? null, encodeTags(classifyCategory(categoryRaw).tags));
+      raws.forEach((raw, at) => channel.run(`${id}:c${at}`, source, id, channelDisplayName(raw), raw));
+      return id;
+    };
+    return { db, add };
+  }
+
+  it("gathers a league's channels from any category, each station once, and leaves out lists of fewer than three", () => {
+    const { db, add } = world();
+    add("s", "US| SPORT", ["US: NFL GAME PASS ᴿᴬᵂ", "US: NFL REDZONE", "US: NFL GAME PASS HD", "US: ESPN"]);
+    add("s", "US| FOX", ["Sunday Night Football [NBC]"]);
+    add("s", "US| NBA PPV", ["US: NBA TV"]);
+    expect(listFacetLists(db).map((f) => [f.id, f.label, f.count])).toEqual([["league:nfl", "🏈 NFL", 3]]);
+    expect(browseFacetList(db, { id: "league:nfl" }).map((c) => c.raw_name)).toEqual(["US: NFL GAME PASS HD", "US: NFL REDZONE", "Sunday Night Football [NBC]"]);
+  });
+
+  it("takes a league from its category's name when the channel's own does not say", () => {
+    const { db, add } = world();
+    add("s", "US| NHL TEAM PPV", ["Boston Bruins", "Toronto Maple Leafs", "Montreal Canadiens"]);
+    expect(listFacetLists(db).map((f) => [f.id, f.count])).toEqual([["league:nhl", 3]]);
+  });
+
+  it("gathers a network's local stations from any category, and not its national services", () => {
+    const { db, add } = world();
+    add("s", "US| NBC", ["US: NBC 5 (WMAQ) CHICAGO", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC SPORTS NETWORK"]);
+    add("s", "US| NEWS", ["NBC [Boston] 1080p", "US: FOX NEWS CHANNEL"]);
+    expect(listFacetLists(db).map((f) => [f.id, f.label, f.count])).toEqual([["local:nbc", "📺 NBC local stations", 3]]);
+    expect(browseFacetList(db, { id: "local:nbc" }).map((c) => c.raw_name)).toEqual(["NBC [Boston] 1080p", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC 5 (WMAQ) CHICAGO"]);
+  });
+
+  it("leaves out placeholders, dividers, and a source that is not tidied, and keeps a station of another country apart", () => {
+    const { db, add } = world();
+    add("s", "US| NHL PPV", ["NHL 01: No Game Today", "##### NHL #####", "US: NHL NETWORK", "US: NHL CENTER ICE"]);
+    add("s", "UK| NHL PPV", ["UK: NHL NETWORK"]);
+    add("t", "US| NHL PPV", ["US: NHL ALTERNATE 1", "US: NHL ALTERNATE 2", "US: NHL ALTERNATE 3"]);
+    expect(listFacetLists(db).map((f) => [f.id, f.count])).toEqual([["league:nhl", 3]]);
+  });
+
+  it("keeps local stations out of the TV Guide list, which is for national channels", () => {
+    const { db } = world();
+    db.prepare("INSERT INTO categories (id, source_id, provider_id, raw_name, country) VALUES ('s:x', 's', 'x', 'US| NEWS', 'US')").run();
+    const channel = db.prepare("INSERT INTO channels (id, source_id, category_id, normalised_name, raw_name, country, first_seen_at, last_seen_at) VALUES (?, 's', 's:x', ?, ?, 'US', 1, 1)");
+    const programme = db.prepare("INSERT INTO programmes (channel_id, title, start_at, end_at) VALUES (?, 'Show', 1, 2)");
+    for (const [id, raw] of [["cnn", "US: CNN"], ["nbc5", "US: NBC 5 (WMAQ) CHICAGO"], ["nhl", "NHL 01: No Game Today"]] as const) { channel.run(id, channelDisplayName(raw), raw); programme.run(id); }
+    expect(browseGuideChannels(db, { country: "US" }).map((c) => c.id)).toEqual(["cnn"]);
+  });
+
+  it("does not list an empty event slot in a country's tidy list", () => {
+    const { db, add } = world();
+    add("s", "US| NHL PPV", ["NHL 01: No Game Today", "US: NHL NETWORK"]);
+    expect(listTidyCategories(db).map((l) => [l.label, l.count])).toEqual([["NHL", 1]]);
+  });
+
+  it("reads nothing from an id that is not a league or local list", () => {
+    const { db } = world();
+    expect(browseFacetList(db, { id: "guide:UK" })).toEqual([]);
   });
 });

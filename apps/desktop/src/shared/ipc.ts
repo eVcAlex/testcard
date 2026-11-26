@@ -15,6 +15,7 @@ import type {
   ChannelCountry,
   GuideCountry,
   TidyCategory,
+  FacetList,
   ChannelRow,
   CountryNode,
   MovieCategoryRow,
@@ -333,6 +334,10 @@ export interface TestcardApi {
     tidyCategories(sourceId?: string): Promise<readonly TidyCategory[]>;
     /** The channels of one tidy list, each station once. */
     browseTidy(id: string): Promise<readonly ChannelRow[]>;
+    /** The league ("NFL") and local-station ("NBC local stations") lists of sources with Tidy playlist on, from what channel names say. */
+    facetLists(sourceId?: string): Promise<readonly FacetList[]>;
+    /** The channels of one league or local-stations list, each station once. */
+    browseFacet(id: string, sourceId?: string): Promise<readonly ChannelRow[]>;
     toggleFavourite(channelId: string): Promise<boolean>;
   };
   epg: {

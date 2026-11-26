@@ -2,7 +2,8 @@ import type Database from "better-sqlite3";
 import { channelShown } from "../sync/hidden.js";
 import { fallbackRank, sameChannelKey } from "../normalise/displayName.js";
 import { CHANNEL_COLUMNS, type ChannelRow } from "./queries.js";
-import { channelGuideCountry, guideCountryOf, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
+import { channelGuideCountry, guideCountryOf, parseFacetListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, facetListId, type FacetList, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
+import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOf, localListLabel, localNetworkOf } from "../epg/tidyKnowledge.js";
 import { decodeTags } from "../normalise/classifyCategory.js";
 import { categoryShown } from "../sync/hidden.js";
 
@@ -33,7 +34,8 @@ function guideLeads(db: Database.Database, sourceId?: string): Lead[] {
   const best = new Map<string, { lead: Lead; rank: number }>();
   for (const row of rows) {
     const country = channelGuideCountry(row.country, row.categoryCountry, row.rawName);
-    if (country === null) continue;
+    // A network's local stations have their own lists, and an event slot with nothing on is not a station.
+    if (country === null || localNetworkOf(row.rawName) !== null || isPlaceholderChannelName(row.rawName)) continue;
     const key = `${row.sourceId}\u0000${country}\u0000${sameChannelKey(row.name)}`;
     const rank = fallbackRank(row.name);
     const held = best.get(key);
@@ -71,6 +73,7 @@ interface TidyRow {
   readonly country: string | null;
   readonly tags: string | null;
   readonly channelId: string;
+  readonly channelRaw: string;
   readonly name: string;
 }
 
@@ -81,7 +84,7 @@ interface TidyRow {
 function tidyRows(db: Database.Database, sourceId?: string, categoryIds?: readonly string[]): TidyRow[] {
   const rows = db
     .prepare(
-      `SELECT cat.id AS categoryId, cat.source_id AS sourceId, cat.raw_name AS rawName, cat.country, cat.tags, c.id AS channelId, c.normalised_name AS name
+      `SELECT cat.id AS categoryId, cat.source_id AS sourceId, cat.raw_name AS rawName, cat.country, cat.tags, c.id AS channelId, c.raw_name AS channelRaw, c.normalised_name AS name
        FROM categories cat
        JOIN sources s ON s.id = cat.source_id AND s.epg_optimise = 1
        JOIN channels c ON c.category_id = cat.id
@@ -93,7 +96,7 @@ function tidyRows(db: Database.Database, sourceId?: string, categoryIds?: readon
   return rows.filter((row) => {
     if (wanted !== null && !wanted.has(row.categoryId)) return false;
     const tags = decodeTags(row.tags);
-    return !tags.includes("junk") && !tags.includes("separator") && !tags.includes("adult");
+    return !tags.includes("junk") && !tags.includes("separator") && !tags.includes("adult") && !isPlaceholderChannelName(row.channelRaw);
   });
 }
 
@@ -136,6 +139,95 @@ export function browseTidyCategory(db: Database.Database, opts: { id: string; li
   const best = new Map<string, { id: string; name: string; rank: number }>();
   for (const row of tidyRows(db, undefined, categoryIds)) {
     const key = `${row.sourceId}\u0000${sameChannelKey(row.name)}`;
+    const rank = fallbackRank(row.name);
+    const held = best.get(key);
+    if (held === undefined || rank < held.rank) best.set(key, { id: row.channelId, name: row.name, rank });
+  }
+  const ids = [...best.values()].sort((a, b) => a.name.localeCompare(b.name)).slice(0, opts.limit ?? 5000).map((entry) => entry.id);
+  const byId = new Map<string, ChannelRow>();
+  for (let from = 0; from < ids.length; from += 500) {
+    const part = ids.slice(from, from + 500);
+    for (const row of db.prepare(`SELECT ${CHANNEL_COLUMNS} FROM channels c WHERE c.id IN (${part.map(() => "?").join(",")})`).all(...part) as ChannelRow[]) byId.set(row.id, row);
+  }
+  return ids.flatMap((id) => byId.get(id) ?? []);
+}
+
+interface FacetRow {
+  readonly channelId: string;
+  readonly sourceId: string;
+  readonly rawName: string;
+  readonly name: string;
+  readonly country: string | null;
+  readonly categoryRaw: string;
+}
+
+/** The channels of tidy sources' live categories that are stations (not dividers or empty event slots), for the league and local lists. */
+function facetRows(db: Database.Database, sourceId?: string): FacetRow[] {
+  const rows = db
+    .prepare(
+      `SELECT c.id AS channelId, c.source_id AS sourceId, c.raw_name AS rawName, c.normalised_name AS name, c.country, cat.country AS categoryCountry, cat.raw_name AS categoryRaw, cat.tags
+       FROM channels c
+       JOIN sources s ON s.id = c.source_id AND s.epg_optimise = 1
+       JOIN categories cat ON cat.id = c.category_id
+       WHERE ${channelShown(db, "c")} AND ${categoryShown(db, "cat", "live")}${sourceId !== undefined ? " AND c.source_id = ?" : ""}
+       ORDER BY c.rowid`,
+    )
+    .all(...(sourceId !== undefined ? [sourceId] : [])) as (Omit<FacetRow, "country"> & { country: string | null; categoryCountry: string | null; tags: string | null })[];
+  const out: FacetRow[] = [];
+  for (const row of rows) {
+    const tags = decodeTags(row.tags);
+    if (tags.includes("junk") || tags.includes("separator") || tags.includes("adult") || isPlaceholderChannelName(row.rawName)) continue;
+    out.push({ channelId: row.channelId, sourceId: row.sourceId, rawName: row.rawName, name: row.name, country: channelGuideCountry(row.country, row.categoryCountry, row.rawName), categoryRaw: row.categoryRaw });
+  }
+  return out;
+}
+
+/** What a channel belongs to, by what its name (and its category's) says: league keys and the network of a local station. */
+function facetsOf(row: FacetRow): { leagues: string[]; local: string | null } {
+  return { leagues: leaguesOf(`${row.rawName} ${row.categoryRaw}`), local: localNetworkOf(row.rawName) };
+}
+
+const stationKey = (row: FacetRow) => `${row.sourceId}\u0000${row.country ?? ""}\u0000${sameChannelKey(row.name)}`;
+
+/** A list needs this many stations to be worth showing: a stray match is not a list. */
+const FACET_LIST_LEAST = 3;
+
+/**
+ * The league lists ("🏈 NFL") and local-station lists ("📺 NBC local stations") of tidy sources, from what channel names say, for any
+ * provider. A station counts once per country whatever quality or category it was filed under. Leagues come first in the order of
+ * `LEAGUES`, then networks in the order of `NETWORKS`; one with fewer than three stations is left out.
+ */
+export function listFacetLists(db: Database.Database, sourceId?: string): FacetList[] {
+  const leagues = new Map<string, Set<string>>();
+  const locals = new Map<string, Set<string>>();
+  for (const row of facetRows(db, sourceId)) {
+    const facets = facetsOf(row);
+    const key = stationKey(row);
+    for (const league of facets.leagues) (leagues.get(league) ?? leagues.set(league, new Set()).get(league)!).add(key);
+    if (facets.local !== null) (locals.get(facets.local) ?? locals.set(facets.local, new Set()).get(facets.local)!).add(key);
+  }
+  const out: FacetList[] = [];
+  for (const league of LEAGUES) {
+    const count = leagues.get(league.key)?.size ?? 0;
+    if (count >= FACET_LIST_LEAST) out.push({ id: facetListId("league", league.key, sourceId), label: leagueListLabel(league), kind: "league", count });
+  }
+  for (const network of NETWORKS) {
+    const count = locals.get(network.key)?.size ?? 0;
+    if (count >= FACET_LIST_LEAST) out.push({ id: facetListId("local", network.key, sourceId), label: localListLabel(network), kind: "local", count });
+  }
+  return out;
+}
+
+/** The channels of one league or local-stations list: each station once (the best quality of it), by name. */
+export function browseFacetList(db: Database.Database, opts: { id: string; sourceId?: string; limit?: number }): ChannelRow[] {
+  const parsed = parseFacetListId(opts.id);
+  if (parsed === null) return [];
+  const sourceId = parsed.sourceId ?? opts.sourceId;
+  const best = new Map<string, { id: string; name: string; rank: number }>();
+  for (const row of facetRows(db, sourceId)) {
+    const facets = facetsOf(row);
+    if (parsed.kind === "league" ? !facets.leagues.includes(parsed.key) : facets.local !== parsed.key) continue;
+    const key = stationKey(row);
     const rank = fallbackRank(row.name);
     const held = best.get(key);
     if (held === undefined || rank < held.rank) best.set(key, { id: row.channelId, name: row.name, rank });

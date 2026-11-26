@@ -57,6 +57,25 @@ describe("railLists with TV Guide lists", () => {
       ["s1:a", "Provider groups"], ["all", "Provider groups"],
     ]);
   });
+  it("puts the leagues, then each network's local stations, between the TV Guide and the country sections", () => {
+    const lists = railLists({
+      ...base,
+      guideCountries: { "": [{ country: "UK", count: 5 }] },
+      facetLists: { "": [
+        { id: "league:nfl", label: "🏈 NFL", kind: "league", count: 30 }, { id: "league:nba", label: "🏀 NBA", kind: "league", count: 20 },
+        { id: "local:nbc", label: "📺 NBC local stations", kind: "local", count: 99 },
+      ] },
+      tidyCategories: { "": [{ id: "tidy:a", label: "Sport", country: "UK", ppv: false, count: 3 }] },
+    });
+    expect(lists.map((l) => [l.id, l.section])).toEqual([
+      ["favourites", undefined], ["recent", undefined],
+      ["guide:UK", "TV Guide"],
+      ["league:nfl", "Sports"], ["league:nba", "Sports"],
+      ["local:nbc", "Local stations"],
+      ["tidy:a", "🇬🇧 UK"],
+      ["s1:a", "Provider groups"], ["all", "Provider groups"],
+    ]);
+  });
   it("shows the tidy lists even when no guide has loaded yet", () => {
     const lists = railLists({ ...base, tidyCategories: { "": [{ id: "tidy:a", label: "Sport", country: "UK", ppv: false, count: 3 }] } });
     expect(lists.map((l) => [l.id, l.section])).toEqual([["favourites", undefined], ["recent", undefined], ["tidy:a", "🇬🇧 UK"], ["s1:a", "Provider groups"], ["all", "Provider groups"]]);

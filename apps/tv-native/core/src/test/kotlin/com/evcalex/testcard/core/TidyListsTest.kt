@@ -5,7 +5,11 @@ import com.evcalex.testcard.core.db.browseGuideChannels
 import com.evcalex.testcard.core.db.channelGuideCountry
 import com.evcalex.testcard.core.db.guideCountryFromName
 import com.evcalex.testcard.core.db.guideCountryOf
+import com.evcalex.testcard.core.db.browseFacetList
 import com.evcalex.testcard.core.db.browseTidyCategory
+import com.evcalex.testcard.core.db.facetListId
+import com.evcalex.testcard.core.db.listFacetLists
+import com.evcalex.testcard.core.db.parseFacetListId
 import com.evcalex.testcard.core.db.guideCountryHeading
 import com.evcalex.testcard.core.db.guideListId
 import com.evcalex.testcard.core.db.guideListLabel
@@ -14,6 +18,7 @@ import com.evcalex.testcard.core.db.listTidyCategories
 import com.evcalex.testcard.core.db.parseTidyCategoryId
 import com.evcalex.testcard.core.db.tidyCategoryId
 import com.evcalex.testcard.core.db.tidyCategoryLabel
+import com.evcalex.testcard.core.normalise.channelDisplayName
 import com.evcalex.testcard.core.normalise.classifyCategory
 import com.evcalex.testcard.core.normalise.encodeTags
 import com.evcalex.testcard.core.normalise.parseName
@@ -213,5 +218,82 @@ class TidyListsTest {
     @Test fun `names a countrys section, and round-trips a tidy lists id`() {
         assertEquals("\uD83C\uDDEC\uD83C\uDDE7 UK", guideCountryHeading("UK")); assertEquals("\uD83C\uDDFA\uD83C\uDDF8 USA", guideCountryHeading("US")); assertEquals("Other", guideCountryHeading(null))
         assertEquals(listOf("s:1", "s:2"), parseTidyCategoryId(tidyCategoryId(listOf("s:1", "s:2")))); assertNull(parseTidyCategoryId("guide:UK"))
+    }
+
+    // ---- league and local-station lists (the same cases as `tidyLists.test.ts`)
+
+    private fun Db.addRaw(source: String, categoryRaw: String, raws: List<String>): String {
+        val id = "$source:cat${++categoryCount}"
+        runBlocking {
+            write { c ->
+                c.run("INSERT INTO categories (id, source_id, provider_id, raw_name, country, tags) VALUES (?, ?, ?, ?, ?, ?)", id, source, categoryCount.toString(), categoryRaw, parseName(categoryRaw).country, encodeTags(classifyCategory(categoryRaw).tags))
+                raws.forEachIndexed { at, raw ->
+                    c.run("INSERT INTO channels (id, source_id, category_id, normalised_name, raw_name, country, first_seen_at, last_seen_at) VALUES (?, ?, ?, ?, ?, NULL, 1, 1)", "$id:c$at", source, id, channelDisplayName(raw), raw)
+                }
+            }
+        }
+        return id
+    }
+
+    private fun Db.facets() = runBlocking { read { c -> c.listFacetLists().map { Triple(it.id, it.label, it.count) } } }
+    private fun Db.facet(id: String) = runBlocking { read { c -> c.browseFacetList(id).map { it.rawName } } }
+
+    @Test fun `gathers a leagues channels from any category, each station once, and leaves out lists of fewer than three`() {
+        val db = setup()
+        db.addRaw("s", "US| SPORT", listOf("US: NFL GAME PASS ᴿᴬᵂ", "US: NFL REDZONE", "US: NFL GAME PASS HD", "US: ESPN"))
+        db.addRaw("s", "US| FOX", listOf("Sunday Night Football [NBC]")); db.addRaw("s", "US| NBA PPV", listOf("US: NBA TV"))
+        assertEquals(listOf(Triple("league:nfl", "🏈 NFL", 3)), db.facets())
+        assertEquals(listOf("US: NFL GAME PASS HD", "US: NFL REDZONE", "Sunday Night Football [NBC]"), db.facet("league:nfl"))
+    }
+
+    @Test fun `takes a league from its categorys name when the channels own does not say`() {
+        val db = setup()
+        db.addRaw("s", "US| NHL TEAM PPV", listOf("Boston Bruins", "Toronto Maple Leafs", "Montreal Canadiens"))
+        assertEquals(listOf("league:nhl" to 3), db.facets().map { it.first to it.third })
+    }
+
+    @Test fun `gathers a networks local stations from any category, and not its national services`() {
+        val db = setup()
+        db.addRaw("s", "US| NBC", listOf("US: NBC 5 (WMAQ) CHICAGO", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC SPORTS NETWORK"))
+        db.addRaw("s", "US| NEWS", listOf("NBC [Boston] 1080p", "US: FOX NEWS CHANNEL"))
+        assertEquals(listOf(Triple("local:nbc", "📺 NBC local stations", 3)), db.facets())
+        assertEquals(listOf("NBC [Boston] 1080p", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC 5 (WMAQ) CHICAGO"), db.facet("local:nbc"))
+    }
+
+    @Test fun `leaves out placeholders, dividers, and a source that is not tidied, and keeps a station of another country apart`() {
+        val db = setup()
+        db.addRaw("s", "US| NHL PPV", listOf("NHL 01: No Game Today", "##### NHL #####", "US: NHL NETWORK", "US: NHL CENTER ICE"))
+        db.addRaw("s", "UK| NHL PPV", listOf("UK: NHL NETWORK"))
+        db.addRaw("t", "US| NHL PPV", listOf("US: NHL ALTERNATE 1", "US: NHL ALTERNATE 2", "US: NHL ALTERNATE 3"))
+        assertEquals(listOf("league:nhl" to 3), db.facets().map { it.first to it.third })
+    }
+
+    @Test fun `keeps local stations out of the TV Guide list, which is for national channels`() {
+        val db = setup()
+        runBlocking { db.write { it.run("INSERT INTO categories (id, source_id, provider_id, raw_name, country) VALUES ('s:x', 's', 'x', 'US| NEWS', 'US')") } }
+        for ((id, raw) in listOf("cnn" to "US: CNN", "nbc5" to "US: NBC 5 (WMAQ) CHICAGO", "nhl" to "NHL 01: No Game Today")) {
+            runBlocking {
+                db.write { c ->
+                    c.run("INSERT INTO channels (id, source_id, category_id, normalised_name, raw_name, country, first_seen_at, last_seen_at) VALUES (?, 's', 's:x', ?, ?, 'US', 1, 1)", id, channelDisplayName(raw), raw)
+                    c.run("INSERT INTO programmes (channel_id, title, start_at, end_at) VALUES (?, 'Show', 1, 2)", id)
+                }
+            }
+        }
+        assertEquals(listOf("cnn"), db.ids("US"))
+    }
+
+    @Test fun `does not list an empty event slot in a countrys tidy list`() {
+        val db = setup()
+        db.addRaw("s", "US| NHL PPV", listOf("NHL 01: No Game Today", "US: NHL NETWORK"))
+        assertEquals(listOf(listOf("NHL", 1)), db.tidy().map { listOf(it.label, it.count) })
+    }
+
+    @Test fun `reads nothing from an id that is not a league or local list, and round-trips the ids`() {
+        val db = setup()
+        assertEquals(emptyList<String>(), db.facet("guide:UK"))
+        val plain = parseFacetListId(facetListId("league", "nfl"))!!
+        assertEquals(listOf("league", "nfl"), listOf(plain.kind, plain.key)); assertNull(plain.sourceId)
+        val own = parseFacetListId(facetListId("local", "nbc", "src-1"))!!
+        assertEquals(listOf("local", "nbc", "src-1"), listOf(own.kind, own.key, own.sourceId)); assertNull(parseFacetListId("tidy:a"))
     }
 }

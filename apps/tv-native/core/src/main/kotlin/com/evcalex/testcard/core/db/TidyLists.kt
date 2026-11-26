@@ -1,6 +1,13 @@
 package com.evcalex.testcard.core.db
 
 import androidx.sqlite.SQLiteConnection
+import com.evcalex.testcard.core.epg.LEAGUES
+import com.evcalex.testcard.core.epg.NETWORKS
+import com.evcalex.testcard.core.epg.isPlaceholderChannelName
+import com.evcalex.testcard.core.epg.leagueListLabel
+import com.evcalex.testcard.core.epg.leaguesOf
+import com.evcalex.testcard.core.epg.localListLabel
+import com.evcalex.testcard.core.epg.localNetworkOf
 import com.evcalex.testcard.core.normalise.categoryDisplayName
 import com.evcalex.testcard.core.normalise.fallbackRank
 import com.evcalex.testcard.core.normalise.sameChannelKey
@@ -34,6 +41,8 @@ private fun SQLiteConnection.guideLeads(sourceId: String?): List<Lead> {
     val best = LinkedHashMap<String, Held>()
     for (row in rows) {
         val country = channelGuideCountry(row.country, row.categoryCountry, row.rawName) ?: continue
+        // A network's local stations have their own lists, and an event slot with nothing on is not a station.
+        if (localNetworkOf(row.rawName) != null || isPlaceholderChannelName(row.rawName)) continue
         val key = "${row.source}\u0000$country\u0000${sameChannelKey(row.name)}"
         val rank = fallbackRank(row.name)
         val held = best[key]
@@ -161,22 +170,22 @@ fun tidyCategoryLabel(rawName: String, ppv: Boolean): String {
     return label.ifEmpty { base }
 }
 
-private class TidyRow(val categoryId: String, val sourceId: String, val rawName: String, val country: String?, val tags: String, val channelId: String, val name: String)
+private class TidyRow(val categoryId: String, val sourceId: String, val rawName: String, val country: String?, val tags: String, val channelId: String, val channelRaw: String, val name: String)
 
 private fun hasHiddenTag(tags: String) = tags.split(" ").any { it == "junk" || it == "separator" || it == "adult" }
 
 /** The channels of tidy sources' live categories, with the category each is in; separator, junk, adult and hidden categories left out. */
 private fun SQLiteConnection.tidyRows(sourceId: String?, categoryIds: Set<String>?): List<TidyRow> =
     query(
-        """SELECT cat.id, cat.source_id, cat.raw_name, cat.country, cat.tags, c.id, c.normalised_name
+        """SELECT cat.id, cat.source_id, cat.raw_name, cat.country, cat.tags, c.id, c.raw_name, c.normalised_name
            FROM categories cat
            JOIN sources s ON s.id = cat.source_id AND s.epg_optimise = 1
            JOIN channels c ON c.category_id = cat.id
            WHERE ${categoryShown("cat", CategoryKind.Live)} AND ${channelShown("c")}${if (sourceId != null) " AND cat.source_id = ?" else ""}
            ORDER BY cat.rowid, c.rowid""",
         *listOfNotNull(sourceId).toTypedArray(),
-    ) { TidyRow(it.getText(0), it.getText(1), it.getText(2), it.textOrNull(3), it.textOrNull(4) ?: "", it.getText(5), it.getText(6)) }
-        .filter { (categoryIds == null || it.categoryId in categoryIds) && !hasHiddenTag(it.tags) }
+    ) { TidyRow(it.getText(0), it.getText(1), it.getText(2), it.textOrNull(3), it.textOrNull(4) ?: "", it.getText(5), it.getText(6), it.getText(7)) }
+        .filter { (categoryIds == null || it.categoryId in categoryIds) && !hasHiddenTag(it.tags) && !isPlaceholderChannelName(it.channelRaw) }
 
 /**
  * The provider's categories of tidy sources, gathered into lists that read as one (`tidyLists.ts`): the same subject in the same country,
@@ -216,6 +225,98 @@ fun SQLiteConnection.browseTidyCategory(id: String, limit: Int = 5000): List<Cha
     val best = LinkedHashMap<String, Best>()
     for (row in tidyRows(null, categoryIds.toSet())) {
         val key = "${row.sourceId}\u0000${sameChannelKey(row.name)}"
+        val rank = fallbackRank(row.name)
+        val held = best[key]
+        if (held == null || rank < held.rank) best[key] = Best(row.channelId, row.name, rank)
+    }
+    val collator = java.text.Collator.getInstance()
+    val ids = best.values.sortedWith { a, b -> collator.compare(a.name, b.name) }.take(limit).map { it.id }
+    val byId = HashMap<String, ChannelRow>()
+    for (part in ids.chunked(500)) {
+        for (row in query("SELECT $CHANNEL_COLUMNS FROM channels c WHERE c.id IN (${part.joinToString(",") { "?" }})", *part.toTypedArray()) { it.channelRow() }) byId[row.id] = row
+    }
+    return ids.mapNotNull { byId[it] }
+}
+
+/**
+ * A list the rail builds from what channel names say: the channels of one league, or one network's local stations (`FacetList`).
+ * [id] is `league:<key>` or `local:<key>`, with `@<source>` inside one source's section; [count] counts a station once.
+ */
+class FacetList(val id: String, val label: String, val kind: String, val count: Int)
+
+/** The rail sections these lists sit in. */
+const val SPORTS_SECTION = "Sports"
+const val LOCAL_SECTION = "Local stations"
+
+/** The id of a league or local-stations list in the Live TV rail. */
+fun facetListId(kind: String, key: String, sourceId: String? = null): String = "$kind:$key${if (sourceId != null) "@$sourceId" else ""}"
+
+/** A league or local-stations list read back from its rail id. */
+class FacetListRef(val kind: String, val key: String, val sourceId: String?)
+
+/** Reads a league or local-stations list's id back, or null when it is not one. */
+fun parseFacetListId(id: String): FacetListRef? {
+    val match = Regex("^(league|local):([^@]+)(?:@(.+))?$", RegexOption.DOT_MATCHES_ALL).find(id) ?: return null
+    return FacetListRef(match.groupValues[1], match.groupValues[2], match.groupValues[3].ifEmpty { null })
+}
+
+private class FacetRow(val channelId: String, val sourceId: String, val rawName: String, val name: String, val country: String?, val categoryRaw: String)
+
+/** The channels of tidy sources' live categories that are stations (not dividers or empty event slots), for the league and local lists. */
+private fun SQLiteConnection.facetRows(sourceId: String?): List<FacetRow> {
+    class Raw(val channelId: String, val sourceId: String, val rawName: String, val name: String, val country: String?, val categoryCountry: String?, val categoryRaw: String, val tags: String)
+    return query(
+        """SELECT c.id, c.source_id, c.raw_name, c.normalised_name, c.country, cat.country, cat.raw_name, cat.tags
+           FROM channels c
+           JOIN sources s ON s.id = c.source_id AND s.epg_optimise = 1
+           JOIN categories cat ON cat.id = c.category_id
+           WHERE ${channelShown("c")} AND ${categoryShown("cat", CategoryKind.Live)}${if (sourceId != null) " AND c.source_id = ?" else ""}
+           ORDER BY c.rowid""",
+        *listOfNotNull(sourceId).toTypedArray(),
+    ) { Raw(it.getText(0), it.getText(1), it.getText(2), it.getText(3), it.textOrNull(4), it.textOrNull(5), it.getText(6), it.textOrNull(7) ?: "") }
+        .filter { !hasHiddenTag(it.tags) && !isPlaceholderChannelName(it.rawName) }
+        .map { FacetRow(it.channelId, it.sourceId, it.rawName, it.name, channelGuideCountry(it.country, it.categoryCountry, it.rawName), it.categoryRaw) }
+}
+
+private fun stationKey(row: FacetRow) = "${row.sourceId}\u0000${row.country ?: ""}\u0000${sameChannelKey(row.name)}"
+
+/** A list needs this many stations to be worth showing: a stray match is not a list. */
+private const val FACET_LIST_LEAST = 3
+
+/**
+ * The league lists ("🏈 NFL") and local-station lists ("📺 NBC local stations") of tidy sources (`tidyLists.ts`), from what channel names say,
+ * for any provider. A station counts once per country whatever quality or category it was filed under. Leagues come first in the order of
+ * [LEAGUES], then networks in the order of [NETWORKS]; one with fewer than three stations is left out.
+ */
+fun SQLiteConnection.listFacetLists(sourceId: String? = null): List<FacetList> {
+    val leagues = HashMap<String, HashSet<String>>()
+    val locals = HashMap<String, HashSet<String>>()
+    for (row in facetRows(sourceId)) {
+        val key = stationKey(row)
+        for (league in leaguesOf("${row.rawName} ${row.categoryRaw}")) leagues.getOrPut(league) { HashSet() }.add(key)
+        localNetworkOf(row.rawName)?.let { locals.getOrPut(it) { HashSet() }.add(key) }
+    }
+    val out = ArrayList<FacetList>()
+    for (league in LEAGUES) {
+        val count = leagues[league.key]?.size ?: 0
+        if (count >= FACET_LIST_LEAST) out += FacetList(facetListId("league", league.key, sourceId), leagueListLabel(league), "league", count)
+    }
+    for (network in NETWORKS) {
+        val count = locals[network.key]?.size ?: 0
+        if (count >= FACET_LIST_LEAST) out += FacetList(facetListId("local", network.key, sourceId), localListLabel(network), "local", count)
+    }
+    return out
+}
+
+/** The channels of one league or local-stations list: each station once (the best quality of it), by name. */
+fun SQLiteConnection.browseFacetList(id: String, sourceId: String? = null, limit: Int = 5000): List<ChannelRow> {
+    val parsed = parseFacetListId(id) ?: return emptyList()
+    class Best(val id: String, val name: String, val rank: Int)
+    val best = LinkedHashMap<String, Best>()
+    for (row in facetRows(parsed.sourceId ?: sourceId)) {
+        val matches = if (parsed.kind == "league") parsed.key in leaguesOf("${row.rawName} ${row.categoryRaw}") else localNetworkOf(row.rawName) == parsed.key
+        if (!matches) continue
+        val key = stationKey(row)
         val rank = fallbackRank(row.name)
         val held = best[key]
         if (held == null || rank < held.rank) best[key] = Best(row.channelId, row.name, rank)
