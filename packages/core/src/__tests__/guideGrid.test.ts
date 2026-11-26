@@ -43,6 +43,24 @@ describe("railLists with TV Guide lists", () => {
     const lists = railLists({ ...base, guideCountries: { "": [] } });
     expect(lists.map((l) => [l.id, l.section])).toEqual([["favourites", undefined], ["recent", undefined], ["s1:a", undefined], ["all", undefined]]);
   });
+  it("adds a section per country and its events from the tidy lists, then the provider's own groups", () => {
+    const tidy = (id: string, label: string, country: string | null, ppv: boolean, count: number) => ({ id, label, country, ppv, count });
+    const lists = railLists({
+      ...base,
+      guideCountries: { "": [{ country: "UK", count: 5 }] },
+      tidyCategories: { "": [tidy("tidy:a", "Sport", "UK", false, 9), tidy("tidy:b", "DAZN", "UK", true, 4), tidy("tidy:c", "News", "US", false, 7), tidy("tidy:d", "BEE| X", null, false, 1), tidy("tidy:e", "Empty", "UK", false, 0)] },
+    });
+    expect(lists.map((l) => [l.id, l.section])).toEqual([
+      ["favourites", undefined], ["recent", undefined],
+      ["guide:UK", "TV Guide"],
+      ["tidy:a", "🇬🇧 UK"], ["tidy:b", "🇬🇧 UK · Events"], ["tidy:c", "🇺🇸 USA"], ["tidy:d", "Other"],
+      ["s1:a", "Provider groups"], ["all", "Provider groups"],
+    ]);
+  });
+  it("shows the tidy lists even when no guide has loaded yet", () => {
+    const lists = railLists({ ...base, tidyCategories: { "": [{ id: "tidy:a", label: "Sport", country: "UK", ppv: false, count: 3 }] } });
+    expect(lists.map((l) => [l.id, l.section])).toEqual([["favourites", undefined], ["recent", undefined], ["tidy:a", "🇬🇧 UK"], ["s1:a", "Provider groups"], ["all", "Provider groups"]]);
+  });
   it("puts a source's own TV Guide lists in its section when several sources are shown", () => {
     const lists = railLists({
       ...base,

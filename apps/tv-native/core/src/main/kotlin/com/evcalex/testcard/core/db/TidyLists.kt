@@ -1,6 +1,7 @@
 package com.evcalex.testcard.core.db
 
 import androidx.sqlite.SQLiteConnection
+import com.evcalex.testcard.core.normalise.categoryDisplayName
 import com.evcalex.testcard.core.normalise.fallbackRank
 import com.evcalex.testcard.core.normalise.sameChannelKey
 import java.util.Locale
@@ -117,4 +118,113 @@ fun parseGuideListId(id: String): GuideListRef? {
     val rest = id.removePrefix(GUIDE_PREFIX)
     val at = rest.indexOf('@')
     return if (at < 0) GuideListRef(rest, null) else GuideListRef(rest.substring(0, at), rest.substring(at + 1))
+}
+
+/** The heading of a country's section in the Live TV rail: "🇬🇧 UK", or "Other" for a category with no known country. */
+fun guideCountryHeading(country: String?): String {
+    if (country == null) return "Other"
+    val flag = flagOf(country)
+    return "${if (flag.isEmpty()) "" else "$flag "}${COUNTRY_NAMES[country.uppercase(Locale.ROOT)] ?: country}"
+}
+
+/**
+ * A group of the provider's categories that read as one ("UK| SPORT ᴴᴰ", "UK| SPORT ᴿᴬᵂ", "UK| SPORT ʰᵉᵛᶜ"): a tidy list of the rail.
+ * [id] is `tidy:` and its categories' ids; [ppv] marks an events / pay-per-view group; [count] counts a station once.
+ */
+class TidyCategory(val id: String, val label: String, val country: String?, val ppv: Boolean, val count: Int)
+
+private const val TIDY_PREFIX = "tidy:"
+private const val TIDY_SEPARATOR = '\u001f'
+
+/** The id of a tidy list: the ids of the provider categories it gathers. */
+fun tidyCategoryId(categoryIds: List<String>): String = TIDY_PREFIX + categoryIds.joinToString(TIDY_SEPARATOR.toString())
+
+/** Reads a tidy list's id back to its categories' ids, or null when it is not one. */
+fun parseTidyCategoryId(id: String): List<String>? = if (id.startsWith(TIDY_PREFIX)) id.removePrefix(TIDY_PREFIX).split(TIDY_SEPARATOR) else null
+
+private val CATEGORY_TAIL = Regex("(?:[\\s/|+-]+(?:HD|SD|FHD|UHD|4K|8K|HEVC|H\\.?265|RAW|VIP|\\d+\\s?FPS|\\d{3,4}P))+\\s*$", RegexOption.IGNORE_CASE)
+private val PPV_TAIL = Regex("[\\s/|+-]*\\bPPV\\b[\\s/|+-]*$", RegexOption.IGNORE_CASE)
+
+/**
+ * A provider category's name as its tidy list is called (`tidyCategoryLabel`): the country prefix and styling go, and so do trailing
+ * quality words, so a category's HD, RAW and HEVC copies share one name; in a PPV list a trailing "PPV" goes too. Never empty.
+ */
+fun tidyCategoryLabel(rawName: String, ppv: Boolean): String {
+    val base = categoryDisplayName(rawName).trim()
+    var label = base
+    while (true) {
+        val next = label.replace(CATEGORY_TAIL, "").trim()
+        if (next == label || next.isEmpty()) break
+        label = next
+    }
+    if (ppv) label = label.replace(PPV_TAIL, "").trim().ifEmpty { label }
+    return label.ifEmpty { base }
+}
+
+private class TidyRow(val categoryId: String, val sourceId: String, val rawName: String, val country: String?, val tags: String, val channelId: String, val name: String)
+
+private fun hasHiddenTag(tags: String) = tags.split(" ").any { it == "junk" || it == "separator" || it == "adult" }
+
+/** The channels of tidy sources' live categories, with the category each is in; separator, junk, adult and hidden categories left out. */
+private fun SQLiteConnection.tidyRows(sourceId: String?, categoryIds: Set<String>?): List<TidyRow> =
+    query(
+        """SELECT cat.id, cat.source_id, cat.raw_name, cat.country, cat.tags, c.id, c.normalised_name
+           FROM categories cat
+           JOIN sources s ON s.id = cat.source_id AND s.epg_optimise = 1
+           JOIN channels c ON c.category_id = cat.id
+           WHERE ${categoryShown("cat", CategoryKind.Live)} AND ${channelShown("c")}${if (sourceId != null) " AND cat.source_id = ?" else ""}
+           ORDER BY cat.rowid, c.rowid""",
+        *listOfNotNull(sourceId).toTypedArray(),
+    ) { TidyRow(it.getText(0), it.getText(1), it.getText(2), it.textOrNull(3), it.textOrNull(4) ?: "", it.getText(5), it.getText(6)) }
+        .filter { (categoryIds == null || it.categoryId in categoryIds) && !hasHiddenTag(it.tags) }
+
+/**
+ * The provider's categories of tidy sources, gathered into lists that read as one (`tidyLists.ts`): the same subject in the same country,
+ * whatever its quality or source tag. Events and pay-per-view groups are kept apart. Each list counts a station once. By country (UK, USA,
+ * Canada, Australia first, then the rest, then none), then name.
+ */
+fun SQLiteConnection.listTidyCategories(sourceId: String? = null): List<TidyCategory> {
+    class Group(var label: String, val country: String?, val ppv: Boolean) { val categoryIds = LinkedHashSet<String>(); val stations = HashSet<String>() }
+    val groups = LinkedHashMap<String, Group>()
+    for (row in tidyRows(sourceId, null)) {
+        val ppv = row.tags.split(" ").contains("ppv")
+        val country = guideCountryOf(row.country)
+        val label = tidyCategoryLabel(row.rawName, ppv)
+        val key = "${row.sourceId}\u0000${country ?: ""}\u0000${if (ppv) 1 else 0}\u0000${label.lowercase(Locale.ROOT)}"
+        val group = groups.getOrPut(key) { Group(label, country, ppv) }
+        // Of the spellings of one name, the one that is not all capitals reads better.
+        if (label.any { it in 'a'..'z' } && group.label.none { it in 'a'..'z' }) group.label = label
+        group.categoryIds.add(row.categoryId)
+        group.stations.add(sameChannelKey(row.name))
+    }
+    fun rank(country: String?): Int {
+        val at = listOf("UK", "US", "CA", "AU", "IE", "NZ").indexOf(country ?: "")
+        return if (country == null) 99 else if (at < 0) 50 else at
+    }
+    val collator = java.text.Collator.getInstance()
+    return groups.values
+        .sortedWith(
+            compareBy<Group> { rank(it.country) }.thenBy { it.country ?: "" }.thenBy { if (it.ppv) 1 else 0 }.thenComparator { a, b -> collator.compare(a.label, b.label) },
+        )
+        .map { TidyCategory(tidyCategoryId(it.categoryIds.toList()), it.label, it.country, it.ppv, it.stations.size) }
+}
+
+/** The channels of one tidy list: each station once (the best quality of it), by name. */
+fun SQLiteConnection.browseTidyCategory(id: String, limit: Int = 5000): List<ChannelRow> {
+    val categoryIds = parseTidyCategoryId(id)?.takeIf { it.isNotEmpty() } ?: return emptyList()
+    class Best(val id: String, val name: String, val rank: Int)
+    val best = LinkedHashMap<String, Best>()
+    for (row in tidyRows(null, categoryIds.toSet())) {
+        val key = "${row.sourceId}\u0000${sameChannelKey(row.name)}"
+        val rank = fallbackRank(row.name)
+        val held = best[key]
+        if (held == null || rank < held.rank) best[key] = Best(row.channelId, row.name, rank)
+    }
+    val collator = java.text.Collator.getInstance()
+    val ids = best.values.sortedWith { a, b -> collator.compare(a.name, b.name) }.take(limit).map { it.id }
+    val byId = HashMap<String, ChannelRow>()
+    for (part in ids.chunked(500)) {
+        for (row in query("SELECT $CHANNEL_COLUMNS FROM channels c WHERE c.id IN (${part.joinToString(",") { "?" }})", *part.toTypedArray()) { it.channelRow() }) byId[row.id] = row
+    }
+    return ids.mapNotNull { byId[it] }
 }

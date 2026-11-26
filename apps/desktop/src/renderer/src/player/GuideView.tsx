@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChannelRow } from "@testcard/core";
 import { railLists, segmentsFor, startList, type Airing, type RailList } from "@testcard/core/src/epg/guideGrid.js";
-import { parseGuideListId } from "@testcard/core/src/epg/guideListLabels.js";
+import { parseGuideListId, parseTidyCategoryId } from "@testcard/core/src/epg/guideListLabels.js";
 import { decodeTags } from "@testcard/core/src/normalise/classifyCategory.js";
 import type { ProgrammeLite } from "../../../shared/ipc.js";
 import { Icon } from "../components/Icon.js";
@@ -75,6 +75,15 @@ export function GuideView({
     })),
   });
   const guideStamp = guideQueries.map((q) => q.dataUpdatedAt).join();
+  // The provider's categories of those sources, gathered into lists that read as one, by country (empty for the rest).
+  const tidyQueries = useQueries({
+    queries: categoryKeys.map((key) => ({
+      queryKey: ["categories", "tidy", key === "" ? undefined : key],
+      queryFn: () => window.testcard.channels.tidyCategories(key === "" ? undefined : key),
+      staleTime: 30_000,
+    })),
+  });
+  const tidyStamp = tidyQueries.map((q) => q.dataUpdatedAt).join();
   const favouritesQuery = useQuery({ queryKey: ["channels", "favourites"], queryFn: () => window.testcard.channels.favourites() });
   const recentQuery = useQuery({ queryKey: ["channels", "recent"], queryFn: () => window.testcard.channels.recent() });
   const own = useCallback((rows: readonly ChannelRow[] | undefined) => (rows ?? []).filter((c) => sourceId === null || c.source_id === sourceId), [sourceId]);
@@ -100,10 +109,11 @@ export function GuideView({
         favourites: own(favouritesQuery.data).length,
         recents: own(recentQuery.data).length,
         guideCountries: Object.fromEntries(categoryKeys.map((key, i) => [key, guideQueries[i]?.data ?? []])),
+        tidyCategories: Object.fromEntries(categoryKeys.map((key, i) => [key, tidyQueries[i]?.data ?? []])),
       }),
     // categoryQueries is a new array every render; when its data last changed is what matters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sourceId, sourceList, categoryKeys, categoryStamp, guideStamp, favouritesQuery.data, recentQuery.data, own],
+    [sourceId, sourceList, categoryKeys, categoryStamp, guideStamp, tidyStamp, favouritesQuery.data, recentQuery.data, own],
   );
   const ready = favouritesQuery.isSuccess && recentQuery.isSuccess && sources.isSuccess && categoryQueries.every((q) => q.isSuccess);
 
@@ -135,6 +145,7 @@ export function GuideView({
       if (shown === "recent") return own(await api.recent());
       if (shown === "all") return api.browse({ limit: CHANNELS_MOST, ...(sourceId !== null ? { sourceId } : {}) });
       if (shown.startsWith("all:")) return api.browse({ limit: CHANNELS_MOST, sourceId: shown.slice(4) });
+      if (parseTidyCategoryId(shown) !== null) return api.browseTidy(shown);
       const guide = parseGuideListId(shown);
       if (guide !== null) return api.browseGuide(guide.country, guide.sourceId ?? sourceId ?? undefined);
       return api.browse({ limit: CHANNELS_MOST, categoryId: shown, ...(sourceId !== null ? { sourceId } : {}) });

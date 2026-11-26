@@ -52,6 +52,10 @@ import com.evcalex.testcard.core.db.CategoryKind
 import com.evcalex.testcard.core.db.ChannelRow
 import com.evcalex.testcard.core.db.browseChannels
 import com.evcalex.testcard.core.db.browseGuideChannels
+import com.evcalex.testcard.core.db.browseTidyCategory
+import com.evcalex.testcard.core.db.guideCountryHeading
+import com.evcalex.testcard.core.db.listTidyCategories
+import com.evcalex.testcard.core.db.parseTidyCategoryId
 import com.evcalex.testcard.core.db.guideListId
 import com.evcalex.testcard.core.db.guideListLabel
 import com.evcalex.testcard.core.db.listGuideCountries
@@ -152,6 +156,8 @@ fun GuideScreen(ctx: SectionContext) {
         val (favourites, recents) = app.db.read { c -> c.listFavouriteChannels().count(::own) to c.listRecentChannels(60).count(::own) }
         // "TV Guide" lists of the sources the viewer has tidied (Settings, Sources): one per country, each station once. None for the rest.
         val guideCountries = app.db.read { c -> if (bySource != null) emptyList() else c.listGuideCountries(sourceId) }
+        // And the provider's categories of those sources gathered into lists that read as one, a section per country (and its events).
+        val tidy = app.db.read { c -> if (bySource != null) emptyList() else c.listTidyCategories(sourceId) }.filter { it.count > 0 }
         // Categories pinned to Home come first in the rail (in the order they were pinned), then the rest as the provider lists them.
         val pinOrder = app.db.read { c -> c.pinnedCategoryIds(CategoryKind.Live).toList() }
         fun <T> pinnedFirst(items: List<T>, idOf: (T) -> String): List<T> = items.sortedBy { item -> pinOrder.indexOf(idOf(item)).let { if (it < 0) Int.MAX_VALUE else it } }
@@ -170,10 +176,11 @@ fun GuideScreen(ctx: SectionContext) {
             } else {
                 // With any pins, the rail reads Pinned, then Categories: two named sections, so pins are easy to tell apart.
                 val ordered = pinnedFirst(categories.filter { it.count > 0 }) { it.id }
-                val sectioned = guideCountries.isNotEmpty() || ordered.any { it.id in pinOrder }
+                val sectioned = guideCountries.isNotEmpty() || tidy.isNotEmpty() || ordered.any { it.id in pinOrder }
                 for (c in ordered) if (c.id in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), PINNED_SECTION))
                 for (g in guideCountries) add(GuideList(guideListId(g.country), guideListLabel(g.country), g.count, RailMark.Icon(Glyph.Versions), GUIDE_SECTION))
-                for (c in ordered) if (c.id !in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), if (!sectioned) null else "Categories"))
+                for (c in tidy) add(GuideList(c.id, c.label, c.count, mark(c.label), if (c.ppv) "${guideCountryHeading(c.country)} · Events" else guideCountryHeading(c.country)))
+                for (c in ordered) if (c.id !in pinOrder) add(GuideList(c.id, c.label, c.count, mark(c.label), if (!sectioned) null else if (tidy.isNotEmpty()) "Provider groups" else "Categories"))
                 add(GuideList("all", "All channels", categories.sumOf { it.count }, RailMark.Letters("All")))
             }
         }
@@ -197,6 +204,7 @@ fun GuideScreen(ctx: SectionContext) {
                 "recent" -> c.listRecentChannels(60).filter(::own)
                 "all" -> c.browseChannels(limit = ALL_CHANNELS_MOST, sourceId = sourceId)
                 else -> if (id.startsWith("all:")) c.browseChannels(limit = ALL_CHANNELS_MOST, sourceId = id.removePrefix("all:"))
+                else if (parseTidyCategoryId(id) != null) c.browseTidyCategory(id, ALL_CHANNELS_MOST)
                 else parseGuideListId(id)?.let { g -> c.browseGuideChannels(g.country, g.sourceId ?: sourceId, ALL_CHANNELS_MOST) }
                     ?: c.browseChannels(categoryId = id, limit = ALL_CHANNELS_MOST, sourceId = sourceId)
             }

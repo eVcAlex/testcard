@@ -14,6 +14,7 @@ import type {
   Channel,
   ChannelCountry,
   GuideCountry,
+  TidyCategory,
   ChannelRow,
   CountryNode,
   MovieCategoryRow,
@@ -328,6 +329,10 @@ export interface TestcardApi {
     guideCountries(sourceId?: string): Promise<readonly GuideCountry[]>;
     /** The channels of one country's "TV Guide" list. */
     browseGuide(country: string, sourceId?: string): Promise<readonly ChannelRow[]>;
+    /** The provider's categories of sources with Tidy playlist on, gathered into lists that read as one, by country. */
+    tidyCategories(sourceId?: string): Promise<readonly TidyCategory[]>;
+    /** The channels of one tidy list, each station once. */
+    browseTidy(id: string): Promise<readonly ChannelRow[]>;
     toggleFavourite(channelId: string): Promise<boolean>;
   };
   epg: {

@@ -30,12 +30,20 @@ placeholders) are dropped; placeholder guide ids (`dummy-...`) stand in for chan
    The guide matcher is given the same country, so a channel's copies in other markets are told apart. The other copies stay reachable as that channel's feeds (ADR 0015).
    `listGuideCountries` and `browseGuideChannels` (`db/tidyLists.ts`, `core/db/TidyLists.kt`); the rail id is `guide:<country>`, or
    `guide:<country>@<source>` inside one source's section.
-3. **Placeholders are not listings.** Guide channels called `dummy-...` only stand in for channels with no real listings
+3. **Tidy categories.** The provider's live categories of a tidied source are also gathered into lists that read as one
+   (`listTidyCategories`, `browseTidyCategory`; `tidy:` ids): the same subject in the same country, whatever its quality or source tag
+   ("UK| SPORT ᴴᴰ", "UK| SPORT ᴿᴬᵂ ⁶⁰ᶠᵖˢ" and "UK| SPORT ʰᵉᵛᶜ" are one "Sport"), by `tidyCategoryLabel`. Events and pay-per-view groups are
+   kept apart (a section "UK · Events", their trailing "PPV" dropped). A list shows each station once, the best quality first, by name.
+   The rail reads TV Guide, then a section per country (UK, USA, Canada, Australia first, then the rest, then "Other"), then the
+   provider's own groups unchanged under "Provider groups", so nothing the provider lists is hidden by tidying (separator, junk and
+   adult categories aside). An unrecognised prefix ("BEE|") stays in the name, because "Other" mixes places. In a multi-source rail
+   only the TV Guide lists are added so far.
+4. **Placeholders are not listings.** Guide channels called `dummy-...` only stand in for channels with no real listings
    ("NO EVENT STREAMING"). With the switch on, the matcher never links to one and a channel whose own `tvg-id` is one gets no listings,
    so the list shows only real coverage. (`isPlaceholderGuideId`.)
-4. **Junk hidden on Windows too.** Categories tagged `junk`, `separator` or `adult` are left out of the Windows Live TV rail, as they
+5. **Junk hidden on Windows too.** Categories tagged `junk`, `separator` or `adult` are left out of the Windows Live TV rail, as they
    already were on Fire TV and mobile.
-5. **Shared by both apps.** The Fire TV port reproduces the TypeScript with the same cases in its tests; the label and id helpers are
+6. **Shared by both apps.** The Fire TV port reproduces the TypeScript with the same cases in its tests; the label and id helpers are
    pure (`epg/guideListLabels.ts`) so the renderer can use them.
 
 ## Consequences
@@ -43,7 +51,8 @@ placeholders) are dropped; placeholder guide ids (`dummy-...`) stand in for chan
 - Off, nothing changes. A guide the source has not imported yet gives no TV Guide lists until it has.
 - The lists need real listings, so how many channels appear depends on the guide the source uses and on `matchGuide`; a curated guide
   that lists provider spellings (the community `epg6` guide does) links far more than the provider's own.
-- Not yet built: merging categories that mean the same thing (24/7, network groups), friendlier names and logos from the guide,
-  hiding "No event" placeholder channels, stepping through a station's copies by hand, and syncing the switch between devices.
+- Not yet built: grouping by network or service across categories (the US list is mostly local affiliates), friendlier channel names and
+  logos from the guide, hiding "No event" placeholder channels, stepping through a station's copies by hand, tidy lists in a
+  multi-source rail, and syncing the switch between devices.
 - A provider that writes the country nowhere (no category prefix, no name prefix) gets no country lists. A big country's list can be
   large (about 1,300 US channels for Strong, mostly local affiliates); grouping them by network is the next stage.

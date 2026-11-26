@@ -5,9 +5,18 @@ import com.evcalex.testcard.core.db.browseGuideChannels
 import com.evcalex.testcard.core.db.channelGuideCountry
 import com.evcalex.testcard.core.db.guideCountryFromName
 import com.evcalex.testcard.core.db.guideCountryOf
+import com.evcalex.testcard.core.db.browseTidyCategory
+import com.evcalex.testcard.core.db.guideCountryHeading
 import com.evcalex.testcard.core.db.guideListId
 import com.evcalex.testcard.core.db.guideListLabel
 import com.evcalex.testcard.core.db.listGuideCountries
+import com.evcalex.testcard.core.db.listTidyCategories
+import com.evcalex.testcard.core.db.parseTidyCategoryId
+import com.evcalex.testcard.core.db.tidyCategoryId
+import com.evcalex.testcard.core.db.tidyCategoryLabel
+import com.evcalex.testcard.core.normalise.classifyCategory
+import com.evcalex.testcard.core.normalise.encodeTags
+import com.evcalex.testcard.core.normalise.parseName
 import com.evcalex.testcard.core.db.parseGuideListId
 import com.evcalex.testcard.core.db.query
 import com.evcalex.testcard.core.db.run
@@ -124,5 +133,85 @@ class TidyListsTest {
         val own = parseGuideListId(guideListId("UK", "src-1"))!!
         assertEquals("UK", own.country); assertEquals("src-1", own.sourceId)
         assertNull(parseGuideListId("all")); assertNull(parseGuideListId("s:cat:UK"))
+    }
+
+    // ---- tidy categories (the same cases as `tidyLists.test.ts`)
+
+    private var categoryCount = 0
+
+    private fun Db.addCategory(source: String, raw: String, names: List<String>): String {
+        val id = "$source:cat${++categoryCount}"
+        runBlocking {
+            write { c ->
+                c.run("INSERT INTO categories (id, source_id, provider_id, raw_name, country, tags) VALUES (?, ?, ?, ?, ?, ?)", id, source, categoryCount.toString(), raw, parseName(raw).country, encodeTags(classifyCategory(raw).tags))
+                names.forEachIndexed { at, name ->
+                    c.run("INSERT INTO channels (id, source_id, category_id, normalised_name, raw_name, country, first_seen_at, last_seen_at) VALUES (?, ?, ?, ?, ?, NULL, 1, 1)", "$id:c$at", source, id, name, name)
+                }
+            }
+        }
+        return id
+    }
+
+    private fun Db.tidy() = runBlocking { read { c -> c.listTidyCategories() } }
+
+    @Test fun `gathers the quality and source copies of a category into one list, counting a station once`() {
+        val db = setup()
+        val hd = db.addCategory("s", "UK| SPORT ᴴᴰ", listOf("Sky Sports Main Event HD", "TNT Sports 1 HD"))
+        val raw = db.addCategory("s", "UK| SPORT ᴿᴬᵂ ⁶⁰ᶠᵖˢ", listOf("Sky Sports Main Event", "Eurosport 1"))
+        val hevc = db.addCategory("s", "UK| SPORT ʰᵉᵛᶜ", listOf("Sky Sports Main Event 4K"))
+        val lists = db.tidy()
+        assertEquals(1, lists.size)
+        assertEquals(listOf("Sport", "UK", false, 3), listOf(lists[0].label, lists[0].country, lists[0].ppv, lists[0].count))
+        assertEquals(listOf(hd, raw, hevc).sorted(), parseTidyCategoryId(lists[0].id)!!.sorted())
+    }
+
+    @Test fun `keeps events apart, drops the PPV word from their name, and leaves out junk, separators and tidying-off sources`() {
+        val db = setup()
+        db.addCategory("s", "UK| DAZN PPV", listOf("DAZN 1")); db.addCategory("s", "UK| GENERAL ᴴᴰ/ᴿᴬᵂ", listOf("BBC One HD"))
+        db.addCategory("s", "4K| ᵁᴴᴰ ³⁸⁴⁰ᴾ", listOf("Junk row")); db.addCategory("t", "UK| NEWS", listOf("Not tidied"))
+        assertEquals(listOf(listOf("General", "UK", false), listOf("DAZN", "UK", true)), db.tidy().map { listOf(it.label, it.country, it.ppv) })
+    }
+
+    @Test fun `orders by country, then events last, then name`() {
+        val db = setup()
+        for (raw in listOf("BEE| DAZN PPV", "DE| NEWS", "US| NEWS", "UK| NEWS", "UK| KIDS", "UK| ESPN PPV")) db.addCategory("s", raw, listOf("X"))
+        assertEquals(
+            listOf("UK Kids", "UK News", "UK ESPN (ppv)", "US News", "DE News", "- BEE| DAZN (ppv)"),
+            db.tidy().map { "${it.country ?: "-"} ${it.label}${if (it.ppv) " (ppv)" else ""}" },
+        )
+    }
+
+    @Test fun `reads a lists channels once each per station, the best quality first, by name`() {
+        val db = setup()
+        db.addCategory("s", "UK| NEWS ᴴᴰ", listOf("BBC News 4K", "Sky News HD")); db.addCategory("s", "UK| NEWS ᴿᴬᵂ", listOf("BBC News HD", "GB News"))
+        val list = db.tidy().single()
+        assertEquals(listOf("BBC News HD", "GB News", "Sky News HD"), runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } })
+        assertEquals(3, list.count)
+    }
+
+    @Test fun `reads nothing from an id that is not a tidy list`() {
+        val db = setup()
+        assertEquals(0, runBlocking { db.read { c -> c.browseTidyCategory("all").size } })
+    }
+
+    @Test fun `does not offer a hidden category or channel`() {
+        val db = setup()
+        val news = db.addCategory("s", "UK| NEWS", listOf("A", "B")); db.addCategory("s", "UK| KIDS", listOf("C"))
+        runBlocking { db.write { it.run("INSERT INTO hidden_channels (source_id, channel_key, label, hidden_at) VALUES ('s', ?, 'A', 1)", "${news.substring(2)}:c0") } }
+        assertEquals(listOf(listOf("Kids", 1), listOf("News", 1)), db.tidy().map { listOf(it.label, it.count) })
+        runBlocking { db.write { it.run("INSERT INTO hidden_categories (source_id, kind, category_key, label, hidden_at) VALUES ('s', 'live', '2', 'Kids', 1)") } }
+        assertEquals(listOf("News"), db.tidy().map { it.label })
+    }
+
+    @Test fun `drops the quality and source words a provider hangs on a category, and the PPV word in an events list`() {
+        assertEquals("Sport", tidyCategoryLabel("UK| SPORT ᴴᴰ", false)); assertEquals("Sport", tidyCategoryLabel("UK| SPORT ᴿᴬᵂ ⁶⁰ᶠᵖˢ", false))
+        assertEquals("sport", tidyCategoryLabel("UK| SPORT ʰᵉᵛᶜ", false).lowercase())
+        assertEquals("EPL Premier League", tidyCategoryLabel("UK| EPL PREMIER LEAGUE PPV ⱽᴵᴾ", true)); assertEquals("DAZN PPV", tidyCategoryLabel("UK| DAZN PPV", false))
+        assertEquals(false, tidyCategoryLabel("UK| 4K", false).isEmpty())
+    }
+
+    @Test fun `names a countrys section, and round-trips a tidy lists id`() {
+        assertEquals("\uD83C\uDDEC\uD83C\uDDE7 UK", guideCountryHeading("UK")); assertEquals("\uD83C\uDDFA\uD83C\uDDF8 USA", guideCountryHeading("US")); assertEquals("Other", guideCountryHeading(null))
+        assertEquals(listOf("s:1", "s:2"), parseTidyCategoryId(tidyCategoryId(listOf("s:1", "s:2")))); assertNull(parseTidyCategoryId("guide:UK"))
     }
 }

@@ -60,6 +60,8 @@ const api: TestcardApi = {
     countryList: bind("channels.countryList"),
     guideCountries: bind("channels.guideCountries"),
     browseGuide: bind("channels.browseGuide"),
+    tidyCategories: bind("channels.tidyCategories"),
+    browseTidy: bind("channels.browseTidy"),
     toggleFavourite: bind("channels.toggleFavourite"),
   },
   epg: {

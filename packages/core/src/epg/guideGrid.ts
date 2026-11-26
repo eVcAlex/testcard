@@ -1,4 +1,4 @@
-import { GUIDE_SECTION, guideListId, guideListLabel, type GuideCountry } from "./guideListLabels.js";
+import { GUIDE_SECTION, guideCountryHeading, guideListId, guideListLabel, type GuideCountry, type TidyCategory } from "./guideListLabels.js";
 
 /** One programme in a guide row, times in epoch ms. */
 export interface Airing {
@@ -54,6 +54,8 @@ export interface RailInput {
   readonly recents: number;
   /** The countries a "TV Guide" list is offered for, keyed like `categories` (none for a source that is not tidied). */
   readonly guideCountries?: Readonly<Record<string, readonly GuideCountry[]>>;
+  /** The tidy lists of tidied sources (`listTidyCategories`), keyed like `categories`. */
+  readonly tidyCategories?: Readonly<Record<string, readonly TidyCategory[]>>;
 }
 
 /**
@@ -80,11 +82,15 @@ export function railLists(input: RailInput): RailList[] {
     return out;
   }
   const all = input.categories[input.sourceId ?? ""] ?? [];
-  // With "TV Guide" lists the rail reads TV Guide, then Categories: two named sections, as on the Fire TV.
+  // With "TV Guide" lists the rail reads TV Guide, then Categories: two named sections, as on the Fire TV. With tidy lists too it reads
+  // TV Guide, then a section per country (and its events), then the provider's own groups, so nothing the provider lists is lost.
   const guide = guideLists(input.sourceId ?? "", GUIDE_SECTION);
   out.push(...guide);
-  for (const c of all) if (c.count > 0) out.push({ id: c.id, label: c.label, count: c.count, ...(guide.length > 0 ? { section: "Categories" } : {}) });
-  out.push({ id: "all", label: "All channels", count: all.reduce((n, c) => n + c.count, 0), ...(guide.length > 0 ? { section: "Categories" } : {}) });
+  const tidy = (input.tidyCategories?.[input.sourceId ?? ""] ?? []).filter((c) => c.count > 0);
+  for (const c of tidy) out.push({ id: c.id, label: c.label, count: c.count, section: c.ppv ? `${guideCountryHeading(c.country)} · Events` : guideCountryHeading(c.country) });
+  const rest = tidy.length > 0 ? "Provider groups" : guide.length > 0 ? "Categories" : undefined;
+  for (const c of all) if (c.count > 0) out.push({ id: c.id, label: c.label, count: c.count, ...(rest !== undefined ? { section: rest } : {}) });
+  out.push({ id: "all", label: "All channels", count: all.reduce((n, c) => n + c.count, 0), ...(rest !== undefined ? { section: rest } : {}) });
   return out;
 }
 
