@@ -16,16 +16,28 @@ import java.util.Locale
 /** A country that has "TV Guide" channels, and how many (one per station: its qualities and copies are counted once). */
 class GuideCountry(val country: String, val count: Int)
 
-private class Lead(val id: String, val country: String, val name: String)
+private class Lead(val id: String, val sourceId: String, val country: String, val name: String)
+
+/**
+ * A list's channels with each station's copies together (`inStationOrder`): all its qualities, and the copies a provider files under other
+ * groups, one after another, the best quality first (HD, unmarked, SD, then 4K; the order the provider listed them on a tie), the stations by
+ * name. Nothing is left out: if one copy will not play, the next row is another way into the same channel. [keyOf] tells a station, so the
+ * same name in different countries or sources stays apart.
+ */
+private fun <T> inStationOrder(rows: List<T>, nameOf: (T) -> String, keyOf: (T) -> String): List<T> {
+    val groups = LinkedHashMap<String, MutableList<T>>()
+    for (row in rows) groups.getOrPut(keyOf(row)) { mutableListOf() }.add(row)
+    val collator = java.text.Collator.getInstance()
+    val stations = groups.values.map { group -> group.withIndex().sortedWith(compareBy({ fallbackRank(nameOf(it.value)) }, { it.index })).map { it.value } }
+    return stations.sortedWith { a, b -> collator.compare(nameOf(a[0]), nameOf(b[0])) }.flatten()
+}
 
 private class GuideRow(val id: String, val source: String, val country: String?, val categoryCountry: String?, val rawName: String, val name: String)
 
 /**
- * The channels of tidy sources (`sources.epg_optimise`) that really have listings, one per station and country (`tidyLists.ts`):
- * of a station's qualities and of the copies a provider files under other groups, the one to show (HD before an unmarked one, SD,
- * then 4K; the first listed on a tie). The others stay reachable as that channel's feeds. A station is not merged across
- * sources, and a channel with no known country (its own, its category's, or a "UK:" prefix of its name) is left to the provider's
- * own groups.
+ * The channels of tidy sources (`sources.epg_optimise`) that really have listings, with a known country (its own, its category's, or a "UK:"
+ * prefix of its name; the rest are left to the provider's own groups), a station's copies together ([inStationOrder]). A station is not merged
+ * across sources (`tidyLists.ts`).
  */
 private fun SQLiteConnection.guideLeads(sourceId: String?): List<Lead> {
     val rows = query(
@@ -37,29 +49,24 @@ private fun SQLiteConnection.guideLeads(sourceId: String?): List<Lead> {
            ORDER BY c.rowid""",
         *listOfNotNull(sourceId).toTypedArray(),
     ) { GuideRow(it.getText(0), it.getText(1), it.textOrNull(2), it.textOrNull(3), it.getText(4), it.getText(5)) }
-    class Held(val lead: Lead, val rank: Int)
-    val best = LinkedHashMap<String, Held>()
+    val leads = ArrayList<Lead>()
     for (row in rows) {
         val country = channelGuideCountry(row.country, row.categoryCountry, row.rawName) ?: continue
         // A network's local stations have their own lists, and an event slot with nothing on is not a station.
         if (localNetworkOf(row.rawName) != null || isPlaceholderChannelName(row.rawName)) continue
-        val key = "${row.source}\u0000$country\u0000${sameChannelKey(row.name)}"
-        val rank = fallbackRank(row.name)
-        val held = best[key]
-        if (held == null || rank < held.rank) best[key] = Held(Lead(row.id, country, row.name), rank)
+        leads += Lead(row.id, row.source, country, row.name)
     }
-    val collator = java.text.Collator.getInstance()
-    return best.values.map { it.lead }.sortedWith { a, b -> collator.compare(a.name, b.name) }
+    return inStationOrder(leads, { it.name }) { "${it.sourceId}\u0000${it.country}\u0000${sameChannelKey(it.name)}" }
 }
 
-/** The countries a tidy "TV Guide" list is offered for, the biggest first. */
+/** The countries a tidy "TV Guide" list is offered for, with how many channels each lists, the biggest first. */
 fun SQLiteConnection.listGuideCountries(sourceId: String? = null): List<GuideCountry> {
     val counts = LinkedHashMap<String, Int>()
     for (lead in guideLeads(sourceId)) counts[lead.country] = (counts[lead.country] ?: 0) + 1
     return counts.map { GuideCountry(it.key, it.value) }.sortedWith(compareByDescending<GuideCountry> { it.count }.thenBy { it.country })
 }
 
-/** The channels of one country's "TV Guide" list, by name. */
+/** The channels of one country's "TV Guide" list: every channel with listings, a station's qualities together, by station name. */
 fun SQLiteConnection.browseGuideChannels(country: String, sourceId: String? = null, limit: Int = 5000): List<ChannelRow> {
     val ids = guideLeads(sourceId).filter { it.country == country }.take(limit).map { it.id }
     val byId = HashMap<String, ChannelRow>()
@@ -138,7 +145,7 @@ fun guideCountryHeading(country: String?): String {
 
 /**
  * A group of the provider's categories that read as one ("UK| SPORT ᴴᴰ", "UK| SPORT ᴿᴬᵂ", "UK| SPORT ʰᵉᵛᶜ"): a tidy list of the rail.
- * [id] is `tidy:` and its categories' ids; [ppv] marks an events / pay-per-view group; [count] counts a station once.
+ * [id] is `tidy:` and its categories' ids; [ppv] marks an events / pay-per-view group; [count] counts every channel it shows.
  */
 class TidyCategory(val id: String, val label: String, val country: String?, val ppv: Boolean, val count: Int)
 
@@ -189,11 +196,11 @@ private fun SQLiteConnection.tidyRows(sourceId: String?, categoryIds: Set<String
 
 /**
  * The provider's categories of tidy sources, gathered into lists that read as one (`tidyLists.ts`): the same subject in the same country,
- * whatever its quality or source tag. Events and pay-per-view groups are kept apart. Each list counts a station once. By country (UK, USA,
+ * whatever its quality or source tag. Events and pay-per-view groups are kept apart. Each list counts every channel it shows. By country (UK, USA,
  * Canada, Australia first, then the rest, then none), then name.
  */
 fun SQLiteConnection.listTidyCategories(sourceId: String? = null): List<TidyCategory> {
-    class Group(var label: String, val country: String?, val ppv: Boolean) { val categoryIds = LinkedHashSet<String>(); val stations = HashSet<String>() }
+    class Group(var label: String, val country: String?, val ppv: Boolean) { val categoryIds = LinkedHashSet<String>(); var count = 0 }
     val groups = LinkedHashMap<String, Group>()
     for (row in tidyRows(sourceId, null)) {
         val ppv = row.tags.split(" ").contains("ppv")
@@ -204,7 +211,7 @@ fun SQLiteConnection.listTidyCategories(sourceId: String? = null): List<TidyCate
         // Of the spellings of one name, the one that is not all capitals reads better.
         if (label.any { it in 'a'..'z' } && group.label.none { it in 'a'..'z' }) group.label = label
         group.categoryIds.add(row.categoryId)
-        group.stations.add(sameChannelKey(row.name))
+        group.count += 1
     }
     fun rank(country: String?): Int {
         val at = listOf("UK", "US", "CA", "AU", "IE", "NZ").indexOf(country ?: "")
@@ -215,22 +222,15 @@ fun SQLiteConnection.listTidyCategories(sourceId: String? = null): List<TidyCate
         .sortedWith(
             compareBy<Group> { rank(it.country) }.thenBy { it.country ?: "" }.thenBy { if (it.ppv) 1 else 0 }.thenComparator { a, b -> collator.compare(a.label, b.label) },
         )
-        .map { TidyCategory(tidyCategoryId(it.categoryIds.toList()), it.label, it.country, it.ppv, it.stations.size) }
+        .map { TidyCategory(tidyCategoryId(it.categoryIds.toList()), it.label, it.country, it.ppv, it.count) }
 }
 
-/** The channels of one tidy list: each station once (the best quality of it), by name. */
+/** The channels of one tidy list: every channel of its categories, a station's qualities together, the best first, by station name. */
 fun SQLiteConnection.browseTidyCategory(id: String, limit: Int = 5000): List<ChannelRow> {
     val categoryIds = parseTidyCategoryId(id)?.takeIf { it.isNotEmpty() } ?: return emptyList()
-    class Best(val id: String, val name: String, val rank: Int)
-    val best = LinkedHashMap<String, Best>()
-    for (row in tidyRows(null, categoryIds.toSet())) {
-        val key = "${row.sourceId}\u0000${sameChannelKey(row.name)}"
-        val rank = fallbackRank(row.name)
-        val held = best[key]
-        if (held == null || rank < held.rank) best[key] = Best(row.channelId, row.name, rank)
-    }
-    val collator = java.text.Collator.getInstance()
-    val ids = best.values.sortedWith { a, b -> collator.compare(a.name, b.name) }.take(limit).map { it.id }
+    class Entry(val id: String, val sourceId: String, val name: String)
+    val rows = tidyRows(null, categoryIds.toSet()).map { Entry(it.channelId, it.sourceId, it.name) }
+    val ids = inStationOrder(rows, { it.name }) { "${it.sourceId}\u0000${sameChannelKey(it.name)}" }.take(limit).map { it.id }
     val byId = HashMap<String, ChannelRow>()
     for (part in ids.chunked(500)) {
         for (row in query("SELECT $CHANNEL_COLUMNS FROM channels c WHERE c.id IN (${part.joinToString(",") { "?" }})", *part.toTypedArray()) { it.channelRow() }) byId[row.id] = row
@@ -240,7 +240,7 @@ fun SQLiteConnection.browseTidyCategory(id: String, limit: Int = 5000): List<Cha
 
 /**
  * A list the rail builds from what channel names say: the channels of one league, or one network's local stations (`FacetList`).
- * [id] is `league:<key>` or `local:<key>`, with `@<source>` inside one source's section; [count] counts a station once.
+ * [id] is `league:<key>` or `local:<key>`, with `@<source>` inside one source's section; [count] counts every channel in it.
  */
 class FacetList(val id: String, val label: String, val kind: String, val count: Int)
 
@@ -280,49 +280,40 @@ private fun SQLiteConnection.facetRows(sourceId: String?): List<FacetRow> {
 
 private fun stationKey(row: FacetRow) = "${row.sourceId}\u0000${row.country ?: ""}\u0000${sameChannelKey(row.name)}"
 
-/** A list needs this many stations to be worth showing: a stray match is not a list. */
+/** A list needs this many channels to be worth showing: a stray match is not a list. */
 private const val FACET_LIST_LEAST = 3
 
 /**
  * The league lists ("🏈 NFL") and local-station lists ("📺 NBC local stations") of tidy sources (`tidyLists.ts`), from what channel names say,
- * for any provider. A station counts once per country whatever quality or category it was filed under. Leagues come first in the order of
- * [LEAGUES], then networks in the order of [NETWORKS]; one with fewer than three stations is left out.
+ * for any provider. A list counts every channel in it, a station's qualities and copies included. Leagues come first in the order of
+ * [LEAGUES], then networks in the order of [NETWORKS]; one with fewer than three channels is left out.
  */
 fun SQLiteConnection.listFacetLists(sourceId: String? = null): List<FacetList> {
-    val leagues = HashMap<String, HashSet<String>>()
-    val locals = HashMap<String, HashSet<String>>()
+    val leagues = HashMap<String, Int>()
+    val locals = HashMap<String, Int>()
     for (row in facetRows(sourceId)) {
-        val key = stationKey(row)
-        for (league in leaguesOf("${row.rawName} ${row.categoryRaw}")) leagues.getOrPut(league) { HashSet() }.add(key)
-        localNetworkOf(row.rawName)?.let { locals.getOrPut(it) { HashSet() }.add(key) }
+        for (league in leaguesOf("${row.rawName} ${row.categoryRaw}")) leagues[league] = (leagues[league] ?: 0) + 1
+        localNetworkOf(row.rawName)?.let { locals[it] = (locals[it] ?: 0) + 1 }
     }
     val out = ArrayList<FacetList>()
     for (league in LEAGUES) {
-        val count = leagues[league.key]?.size ?: 0
+        val count = leagues[league.key] ?: 0
         if (count >= FACET_LIST_LEAST) out += FacetList(facetListId("league", league.key, sourceId), leagueListLabel(league), "league", count)
     }
     for (network in NETWORKS) {
-        val count = locals[network.key]?.size ?: 0
+        val count = locals[network.key] ?: 0
         if (count >= FACET_LIST_LEAST) out += FacetList(facetListId("local", network.key, sourceId), localListLabel(network), "local", count)
     }
     return out
 }
 
-/** The channels of one league or local-stations list: each station once (the best quality of it), by name. */
+/** The channels of one league or local-stations list: every channel in it, a station's qualities together, the best first, by station name. */
 fun SQLiteConnection.browseFacetList(id: String, sourceId: String? = null, limit: Int = 5000): List<ChannelRow> {
     val parsed = parseFacetListId(id) ?: return emptyList()
-    class Best(val id: String, val name: String, val rank: Int)
-    val best = LinkedHashMap<String, Best>()
-    for (row in facetRows(parsed.sourceId ?: sourceId)) {
-        val matches = if (parsed.kind == "league") parsed.key in leaguesOf("${row.rawName} ${row.categoryRaw}") else localNetworkOf(row.rawName) == parsed.key
-        if (!matches) continue
-        val key = stationKey(row)
-        val rank = fallbackRank(row.name)
-        val held = best[key]
-        if (held == null || rank < held.rank) best[key] = Best(row.channelId, row.name, rank)
+    val rows = facetRows(parsed.sourceId ?: sourceId).filter { row ->
+        if (parsed.kind == "league") parsed.key in leaguesOf("${row.rawName} ${row.categoryRaw}") else localNetworkOf(row.rawName) == parsed.key
     }
-    val collator = java.text.Collator.getInstance()
-    val ids = best.values.sortedWith { a, b -> collator.compare(a.name, b.name) }.take(limit).map { it.id }
+    val ids = inStationOrder(rows, { it.name }, ::stationKey).take(limit).map { it.channelId }
     val byId = HashMap<String, ChannelRow>()
     for (part in ids.chunked(500)) {
         for (row in query("SELECT $CHANNEL_COLUMNS FROM channels c WHERE c.id IN (${part.joinToString(",") { "?" }})", *part.toTypedArray()) { it.channelRow() }) byId[row.id] = row

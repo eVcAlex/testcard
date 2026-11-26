@@ -9,16 +9,33 @@ import { categoryShown } from "../sync/hidden.js";
 
 interface Lead {
   readonly id: string;
+  readonly sourceId: string;
   readonly country: string;
   readonly name: string;
 }
 
 /**
- * The channels of tidy sources (`sources.epg_optimise`) that really have listings, one per station and country: of a
- * station's qualities and of the copies a provider files under other groups, the one to show (HD before an unmarked
- * one, SD, then 4K; the first listed on a tie). The others stay reachable as that channel's feeds. A station is not
- * merged across sources, and a channel with no known country (its own, its category's, or a "UK:" prefix of its name) is
- * left to the provider's own groups.
+ * A list's channels with each station's copies together: all its qualities, and the copies a provider files under other groups,
+ * one after another, the best quality first (HD, unmarked, SD, then 4K; the order the provider listed them on a tie), the stations
+ * by name. Nothing is left out: if one copy will not play, the next row is another way into the same channel. A station is told by
+ * `keyOf`, which keeps the same name in different countries or sources apart.
+ */
+function inStationOrder<T extends { readonly name: string }>(rows: readonly T[], keyOf: (row: T) => string): T[] {
+  const groups = new Map<string, T[]>();
+  for (const row of rows) {
+    const key = keyOf(row);
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [row]);
+    else group.push(row);
+  }
+  const stations = [...groups.values()].map((group) => group.map((row, at) => ({ row, at, rank: fallbackRank(row.name) })).sort((a, b) => a.rank - b.rank || a.at - b.at).map((entry) => entry.row));
+  return stations.sort((a, b) => a[0]!.name.localeCompare(b[0]!.name)).flat();
+}
+
+/**
+ * The channels of tidy sources (`sources.epg_optimise`) that really have listings, with a known country (its own, its
+ * category's, or a "UK:" prefix of its name; the rest are left to the provider's own groups), a station's copies together
+ * (`inStationOrder`). A station is not merged across sources.
  */
 function guideLeads(db: Database.Database, sourceId?: string): Lead[] {
   const rows = db
@@ -31,27 +48,24 @@ function guideLeads(db: Database.Database, sourceId?: string): Lead[] {
        ORDER BY c.rowid`,
     )
     .all(...(sourceId !== undefined ? [sourceId] : [])) as { id: string; sourceId: string; country: string | null; categoryCountry: string | null; rawName: string; name: string }[];
-  const best = new Map<string, { lead: Lead; rank: number }>();
+  const leads: Lead[] = [];
   for (const row of rows) {
     const country = channelGuideCountry(row.country, row.categoryCountry, row.rawName);
     // A network's local stations have their own lists, and an event slot with nothing on is not a station.
     if (country === null || localNetworkOf(row.rawName) !== null || isPlaceholderChannelName(row.rawName)) continue;
-    const key = `${row.sourceId}\u0000${country}\u0000${sameChannelKey(row.name)}`;
-    const rank = fallbackRank(row.name);
-    const held = best.get(key);
-    if (held === undefined || rank < held.rank) best.set(key, { lead: { id: row.id, country, name: row.name }, rank });
+    leads.push({ id: row.id, sourceId: row.sourceId, country, name: row.name });
   }
-  return [...best.values()].map((entry) => entry.lead).sort((a, b) => a.name.localeCompare(b.name));
+  return inStationOrder(leads, (lead) => `${lead.sourceId}\u0000${lead.country}\u0000${sameChannelKey(lead.name)}`);
 }
 
-/** The countries a tidy "TV Guide" list is offered for, the biggest first. */
+/** The countries a tidy "TV Guide" list is offered for, with how many channels each lists, the biggest first. */
 export function listGuideCountries(db: Database.Database, sourceId?: string): GuideCountry[] {
   const counts = new Map<string, number>();
   for (const lead of guideLeads(db, sourceId)) counts.set(lead.country, (counts.get(lead.country) ?? 0) + 1);
   return [...counts.entries()].map(([country, count]) => ({ country, count })).sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
 }
 
-/** The channels of one country's "TV Guide" list, by name. */
+/** The channels of one country's "TV Guide" list: every channel with listings, a station's qualities together, by station name. */
 export function browseGuideChannels(db: Database.Database, opts: { country: string; sourceId?: string; limit?: number }): ChannelRow[] {
   const ids = guideLeads(db, opts.sourceId)
     .filter((lead) => lead.country === opts.country)
@@ -103,10 +117,10 @@ function tidyRows(db: Database.Database, sourceId?: string, categoryIds?: readon
 /**
  * The provider's categories of tidy sources, gathered into lists that read as one: the same subject in the same country, whatever
  * its quality or source tag ("UK| SPORT ᴴᴰ", "UK| SPORT ᴿᴬᵂ", "UK| SPORT ʰᵉᵛᶜ" are one "Sport"). Events and pay-per-view groups are kept
- * apart from the rest. Each list counts a station once. By country (UK, USA, Canada, Australia first, then the rest, then no known country), then name.
+ * apart from the rest. Each list counts every channel it shows. By country (UK, USA, Canada, Australia first, then the rest, then no known country), then name.
  */
 export function listTidyCategories(db: Database.Database, sourceId?: string): TidyCategory[] {
-  interface Group { label: string; country: string | null; ppv: boolean; categoryIds: Set<string>; stations: Set<string>; firstRow: number }
+  interface Group { label: string; country: string | null; ppv: boolean; categoryIds: Set<string>; count: number; firstRow: number }
   const groups = new Map<string, Group>();
   let order = 0;
   for (const row of tidyRows(db, sourceId)) {
@@ -116,12 +130,12 @@ export function listTidyCategories(db: Database.Database, sourceId?: string): Ti
     const key = `${row.sourceId}\u0000${country ?? ""}\u0000${ppv ? 1 : 0}\u0000${label.toLowerCase()}`;
     let group = groups.get(key);
     if (group === undefined) {
-      group = { label, country, ppv, categoryIds: new Set(), stations: new Set(), firstRow: order++ };
+      group = { label, country, ppv, categoryIds: new Set(), count: 0, firstRow: order++ };
       groups.set(key, group);
     // Of the spellings of one name, the one that is not all capitals reads better.
     } else if (/[a-z]/.test(label) && !/[a-z]/.test(group.label)) group.label = label;
     group.categoryIds.add(row.categoryId);
-    group.stations.add(sameChannelKey(row.name));
+    group.count += 1;
   }
   const rank = (country: string | null) => {
     const at = ["UK", "US", "CA", "AU", "IE", "NZ"].indexOf(country ?? "");
@@ -129,21 +143,15 @@ export function listTidyCategories(db: Database.Database, sourceId?: string): Ti
   };
   return [...groups.values()]
     .sort((a, b) => rank(a.country) - rank(b.country) || (a.country ?? "").localeCompare(b.country ?? "") || Number(a.ppv) - Number(b.ppv) || a.label.localeCompare(b.label))
-    .map((g) => ({ id: tidyCategoryId([...g.categoryIds]), label: g.label, country: g.country, ppv: g.ppv, count: g.stations.size }));
+    .map((g) => ({ id: tidyCategoryId([...g.categoryIds]), label: g.label, country: g.country, ppv: g.ppv, count: g.count }));
 }
 
-/** The channels of one tidy list: each station once (the best quality of it, as in a "TV Guide" list), by name. */
+/** The channels of one tidy list: every channel of its categories, a station's qualities together, the best first, by station name. */
 export function browseTidyCategory(db: Database.Database, opts: { id: string; limit?: number }): ChannelRow[] {
   const categoryIds = parseTidyCategoryId(opts.id);
   if (categoryIds === null || categoryIds.length === 0) return [];
-  const best = new Map<string, { id: string; name: string; rank: number }>();
-  for (const row of tidyRows(db, undefined, categoryIds)) {
-    const key = `${row.sourceId}\u0000${sameChannelKey(row.name)}`;
-    const rank = fallbackRank(row.name);
-    const held = best.get(key);
-    if (held === undefined || rank < held.rank) best.set(key, { id: row.channelId, name: row.name, rank });
-  }
-  const ids = [...best.values()].sort((a, b) => a.name.localeCompare(b.name)).slice(0, opts.limit ?? 5000).map((entry) => entry.id);
+  const rows = tidyRows(db, undefined, categoryIds).map((row) => ({ id: row.channelId, sourceId: row.sourceId, name: row.name }));
+  const ids = inStationOrder(rows, (row) => `${row.sourceId}\u0000${sameChannelKey(row.name)}`).slice(0, opts.limit ?? 5000).map((row) => row.id);
   const byId = new Map<string, ChannelRow>();
   for (let from = 0; from < ids.length; from += 500) {
     const part = ids.slice(from, from + 500);
@@ -189,50 +197,44 @@ function facetsOf(row: FacetRow): { leagues: string[]; local: string | null } {
 
 const stationKey = (row: FacetRow) => `${row.sourceId}\u0000${row.country ?? ""}\u0000${sameChannelKey(row.name)}`;
 
-/** A list needs this many stations to be worth showing: a stray match is not a list. */
+/** A list needs this many channels to be worth showing: a stray match is not a list. */
 const FACET_LIST_LEAST = 3;
 
 /**
  * The league lists ("🏈 NFL") and local-station lists ("📺 NBC local stations") of tidy sources, from what channel names say, for any
- * provider. A station counts once per country whatever quality or category it was filed under. Leagues come first in the order of
- * `LEAGUES`, then networks in the order of `NETWORKS`; one with fewer than three stations is left out.
+ * provider. A list counts every channel in it, a station's qualities and copies included. Leagues come first in the order of `LEAGUES`,
+ * then networks in the order of `NETWORKS`; one with fewer than three channels is left out.
  */
 export function listFacetLists(db: Database.Database, sourceId?: string): FacetList[] {
-  const leagues = new Map<string, Set<string>>();
-  const locals = new Map<string, Set<string>>();
+  const leagues = new Map<string, number>();
+  const locals = new Map<string, number>();
   for (const row of facetRows(db, sourceId)) {
     const facets = facetsOf(row);
-    const key = stationKey(row);
-    for (const league of facets.leagues) (leagues.get(league) ?? leagues.set(league, new Set()).get(league)!).add(key);
-    if (facets.local !== null) (locals.get(facets.local) ?? locals.set(facets.local, new Set()).get(facets.local)!).add(key);
+    for (const league of facets.leagues) leagues.set(league, (leagues.get(league) ?? 0) + 1);
+    if (facets.local !== null) locals.set(facets.local, (locals.get(facets.local) ?? 0) + 1);
   }
   const out: FacetList[] = [];
   for (const league of LEAGUES) {
-    const count = leagues.get(league.key)?.size ?? 0;
+    const count = leagues.get(league.key) ?? 0;
     if (count >= FACET_LIST_LEAST) out.push({ id: facetListId("league", league.key, sourceId), label: leagueListLabel(league), kind: "league", count });
   }
   for (const network of NETWORKS) {
-    const count = locals.get(network.key)?.size ?? 0;
+    const count = locals.get(network.key) ?? 0;
     if (count >= FACET_LIST_LEAST) out.push({ id: facetListId("local", network.key, sourceId), label: localListLabel(network), kind: "local", count });
   }
   return out;
 }
 
-/** The channels of one league or local-stations list: each station once (the best quality of it), by name. */
+/** The channels of one league or local-stations list: every channel in it, a station's qualities together, the best first, by station name. */
 export function browseFacetList(db: Database.Database, opts: { id: string; sourceId?: string; limit?: number }): ChannelRow[] {
   const parsed = parseFacetListId(opts.id);
   if (parsed === null) return [];
   const sourceId = parsed.sourceId ?? opts.sourceId;
-  const best = new Map<string, { id: string; name: string; rank: number }>();
-  for (const row of facetRows(db, sourceId)) {
+  const rows = facetRows(db, sourceId).filter((row) => {
     const facets = facetsOf(row);
-    if (parsed.kind === "league" ? !facets.leagues.includes(parsed.key) : facets.local !== parsed.key) continue;
-    const key = stationKey(row);
-    const rank = fallbackRank(row.name);
-    const held = best.get(key);
-    if (held === undefined || rank < held.rank) best.set(key, { id: row.channelId, name: row.name, rank });
-  }
-  const ids = [...best.values()].sort((a, b) => a.name.localeCompare(b.name)).slice(0, opts.limit ?? 5000).map((entry) => entry.id);
+    return parsed.kind === "league" ? facets.leagues.includes(parsed.key) : facets.local === parsed.key;
+  });
+  const ids = inStationOrder(rows, stationKey).slice(0, opts.limit ?? 5000).map((row) => row.channelId);
   const byId = new Map<string, ChannelRow>();
   for (let from = 0; from < ids.length; from += 500) {
     const part = ids.slice(from, from + 500);

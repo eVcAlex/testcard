@@ -21,8 +21,11 @@ placeholders) are dropped; placeholder guide ids (`dummy-...`) stand in for chan
 1. **A view over the catalogue, never a rewrite.** Nothing in `channels`, `channel_variants` or any category changes. The provider's own
    groups stay in the rail underneath.
 2. **"TV Guide" lists.** For a source with the switch on (`sources.epg_optimise`, now labelled "Tidy playlist and improve TV guide"; no
-   new column), the Live TV rail gets one list per country: the channels that really have listings (programmes), one per station
-   (`sameChannelKey`) and country, the best quality first (`fallbackRank`), by name. A station is not merged across sources.
+   new column), the Live TV rail gets one list per country: the channels that really have listings (programmes). **Every channel is
+   listed, with a station's copies one after another** (`inStationOrder`: all its qualities, and the copies filed under other groups, the
+   best first by `fallbackRank`, the stations by name), as a provider's own group does ("Sky Sports Main Event" in HD, UHD 50fps, SD...):
+   if one copy will not play, the next row is another way into the same channel. A station is told by source, country and
+   `sameChannelKey`, so the same name in two countries or sources stays apart.
    The country is the channel's own parsed one (`XX|`), else its category's ("UK| SPORT"), else a prefix of its name ("UK: BBC One",
    "US - NBC"), and only a known country code counts (`guideCountryOf`): "NBA", "PRIME" or "VIP" prefixes are leagues and services,
    not lists. A channel with no known country is left to the provider's groups. The stored `channels.country` is not widened,
@@ -33,7 +36,7 @@ placeholders) are dropped; placeholder guide ids (`dummy-...`) stand in for chan
 3. **Tidy categories.** The provider's live categories of a tidied source are also gathered into lists that read as one
    (`listTidyCategories`, `browseTidyCategory`; `tidy:` ids): the same subject in the same country, whatever its quality or source tag
    ("UK| SPORT ᴴᴰ", "UK| SPORT ᴿᴬᵂ ⁶⁰ᶠᵖˢ" and "UK| SPORT ʰᵉᵛᶜ" are one "Sport"), by `tidyCategoryLabel`. Events and pay-per-view groups are
-   kept apart (a section "UK · Events", their trailing "PPV" dropped). A list shows each station once, the best quality first, by name.
+   kept apart (a section "UK · Events", their trailing "PPV" dropped). A list shows every channel, a station's copies together and the best first (`inStationOrder`).
    The rail reads TV Guide, then a section per country (UK, USA, Canada, Australia first, then the rest, then "Other"), then the
    provider's own groups unchanged under "Provider groups", so nothing the provider lists is hidden by tidying (separator, junk and
    adult categories aside). An unrecognised prefix ("BEE|") stays in the name, because "Other" mixes places. In a multi-source rail
@@ -43,11 +46,11 @@ placeholders) are dropped; placeholder guide ids (`dummy-...`) stand in for chan
    broadcast networks is matched against a channel's name and its category's name, whatever the provider's prefix or styling: "🏈 NFL" gathers
    the NFL channels wherever the provider filed them. A network's *local stations* ("NBC 5 (WMAQ) Chicago", "NBC [Boston]", "WILKES BARRE, PA
    WBRE NBC 28") are told from its national services ("FOX News", "NBC Sports") by call letters, a city in brackets, or a channel number, and get a
-   list per network ("📺 NBC local stations"). A list needs three stations; a station counts once per country. Empty event slots ("NHL 01: No
+   list per network ("📺 NBC local stations"). A list needs three channels, and shows every one, a station's copies together. Empty event slots ("NHL 01: No
    Game Today", "- NO EVENT STREAMING -") and divider rows ("##### NCAAF #####") are not stations and are left out of every tidy list. The tables
    are data: the Kotlin port is copied from them and `test-vectors/tidyFacets.json` pins the answers. Measured on Strong (18,581 channels): NBC 589
    local stations (EPGenius, hand-curated: 615), FOX 314 (297), ABC 180 (185), CBS 266 (299); every list in 230 ms.
-5. **TV Guide lists are national channels.** A network's local stations are left out of them (they have their own lists), as are placeholders.
+5. **TV Guide lists are national channels (every copy of each).** A network's local stations are left out of them (they have their own lists), as are placeholders.
 6. **Rail order:** TV Guide, Sports (leagues), Local stations, a section per country with its events, then the provider's own groups.
 7. **Placeholders are not listings.** Guide channels called `dummy-...` only stand in for channels with no real listings
    ("NO EVENT STREAMING"). With the switch on, the matcher never links to one and a channel whose own `tvg-id` is one gets no listings,

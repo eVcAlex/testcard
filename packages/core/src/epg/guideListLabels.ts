@@ -1,7 +1,7 @@
 // What a "TV Guide" list is called and how the Live TV rail names it. Pure: the renderer uses this too.
 import { categoryDisplayName } from "../normalise/displayName.js";
 
-/** A country that has "TV Guide" channels, and how many (one per station: its qualities and copies are counted once). */
+/** A country that has "TV Guide" channels, and how many (every channel with listings, a station's qualities and copies included). */
 export interface GuideCountry {
   readonly country: string;
   readonly count: number;
@@ -83,7 +83,7 @@ export interface TidyCategory {
   readonly country: string | null;
   /** An events / pay-per-view group. */
   readonly ppv: boolean;
-  /** Stations in the list: each is counted once, whatever quality or category it was filed under. */
+  /** Channels in the list: every one, a station's qualities and copies included. */
   readonly count: number;
 }
 
@@ -93,7 +93,7 @@ export interface FacetList {
   readonly id: string;
   readonly label: string;
   readonly kind: "league" | "local";
-  /** Stations in the list: each is counted once, whatever quality or category it was filed under. */
+  /** Channels in the list: every one, a station's qualities and copies included. */
   readonly count: number;
 }
 

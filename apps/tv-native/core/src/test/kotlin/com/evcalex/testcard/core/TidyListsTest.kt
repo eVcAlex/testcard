@@ -56,17 +56,17 @@ class TidyListsTest {
     private fun Db.countries(source: String? = null) = runBlocking { read { c -> c.listGuideCountries(source).map { it.country to it.count } } }
     private fun Db.ids(country: String, source: String? = null) = runBlocking { read { c -> c.browseGuideChannels(country, source).map { it.id } } }
 
-    @Test fun `counts each station once per country, whatever quality or group it was listed under`() {
+    @Test fun `counts every channel that has listings per country, whatever its quality or group`() {
         val db = setup()
         db.add("bbc4k", "s", "BBC One 4K", "UK"); db.add("bbchd", "s", "BBC One HD", "UK"); db.add("bbc2", "s", "BBC One", "UK")
         db.add("itv", "s", "ITV1", "UK"); db.add("nbc", "s", "NBC Chicago", "US")
-        assertEquals(listOf("UK" to 2, "US" to 1), db.countries())
+        assertEquals(listOf("UK" to 4, "US" to 1), db.countries())
     }
 
-    @Test fun `shows the best quality of a station first and orders by name`() {
+    @Test fun `lists every quality of a station together, the best first, then the next station by name`() {
         val db = setup()
         db.add("bbc4k", "s", "BBC One 4K", "UK"); db.add("bbchd", "s", "BBC One HD", "UK"); db.add("itv", "s", "ITV1", "UK")
-        assertEquals(listOf("bbchd", "itv"), db.ids("UK"))
+        assertEquals(listOf("bbchd", "bbc4k", "itv"), db.ids("UK"))
     }
 
     @Test fun `leaves out channels with no listings, no country, another country, or a source that is not tidied`() {
@@ -159,14 +159,14 @@ class TidyListsTest {
 
     private fun Db.tidy() = runBlocking { read { c -> c.listTidyCategories() } }
 
-    @Test fun `gathers the quality and source copies of a category into one list, counting a station once`() {
+    @Test fun `gathers the quality and source copies of a category into one list, counting every channel it shows`() {
         val db = setup()
         val hd = db.addCategory("s", "UK| SPORT ᴴᴰ", listOf("Sky Sports Main Event HD", "TNT Sports 1 HD"))
         val raw = db.addCategory("s", "UK| SPORT ᴿᴬᵂ ⁶⁰ᶠᵖˢ", listOf("Sky Sports Main Event", "Eurosport 1"))
         val hevc = db.addCategory("s", "UK| SPORT ʰᵉᵛᶜ", listOf("Sky Sports Main Event 4K"))
         val lists = db.tidy()
         assertEquals(1, lists.size)
-        assertEquals(listOf("Sport", "UK", false, 3), listOf(lists[0].label, lists[0].country, lists[0].ppv, lists[0].count))
+        assertEquals(listOf("Sport", "UK", false, 5), listOf(lists[0].label, lists[0].country, lists[0].ppv, lists[0].count))
         assertEquals(listOf(hd, raw, hevc).sorted(), parseTidyCategoryId(lists[0].id)!!.sorted())
     }
 
@@ -186,12 +186,26 @@ class TidyListsTest {
         )
     }
 
-    @Test fun `reads a lists channels once each per station, the best quality first, by name`() {
+    @Test fun `reads every channel of a list, a stations qualities together with the best first, then by station name`() {
         val db = setup()
         db.addCategory("s", "UK| NEWS ᴴᴰ", listOf("BBC News 4K", "Sky News HD")); db.addCategory("s", "UK| NEWS ᴿᴬᵂ", listOf("BBC News HD", "GB News"))
         val list = db.tidy().single()
-        assertEquals(listOf("BBC News HD", "GB News", "Sky News HD"), runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } })
-        assertEquals(3, list.count)
+        assertEquals(listOf("BBC News HD", "BBC News 4K", "GB News", "Sky News HD"), runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } })
+        assertEquals(4, list.count)
+    }
+
+    @Test fun `keeps every quality of a channel one after another, as a providers own group does`() {
+        val db = setup()
+        db.addCategory("s", "UK| SKY SPORTS", listOf(
+            "Sky Sports Premier League HD", "Sky Sports Main Event UHD 50fps", "Sky Sports 1 HD", "Sky Sports Main Event HD", "Sky Sports Premier League UHD 50fps",
+            "Sky Sports Main Event", "Sky Sports 1 UHD 50fps", "Sky Sports Main Event SD",
+        ))
+        val list = db.tidy().single()
+        assertEquals(8, list.count)
+        assertEquals(
+            listOf("Sky Sports 1 HD", "Sky Sports 1 UHD 50fps", "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD", "Sky Sports Main Event UHD 50fps", "Sky Sports Premier League HD", "Sky Sports Premier League UHD 50fps"),
+            runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } },
+        )
     }
 
     @Test fun `reads nothing from an id that is not a tidy list`() {
@@ -238,12 +252,12 @@ class TidyListsTest {
     private fun Db.facets() = runBlocking { read { c -> c.listFacetLists().map { Triple(it.id, it.label, it.count) } } }
     private fun Db.facet(id: String) = runBlocking { read { c -> c.browseFacetList(id).map { it.rawName } } }
 
-    @Test fun `gathers a leagues channels from any category, each station once, and leaves out lists of fewer than three`() {
+    @Test fun `gathers a leagues channels from any category, a stations qualities together, and leaves out lists of fewer than three`() {
         val db = setup()
         db.addRaw("s", "US| SPORT", listOf("US: NFL GAME PASS ᴿᴬᵂ", "US: NFL REDZONE", "US: NFL GAME PASS HD", "US: ESPN"))
         db.addRaw("s", "US| FOX", listOf("Sunday Night Football [NBC]")); db.addRaw("s", "US| NBA PPV", listOf("US: NBA TV"))
-        assertEquals(listOf(Triple("league:nfl", "🏈 NFL", 3)), db.facets())
-        assertEquals(listOf("US: NFL GAME PASS HD", "US: NFL REDZONE", "Sunday Night Football [NBC]"), db.facet("league:nfl"))
+        assertEquals(listOf(Triple("league:nfl", "🏈 NFL", 4)), db.facets())
+        assertEquals(listOf("US: NFL GAME PASS HD", "US: NFL GAME PASS ᴿᴬᵂ", "US: NFL REDZONE", "Sunday Night Football [NBC]"), db.facet("league:nfl"))
     }
 
     @Test fun `takes a league from its categorys name when the channels own does not say`() {
