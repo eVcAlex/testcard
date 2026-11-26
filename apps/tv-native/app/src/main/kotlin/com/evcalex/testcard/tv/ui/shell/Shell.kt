@@ -107,9 +107,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     if (!app.ready) { Box(Modifier.fillMaxSize().background(Palette.background), contentAlignment = Alignment.Center) { AppText("testcard", 40, Palette.foreground, FontWeight.SemiBold) }; return }
     val status = app.status
     // Signed out (or the session ended): only the sign-in screen makes sense.
-    // Whether this run began signed out: a viewer who has just signed in is asked who is watching once, to add a profile or carry on.
-    val signedOutThisRun = remember { mutableStateOf(false) }
-    if (status.account != SyncAccount.SignedIn && !app.localMode) { signedOutThisRun.value = true; SignInScreen(app); return }
+    if (status.account != SyncAccount.SignedIn && !app.localMode) { SignInScreen(app); return }
 
     val sources = app.sources
     val pickedSource = app.sourcePick
@@ -124,8 +122,15 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     var exitHint by remember { mutableStateOf(false) }
     var goTo by remember { mutableStateOf<String?>(null) }
     var lastBack by remember { mutableStateOf(0L) }
-    // "Who's watching?": on launch when there is more than one profile, right after signing in, and from the profile button in the nav bar.
-    var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else if (signedOutThisRun.value && app.profiles.size == 1) "offer" else null) }
+    // "Who's watching?": on launch when there is more than one profile, and from the profile button in the nav bar.
+    var choosing by remember { mutableStateOf<String?>(if (app.profiles.size > 1) "launch" else null) }
+    // Only an account created on this TV is offered a profile, once. Signing in to an existing account never is: its profiles are
+    // still on their way when the sign-in finishes, so "no profiles yet" would be a guess.
+    LaunchedEffect(app.profileOfferPending, app.profiles.size) {
+        if (app.profileOfferPending && choosing == null) {
+            if (app.profiles.size == 1) choosing = "offer" else app.answerProfileOffer()
+        }
+    }
     val holder = rememberSaveableStateHolder()
 
     val sourceNames = remember(sourceId, sources) {
@@ -133,7 +138,7 @@ fun Shell(app: AppController, update: UpdateState, content: ShellContent, exit: 
     }
 
     if (choosing == "offer") {
-        ProfileOffer(onCreate = { choosing = "create" }, onSkip = { choosing = null })
+        ProfileOffer(onCreate = { app.answerProfileOffer(); choosing = "create" }, onSkip = { app.answerProfileOffer(); choosing = null })
         return
     }
     if (choosing != null) {

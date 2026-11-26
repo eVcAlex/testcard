@@ -25,6 +25,17 @@ describe("guideKey", () => {
   });
 });
 
+describe("matchGuide placeholders", () => {
+  it("never matches a placeholder guide channel", () => {
+    const { matches } = matchGuide([channel("c1", "UK| Dave HD", "UK")], [{ id: "dummy-1", names: ["Dave"] }]);
+    expect(matches.size).toBe(0);
+  });
+  it("prefers the real channel when a placeholder carries the same name", () => {
+    const { matches } = matchGuide([channel("c1", "UK| Dave HD", "UK")], [{ id: "dummy-1", names: ["Dave"] }, ...guide]);
+    expect(matches.get("c1")?.guideId).toBe("Dave.uk");
+  });
+});
+
 describe("matchGuide", () => {
   it("leaves a channel whose own tvg-id the guide knows alone", () => {
     const { matches, stats } = matchGuide([channel("c1", "Whatever", null, "Dave.uk")], guide);
@@ -142,6 +153,40 @@ describe("importEpg with optimising", () => {
     await importEpg(db, "s1", streamOf(xmltv));
     expect(titlesFor(db, "ch-bbc")).toEqual([]);
     expect(titlesFor(db, "ch-good")).toEqual(["Quiz"]);
+  });
+
+  it("does not link to a placeholder guide channel, and gives a placeholder tvg-id no listings", async () => {
+    const db = seeded();
+    db.prepare("UPDATE channels SET tvg_id = 'dummy-12' WHERE id = 'ch-good'").run();
+    const withPlaceholders = `<?xml version="1.0"?><tv>
+<channel id="dummy-12"><display-name>Dave</display-name></channel>
+<channel id="dummy-99"><display-name>BBC One</display-name></channel>
+<programme start="${stamp(now - 3600_000)}" stop="${stamp(now + 3600_000)}" channel="dummy-12"><title>NO EVENT STREAMING</title></programme>
+<programme start="${stamp(now - 3600_000)}" stop="${stamp(now + 3600_000)}" channel="dummy-99"><title>NO EVENT STREAMING</title></programme>
+</tv>`;
+    const result = await importEpg(db, "s1", streamOf(withPlaceholders), { optimise: true });
+    expect(titlesFor(db, "ch-good")).toEqual([]);
+    expect(titlesFor(db, "ch-bbc")).toEqual([]);
+    expect(result.matching?.matched).toBe(0);
+  });
+
+  it("tells a channel's market apart by its category's country or a name prefix when the channel itself has none", async () => {
+    const db = migrateDatabase(new Database(":memory:"));
+    db.prepare("INSERT INTO sources (id, kind, name, playlist_url, created_at) VALUES ('s1', 'm3u', 'One', 'http://p/l.m3u', 1)").run();
+    db.prepare("INSERT INTO categories (id, source_id, provider_id, raw_name, country) VALUES ('uk', 's1', 'c', 'UK| Entertainment', 'UK')").run();
+    db.prepare("INSERT INTO categories (id, source_id, provider_id, raw_name) VALUES ('none', 's1', 'd', 'Entertainment')").run();
+    const insert = db.prepare("INSERT INTO channels (id, source_id, category_id, normalised_name, raw_name, country, first_seen_at, last_seen_at) VALUES (?, 's1', ?, ?, ?, NULL, 1, 1)");
+    insert.run("by-category", "uk", "Sky 1", "Sky 1");
+    insert.run("by-name", "none", "Sky 1", "DE: Sky 1");
+    const sky = `<?xml version="1.0"?><tv>
+<channel id="Sky1.uk"><display-name>Sky 1</display-name></channel>
+<channel id="Sky1.de"><display-name>Sky 1</display-name></channel>
+<programme start="${stamp(now - 3600_000)}" stop="${stamp(now + 3600_000)}" channel="Sky1.uk"><title>UK show</title></programme>
+<programme start="${stamp(now - 3600_000)}" stop="${stamp(now + 3600_000)}" channel="Sky1.de"><title>DE show</title></programme>
+</tv>`;
+    await importEpg(db, "s1", streamOf(sky), { optimise: true });
+    expect(titlesFor(db, "by-category")).toEqual(["UK show"]);
+    expect(titlesFor(db, "by-name")).toEqual(["DE show"]);
   });
 
   it("still imports a guide that has no channel list", async () => {

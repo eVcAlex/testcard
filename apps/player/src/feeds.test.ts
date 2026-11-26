@@ -15,6 +15,11 @@ describe("feedsFor", () => {
     expect(ids).not.toContain("4");
     expect(new Set(ids).size).toBe(ids.length);
   });
+  it("offers every copy, however many the list carries", () => {
+    const many = [ch("0", "UK: Sky Sports Main Event")];
+    for (let n = 1; n <= 40; n++) many.push(ch(`${n}`, `UK: Sky Sports Main Event ${n % 2 ? "HD" : "SD"}`));
+    expect(feedsFor(many[0]!, many)).toHaveLength(41);
+  });
   it("says what took over", () => {
     expect(fellBackNote(pool[0]!, pool[1]!)).toBe("Playing BBC One HD instead");
   });

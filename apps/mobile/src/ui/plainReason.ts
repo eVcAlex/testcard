@@ -13,6 +13,9 @@ export function plainReason(message: string, who = "the provider"): string {
   if (/\b(401|403)\b|unauthori[sz]ed|forbidden|credentials|login|password/i.test(message))
     return "The provider turned down the login. Press Edit to check it.";
   if (/\b5\d\d\b/.test(message)) return "The provider's server had a problem.";
+  // A reply that was not what was asked for (a web page where data was due, an object where a list was): never the library's words.
+  if (/ClassCastException|cannot be cast|SerializationException|JsonDecodingException|Unexpected JSON|JSONException|MalformedJson|Unexpected token|not valid JSON|EOFException|End of input|Expected start of|is not a function/i.test(message))
+    return `${who[0]!.toUpperCase()}${who.slice(1)} sent a reply the app couldn't read. Try again in a minute, and if it keeps happening, press Edit to check the source.`;
   const tidy = message
     .replace(/^fetch failed:\s*/i, "")
     .replace(/\b(?:[a-z]+\.)+[A-Z]\w*(?:Exception|Error):\s*/g, "")

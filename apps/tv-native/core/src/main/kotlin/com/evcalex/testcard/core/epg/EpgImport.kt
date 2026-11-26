@@ -2,6 +2,7 @@ package com.evcalex.testcard.core.epg
 
 import com.evcalex.testcard.core.nowMs
 import com.evcalex.testcard.core.db.Db
+import com.evcalex.testcard.core.db.channelGuideCountry
 import com.evcalex.testcard.core.db.changes
 import com.evcalex.testcard.core.db.exec
 import com.evcalex.testcard.core.db.query
@@ -57,10 +58,13 @@ suspend fun deleteProgrammesInSlices(db: Db, select: String, vararg params: Any?
 }
 
 /** A guide id can be shared by several channels (a playlist lists a channel under more than one group, or in HD and SD); each gets the listings. */
-private suspend fun channelsByGuideId(db: Db, sourceId: String): MutableMap<String, MutableList<String>> {
+private suspend fun channelsByGuideId(db: Db, sourceId: String, optimise: Boolean): MutableMap<String, MutableList<String>> {
     val out = LinkedHashMap<String, MutableList<String>>()
     db.read { connection ->
-        connection.query("SELECT tvg_id, id FROM channels WHERE source_id = ? AND tvg_id IS NOT NULL AND tvg_id <> ''", sourceId) { out.getOrPut(it.getText(0)) { mutableListOf() }.add(it.getText(1)) }
+        connection.query("SELECT tvg_id, id FROM channels WHERE source_id = ? AND tvg_id IS NOT NULL AND tvg_id <> ''", sourceId) {
+            // Tidying leaves a placeholder id's "no event" listings out: a channel with no real listings shows none, honestly.
+            if (!(optimise && isPlaceholderGuideId(it.getText(0)))) out.getOrPut(it.getText(0)) { mutableListOf() }.add(it.getText(1))
+        }
     }
     return out
 }
@@ -74,8 +78,14 @@ private suspend fun flush(db: Db, rows: List<Pending>) = db.transaction { connec
 /** Every channel of a source with what the matcher needs, for [importEpg] with `optimise`. */
 private suspend fun matchableChannels(db: Db, sourceId: String): List<MatchableChannel> = db.read { connection ->
     val out = ArrayList<MatchableChannel>()
-    connection.query("SELECT id, raw_name, country, tvg_id FROM channels WHERE source_id = ?", sourceId) {
-        out.add(MatchableChannel(it.getText(0), it.getText(1), if (it.isNull(2)) null else it.getText(2), if (it.isNull(3)) null else it.getText(3)))
+    connection.query(
+        "SELECT c.id, c.raw_name, c.country, c.tvg_id, cat.country FROM channels c LEFT JOIN categories cat ON cat.id = c.category_id WHERE c.source_id = ?",
+        sourceId,
+    ) {
+        val own = if (it.isNull(2)) null else it.getText(2)
+        // The country tells apart a channel's copies in different markets: its own, its category's, or a "UK:" name prefix.
+        val country = channelGuideCountry(own, if (it.isNull(4)) null else it.getText(4), it.getText(1)) ?: own
+        out.add(MatchableChannel(it.getText(0), it.getText(1), country, if (it.isNull(3)) null else it.getText(3)))
     }
     out
 }
@@ -99,7 +109,7 @@ suspend fun importEpg(
     onProgress: (programmesSoFar: Int) -> Unit = {},
 ): EpgImportResult = coroutineScope {
     val startedAt = nowMs()
-    val channels = channelsByGuideId(db, sourceId)
+    val channels = channelsByGuideId(db, sourceId, optimise)
     // With optimising on, the guide's own channel list (read first) is matched to the channels the playlist's `tvg-id`s missed, and
     // those join the same fan-out (`GuideMatching`). A failure there must not cost the guide: it carries on as if off.
     val matching = if (optimise) GuideMatching(matchableChannels(db, sourceId), channels) else null
@@ -142,7 +152,7 @@ suspend fun importEpg(
  */
 suspend fun importGuideFile(db: Db, sourceId: String, fileJson: String): EpgImportResult {
     val startedAt = nowMs()
-    val channels = channelsByGuideId(db, sourceId)
+    val channels = channelsByGuideId(db, sourceId, optimise = false)
     val c: JsonObject = Json.parseToJsonElement(fileJson).jsonObject["c"]?.jsonObject ?: JsonObject(emptyMap())
     deleteProgrammesInSlices(db, "SELECT p.rowid FROM programmes p JOIN channels c ON c.id = p.channel_id WHERE c.source_id = ?", sourceId)
 

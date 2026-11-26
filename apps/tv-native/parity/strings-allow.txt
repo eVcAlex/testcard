@@ -46,3 +46,16 @@ When a live channel stops to buffer for a few seconds, switch to another feed of
 
 # the TypeScript openLinkSecrets wrapper only; the native app reads a link with parseLinkOutcome, which returns a sign-in or a setup link
 The link did not carry a sign-in.
+
+# regular expression sources in the league table (tidyKnowledge.ts), not text for a person; the Kotlin table is copied from them
+\\bNFL\\b|sunday ticket|redzone|(?:sunday|monday|thursday) night football
+\\bNCAAF\\b|college football|\\bCFB\\b
+\\bNCAAB\\b|college basketball|march madness
+\\bNHL\\b|center ice
+\\bEPL\\b|premier league
+\\bUEFA\\b|champions league|europa league|conference league
+nascar|indycar|motogp|\\bMXGP\\b|supercross|dirtvision|\\bTT races\\b|\\brally\\b
+tennis|\\bATP\\b|\\bWTA\\b|wimbledon|roland garros
+\\bgolf\\b|\\bPGA\\b|\\bLIV golf\\b
+rugby|six nations|\\bNRL\\b
+\\bNFHS\\b|high school

@@ -188,6 +188,13 @@ class AppController(context: Context) {
     var localMode by mutableStateOf(false)
         private set
 
+    /** Set when an account is created on this TV: the viewer is asked once whether to add a profile. Never for an existing account that signs in. */
+    var profileOfferPending by mutableStateOf(false)
+        private set
+
+    /** The offer has been answered (a profile was started, or it was skipped): it is not asked again. */
+    fun answerProfileOffer() { profileOfferPending = false }
+
     /** The channels picked for Multi view, in the order picked (the first is the main picture). Kept while the app runs; not synced. */
     val multiQueue = androidx.compose.runtime.mutableStateListOf<com.evcalex.testcard.core.playback.PlayItem>()
 
@@ -375,6 +382,7 @@ class AppController(context: Context) {
         status = sync.status.value
         launching = false
         changeLocalMode(false)
+        profileOfferPending = true
         bump()
     }
 

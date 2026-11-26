@@ -56,6 +56,15 @@ describe("listChannelFeeds", () => {
     expect(listChannelFeeds(db, "a").map((feed) => feed.variantId)).toEqual(["a:0", "b:1"]);
   });
 
+  it("lists every copy, however many a provider carries", () => {
+    const { db, add } = setup();
+    add("lead", "s", "Sky Sports Main Event", "UK", ["1", "2"]);
+    for (let n = 0; n < 40; n++) add(`copy${n}`, "s", `Sky Sports Main Event ${n % 2 === 0 ? "HD" : "SD"}`, "UK", [`${100 + n}`]);
+    const feeds = listChannelFeeds(db, "lead");
+    expect(feeds).toHaveLength(42);
+    expect(new Set(feeds.map((feed) => feed.variantId)).size).toBe(42);
+  });
+
   it("gives nothing for a channel that is gone", () => {
     const { db } = setup();
     expect(listChannelFeeds(db, "missing")).toEqual([]);

@@ -20,6 +20,12 @@ import {
   importCatalogue,
   listCategories,
   listChannelCountries,
+  listGuideCountries,
+  browseGuideChannels,
+  listTidyCategories,
+  browseTidyCategory,
+  listFacetLists,
+  browseFacetList,
   listFavouriteChannels,
   listFavouriteMovies,
   listFavouriteSeries,
@@ -799,6 +805,30 @@ export function registerIpcHandlers(db: Database.Database, mainWindow: BrowserWi
 
       async countryList(sourceId) {
         return listChannelCountries(db, sourceId);
+      },
+
+      async guideCountries(sourceId) {
+        return listGuideCountries(db, sourceId);
+      },
+
+      async browseGuide(country, sourceId) {
+        return browseGuideChannels(db, { country, ...(sourceId !== undefined ? { sourceId } : {}) });
+      },
+
+      async tidyCategories(sourceId) {
+        return listTidyCategories(db, sourceId);
+      },
+
+      async facetLists(sourceId) {
+        return listFacetLists(db, sourceId);
+      },
+
+      async browseFacet(id, sourceId) {
+        return browseFacetList(db, { id, ...(sourceId !== undefined ? { sourceId } : {}) });
+      },
+
+      async browseTidy(id) {
+        return browseTidyCategory(db, { id });
       },
 
       async toggleFavourite(channelId) {

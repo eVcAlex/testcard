@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 import { parseXmltv } from "./parseXmltv.js";
-import { matchGuide, type GuideChannel, type GuideMatchStats } from "./matchGuide.js";
+import { isPlaceholderGuideId, matchGuide, type GuideChannel, type GuideMatchStats } from "./matchGuide.js";
+import { channelGuideCountry } from "./guideListLabels.js";
 import { yieldToEventLoop } from "../db/applyInSlices.js";
 
 export interface EpgImportResult {
@@ -51,10 +52,15 @@ export async function importEpg(
   // and each of them gets the listings; the parser is handed the guide id itself and it is fanned out below.
   const channelsByGuideId = new Map<string, string[]>();
   const channelRows = db
-    .prepare(`SELECT tvg_id AS tvgId, id, raw_name AS rawName, country FROM channels WHERE source_id = ?`)
-    .all(sourceId) as { tvgId: string | null; id: string; rawName: string; country: string | null }[];
+    .prepare(
+      `SELECT c.tvg_id AS tvgId, c.id, c.raw_name AS rawName, c.country, cat.country AS categoryCountry
+       FROM channels c LEFT JOIN categories cat ON cat.id = c.category_id WHERE c.source_id = ?`,
+    )
+    .all(sourceId) as { tvgId: string | null; id: string; rawName: string; country: string | null; categoryCountry: string | null }[];
   for (const row of channelRows) {
     if (row.tvgId === null || row.tvgId === "") continue;
+    // Tidying leaves a placeholder id's "no event" listings out: a channel with no real listings shows none, honestly.
+    if (options.optimise === true && isPlaceholderGuideId(row.tvgId)) continue;
     const ids = channelsByGuideId.get(row.tvgId);
     if (ids === undefined) channelsByGuideId.set(row.tvgId, [row.id]);
     else ids.push(row.id);
@@ -73,7 +79,8 @@ export async function importEpg(
           if (declared.length === 0) return;
           try {
             const result = matchGuide(
-              channelRows.map((row) => ({ id: row.id, rawName: row.rawName, country: row.country, tvgId: row.tvgId })),
+              // The country tells apart a channel's copies in different markets: its own, its category's, or a "UK:" name prefix.
+              channelRows.map((row) => ({ id: row.id, rawName: row.rawName, country: channelGuideCountry(row.country, row.categoryCountry, row.rawName) ?? row.country, tvgId: row.tvgId })),
               declared,
             );
             for (const [channelId, match] of result.matches) {

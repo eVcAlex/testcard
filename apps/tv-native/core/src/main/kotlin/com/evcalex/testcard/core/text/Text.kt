@@ -24,6 +24,7 @@ private val NETWORK = Regex("Network request failed|unreachable|ECONNREFUSED|Con
 private val NO_ANSWER = Regex("did not respond|timed? ?out|ETIMEDOUT|SocketTimeout", RegexOption.IGNORE_CASE)
 private val REFUSED = Regex("${WORD_START}(401|403)${WORD_END}|unauthori[sz]ed|forbidden|credentials|login|password", RegexOption.IGNORE_CASE)
 private val SERVER_ERROR = Regex("${WORD_START}5[0-9][0-9]${WORD_END}")
+private val UNREADABLE = Regex("ClassCastException|cannot be cast|SerializationException|JsonDecodingException|JsonEncodingException|Unexpected JSON|JsonObject|JsonArray|JsonElement|JSONException|MalformedJson|Unexpected token|not valid JSON|EOFException|End of input|Expected start of", RegexOption.IGNORE_CASE)
 private val FETCH_FAILED = Regex("^fetch failed:[$WS]*", RegexOption.IGNORE_CASE)
 private val CLASS_NAME = Regex("${WORD_START}(?:[a-z]+\\.)+[A-Z][A-Za-z0-9_]*(?:Exception|Error):[$WS]*")
 private val TRY_AGAIN = Regex("[$WS]*Try again[^.]*\\.?\\z", RegexOption.IGNORE_CASE)
@@ -41,6 +42,8 @@ fun plainReason(message: String, who: String = "the provider"): String {
     if (NO_ANSWER.containsMatchIn(message)) return "${capitalised(who)} didn't respond."
     if (REFUSED.containsMatchIn(message)) return "The provider turned down the login. Press Edit to check it."
     if (SERVER_ERROR.containsMatchIn(message)) return "The provider's server had a problem."
+    // A reply that was not what was asked for (a web page where data was due, an object where a list was): never the library's words.
+    if (UNREADABLE.containsMatchIn(message)) return "${capitalised(who)} sent a reply the app couldn't read. Try again in a minute, and if it keeps happening, press Edit to check the source."
     val tidy = message.replace(FETCH_FAILED, "").replace(CLASS_NAME, "").replace(TRY_AGAIN, "").jsTrim()
     if (tidy == "") return ""
     val sentence = capitalised(tidy)

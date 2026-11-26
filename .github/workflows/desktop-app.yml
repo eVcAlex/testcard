@@ -53,8 +53,8 @@ jobs:
       - name: Fetch the pinned mpv
         shell: pwsh
         run: |
-          $url = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-x86_64-20260903-git-69e63f425a.7z"
-          $sha = "418dbfb5feb851cbed33d6c05d8481ba71802621bfd6efe8974522b28d42ac97"
+          $url = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20261104/mpv-x86_64-20261104-git-46787be250.7z"
+          $sha = "84397be53b37945b9dccdb7e8d8579eb431091d26ab362d111da68c3d4482ffa"
           Invoke-WebRequest $url -OutFile mpv.7z
           if ((Get-FileHash mpv.7z -Algorithm SHA256).Hash.ToLower() -ne $sha) { throw "mpv archive does not match the pinned SHA256" }
           New-Item -ItemType Directory -Force apps/desktop/resources/mpv | Out-Null

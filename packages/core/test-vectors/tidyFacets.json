@@ -1,0 +1,1106 @@
+[
+ {
+  "fn": "facets",
+  "in": [
+   "AT&T: NFL NETWORK ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "nfl"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "AT&T: NFL REDZONE ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "nfl"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "Sunday Night Football [NBC]"
+  ],
+  "out": {
+   "leagues": [
+    "nfl"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "NCAAF 01: NC State at Wake Forest 7:30pm"
+  ],
+  "out": {
+   "leagues": [
+    "ncaaf"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "NHL 01: No Game Today"
+  ],
+  "out": {
+   "leagues": [
+    "nhl"
+   ],
+   "local": null,
+   "placeholder": true
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "##### NCAAF #####"
+  ],
+  "out": {
+   "leagues": [
+    "ncaaf"
+   ],
+   "local": null,
+   "placeholder": true
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "####### UEFA PPV #######"
+  ],
+  "out": {
+   "leagues": [
+    "uefa"
+   ],
+   "local": null,
+   "placeholder": true
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "- NO EVENT STREAMING - | 8K EXCLUSIVE | US: ESPN+ PPV 323"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": true
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: NBA TV HD"
+  ],
+  "out": {
+   "leagues": [
+    "nba"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: WNBA MINNESOTA LYNX"
+  ],
+  "out": {
+   "leagues": [
+    "wnba"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "AT&T: MLB NETWORK ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "mlb"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "MILB 12: Reno Aces"
+  ],
+  "out": {
+   "leagues": [
+    "milb"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US (MLS 04) | Seattle vs. LAFC"
+  ],
+  "out": {
+   "leagues": [
+    "mls"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "NZ: SKY SPORT PREMIER LEAGUE ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "epl"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK: SKY SPORTS PREMIER LEAGUE UHD"
+  ],
+  "out": {
+   "leagues": [
+    "epl"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "IT: SKY SPORT LA LIGA"
+  ],
+  "out": {
+   "leagues": [
+    "laliga"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UEFA Champions League 03"
+  ],
+  "out": {
+   "leagues": [
+    "uefa"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK: SKY SPORTS F1 UHD 50fps"
+  ],
+  "out": {
+   "leagues": [
+    "f1"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "PRIME: NASCAR ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "motorsport"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: UFC FIGHT PASS"
+  ],
+  "out": {
+   "leagues": [
+    "ufc"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "IT: DAZN MATCHROOM BOXING ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "boxing"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: WWE NETWORK ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "wrestling"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK: SKY SPORT TENNIS ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "tennis"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK: SKY SPORT GOLF ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "golf"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK: SKY SPORTS CRICKET"
+  ],
+  "out": {
+   "leagues": [
+    "cricket"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "PRIME: RUGBYPASS TV ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [
+    "rugby"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: NRL TV"
+  ],
+  "out": {
+   "leagues": [
+    "rugby"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "AU: AFL LIVE"
+  ],
+  "out": {
+   "leagues": [
+    "afl"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK: PDC DARTS"
+  ],
+  "out": {
+   "leagues": [
+    "darts"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: HIGH SCHOOL SPORTS 04"
+  ],
+  "out": {
+   "leagues": [
+    "highschool"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "NBC [Chicago] 1080p"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "nbc",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "NBC 5 (WMAQ) CHICAGO (A) ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "nbc",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "ABC (KGO) SAN Francisco California"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "abc",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "WILKES BARRE, PA WBRE NBC 28 (A)"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "nbc",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: CBS (WSBK) BOSTON HD"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "cbs",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: CW 21 BIRMINGHAM AL (WTTO) HD"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "cw",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "AT&T: FOX 10 LOCAL PHOENIX ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "fox",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: TELEMUNDO 51 MIAMI (WSCV)"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "telemundo",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "TV: BOSTON, MA WGBH PBS 2 A3 HD BOSTON ᶜᶦᵗʸ ᴿᴬᵂ"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "pbs",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: FOX NEWS CHANNEL"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: FOX BUSINESS"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: NBC SPORTS NETWORK"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: ABC NEWS LIVE"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: CBS SPORTS NETWORK"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "NBC"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "BBC One"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK: ITV1"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: ESPN"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: CNN"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "Dave"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "FOX 5 News"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "fox",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "ABC 13 Asheville"
+  ],
+  "out": {
+   "leagues": [],
+   "local": "abc",
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: NBC UNIVERSO"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "SKY CINEMA"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   ""
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "   "
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "UK"
+  ],
+  "out": "UK"
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "uk"
+  ],
+  "out": "UK"
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "GB"
+  ],
+  "out": "UK"
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "gb"
+  ],
+  "out": "UK"
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "US"
+  ],
+  "out": "US"
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "CA"
+  ],
+  "out": "CA"
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "NBA"
+  ],
+  "out": null
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "PRIME"
+  ],
+  "out": null
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "VIP"
+  ],
+  "out": null
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "BEE"
+  ],
+  "out": null
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "XX"
+  ],
+  "out": null
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   "INT"
+  ],
+  "out": null
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   ""
+  ],
+  "out": null
+ },
+ {
+  "fn": "guideCountryOf",
+  "in": [
+   " us "
+  ],
+  "out": "US"
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   "CA",
+   "UK",
+   "US: X"
+  ],
+  "out": "CA"
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   "UK",
+   "US: X"
+  ],
+  "out": "UK"
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   "NHL",
+   null,
+   "US: X"
+  ],
+  "out": "US"
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   null,
+   "UK: BBC One"
+  ],
+  "out": "UK"
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   null,
+   "US - NBC"
+  ],
+  "out": "US"
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   null,
+   "CA| CTV"
+  ],
+  "out": "CA"
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   null,
+   "4K: Sky Primafila"
+  ],
+  "out": null
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   null,
+   "TV: Funniest Videos"
+  ],
+  "out": null
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   null,
+   "PRIME: Movie Channel"
+  ],
+  "out": null
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   "gb",
+   null,
+   "Dave"
+  ],
+  "out": "UK"
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   "BEE",
+   "BEE| DAZN"
+  ],
+  "out": null
+ },
+ {
+  "fn": "channelGuideCountry",
+  "in": [
+   null,
+   null,
+   ""
+  ],
+  "out": null
+ },
+ {
+  "fn": "guideCountryHeading",
+  "in": [
+   "UK"
+  ],
+  "out": "🇬🇧 UK"
+ },
+ {
+  "fn": "guideCountryHeading",
+  "in": [
+   "US"
+  ],
+  "out": "🇺🇸 USA"
+ },
+ {
+  "fn": "guideCountryHeading",
+  "in": [
+   "CA"
+  ],
+  "out": "🇨🇦 Canada"
+ },
+ {
+  "fn": "guideCountryHeading",
+  "in": [
+   "AU"
+  ],
+  "out": "🇦🇺 Australia"
+ },
+ {
+  "fn": "guideCountryHeading",
+  "in": [
+   "DE"
+  ],
+  "out": "🇩🇪 Germany"
+ },
+ {
+  "fn": "guideCountryHeading",
+  "in": [
+   "XX"
+  ],
+  "out": "🇽🇽 XX"
+ },
+ {
+  "fn": "guideCountryHeading",
+  "in": [
+   "INT"
+  ],
+  "out": "INT"
+ },
+ {
+  "fn": "guideCountryHeading",
+  "in": [
+   null
+  ],
+  "out": "Other"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| SPORT ᴴᴰ",
+   false
+  ],
+  "out": "Sport"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| SPORT ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+   false
+  ],
+  "out": "Sport"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| SPORT ʰᵉᵛᶜ",
+   false
+  ],
+  "out": "SPORT"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| SPORT SD ⱽᴵᴾ",
+   false
+  ],
+  "out": "Sport"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| DAZN PPV",
+   false
+  ],
+  "out": "DAZN PPV"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| DAZN PPV",
+   true
+  ],
+  "out": "DAZN"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| EPL PREMIER LEAGUE PPV ⱽᴵᴾ",
+   true
+  ],
+  "out": "EPL Premier League"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "US| NBC ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+   false
+  ],
+  "out": "NBC"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "US| 24/7 PPV ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+   true
+  ],
+  "out": "24/7"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "US| 24/7 COMEDY ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+   false
+  ],
+  "out": "24/7 Comedy"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| BBC IPLAYER SERIES ᴿᴬᵂ",
+   false
+  ],
+  "out": "BBC Iplayer Series"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| SKY CINEMA ʰᵉᵛᶜ",
+   false
+  ],
+  "out": "SKY CINEMA"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| SKY CINEMA ᴴᴰ/ᴿᴬᵂ",
+   false
+  ],
+  "out": "Sky Cinema"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "BEE| DAZN PPV",
+   true
+  ],
+  "out": "BEE| DAZN"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "4K| ᵁᴴᴰ ³⁸⁴⁰ᴾ",
+   false
+  ],
+  "out": "UHD 3"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "CA| GENERAL FR",
+   false
+  ],
+  "out": "General FR"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "US| TV ᶜᴵᵀʸ ᴿᴬᵂ ⁶⁰ᶠᵖˢ",
+   false
+  ],
+  "out": "TV"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| 4K",
+   false
+  ],
+  "out": "4K"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "UK| TNT SPORT ᴴᴰ ⱽᴵᴾ",
+   false
+  ],
+  "out": "TNT Sport"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "🇬🇧 United Kingdom ⬇️",
+   false
+  ],
+  "out": "🇬🇧 United Kingdom"
+ },
+ {
+  "fn": "tidyCategoryLabel",
+  "in": [
+   "",
+   false
+  ],
+  "out": ""
+ }
+]

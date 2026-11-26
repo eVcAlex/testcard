@@ -12,6 +12,8 @@ import { groupVariants, type RawChannelEntry } from "../src/normalise/groupVaria
 import { dropVariantMarks, parseName } from "../src/normalise/parseName.js";
 import { openSetupProfile, parseSetupFragment, sealSetupProfile, setupProof } from "../src/sync/setupCrypto.js";
 import { guideKey, matchGuide, type GuideChannel, type MatchableChannel } from "../src/epg/matchGuide.js";
+import { channelGuideCountry, guideCountryHeading, guideCountryOf, tidyCategoryLabel } from "../src/epg/guideListLabels.js";
+import { isPlaceholderChannelName, leaguesOf, localNetworkOf } from "../src/epg/tidyKnowledge.js";
 import { splitTitle } from "../src/normalise/splitTitle.js";
 import { isDatedTitle, titleKey } from "../src/normalise/titleKey.js";
 import { classifyEntry, movieKey, seriesKey, urlExtension } from "../src/source/m3u/classifyEntry.js";
@@ -277,6 +279,32 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
   ] as const) {
     add("catchup", "programmeMinutes", [start, end], programmeMinutes({ start: new Date(start), end: new Date(end) }));
   }
+
+  // Tidy playlist: what a name says (league, local station, placeholder), country codes and category names: the native app must agree.
+  for (const name of [
+    "AT&T: NFL NETWORK ᴿᴬᵂ", "AT&T: NFL REDZONE ᴿᴬᵂ", "Sunday Night Football [NBC]", "NCAAF 01: NC State at Wake Forest 7:30pm", "NHL 01: No Game Today", "##### NCAAF #####",
+    "####### UEFA PPV #######", "- NO EVENT STREAMING - | 8K EXCLUSIVE | US: ESPN+ PPV 323", "US: NBA TV HD", "US: WNBA MINNESOTA LYNX", "AT&T: MLB NETWORK ᴿᴬᵂ", "MILB 12: Reno Aces",
+    "US (MLS 04) | Seattle vs. LAFC", "NZ: SKY SPORT PREMIER LEAGUE ᴿᴬᵂ", "UK: SKY SPORTS PREMIER LEAGUE UHD", "IT: SKY SPORT LA LIGA", "UEFA Champions League 03", "UK: SKY SPORTS F1 UHD 50fps",
+    "PRIME: NASCAR ᴿᴬᵂ", "US: UFC FIGHT PASS", "IT: DAZN MATCHROOM BOXING ᴿᴬᵂ", "US: WWE NETWORK ᴿᴬᵂ", "UK: SKY SPORT TENNIS ᴿᴬᵂ", "UK: SKY SPORT GOLF ᴿᴬᵂ", "UK: SKY SPORTS CRICKET",
+    "PRIME: RUGBYPASS TV ᴿᴬᵂ", "US: NRL TV", "AU: AFL LIVE", "UK: PDC DARTS", "US: HIGH SCHOOL SPORTS 04", "NBC [Chicago] 1080p", "NBC 5 (WMAQ) CHICAGO (A) ᴿᴬᵂ", "ABC (KGO) SAN Francisco California",
+    "WILKES BARRE, PA WBRE NBC 28 (A)", "US: CBS (WSBK) BOSTON HD", "US: CW 21 BIRMINGHAM AL (WTTO) HD", "AT&T: FOX 10 LOCAL PHOENIX ᴿᴬᵂ", "US: TELEMUNDO 51 MIAMI (WSCV)", "TV: BOSTON, MA WGBH PBS 2 A3 HD BOSTON ᶜᶦᵗʸ ᴿᴬᵂ",
+    "US: FOX NEWS CHANNEL", "US: FOX BUSINESS", "US: NBC SPORTS NETWORK", "US: ABC NEWS LIVE", "US: CBS SPORTS NETWORK", "NBC", "BBC One", "UK: ITV1", "US: ESPN", "US: CNN", "Dave", "FOX 5 News", "ABC 13 Asheville",
+    "US: NBC UNIVERSO", "SKY CINEMA", "", "   ",
+  ]) {
+    add("tidyFacets", "facets", [name], { leagues: leaguesOf(name), local: localNetworkOf(name), placeholder: isPlaceholderChannelName(name) });
+  }
+  for (const code of ["UK", "uk", "GB", "gb", "US", "CA", "NBA", "PRIME", "VIP", "BEE", "XX", "INT", "", " us "]) add("tidyFacets", "guideCountryOf", [code], guideCountryOf(code));
+  for (const [channel, category, raw] of [
+    ["CA", "UK", "US: X"], [null, "UK", "US: X"], ["NHL", null, "US: X"], [null, null, "UK: BBC One"], [null, null, "US - NBC"], [null, null, "CA| CTV"], [null, null, "4K: Sky Primafila"],
+    [null, null, "TV: Funniest Videos"], [null, null, "PRIME: Movie Channel"], ["gb", null, "Dave"], [null, "BEE", "BEE| DAZN"], [null, null, ""],
+  ] as const) add("tidyFacets", "channelGuideCountry", [channel, category, raw], channelGuideCountry(channel, category, raw));
+  for (const country of ["UK", "US", "CA", "AU", "DE", "XX", "INT"]) add("tidyFacets", "guideCountryHeading", [country], guideCountryHeading(country));
+  add("tidyFacets", "guideCountryHeading", [null], guideCountryHeading(null));
+  for (const [raw, ppv] of [
+    ["UK| SPORT ᴴᴰ", false], ["UK| SPORT ᴿᴬᵂ ⁶⁰ᶠᵖˢ", false], ["UK| SPORT ʰᵉᵛᶜ", false], ["UK| SPORT SD ⱽᴵᴾ", false], ["UK| DAZN PPV", false], ["UK| DAZN PPV", true], ["UK| EPL PREMIER LEAGUE PPV ⱽᴵᴾ", true],
+    ["US| NBC ᴴᴰ/ᴿᴬᵂ ⁶⁰ᶠᵖˢ", false], ["US| 24/7 PPV ᴿᴬᵂ ⁶⁰ᶠᵖˢ", true], ["US| 24/7 COMEDY ᴿᴬᵂ ⁶⁰ᶠᵖˢ", false], ["UK| BBC IPLAYER SERIES ᴿᴬᵂ", false], ["UK| SKY CINEMA ʰᵉᵛᶜ", false], ["UK| SKY CINEMA ᴴᴰ/ᴿᴬᵂ", false],
+    ["BEE| DAZN PPV", true], ["4K| ᵁᴴᴰ ³⁸⁴⁰ᴾ", false], ["CA| GENERAL FR", false], ["US| TV ᶜᴵᵀʸ ᴿᴬᵂ ⁶⁰ᶠᵖˢ", false], ["UK| 4K", false], ["UK| TNT SPORT ᴴᴰ ⱽᴵᴾ", false], ["🇬🇧 United Kingdom ⬇️", false], ["", false],
+  ] as const) add("tidyFacets", "tidyCategoryLabel", [raw, ppv], tidyCategoryLabel(raw, ppv));
 
   const map = new Map([["tnt1", "channel-1"]]);
   for (const text of [XMLTV, ""]) {

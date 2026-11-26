@@ -80,12 +80,9 @@ private fun <T> once(rows: List<T>, keyOf: (T) -> String, limit: Int): List<T> {
 /** One way to play a channel: a Variant of it, or of the same channel listed elsewhere. */
 class ChannelFeed(val channelId: String, val variantId: String, /** The display name of the channel this feed belongs to. */ val name: String, /** The Variant's quality label ("720p25"), when it has one. */ val quality: String?)
 
-/** Enough to get past a dead stream without trying every copy a large list carries. */
-private const val MOST_FEEDS = 8
-
 /**
  * Every way to play a channel, in the order to try them: its own Variants first (best first, as grouped), then the same
- * channel listed in another category or quality, from the same source before another. The same country only.
+ * channel listed in another category or quality, from the same source before another. The same country only. Not capped.
  */
 fun SQLiteConnection.listChannelFeeds(channelId: String): List<ChannelFeed> {
     class Own(val id: String, val sourceId: String, val name: String, val country: String?)
@@ -120,8 +117,7 @@ fun SQLiteConnection.listChannelFeeds(channelId: String): List<ChannelFeed> {
                 .thenComparator { a, b -> collator.compare(a.name, b.name) },
         )
     for (other in others) {
-        if (feeds.size >= MOST_FEEDS) break
         addFeedsOf(other.id, other.name)
     }
-    return feeds.take(MOST_FEEDS)
+    return feeds
 }

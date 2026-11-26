@@ -11,13 +11,11 @@ export interface ChannelFeed {
   readonly quality: string | null;
 }
 
-/** Enough to get past a dead stream without trying every copy a large list carries. */
-const MOST_FEEDS = 8;
-
 /**
  * Every way to play a channel, in the order to try them: its own Variants first (best first, as grouped), then
  * the same channel listed in another category or quality ("BBC One 4K" failing over to "BBC One HD"), from the
  * same source before another. The same country only, so "Fox" in the UK list never falls back to "Fox" in the US one.
+ * Not capped: a channel a provider lists a dozen times has a dozen feeds, and the viewer can step through all of them.
  */
 export function listChannelFeeds(db: Database.Database, channelId: string): ChannelFeed[] {
   const channel = db
@@ -52,8 +50,7 @@ export function listChannelFeeds(db: Database.Database, channelId: string): Chan
     .filter((other) => sameChannelKey(other.name) === key)
     .sort((a, b) => Number(a.sourceId !== channel.sourceId) - Number(b.sourceId !== channel.sourceId) || fallbackRank(a.name) - fallbackRank(b.name) || a.name.localeCompare(b.name));
   for (const other of others) {
-    if (feeds.length >= MOST_FEEDS) break;
     addFeedsOf(other.id, other.name);
   }
-  return feeds.slice(0, MOST_FEEDS);
+  return feeds;
 }

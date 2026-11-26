@@ -61,6 +61,14 @@ export function guideKey(name: string): string {
     .replace(/[^a-z0-9]+/g, "");
 }
 
+/**
+ * A guide channel that only stands in for a playlist channel with no real listings, so that every channel has *some* guide
+ * id ("dummy-1613123", whose one listing reads "NO EVENT STREAMING"). Linking to one would only fake coverage.
+ */
+export function isPlaceholderGuideId(guideId: string): boolean {
+  return /^dummy[-_]/i.test(guideId);
+}
+
 /** Guide ids often end in the market: "BBCOne.uk", "CNN.us". `gb` is read as `uk`. */
 function marketOf(guideId: string): string | null {
   const suffix = /[.\-_]([a-z]{2})$/i.exec(guideId)?.[1]?.toLowerCase();
@@ -88,9 +96,10 @@ export function matchGuide(
   guide: readonly GuideChannel[],
   options: MatchGuideOptions = {},
 ): GuideMatchResult {
-  const guideIds = new Set(guide.map((entry) => entry.id));
+  const real = guide.filter((entry) => !isPlaceholderGuideId(entry.id));
+  const guideIds = new Set(real.map((entry) => entry.id));
   const byKey = new Map<string, Set<string>>();
-  for (const entry of guide) {
+  for (const entry of real) {
     for (const name of entry.names) {
       const key = guideKey(name);
       if (key === "") continue;

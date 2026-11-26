@@ -48,6 +48,9 @@ internal class GuideList(val id: String, val label: String, val count: Int, val 
 /** Whether the list is a source's (or everything's) "All channels", which has no category to pin or hide. */
 internal fun GuideList.isAll() = id == "all" || id.startsWith("all:")
 
+/** Whether the list is built from several provider categories or from the guide (a "TV Guide" or tidy list): there is no one category to pin or hide. */
+internal fun GuideList.isDerived() = id.startsWith("guide:") || id.startsWith("tidy:") || id.startsWith("league:") || id.startsWith("local:")
+
 /**
  * The lists the rail draws: those in a collapsed section are left out, except [current], which stays so the remote has
  * somewhere to rest and the viewer can see where they are.
@@ -74,6 +77,7 @@ internal fun sectionsOf(lists: List<GuideList>): List<Pair<String, Int>> =
 
 /** A section's key: its heading is "Pinned" or the source name; a pinned one in a source's rail reads "Pinned · Source". */
 internal const val PINNED_SECTION = "Pinned"
+internal const val GUIDE_SECTION = "TV Guide"
 
 /** What the collapsed rail draws for a list. */
 internal sealed interface RailMark {
@@ -180,7 +184,7 @@ private fun OpenItem(
         },
         RoundedCornerShape(10.dp),
         // "All" is not a category: there is nothing to pin or hide.
-        onLongClick = if (item.mark is RailMark.Letters && !item.isAll()) ({ onLongPress(item) }) else null,
+        onLongClick = if (item.mark is RailMark.Letters && !item.isAll() && !item.isDerived()) ({ onLongPress(item) }) else null,
         onFocusChange = { if (it) onFocused() }, focusRequester = requester,
         ring = false, background = Color.Transparent, focusedBackground = Palette.accent,
     ) { focused ->
