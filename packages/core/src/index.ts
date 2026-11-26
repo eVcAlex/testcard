@@ -45,3 +45,4 @@ export * from "./sync/setupCrypto.js";
 export * from "./sync/setupLink.js";
 export * from "./db/startRows.js";
 export { listWatchedLately } from "./db/homeQueries.js";
+export * from "./curate/curateSection.js";
