@@ -929,6 +929,110 @@
   "out": []
  },
  {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports Main Event UHD"
+  ],
+  "out": 0
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports Premier League HD"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports 1"
+  ],
+  "out": 2
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports 2 FHD"
+  ],
+  "out": 3
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports F1"
+  ],
+  "out": 10
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports Racing"
+  ],
+  "out": 15
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports Golf"
+  ],
+  "out": 9
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports Mix"
+  ],
+  "out": 13
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports Whatever"
+  ],
+  "out": 16
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "tnt",
+   "TNT Sports 3"
+  ],
+  "out": 2
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "tnt",
+   "TNT Sports Ultimate"
+  ],
+  "out": 4
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "tnt",
+   "BT Sport Box Office"
+  ],
+  "out": 5
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "dazn",
+   "DAZN 1"
+  ],
+  "out": 0
+ },
+ {
   "fn": "guideCountryOf",
   "in": [
    "UK"

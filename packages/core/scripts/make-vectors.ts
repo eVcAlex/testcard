@@ -13,7 +13,7 @@ import { dropVariantMarks, parseName } from "../src/normalise/parseName.js";
 import { openSetupProfile, parseSetupFragment, sealSetupProfile, setupProof } from "../src/sync/setupCrypto.js";
 import { guideKey, matchGuide, type GuideChannel, type MatchableChannel } from "../src/epg/matchGuide.js";
 import { channelGuideCountry, guideCountryHeading, guideCountryOf, tidyCategoryLabel } from "../src/epg/guideListLabels.js";
-import { isPlaceholderChannelName, leaguesOf, leaguesOfChannel, localNetworkOf } from "../src/epg/tidyKnowledge.js";
+import { isPlaceholderChannelName, leaguesOf, leaguesOfChannel, localNetworkOf, stationRank } from "../src/epg/tidyKnowledge.js";
 import { splitTitle } from "../src/normalise/splitTitle.js";
 import { isDatedTitle, titleKey } from "../src/normalise/titleKey.js";
 import { classifyEntry, movieKey, seriesKey, urlExtension } from "../src/source/m3u/classifyEntry.js";
@@ -297,6 +297,10 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
     ["Sky Sports Action HD", "UK| SKY SPORTS", "UK"], ["MXC| Sky Sports 1", "MXC| SPORTS", null], ["F1| Sky Sports F1 HD", "F1| SKY", null], ["Sky Sports Main Event UHD", "", null],
     ["Sky Sport F1 IT", "IT| SKY", "IT"], ["Sky Sports Premier League", "AU| SPORTS", "AU"], ["TNT Sports 1", "UK| TNT", "UK"], ["UK: EFL Carabao Cup", "", "UK"], ["Sky Sports NZ 1", "", "NZ"],
   ] as const) add("tidyFacets", "leaguesOfChannel", [raw, category, country], leaguesOfChannel(raw, category, country));
+  for (const [list, name] of [
+    ["skysports", "Sky Sports Main Event UHD"], ["skysports", "Sky Sports Premier League HD"], ["skysports", "Sky Sports 1"], ["skysports", "Sky Sports 2 FHD"], ["skysports", "Sky Sports F1"], ["skysports", "Sky Sports Racing"],
+    ["skysports", "Sky Sports Golf"], ["skysports", "Sky Sports Mix"], ["skysports", "Sky Sports Whatever"], ["tnt", "TNT Sports 3"], ["tnt", "TNT Sports Ultimate"], ["tnt", "BT Sport Box Office"], ["dazn", "DAZN 1"],
+  ] as const) add("tidyFacets", "stationRank", [list, name], stationRank(list, name));
   for (const code of ["UK", "uk", "GB", "gb", "US", "CA", "NBA", "PRIME", "VIP", "BEE", "XX", "INT", "", " us "]) add("tidyFacets", "guideCountryOf", [code], guideCountryOf(code));
   for (const [channel, category, raw] of [
     ["CA", "UK", "US: X"], [null, "UK", "US: X"], ["NHL", null, "US: X"], [null, null, "UK: BBC One"], [null, null, "US - NBC"], [null, null, "CA| CTV"], [null, null, "4K: Sky Primafila"],

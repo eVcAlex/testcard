@@ -71,6 +71,24 @@ export const NETWORKS: readonly Network[] = [
   { key: "univision", label: "Univision", pattern: "univision" },
 ];
 
+/**
+ * The order a broadcaster's stations are known in, as regular expression sources: its flagship channels first, then the numbered ones,
+ * then the rest in the provider's order ("Main Event", "Premier League", "Sports 1", "Sports 2" ...). Only for the broadcasters listed.
+ */
+export const STATION_ORDER: Readonly<Record<string, readonly string[]>> = {
+  skysports: ["main event", "premier league", "\\b1\\b", "\\b2\\b", "\\b3\\b", "\\b4\\b", "\\b5\\b", "football", "cricket", "golf", "f1|formula", "action", "arena", "mix", "news", "racing"],
+  tnt: ["\\b1\\b", "\\b2\\b", "\\b3\\b", "\\b4\\b", "ultimate", "box office"],
+};
+const ORDER_PATTERNS = Object.fromEntries(Object.entries(STATION_ORDER).map(([key, sources]) => [key, sources.map((source) => new RegExp(source, "i"))]));
+
+/** Where a station comes in its list: its place in `STATION_ORDER` for the list's broadcaster, or after all of them (0 for a list with no order). */
+export function stationRank(listKey: string, name: string): number {
+  const patterns = ORDER_PATTERNS[listKey];
+  if (patterns === undefined) return 0;
+  const at = patterns.findIndex((pattern) => pattern.test(name));
+  return at < 0 ? patterns.length : at;
+}
+
 const compile = (source: string) => new RegExp(source, "i");
 const LEAGUE_PATTERNS = LEAGUES.map((league) => ({ league, regex: compile(league.pattern) }));
 const NETWORK_PATTERNS = NETWORKS.map((network) => ({ network, regex: compile(network.pattern) }));

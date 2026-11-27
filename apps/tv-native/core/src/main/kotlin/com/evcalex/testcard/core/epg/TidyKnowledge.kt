@@ -63,6 +63,20 @@ val NETWORKS: List<Network> = listOf(
     Network("univision", "Univision", """univision"""),
 )
 
+/** The order a broadcaster's stations are known in (`STATION_ORDER` in `tidyKnowledge.ts`): flagship channels first, then the numbered ones. */
+val STATION_ORDER: Map<String, List<String>> = mapOf(
+    "skysports" to listOf("main event", "premier league", """\b1\b""", """\b2\b""", """\b3\b""", """\b4\b""", """\b5\b""", "football", "cricket", "golf", "f1|formula", "action", "arena", "mix", "news", "racing"),
+    "tnt" to listOf("""\b1\b""", """\b2\b""", """\b3\b""", """\b4\b""", "ultimate", "box office"),
+)
+private val ORDER_PATTERNS = STATION_ORDER.mapValues { (_, sources) -> sources.map { Regex(it, RegexOption.IGNORE_CASE) } }
+
+/** Where a station comes in its list (`stationRank`): its place in [STATION_ORDER] for the list's broadcaster, after all of them if none, 0 for a list with no order. */
+fun stationRank(listKey: String, name: String): Int {
+    val patterns = ORDER_PATTERNS[listKey] ?: return 0
+    val at = patterns.indexOfFirst { it.containsMatchIn(name) }
+    return if (at < 0) patterns.size else at
+}
+
 private val LEAGUE_PATTERNS = LEAGUES.map { it to Regex(it.pattern, RegexOption.IGNORE_CASE) }
 private val NETWORK_PATTERNS = NETWORKS.map { it to Regex(it.pattern, RegexOption.IGNORE_CASE) }
 

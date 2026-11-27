@@ -3,7 +3,7 @@ import { channelShown } from "../sync/hidden.js";
 import { fallbackRank, sameChannelKey } from "../normalise/displayName.js";
 import { CHANNEL_COLUMNS, type ChannelRow } from "./queries.js";
 import { channelGuideCountry, guideCountryOf, inTidyMarkets, parseFacetListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, facetListId, type FacetList, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
-import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOfChannel, localListLabel, localNetworkOf } from "../epg/tidyKnowledge.js";
+import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOfChannel, localListLabel, stationRank, localNetworkOf } from "../epg/tidyKnowledge.js";
 import { decodeTags } from "../normalise/classifyCategory.js";
 import { categoryShown } from "../sync/hidden.js";
 
@@ -20,7 +20,7 @@ interface Lead {
  * in the order the provider lists them (its own order is the one a viewer knows: Main Event, Premier League, 1, 2...). Nothing is left out: if one copy will not play, the next row is another way into the same channel. A station is told by
  * `keyOf`, which keeps the same name in different countries or sources apart.
  */
-function inStationOrder<T extends { readonly name: string }>(rows: readonly T[], keyOf: (row: T) => string): T[] {
+function inStationOrder<T extends { readonly name: string }>(rows: readonly T[], keyOf: (row: T) => string, rankOf?: (row: T) => number): T[] {
   const groups = new Map<string, T[]>();
   for (const row of rows) {
     const key = keyOf(row);
@@ -29,6 +29,7 @@ function inStationOrder<T extends { readonly name: string }>(rows: readonly T[],
     else group.push(row);
   }
   const stations = [...groups.values()].map((group) => group.map((row, at) => ({ row, at, rank: fallbackRank(row.name) })).sort((a, b) => a.rank - b.rank || a.at - b.at).map((entry) => entry.row));
+  if (rankOf !== undefined) stations.sort((a, b) => rankOf(a[0]!) - rankOf(b[0]!));
   return stations.flat();
 }
 
@@ -237,7 +238,8 @@ export function browseFacetList(db: Database.Database, opts: { id: string; sourc
     const facets = facetsOf(row);
     return parsed.kind === "league" ? facets.leagues.includes(parsed.key) : facets.local === parsed.key;
   });
-  const ids = inStationOrder(rows, stationKey).slice(0, opts.limit ?? 5000).map((row) => row.channelId);
+  const rankOf = parsed.kind === "league" ? (row: FacetRow) => stationRank(parsed.key, row.name) : undefined;
+  const ids = inStationOrder(rows, stationKey, rankOf).slice(0, opts.limit ?? 5000).map((row) => row.channelId);
   const byId = new Map<string, ChannelRow>();
   for (let from = 0; from < ids.length; from += 500) {
     const part = ids.slice(from, from + 500);

@@ -7,6 +7,7 @@ import com.evcalex.testcard.core.db.tidyCategoryLabel
 import com.evcalex.testcard.core.epg.isPlaceholderChannelName
 import com.evcalex.testcard.core.epg.leaguesOf
 import com.evcalex.testcard.core.epg.leaguesOfChannel
+import com.evcalex.testcard.core.epg.stationRank
 import com.evcalex.testcard.core.epg.localNetworkOf
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -31,6 +32,7 @@ class TidyFacetsVectorsTest {
             JsonObject(mapOf("leagues" to JsonArray(leaguesOf(name).map { JsonPrimitive(it) }), "local" to text(localNetworkOf(name)), "placeholder" to JsonPrimitive(isPlaceholderChannelName(name))))
         }
         "leaguesOfChannel" -> JsonArray(leaguesOfChannel(row.string(0), row.string(1), nullable(arg(row, 2))).map { JsonPrimitive(it) })
+        "stationRank" -> JsonPrimitive(stationRank(row.string(0), row.string(1)))
         "guideCountryOf" -> text(guideCountryOf(row.string(0)))
         "channelGuideCountry" -> text(channelGuideCountry(nullable(arg(row, 0)), nullable(arg(row, 1)), row.string(2)))
         "guideCountryHeading" -> JsonPrimitive(guideCountryHeading(nullable(arg(row, 0))))

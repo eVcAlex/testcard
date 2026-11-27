@@ -291,6 +291,14 @@ describe("league and local-station lists", () => {
     expect(browseFacetList(db, { id: "league:skysports" }).map((c) => c.raw_name)).toEqual(["Sky Sports Main Event UHD", "Sky Sports Premier League", "Sky Sports 1", "Sky Sports 2"]);
   });
 
+  it("puts a broadcaster's flagship channels first: Main Event, Premier League, then Sports 1, 2", () => {
+    const { db, add } = world();
+    add("s", "UK| SKY SPORTS", ["Sky Sports Racing", "Sky Sports 2", "Sky Sports Premier League HD", "Sky Sports Main Event UHD", "Sky Sports 1", "Sky Sports Main Event HD", "Sky Sports Golf"]);
+    expect(browseFacetList(db, { id: "league:skysports" }).map((c) => c.raw_name)).toEqual([
+      "Sky Sports Main Event HD", "Sky Sports Main Event UHD", "Sky Sports Premier League HD", "Sky Sports 1", "Sky Sports 2", "Sky Sports Golf", "Sky Sports Racing",
+    ]);
+  });
+
   it("gathers a network's local stations from any category, and not its national services", () => {
     const { db, add } = world();
     add("s", "US| NBC", ["US: NBC 5 (WMAQ) CHICAGO", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC SPORTS NETWORK"]);

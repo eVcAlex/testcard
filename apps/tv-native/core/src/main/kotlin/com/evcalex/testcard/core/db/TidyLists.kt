@@ -8,6 +8,7 @@ import com.evcalex.testcard.core.epg.leagueListLabel
 import com.evcalex.testcard.core.epg.leaguesOfChannel
 import com.evcalex.testcard.core.epg.localListLabel
 import com.evcalex.testcard.core.epg.localNetworkOf
+import com.evcalex.testcard.core.epg.stationRank
 import com.evcalex.testcard.core.normalise.categoryDisplayName
 import com.evcalex.testcard.core.normalise.fallbackRank
 import com.evcalex.testcard.core.normalise.sameChannelKey
@@ -24,11 +25,11 @@ private class Lead(val id: String, val sourceId: String, val country: String, va
  * name. Nothing is left out: if one copy will not play, the next row is another way into the same channel. [keyOf] tells a station, so the
  * same name in different countries or sources stays apart.
  */
-private fun <T> inStationOrder(rows: List<T>, nameOf: (T) -> String, keyOf: (T) -> String): List<T> {
+private fun <T> inStationOrder(rows: List<T>, nameOf: (T) -> String, keyOf: (T) -> String, rankOf: ((T) -> Int)? = null): List<T> {
     val groups = LinkedHashMap<String, MutableList<T>>()
     for (row in rows) groups.getOrPut(keyOf(row)) { mutableListOf() }.add(row)
     val stations = groups.values.map { group -> group.withIndex().sortedWith(compareBy({ fallbackRank(nameOf(it.value)) }, { it.index })).map { it.value } }
-    return stations.flatten()
+    return (if (rankOf == null) stations else stations.sortedBy { rankOf(it[0]) }).flatten()
 }
 
 private class GuideRow(val id: String, val source: String, val country: String?, val categoryCountry: String?, val rawName: String, val name: String)
@@ -56,7 +57,7 @@ private fun SQLiteConnection.guideLeads(sourceId: String?): List<Lead> {
         if (localNetworkOf(row.rawName) != null || isPlaceholderChannelName(row.rawName)) continue
         leads += Lead(row.id, row.source, country, row.name)
     }
-    return inStationOrder(leads, { it.name }) { "${it.sourceId}\u0000${it.country}\u0000${sameChannelKey(it.name)}" }
+    return inStationOrder(leads, { it.name }, { "${it.sourceId}\u0000${it.country}\u0000${sameChannelKey(it.name)}" })
 }
 
 /** The countries a tidy "TV Guide" list is offered for, with how many channels each lists, the biggest first. */
@@ -235,7 +236,7 @@ fun SQLiteConnection.browseTidyCategory(id: String, limit: Int = 5000): List<Cha
     val categoryIds = parseTidyCategoryId(id)?.takeIf { it.isNotEmpty() } ?: return emptyList()
     class Entry(val id: String, val sourceId: String, val name: String)
     val rows = tidyRows(null, categoryIds.toSet()).map { Entry(it.channelId, it.sourceId, it.name) }
-    val ids = inStationOrder(rows, { it.name }) { "${it.sourceId}\u0000${sameChannelKey(it.name)}" }.take(limit).map { it.id }
+    val ids = inStationOrder(rows, { it.name }, { "${it.sourceId}\u0000${sameChannelKey(it.name)}" }).take(limit).map { it.id }
     val byId = HashMap<String, ChannelRow>()
     for (part in ids.chunked(500)) {
         for (row in query("SELECT $CHANNEL_COLUMNS FROM channels c WHERE c.id IN (${part.joinToString(",") { "?" }})", *part.toTypedArray()) { it.channelRow() }) byId[row.id] = row
@@ -319,7 +320,8 @@ fun SQLiteConnection.browseFacetList(id: String, sourceId: String? = null, limit
     val rows = facetRows(parsed.sourceId ?: sourceId).filter { row ->
         if (parsed.kind == "league") parsed.key in leaguesOfChannel(row.rawName, row.categoryRaw, row.country) else localNetworkOf(row.rawName) == parsed.key
     }
-    val ids = inStationOrder(rows, { it.name }, ::stationKey).take(limit).map { it.channelId }
+    val rankOf: ((FacetRow) -> Int)? = if (parsed.kind == "league") { row -> stationRank(parsed.key, row.name) } else null
+    val ids = inStationOrder(rows, { it.name }, ::stationKey, rankOf).take(limit).map { it.channelId }
     val byId = HashMap<String, ChannelRow>()
     for (part in ids.chunked(500)) {
         for (row in query("SELECT $CHANNEL_COLUMNS FROM channels c WHERE c.id IN (${part.joinToString(",") { "?" }})", *part.toTypedArray()) { it.channelRow() }) byId[row.id] = row
