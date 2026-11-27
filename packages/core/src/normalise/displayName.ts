@@ -167,6 +167,16 @@ export function sameChannelKey(displayed: string): string {
   return base === "" ? displayed.trim().toLowerCase() : base;
 }
 
+/** How a list shows a channel's qualities: the best picture first (4K/UHD, then Full HD, HD, unmarked, SD). */
+export function qualityRank(displayed: string): number {
+  const tail = TRAILING_QUALITY.exec(displayed)?.[0].toUpperCase() ?? "";
+  if (/\b(?:\d*K|UHD|2160P?\d*)\b/.test(tail)) return 0;
+  if (/\b(?:FHD|1080P?\d*)\b/.test(tail)) return 1;
+  if (/\bSD\b|\b(?:480|576)P/.test(tail)) return 4;
+  if (/\b(?:HD|720P?\d*)\b/.test(tail)) return 2;
+  return 3;
+}
+
 /** A station's name without its quality: "Sky Sports Main Event UHD 50fps" gives "Sky Sports Main Event" (for a heading above its copies). */
 export function stationLabel(displayed: string): string {
   const base = displayed.replace(TRAILING_QUALITY, "").replace(/\s+/g, " ").trim();

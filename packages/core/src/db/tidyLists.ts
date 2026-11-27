@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { channelShown } from "../sync/hidden.js";
-import { fallbackRank, sameChannelKey } from "../normalise/displayName.js";
+import { qualityRank, sameChannelKey } from "../normalise/displayName.js";
 import { CHANNEL_COLUMNS, type ChannelRow } from "./queries.js";
 import { channelGuideCountry, guideCountryOf, inTidyMarkets, parseFacetListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, facetListId, type FacetList, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
 import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOfChannel, localListLabel, stationRank, localNetworkOf } from "../epg/tidyKnowledge.js";
@@ -16,7 +16,7 @@ interface Lead {
 
 /**
  * A list's channels with each station's copies together: all its qualities, and the copies a provider files under other groups,
- * one after another, the best quality first (HD, unmarked, SD, then 4K; the order the provider listed them on a tie), the stations
+ * one after another, the best picture first (4K, Full HD, HD, unmarked, SD; the provider's order on a tie), the stations
  * in the order the provider lists them (its own order is the one a viewer knows: Main Event, Premier League, 1, 2...). Nothing is left out: if one copy will not play, the next row is another way into the same channel. A station is told by
  * `keyOf`, which keeps the same name in different countries or sources apart.
  */
@@ -28,7 +28,7 @@ function inStationOrder<T extends { readonly name: string }>(rows: readonly T[],
     if (group === undefined) groups.set(key, [row]);
     else group.push(row);
   }
-  const stations = [...groups.values()].map((group) => group.map((row, at) => ({ row, at, rank: fallbackRank(row.name) })).sort((a, b) => a.rank - b.rank || a.at - b.at).map((entry) => entry.row));
+  const stations = [...groups.values()].map((group) => group.map((row, at) => ({ row, at, rank: qualityRank(row.name) })).sort((a, b) => a.rank - b.rank || a.at - b.at).map((entry) => entry.row));
   if (rankOf !== undefined) stations.sort((a, b) => rankOf(a[0]!) - rankOf(b[0]!));
   return stations.flat();
 }

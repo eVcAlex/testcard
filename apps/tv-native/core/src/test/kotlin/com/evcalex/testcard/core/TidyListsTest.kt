@@ -66,7 +66,7 @@ class TidyListsTest {
     @Test fun `lists every quality of a station together, the best first, then the next station by name`() {
         val db = setup()
         db.add("bbc4k", "s", "BBC One 4K", "UK"); db.add("bbchd", "s", "BBC One HD", "UK"); db.add("itv", "s", "ITV1", "UK")
-        assertEquals(listOf("bbchd", "bbc4k", "itv"), db.ids("UK"))
+        assertEquals(listOf("bbc4k", "bbchd", "itv"), db.ids("UK"))
     }
 
     @Test fun `leaves out channels with no listings, no country, another country, or a source that is not tidied`() {
@@ -190,7 +190,7 @@ class TidyListsTest {
         val db = setup()
         db.addCategory("s", "UK| NEWS ᴴᴰ", listOf("BBC News 4K", "Sky News HD")); db.addCategory("s", "UK| NEWS ᴿᴬᵂ", listOf("BBC News HD", "GB News"))
         val list = db.tidy().single()
-        assertEquals(listOf("BBC News HD", "BBC News 4K", "Sky News HD", "GB News"), runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } })
+        assertEquals(listOf("BBC News 4K", "BBC News HD", "Sky News HD", "GB News"), runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } })
         assertEquals(4, list.count)
     }
 
@@ -203,7 +203,7 @@ class TidyListsTest {
         val list = db.tidy().single()
         assertEquals(8, list.count)
         assertEquals(
-            listOf("Sky Sports Premier League HD", "Sky Sports Premier League UHD 50fps", "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD", "Sky Sports Main Event UHD 50fps", "Sky Sports 1 HD", "Sky Sports 1 UHD 50fps"),
+            listOf("Sky Sports Premier League UHD 50fps", "Sky Sports Premier League HD", "Sky Sports Main Event UHD 50fps", "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD", "Sky Sports 1 UHD 50fps", "Sky Sports 1 HD"),
             runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } },
         )
     }

@@ -10,7 +10,7 @@ import com.evcalex.testcard.core.epg.localListLabel
 import com.evcalex.testcard.core.epg.localNetworkOf
 import com.evcalex.testcard.core.epg.stationRank
 import com.evcalex.testcard.core.normalise.categoryDisplayName
-import com.evcalex.testcard.core.normalise.fallbackRank
+import com.evcalex.testcard.core.normalise.qualityRank
 import com.evcalex.testcard.core.normalise.sameChannelKey
 import java.util.Locale
 
@@ -21,14 +21,14 @@ private class Lead(val id: String, val sourceId: String, val country: String, va
 
 /**
  * A list's channels with each station's copies together (`inStationOrder`): all its qualities, and the copies a provider files under other
- * groups, one after another, the best quality first (HD, unmarked, SD, then 4K; the order the provider listed them on a tie), the stations by
+ * groups, one after another, the best picture first (4K, Full HD, HD, unmarked, SD; the provider's order on a tie), the stations by
  * name. Nothing is left out: if one copy will not play, the next row is another way into the same channel. [keyOf] tells a station, so the
  * same name in different countries or sources stays apart.
  */
 private fun <T> inStationOrder(rows: List<T>, nameOf: (T) -> String, keyOf: (T) -> String, rankOf: ((T) -> Int)? = null): List<T> {
     val groups = LinkedHashMap<String, MutableList<T>>()
     for (row in rows) groups.getOrPut(keyOf(row)) { mutableListOf() }.add(row)
-    val stations = groups.values.map { group -> group.withIndex().sortedWith(compareBy({ fallbackRank(nameOf(it.value)) }, { it.index })).map { it.value } }
+    val stations = groups.values.map { group -> group.withIndex().sortedWith(compareBy({ qualityRank(nameOf(it.value)) }, { it.index })).map { it.value } }
     return (if (rankOf == null) stations else stations.sortedBy { rankOf(it[0]) }).flatten()
 }
 

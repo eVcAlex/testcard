@@ -929,6 +929,83 @@
   "out": []
  },
  {
+  "fn": "qualityRank",
+  "in": [
+   "Sky Sports 1 UHD 50fps"
+  ],
+  "out": 0
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "Sky Sports 1 4K"
+  ],
+  "out": 0
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "Sky Sports 1 FHD"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "Sky Sports 1 (1080p50)"
+  ],
+  "out": 1
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "Sky Sports 1 HD"
+  ],
+  "out": 2
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "Sky Sports 1 (720p25)"
+  ],
+  "out": 2
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "Sky Sports 1"
+  ],
+  "out": 3
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "Sky Sports 1 SD"
+  ],
+  "out": 4
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "BBC One 576p"
+  ],
+  "out": 4
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   "ITV1 HEVC"
+  ],
+  "out": 3
+ },
+ {
+  "fn": "qualityRank",
+  "in": [
+   ""
+  ],
+  "out": 3
+ },
+ {
   "fn": "stationRank",
   "in": [
    "skysports",

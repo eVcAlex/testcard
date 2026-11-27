@@ -163,6 +163,18 @@ fun sameChannelKey(displayed: String): String {
     return if (base == "") displayed.jsTrim().lowercase(Locale.ROOT) else base
 }
 
+private val QUALITY_FHD = Regex("""\b(?:FHD|1080P?\d*)\b""")
+
+/** How a list shows a channel's qualities (`qualityRank`): 4K/UHD, then Full HD, HD, unmarked, SD. */
+fun qualityRank(displayed: String): Int {
+    val tail = TRAILING_QUALITY.find(displayed)?.value?.uppercase(Locale.ROOT) ?: ""
+    if (QUALITY_4K.containsMatchIn(tail)) return 0
+    if (QUALITY_FHD.containsMatchIn(tail)) return 1
+    if (QUALITY_SD.containsMatchIn(tail)) return 4
+    if (QUALITY_HD.containsMatchIn(tail)) return 2
+    return 3
+}
+
 /** Which of a channel's qualities to try first when another has failed: HD, then unmarked, then SD, then 4K. */
 fun fallbackRank(displayed: String): Int {
     val tail = TRAILING_QUALITY.find(displayed)?.value?.uppercase(Locale.ROOT) ?: ""

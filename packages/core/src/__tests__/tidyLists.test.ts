@@ -35,12 +35,12 @@ describe("TV Guide lists", () => {
     expect(listGuideCountries(db)).toEqual([{ country: "UK", count: 4 }, { country: "US", count: 1 }]);
   });
 
-  it("lists every quality of a station together, the best first, then the next station by name", () => {
+  it("lists every quality of a station together, the best picture first, then the next station by name", () => {
     const { db, add } = setup();
     add("bbc4k", "s", "BBC One 4K", "UK");
     add("bbchd", "s", "BBC One HD", "UK");
     add("itv", "s", "ITV1", "UK");
-    expect(browseGuideChannels(db, { country: "UK" }).map((c) => c.id)).toEqual(["bbchd", "bbc4k", "itv"]);
+    expect(browseGuideChannels(db, { country: "UK" }).map((c) => c.id)).toEqual(["bbc4k", "bbchd", "itv"]);
   });
 
   it("leaves out channels with no listings, no country, another country, or a source that is not tidied", () => {
@@ -184,13 +184,13 @@ describe("tidy categories", () => {
     ]);
   });
 
-  it("reads every channel of a list, a station's qualities together with the best first, then the stations in the provider's order", () => {
+  it("reads every channel of a list, a station's qualities together with the best picture first, then the stations in the provider's order", () => {
     const { db, addCategory } = world();
     addCategory("s", "UK| NEWS ᴴᴰ", ["BBC News 4K", "Sky News HD"]);
     addCategory("s", "UK| NEWS ᴿᴬᵂ", ["BBC News HD", "GB News"]);
     const [list] = listTidyCategories(db);
     const names = browseTidyCategory(db, { id: list!.id }).map((c) => c.normalised_name);
-    expect(names).toEqual(["BBC News HD", "BBC News 4K", "Sky News HD", "GB News"]);
+    expect(names).toEqual(["BBC News 4K", "BBC News HD", "Sky News HD", "GB News"]);
     expect(list!.count).toBe(4);
   });
 
@@ -203,9 +203,9 @@ describe("tidy categories", () => {
     const [list] = listTidyCategories(db);
     expect(list!.count).toBe(8);
     expect(browseTidyCategory(db, { id: list!.id }).map((c) => c.normalised_name)).toEqual([
-      "Sky Sports Premier League HD", "Sky Sports Premier League UHD 50fps",
-      "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD", "Sky Sports Main Event UHD 50fps",
-      "Sky Sports 1 HD", "Sky Sports 1 UHD 50fps",
+      "Sky Sports Premier League UHD 50fps", "Sky Sports Premier League HD",
+      "Sky Sports Main Event UHD 50fps", "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD",
+      "Sky Sports 1 UHD 50fps", "Sky Sports 1 HD",
     ]);
   });
 
@@ -295,7 +295,7 @@ describe("league and local-station lists", () => {
     const { db, add } = world();
     add("s", "UK| SKY SPORTS", ["Sky Sports Racing", "Sky Sports 2", "Sky Sports Premier League HD", "Sky Sports Main Event UHD", "Sky Sports 1", "Sky Sports Main Event HD", "Sky Sports Golf"]);
     expect(browseFacetList(db, { id: "league:skysports" }).map((c) => c.raw_name)).toEqual([
-      "Sky Sports Main Event HD", "Sky Sports Main Event UHD", "Sky Sports Premier League HD", "Sky Sports 1", "Sky Sports 2", "Sky Sports Golf", "Sky Sports Racing",
+      "Sky Sports Main Event UHD", "Sky Sports Main Event HD", "Sky Sports Premier League HD", "Sky Sports 1", "Sky Sports 2", "Sky Sports Golf", "Sky Sports Racing",
     ]);
   });
 

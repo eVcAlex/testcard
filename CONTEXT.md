@@ -115,7 +115,7 @@ plays back through an embedded `mpv`, stores everything locally.
   scheduler (`main/refreshScheduler.ts`) that's guarded against double-running a Source
   that's already mid-refresh.
 - **Tidy playlist** — the same per-source switch ("Tidy playlist and improve TV guide", `sources.epg_optimise`) also adds a **TV Guide** list per
-  country to the Live TV rail: the channels with real listings, every copy of a station one after another with the best quality first, over the provider's own groups
+  country to the Live TV rail: the channels with real listings, every copy of a station one after another, the best picture first (4K, Full HD, HD, SD), over the provider's own groups
   (never rewriting them). See `docs/adr/0021-tidy-playlist.md`.
 - **Guide matching** — an optional per-source switch ("Tidy playlist and improve TV guide", `sources.epg_optimise`) that also links channels whose
   `tvg-id` is missing or unknown to the guide channel that is plainly the same one (`matchGuide`), by cleaned name and country. Never
