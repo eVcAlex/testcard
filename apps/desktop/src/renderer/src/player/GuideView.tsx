@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { sameChannelKey, stationLabel, type ChannelRow } from "@testcard/core";
+import type { ChannelRow } from "@testcard/core";
+import { sameChannelKey, stationLabel } from "@testcard/core/src/normalise/displayName.js";
 import { railLists, segmentsFor, startList, type Airing, type RailList } from "@testcard/core/src/epg/guideGrid.js";
 import { parseFacetListId, parseGuideListId, parseTidyCategoryId } from "@testcard/core/src/epg/guideListLabels.js";
 import { decodeTags } from "@testcard/core/src/normalise/classifyCategory.js";
