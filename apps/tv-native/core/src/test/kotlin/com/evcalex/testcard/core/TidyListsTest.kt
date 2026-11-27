@@ -190,7 +190,7 @@ class TidyListsTest {
         val db = setup()
         db.addCategory("s", "UK| NEWS ᴴᴰ", listOf("BBC News 4K", "Sky News HD")); db.addCategory("s", "UK| NEWS ᴿᴬᵂ", listOf("BBC News HD", "GB News"))
         val list = db.tidy().single()
-        assertEquals(listOf("BBC News HD", "BBC News 4K", "GB News", "Sky News HD"), runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } })
+        assertEquals(listOf("BBC News HD", "BBC News 4K", "Sky News HD", "GB News"), runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } })
         assertEquals(4, list.count)
     }
 
@@ -203,7 +203,7 @@ class TidyListsTest {
         val list = db.tidy().single()
         assertEquals(8, list.count)
         assertEquals(
-            listOf("Sky Sports 1 HD", "Sky Sports 1 UHD 50fps", "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD", "Sky Sports Main Event UHD 50fps", "Sky Sports Premier League HD", "Sky Sports Premier League UHD 50fps"),
+            listOf("Sky Sports Premier League HD", "Sky Sports Premier League UHD 50fps", "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD", "Sky Sports Main Event UHD 50fps", "Sky Sports 1 HD", "Sky Sports 1 UHD 50fps"),
             runBlocking { db.read { c -> c.browseTidyCategory(list.id).map { it.normalisedName } } },
         )
     }
@@ -271,7 +271,7 @@ class TidyListsTest {
         db.addRaw("s", "US| NBC", listOf("US: NBC 5 (WMAQ) CHICAGO", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC SPORTS NETWORK"))
         db.addRaw("s", "US| NEWS", listOf("NBC [Boston] 1080p", "US: FOX NEWS CHANNEL"))
         assertEquals(listOf(Triple("local:nbc", "📺 NBC local stations", 3)), db.facets())
-        assertEquals(listOf("NBC [Boston] 1080p", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC 5 (WMAQ) CHICAGO"), db.facet("local:nbc"))
+        assertEquals(listOf("US: NBC 5 (WMAQ) CHICAGO", "US: NBC 4 (WCMH) COLUMBUS OH", "NBC [Boston] 1080p"), db.facet("local:nbc"))
     }
 
     @Test fun `leaves out placeholders, dividers, and a source that is not tidied, and keeps a station of another country apart`() {

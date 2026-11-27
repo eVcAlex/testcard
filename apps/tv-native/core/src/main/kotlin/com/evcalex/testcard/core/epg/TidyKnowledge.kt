@@ -7,19 +7,19 @@ package com.evcalex.testcard.core.epg
 */
 
 /** A league, sport or competition a channel's (or its category's) name can say it belongs to. */
-class League(val key: String, val label: String, val emoji: String, val pattern: String)
+class League(val key: String, val label: String, val emoji: String, val pattern: String, val countries: List<String>? = null)
 
 /** In the order the rail lists them: the big leagues first. A channel can belong to more than one. */
 val LEAGUES: List<League> = listOf(
-    League("skysports", "Sky Sports", "📺", """sky ?sports?\b"""),
-    League("tnt", "TNT Sports / BT Sport", "📺", """tnt ?sports?\b|\bBT ?sports?\b|\bBT box office\b"""),
-    League("spfl", "Scottish Football", "⚽", """\bSPFL\b|scottish (?:premiership|football|championship|cup)|\bcinch\b|viaplay scot"""),
-    League("efl", "EFL", "⚽", """\bEFL\b|carabao|sky bet (?:championship|league)"""),
+    League("skysports", "Sky Sports", "📺", """sky ?sports\b""", listOf("UK", "IE")),
+    League("tnt", "TNT Sports / BT Sport", "📺", """tnt ?sports?\b|\bBT ?sports?\b|\bBT box office\b""", listOf("UK", "IE")),
+    League("spfl", "Scottish Football", "⚽", """\bSPFL\b|scottish (?:premiership|football|championship|cup)|\bcinch\b|viaplay scot""", listOf("UK", "IE")),
+    League("efl", "EFL", "⚽", """\bEFL\b|carabao|sky bet (?:championship|league)""", listOf("UK")),
     League("dazn", "DAZN", "📺", """\bDAZN\b"""),
     League("espn", "ESPN", "📺", """\bESPN\b"""),
     League("bein", "beIN Sports", "📺", """\bbe ?in ?sports?\b"""),
     League("eurosport", "Eurosport", "📺", """eurosport"""),
-    League("premiersports", "Premier Sports", "📺", """premier sports"""),
+    League("premiersports", "Premier Sports", "📺", """premier sports""", listOf("UK", "IE")),
     League("nfl", "NFL", "🏈", """\bNFL\b|sunday ticket|redzone|(?:sunday|monday|thursday) night football"""),
     League("ncaaf", "College Football", "🏟️", """\bNCAAF\b|college football|\bCFB\b"""),
     League("nba", "NBA", "🏀", """\bNBA\b"""),
@@ -68,6 +68,22 @@ private val NETWORK_PATTERNS = NETWORKS.map { it to Regex(it.pattern, RegexOptio
 
 /** The leagues a name (a channel's, or its category's) says it belongs to, by key, in [LEAGUES] order. */
 fun leaguesOf(text: String): List<String> = LEAGUE_PATTERNS.filter { (_, regex) -> regex.containsMatchIn(text) }.map { (league, _) -> league.key }
+
+/** A provider's own prefix ("MXC| ", "UK: "): the channel says which market it is. */
+private val PREFIXED = Regex("""^\s*[^\s|:]{1,6}\s*[|:]""")
+
+/** The leagues and broadcasters a channel belongs to (`leaguesOfChannel` in `tidyKnowledge.ts`); a one-market broadcaster only for that country's channels. */
+fun leaguesOfChannel(rawName: String, categoryRaw: String, country: String?): List<String> {
+    val named = leaguesOf("$rawName $categoryRaw").toSet()
+    return LEAGUES.filter { league ->
+        when {
+            league.key !in named -> false
+            league.countries == null -> true
+            country != null -> country in league.countries
+            else -> !PREFIXED.containsMatchIn(rawName)
+        }
+    }.map { it.key }
+}
 
 /** "(WMAQ)", "(KGO)", "(Wtvd)": a U.S. station's call letters in brackets. */
 private val CALL_SIGN = Regex("""(?:\(|\[)\s*[KW][A-Za-z]{2,3}(?:-?(?:TV|DT|HD|LD))?\s*(?:\)|\])""")

@@ -175,7 +175,6 @@
   ],
   "out": {
    "leagues": [
-    "skysports",
     "epl"
    ],
    "local": null,
@@ -203,7 +202,6 @@
   ],
   "out": {
    "leagues": [
-    "skysports",
     "laliga"
    ],
    "local": null,
@@ -297,7 +295,6 @@
   ],
   "out": {
    "leagues": [
-    "skysports",
     "tennis"
    ],
    "local": null,
@@ -311,7 +308,6 @@
   ],
   "out": {
    "leagues": [
-    "skysports",
     "golf"
    ],
    "local": null,
@@ -836,6 +832,101 @@
    "local": null,
    "placeholder": false
   }
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "Sky Sports Action HD",
+   "UK| SKY SPORTS",
+   "UK"
+  ],
+  "out": [
+   "skysports"
+  ]
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "MXC| Sky Sports 1",
+   "MXC| SPORTS",
+   null
+  ],
+  "out": []
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "F1| Sky Sports F1 HD",
+   "F1| SKY",
+   null
+  ],
+  "out": [
+   "f1"
+  ]
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "Sky Sports Main Event UHD",
+   "",
+   null
+  ],
+  "out": [
+   "skysports"
+  ]
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "Sky Sport F1 IT",
+   "IT| SKY",
+   "IT"
+  ],
+  "out": [
+   "f1"
+  ]
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "Sky Sports Premier League",
+   "AU| SPORTS",
+   "AU"
+  ],
+  "out": [
+   "epl"
+  ]
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "TNT Sports 1",
+   "UK| TNT",
+   "UK"
+  ],
+  "out": [
+   "tnt"
+  ]
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "UK: EFL Carabao Cup",
+   "",
+   "UK"
+  ],
+  "out": [
+   "efl"
+  ]
+ },
+ {
+  "fn": "leaguesOfChannel",
+  "in": [
+   "Sky Sports NZ 1",
+   "",
+   "NZ"
+  ],
+  "out": []
  },
  {
   "fn": "guideCountryOf",

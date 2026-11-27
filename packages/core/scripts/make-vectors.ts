@@ -13,7 +13,7 @@ import { dropVariantMarks, parseName } from "../src/normalise/parseName.js";
 import { openSetupProfile, parseSetupFragment, sealSetupProfile, setupProof } from "../src/sync/setupCrypto.js";
 import { guideKey, matchGuide, type GuideChannel, type MatchableChannel } from "../src/epg/matchGuide.js";
 import { channelGuideCountry, guideCountryHeading, guideCountryOf, tidyCategoryLabel } from "../src/epg/guideListLabels.js";
-import { isPlaceholderChannelName, leaguesOf, localNetworkOf } from "../src/epg/tidyKnowledge.js";
+import { isPlaceholderChannelName, leaguesOf, leaguesOfChannel, localNetworkOf } from "../src/epg/tidyKnowledge.js";
 import { splitTitle } from "../src/normalise/splitTitle.js";
 import { isDatedTitle, titleKey } from "../src/normalise/titleKey.js";
 import { classifyEntry, movieKey, seriesKey, urlExtension } from "../src/source/m3u/classifyEntry.js";
@@ -293,6 +293,10 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
   ]) {
     add("tidyFacets", "facets", [name], { leagues: leaguesOf(name), local: localNetworkOf(name), placeholder: isPlaceholderChannelName(name) });
   }
+  for (const [raw, category, country] of [
+    ["Sky Sports Action HD", "UK| SKY SPORTS", "UK"], ["MXC| Sky Sports 1", "MXC| SPORTS", null], ["F1| Sky Sports F1 HD", "F1| SKY", null], ["Sky Sports Main Event UHD", "", null],
+    ["Sky Sport F1 IT", "IT| SKY", "IT"], ["Sky Sports Premier League", "AU| SPORTS", "AU"], ["TNT Sports 1", "UK| TNT", "UK"], ["UK: EFL Carabao Cup", "", "UK"], ["Sky Sports NZ 1", "", "NZ"],
+  ] as const) add("tidyFacets", "leaguesOfChannel", [raw, category, country], leaguesOfChannel(raw, category, country));
   for (const code of ["UK", "uk", "GB", "gb", "US", "CA", "NBA", "PRIME", "VIP", "BEE", "XX", "INT", "", " us "]) add("tidyFacets", "guideCountryOf", [code], guideCountryOf(code));
   for (const [channel, category, raw] of [
     ["CA", "UK", "US: X"], [null, "UK", "US: X"], ["NHL", null, "US: X"], [null, null, "UK: BBC One"], [null, null, "US - NBC"], [null, null, "CA| CTV"], [null, null, "4K: Sky Primafila"],

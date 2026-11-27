@@ -9,19 +9,21 @@ export interface League {
   readonly emoji: string;
   /** A regular expression source, matched case-insensitively against the name. Kept to what Java's regex reads the same. */
   readonly pattern: string;
+  /** Only this country's channels (a UK broadcaster's name also turns up on other markets' copies); absent: any country. */
+  readonly countries?: readonly string[];
 }
 
 /** In the order the rail lists them: the big leagues first. A channel can belong to more than one. */
 export const LEAGUES: readonly League[] = [
-  { key: "skysports", label: "Sky Sports", emoji: "📺", pattern: "sky ?sports?\\b" },
-  { key: "tnt", label: "TNT Sports / BT Sport", emoji: "📺", pattern: "tnt ?sports?\\b|\\bBT ?sports?\\b|\\bBT box office\\b" },
-  { key: "spfl", label: "Scottish Football", emoji: "⚽", pattern: "\\bSPFL\\b|scottish (?:premiership|football|championship|cup)|\\bcinch\\b|viaplay scot" },
-  { key: "efl", label: "EFL", emoji: "⚽", pattern: "\\bEFL\\b|carabao|sky bet (?:championship|league)" },
+  { key: "skysports", label: "Sky Sports", emoji: "📺", pattern: "sky ?sports\\b", countries: ["UK", "IE"] },
+  { key: "tnt", label: "TNT Sports / BT Sport", emoji: "📺", pattern: "tnt ?sports?\\b|\\bBT ?sports?\\b|\\bBT box office\\b", countries: ["UK", "IE"] },
+  { key: "spfl", label: "Scottish Football", emoji: "⚽", pattern: "\\bSPFL\\b|scottish (?:premiership|football|championship|cup)|\\bcinch\\b|viaplay scot", countries: ["UK", "IE"] },
+  { key: "efl", label: "EFL", emoji: "⚽", pattern: "\\bEFL\\b|carabao|sky bet (?:championship|league)", countries: ["UK"] },
   { key: "dazn", label: "DAZN", emoji: "📺", pattern: "\\bDAZN\\b" },
   { key: "espn", label: "ESPN", emoji: "📺", pattern: "\\bESPN\\b" },
   { key: "bein", label: "beIN Sports", emoji: "📺", pattern: "\\bbe ?in ?sports?\\b" },
   { key: "eurosport", label: "Eurosport", emoji: "📺", pattern: "eurosport" },
-  { key: "premiersports", label: "Premier Sports", emoji: "📺", pattern: "premier sports" },
+  { key: "premiersports", label: "Premier Sports", emoji: "📺", pattern: "premier sports", countries: ["UK", "IE"] },
   { key: "nfl", label: "NFL", emoji: "🏈", pattern: "\\bNFL\\b|sunday ticket|redzone|(?:sunday|monday|thursday) night football" },
   { key: "ncaaf", label: "College Football", emoji: "🏟️", pattern: "\\bNCAAF\\b|college football|\\bCFB\\b" },
   { key: "nba", label: "NBA", emoji: "🏀", pattern: "\\bNBA\\b" },
@@ -76,6 +78,22 @@ const NETWORK_PATTERNS = NETWORKS.map((network) => ({ network, regex: compile(ne
 /** The leagues a name (a channel's, or its category's) says it belongs to, by key, in `LEAGUES` order. */
 export function leaguesOf(text: string): string[] {
   return LEAGUE_PATTERNS.filter(({ regex }) => regex.test(text)).map(({ league }) => league.key);
+}
+
+/** A provider's own prefix ("MXC| ", "UK: "): the channel says which market it is. */
+const PREFIXED = /^\s*[^\s|:]{1,6}\s*[|:]/;
+
+/**
+ * The leagues and broadcasters a channel belongs to, by key: what its name and its category's say, and, for a broadcaster of one market
+ * ("Sky Sports"), only the channels of that country (or, with no country and no prefix, unmarked ones): "MXC| Sky Sports 1" is Mexico's.
+ */
+export function leaguesOfChannel(rawName: string, categoryRaw: string, country: string | null): string[] {
+  const named = new Set(leaguesOf(`${rawName} ${categoryRaw}`));
+  return LEAGUES.filter((league) => {
+    if (!named.has(league.key)) return false;
+    if (league.countries === undefined) return true;
+    return country !== null ? league.countries.includes(country) : !PREFIXED.test(rawName);
+  }).map((league) => league.key);
 }
 
 /** "(WMAQ)", "(KGO)", "(Wtvd)": a U.S. station's call letters in brackets. */

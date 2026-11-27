@@ -184,13 +184,13 @@ describe("tidy categories", () => {
     ]);
   });
 
-  it("reads every channel of a list, a station's qualities together with the best first, then by station name", () => {
+  it("reads every channel of a list, a station's qualities together with the best first, then the stations in the provider's order", () => {
     const { db, addCategory } = world();
     addCategory("s", "UK| NEWS ᴴᴰ", ["BBC News 4K", "Sky News HD"]);
     addCategory("s", "UK| NEWS ᴿᴬᵂ", ["BBC News HD", "GB News"]);
     const [list] = listTidyCategories(db);
     const names = browseTidyCategory(db, { id: list!.id }).map((c) => c.normalised_name);
-    expect(names).toEqual(["BBC News HD", "BBC News 4K", "GB News", "Sky News HD"]);
+    expect(names).toEqual(["BBC News HD", "BBC News 4K", "Sky News HD", "GB News"]);
     expect(list!.count).toBe(4);
   });
 
@@ -203,9 +203,9 @@ describe("tidy categories", () => {
     const [list] = listTidyCategories(db);
     expect(list!.count).toBe(8);
     expect(browseTidyCategory(db, { id: list!.id }).map((c) => c.normalised_name)).toEqual([
-      "Sky Sports 1 HD", "Sky Sports 1 UHD 50fps",
-      "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD", "Sky Sports Main Event UHD 50fps",
       "Sky Sports Premier League HD", "Sky Sports Premier League UHD 50fps",
+      "Sky Sports Main Event HD", "Sky Sports Main Event", "Sky Sports Main Event SD", "Sky Sports Main Event UHD 50fps",
+      "Sky Sports 1 HD", "Sky Sports 1 UHD 50fps",
     ]);
   });
 
@@ -275,12 +275,21 @@ describe("league and local-station lists", () => {
     expect(listFacetLists(db).map((f) => [f.id, f.count])).toEqual([["league:nhl", 3]]);
   });
 
+  it("keeps a one-market broadcaster's list to that market's channels, in the provider's order", () => {
+    const { db, add } = world();
+    add("s", "UK| SKY SPORTS", ["Sky Sports Main Event UHD", "Sky Sports Premier League", "Sky Sports 1", "Sky Sports 2"]);
+    add("s", "MXC| SPORTS", ["MXC| Sky Sports 1", "MXC| Sky Sports 2", "MXC| Sky Sports 3"]);
+    add("s", "IT| SKY", ["IT: Sky Sport F1 IT", "IT: Sky Sports Calcio", "IT: Sky Sports Golf"]);
+    expect(listFacetLists(db).map((f) => [f.id, f.count])).toEqual([["league:skysports", 4]]);
+    expect(browseFacetList(db, { id: "league:skysports" }).map((c) => c.raw_name)).toEqual(["Sky Sports Main Event UHD", "Sky Sports Premier League", "Sky Sports 1", "Sky Sports 2"]);
+  });
+
   it("gathers a network's local stations from any category, and not its national services", () => {
     const { db, add } = world();
     add("s", "US| NBC", ["US: NBC 5 (WMAQ) CHICAGO", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC SPORTS NETWORK"]);
     add("s", "US| NEWS", ["NBC [Boston] 1080p", "US: FOX NEWS CHANNEL"]);
     expect(listFacetLists(db).map((f) => [f.id, f.label, f.count])).toEqual([["local:nbc", "📺 NBC local stations", 3]]);
-    expect(browseFacetList(db, { id: "local:nbc" }).map((c) => c.raw_name)).toEqual(["NBC [Boston] 1080p", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC 5 (WMAQ) CHICAGO"]);
+    expect(browseFacetList(db, { id: "local:nbc" }).map((c) => c.raw_name)).toEqual(["US: NBC 5 (WMAQ) CHICAGO", "US: NBC 4 (WCMH) COLUMBUS OH", "NBC [Boston] 1080p"]);
   });
 
   it("leaves out placeholders, dividers, and a source that is not tidied, and keeps a station of another country apart", () => {

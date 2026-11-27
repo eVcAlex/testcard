@@ -5,7 +5,7 @@ import com.evcalex.testcard.core.epg.LEAGUES
 import com.evcalex.testcard.core.epg.NETWORKS
 import com.evcalex.testcard.core.epg.isPlaceholderChannelName
 import com.evcalex.testcard.core.epg.leagueListLabel
-import com.evcalex.testcard.core.epg.leaguesOf
+import com.evcalex.testcard.core.epg.leaguesOfChannel
 import com.evcalex.testcard.core.epg.localListLabel
 import com.evcalex.testcard.core.epg.localNetworkOf
 import com.evcalex.testcard.core.normalise.categoryDisplayName
@@ -27,9 +27,8 @@ private class Lead(val id: String, val sourceId: String, val country: String, va
 private fun <T> inStationOrder(rows: List<T>, nameOf: (T) -> String, keyOf: (T) -> String): List<T> {
     val groups = LinkedHashMap<String, MutableList<T>>()
     for (row in rows) groups.getOrPut(keyOf(row)) { mutableListOf() }.add(row)
-    val collator = java.text.Collator.getInstance()
     val stations = groups.values.map { group -> group.withIndex().sortedWith(compareBy({ fallbackRank(nameOf(it.value)) }, { it.index })).map { it.value } }
-    return stations.sortedWith { a, b -> collator.compare(nameOf(a[0]), nameOf(b[0])) }.flatten()
+    return stations.flatten()
 }
 
 private class GuideRow(val id: String, val source: String, val country: String?, val categoryCountry: String?, val rawName: String, val name: String)
@@ -292,7 +291,7 @@ fun SQLiteConnection.listFacetLists(sourceId: String? = null): List<FacetList> {
     val leagues = HashMap<String, Int>()
     val locals = HashMap<String, Int>()
     for (row in facetRows(sourceId)) {
-        for (league in leaguesOf("${row.rawName} ${row.categoryRaw}")) leagues[league] = (leagues[league] ?: 0) + 1
+        for (league in leaguesOfChannel(row.rawName, row.categoryRaw, row.country)) leagues[league] = (leagues[league] ?: 0) + 1
         localNetworkOf(row.rawName)?.let { locals[it] = (locals[it] ?: 0) + 1 }
     }
     val out = ArrayList<FacetList>()
@@ -311,7 +310,7 @@ fun SQLiteConnection.listFacetLists(sourceId: String? = null): List<FacetList> {
 fun SQLiteConnection.browseFacetList(id: String, sourceId: String? = null, limit: Int = 5000): List<ChannelRow> {
     val parsed = parseFacetListId(id) ?: return emptyList()
     val rows = facetRows(parsed.sourceId ?: sourceId).filter { row ->
-        if (parsed.kind == "league") parsed.key in leaguesOf("${row.rawName} ${row.categoryRaw}") else localNetworkOf(row.rawName) == parsed.key
+        if (parsed.kind == "league") parsed.key in leaguesOfChannel(row.rawName, row.categoryRaw, row.country) else localNetworkOf(row.rawName) == parsed.key
     }
     val ids = inStationOrder(rows, { it.name }, ::stationKey).take(limit).map { it.channelId }
     val byId = HashMap<String, ChannelRow>()

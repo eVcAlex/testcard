@@ -3,7 +3,7 @@ import { channelShown } from "../sync/hidden.js";
 import { fallbackRank, sameChannelKey } from "../normalise/displayName.js";
 import { CHANNEL_COLUMNS, type ChannelRow } from "./queries.js";
 import { channelGuideCountry, guideCountryOf, parseFacetListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, facetListId, type FacetList, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
-import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOf, localListLabel, localNetworkOf } from "../epg/tidyKnowledge.js";
+import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOfChannel, localListLabel, localNetworkOf } from "../epg/tidyKnowledge.js";
 import { decodeTags } from "../normalise/classifyCategory.js";
 import { categoryShown } from "../sync/hidden.js";
 
@@ -17,7 +17,7 @@ interface Lead {
 /**
  * A list's channels with each station's copies together: all its qualities, and the copies a provider files under other groups,
  * one after another, the best quality first (HD, unmarked, SD, then 4K; the order the provider listed them on a tie), the stations
- * by name. Nothing is left out: if one copy will not play, the next row is another way into the same channel. A station is told by
+ * in the order the provider lists them (its own order is the one a viewer knows: Main Event, Premier League, 1, 2...). Nothing is left out: if one copy will not play, the next row is another way into the same channel. A station is told by
  * `keyOf`, which keeps the same name in different countries or sources apart.
  */
 function inStationOrder<T extends { readonly name: string }>(rows: readonly T[], keyOf: (row: T) => string): T[] {
@@ -29,7 +29,7 @@ function inStationOrder<T extends { readonly name: string }>(rows: readonly T[],
     else group.push(row);
   }
   const stations = [...groups.values()].map((group) => group.map((row, at) => ({ row, at, rank: fallbackRank(row.name) })).sort((a, b) => a.rank - b.rank || a.at - b.at).map((entry) => entry.row));
-  return stations.sort((a, b) => a[0]!.name.localeCompare(b[0]!.name)).flat();
+  return stations.flat();
 }
 
 /**
@@ -192,7 +192,7 @@ function facetRows(db: Database.Database, sourceId?: string): FacetRow[] {
 
 /** What a channel belongs to, by what its name (and its category's) says: league keys and the network of a local station. */
 function facetsOf(row: FacetRow): { leagues: string[]; local: string | null } {
-  return { leagues: leaguesOf(`${row.rawName} ${row.categoryRaw}`), local: localNetworkOf(row.rawName) };
+  return { leagues: leaguesOfChannel(row.rawName, row.categoryRaw, row.country), local: localNetworkOf(row.rawName) };
 }
 
 const stationKey = (row: FacetRow) => `${row.sourceId}\u0000${row.country ?? ""}\u0000${sameChannelKey(row.name)}`;
