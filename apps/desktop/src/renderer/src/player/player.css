@@ -2469,6 +2469,22 @@
   height: var(--guide-row-h);
 }
 
+/* The heading above a station's copies in a tidy list: only drawn, never a channel. */
+.lt-station {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--guide-row-h);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  font-weight: 600;
+  background: var(--surface-2, rgba(255, 255, 255, 0.04));
+  color: var(--text, inherit);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
 .lt-ch-logo {
   flex: none;
   width: 28px;

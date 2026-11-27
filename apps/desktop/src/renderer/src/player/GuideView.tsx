@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ChannelRow } from "@testcard/core";
+import { sameChannelKey, stationLabel, type ChannelRow } from "@testcard/core";
 import { railLists, segmentsFor, startList, type Airing, type RailList } from "@testcard/core/src/epg/guideGrid.js";
 import { parseFacetListId, parseGuideListId, parseTidyCategoryId } from "@testcard/core/src/epg/guideListLabels.js";
 import { decodeTags } from "@testcard/core/src/normalise/classifyCategory.js";
@@ -165,6 +165,33 @@ export function GuideView({
   const rows = useMemo(() => channelsQuery.data ?? [], [channelsQuery.data]);
   useEffect(() => onListChange(rows), [rows, onListChange]);
 
+  // ---- station headings: in a tidy list a station's copies sit together, and a heading above two or more names the station (as the
+  // provider's own groups do), so a bad stream is easy to skip. A heading is only drawn; the rows stay the channels. ----
+  const layout = useMemo(() => {
+    const derived = !searching && (parseTidyCategoryId(shown) !== null || parseFacetListId(shown) !== null || parseGuideListId(shown) !== null);
+    const tops: number[] = [];
+    const headings = new Map<number, { label: string; top: number }>();
+    let slots = 0;
+    for (let i = 0; i < rows.length; ) {
+      const key = sameChannelKey(rows[i]!.normalised_name);
+      let end = i + 1;
+      while (derived && end < rows.length && sameChannelKey(rows[end]!.normalised_name) === key) end += 1;
+      if (derived && end - i >= 2) {
+        headings.set(i, { label: stationLabel(rows[i]!.normalised_name), top: slots * ROW_H });
+        slots += 1;
+      }
+      for (let k = i; k < end; k += 1) { tops.push(slots * ROW_H); slots += 1; }
+      i = end;
+    }
+    return { tops, headings, height: slots * ROW_H };
+  }, [rows, shown, searching]);
+  const rowAt = (y: number) => {
+    let low = 0;
+    let high = layout.tops.length;
+    while (low < high) { const mid = (low + high) >> 1; if (layout.tops[mid]! + ROW_H > y) high = mid; else low = mid + 1; }
+    return low;
+  };
+
   // ---- the window ----
   const [offsetMin, setOffsetMin] = useState(0);
   const earliest = floorToSlot(nowMs);
@@ -200,8 +227,8 @@ export function GuideView({
       observer.disconnect();
     };
   }, []);
-  const firstRow = Math.max(0, Math.floor(scroll.top / ROW_H) - 4);
-  const lastRow = Math.min(rows.length, Math.ceil((scroll.top + scroll.height) / ROW_H) + 4);
+  const firstRow = Math.max(0, rowAt(scroll.top) - 4);
+  const lastRow = Math.min(rows.length, rowAt(scroll.top + scroll.height) + 5);
   const blockFrom = Math.max(0, Math.floor(firstRow / BLOCK) * BLOCK - BLOCK);
   const blockTo = Math.min(rows.length, Math.ceil(lastRow / BLOCK) * BLOCK + BLOCK);
   const wantedIds = useMemo(() => rows.slice(blockFrom, blockTo).map((c) => c.id), [rows, blockFrom, blockTo]);
@@ -268,8 +295,9 @@ export function GuideView({
   const revealRow = (index: number) => {
     const element = bodyRef.current;
     if (!element) return;
-    const top = index * ROW_H;
-    if (top < element.scrollTop) element.scrollTop = top;
+    const top = layout.tops[index] ?? index * ROW_H;
+    const heading = layout.headings.get(index);
+    if ((heading?.top ?? top) < element.scrollTop) element.scrollTop = heading?.top ?? top;
     else if (top + ROW_H > element.scrollTop + element.clientHeight) element.scrollTop = top + ROW_H - element.clientHeight;
   };
   const page = (delta: number) => setOffsetMin((o) => Math.max(0, o + delta));
@@ -408,11 +436,19 @@ export function GuideView({
             </div>
           </div>
           <div className="lt-body" ref={bodyRef}>
-            <div className="lt-rows" style={{ height: rows.length * ROW_H }}>
+            <div className="lt-rows" style={{ height: layout.height }}>
               {rows.slice(firstRow, lastRow).map((channel, k) => {
                 const index = firstRow + k;
+                const heading = layout.headings.get(index);
                 return (
-                  <div className="pw-guide-row lt-row" key={channel.id} style={{ top: index * ROW_H }} data-active={channel.id === activeChannelId} data-selected={index === selRow}>
+                  <Fragment key={channel.id}>
+                  {heading ? (
+                    <div className="lt-station" style={{ top: heading.top }}>
+                      <Icon name="arrow-down" size={14} />
+                      <span>{heading.label}</span>
+                    </div>
+                  ) : null}
+                  <div className="pw-guide-row lt-row" style={{ top: layout.tops[index] ?? index * ROW_H }} data-active={channel.id === activeChannelId} data-selected={index === selRow}>
                     <button
                       type="button"
                       className="pw-guide-ch"
@@ -452,6 +488,7 @@ export function GuideView({
                       })}
                     </div>
                   </div>
+                  </Fragment>
                 );
               })}
               {rows.length > 0 && nowLeft >= 0 && nowLeft <= trackWidth && (

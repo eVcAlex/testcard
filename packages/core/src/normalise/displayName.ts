@@ -167,6 +167,12 @@ export function sameChannelKey(displayed: string): string {
   return base === "" ? displayed.trim().toLowerCase() : base;
 }
 
+/** A station's name without its quality: "Sky Sports Main Event UHD 50fps" gives "Sky Sports Main Event" (for a heading above its copies). */
+export function stationLabel(displayed: string): string {
+  const base = displayed.replace(TRAILING_QUALITY, "").replace(/\s+/g, " ").trim();
+  return base === "" ? displayed.trim() : base;
+}
+
 /**
  * Which of a channel's qualities to try first when another has failed: HD first (the most likely to play and
  * still look good), then an unmarked one, then SD, and 4K last, since it is the one most likely to be what failed.
