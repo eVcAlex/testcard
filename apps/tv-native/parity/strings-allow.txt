@@ -59,3 +59,9 @@ tennis|\\bATP\\b|\\bWTA\\b|wimbledon|roland garros
 \\bgolf\\b|\\bPGA\\b|\\bLIV golf\\b
 rugby|six nations|\\bNRL\\b
 \\bNFHS\\b|high school
+sky ?sports?\\b
+tnt ?sports?\\b|\\bBT ?sports?\\b|\\bBT box office\\b
+\\bSPFL\\b|scottish (?:premiership|football|championship|cup)|\\bcinch\\b|viaplay scot
+\\bEFL\\b|carabao|sky bet (?:championship|league)
+\\bbe ?in ?sports?\\b
+premier sports

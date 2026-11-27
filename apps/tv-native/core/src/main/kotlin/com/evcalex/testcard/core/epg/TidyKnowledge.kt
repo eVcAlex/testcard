@@ -11,6 +11,15 @@ class League(val key: String, val label: String, val emoji: String, val pattern:
 
 /** In the order the rail lists them: the big leagues first. A channel can belong to more than one. */
 val LEAGUES: List<League> = listOf(
+    League("skysports", "Sky Sports", "📺", """sky ?sports?\b"""),
+    League("tnt", "TNT Sports / BT Sport", "📺", """tnt ?sports?\b|\bBT ?sports?\b|\bBT box office\b"""),
+    League("spfl", "Scottish Football", "⚽", """\bSPFL\b|scottish (?:premiership|football|championship|cup)|\bcinch\b|viaplay scot"""),
+    League("efl", "EFL", "⚽", """\bEFL\b|carabao|sky bet (?:championship|league)"""),
+    League("dazn", "DAZN", "📺", """\bDAZN\b"""),
+    League("espn", "ESPN", "📺", """\bESPN\b"""),
+    League("bein", "beIN Sports", "📺", """\bbe ?in ?sports?\b"""),
+    League("eurosport", "Eurosport", "📺", """eurosport"""),
+    League("premiersports", "Premier Sports", "📺", """premier sports"""),
     League("nfl", "NFL", "🏈", """\bNFL\b|sunday ticket|redzone|(?:sunday|monday|thursday) night football"""),
     League("ncaaf", "College Football", "🏟️", """\bNCAAF\b|college football|\bCFB\b"""),
     League("nba", "NBA", "🏀", """\bNBA\b"""),

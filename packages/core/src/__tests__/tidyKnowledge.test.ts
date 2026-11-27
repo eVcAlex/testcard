@@ -7,8 +7,12 @@ describe("leaguesOf", () => {
     expect(leaguesOf("AT&T: NFL NETWORK ᴿᴬᵂ")).toEqual(["nfl"]);
     expect(leaguesOf("Sunday Night Football [NBC]")).toEqual(["nfl"]);
     expect(leaguesOf("US: NBA TV HD")).toEqual(["nba"]);
-    expect(leaguesOf("UK: SKY SPORTS F1 UHD 50fps")).toEqual(["f1"]);
-    expect(leaguesOf("IT: DAZN MATCHROOM BOXING ᴿᴬᵂ")).toEqual(["boxing"]);
+    expect(leaguesOf("UK: SKY SPORTS F1 UHD 50fps")).toEqual(["skysports", "f1"]);
+    expect(leaguesOf("IT: DAZN MATCHROOM BOXING ᴿᴬᵂ")).toEqual(["dazn", "boxing"]);
+    expect(leaguesOf("Sky Sports Action HD")).toEqual(["skysports"]);
+    expect(leaguesOf("UK| TNT SPORTS 1 FHD")).toEqual(["tnt"]);
+    expect(leaguesOf("SPFL: Celtic v Rangers")).toEqual(["spfl"]);
+    expect(leaguesOf("TNT")).toEqual([]);
     expect(leaguesOf("UEFA Champions League 03")).toEqual(["uefa"]);
   });
   it("keeps the WNBA apart from the NBA, and college from the pros", () => {

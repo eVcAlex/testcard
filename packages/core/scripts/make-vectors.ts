@@ -289,7 +289,7 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
     "PRIME: RUGBYPASS TV ᴿᴬᵂ", "US: NRL TV", "AU: AFL LIVE", "UK: PDC DARTS", "US: HIGH SCHOOL SPORTS 04", "NBC [Chicago] 1080p", "NBC 5 (WMAQ) CHICAGO (A) ᴿᴬᵂ", "ABC (KGO) SAN Francisco California",
     "WILKES BARRE, PA WBRE NBC 28 (A)", "US: CBS (WSBK) BOSTON HD", "US: CW 21 BIRMINGHAM AL (WTTO) HD", "AT&T: FOX 10 LOCAL PHOENIX ᴿᴬᵂ", "US: TELEMUNDO 51 MIAMI (WSCV)", "TV: BOSTON, MA WGBH PBS 2 A3 HD BOSTON ᶜᶦᵗʸ ᴿᴬᵂ",
     "US: FOX NEWS CHANNEL", "US: FOX BUSINESS", "US: NBC SPORTS NETWORK", "US: ABC NEWS LIVE", "US: CBS SPORTS NETWORK", "NBC", "BBC One", "UK: ITV1", "US: ESPN", "US: CNN", "Dave", "FOX 5 News", "ABC 13 Asheville",
-    "US: NBC UNIVERSO", "SKY CINEMA", "", "   ",
+    "US: NBC UNIVERSO", "SKY CINEMA", "", "   ", "Sky Sports Action HD", "UK| TNT SPORTS 1 FHD", "BT Box Office HD", "SPFL: Celtic v Rangers", "UK| Premier Sports 2", "BEE| DAZN CUP FHD EN", "US: ESPN2", "beIN SPORTS 1", "Eurosport 1 HD", "Sky Sports Red Button", "UK: EFL Carabao Cup", "TNT",
   ]) {
     add("tidyFacets", "facets", [name], { leagues: leaguesOf(name), local: localNetworkOf(name), placeholder: isPlaceholderChannelName(name) });
   }

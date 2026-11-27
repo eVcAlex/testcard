@@ -13,6 +13,15 @@ export interface League {
 
 /** In the order the rail lists them: the big leagues first. A channel can belong to more than one. */
 export const LEAGUES: readonly League[] = [
+  { key: "skysports", label: "Sky Sports", emoji: "📺", pattern: "sky ?sports?\\b" },
+  { key: "tnt", label: "TNT Sports / BT Sport", emoji: "📺", pattern: "tnt ?sports?\\b|\\bBT ?sports?\\b|\\bBT box office\\b" },
+  { key: "spfl", label: "Scottish Football", emoji: "⚽", pattern: "\\bSPFL\\b|scottish (?:premiership|football|championship|cup)|\\bcinch\\b|viaplay scot" },
+  { key: "efl", label: "EFL", emoji: "⚽", pattern: "\\bEFL\\b|carabao|sky bet (?:championship|league)" },
+  { key: "dazn", label: "DAZN", emoji: "📺", pattern: "\\bDAZN\\b" },
+  { key: "espn", label: "ESPN", emoji: "📺", pattern: "\\bESPN\\b" },
+  { key: "bein", label: "beIN Sports", emoji: "📺", pattern: "\\bbe ?in ?sports?\\b" },
+  { key: "eurosport", label: "Eurosport", emoji: "📺", pattern: "eurosport" },
+  { key: "premiersports", label: "Premier Sports", emoji: "📺", pattern: "premier sports" },
   { key: "nfl", label: "NFL", emoji: "🏈", pattern: "\\bNFL\\b|sunday ticket|redzone|(?:sunday|monday|thursday) night football" },
   { key: "ncaaf", label: "College Football", emoji: "🏟️", pattern: "\\bNCAAF\\b|college football|\\bCFB\\b" },
   { key: "nba", label: "NBA", emoji: "🏀", pattern: "\\bNBA\\b" },

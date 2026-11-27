@@ -96,7 +96,9 @@
    "- NO EVENT STREAMING - | 8K EXCLUSIVE | US: ESPN+ PPV 323"
   ],
   "out": {
-   "leagues": [],
+   "leagues": [
+    "espn"
+   ],
    "local": null,
    "placeholder": true
   }
@@ -173,6 +175,7 @@
   ],
   "out": {
    "leagues": [
+    "skysports",
     "epl"
    ],
    "local": null,
@@ -186,6 +189,7 @@
   ],
   "out": {
    "leagues": [
+    "skysports",
     "epl"
    ],
    "local": null,
@@ -199,6 +203,7 @@
   ],
   "out": {
    "leagues": [
+    "skysports",
     "laliga"
    ],
    "local": null,
@@ -225,6 +230,7 @@
   ],
   "out": {
    "leagues": [
+    "skysports",
     "f1"
    ],
    "local": null,
@@ -264,6 +270,7 @@
   ],
   "out": {
    "leagues": [
+    "dazn",
     "boxing"
    ],
    "local": null,
@@ -290,6 +297,7 @@
   ],
   "out": {
    "leagues": [
+    "skysports",
     "tennis"
    ],
    "local": null,
@@ -303,6 +311,7 @@
   ],
   "out": {
    "leagues": [
+    "skysports",
     "golf"
    ],
    "local": null,
@@ -316,6 +325,7 @@
   ],
   "out": {
    "leagues": [
+    "skysports",
     "cricket"
    ],
    "local": null,
@@ -580,7 +590,9 @@
    "US: ESPN"
   ],
   "out": {
-   "leagues": [],
+   "leagues": [
+    "espn"
+   ],
    "local": null,
    "placeholder": false
   }
@@ -666,6 +678,158 @@
   "fn": "facets",
   "in": [
    "   "
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "Sky Sports Action HD"
+  ],
+  "out": {
+   "leagues": [
+    "skysports"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK| TNT SPORTS 1 FHD"
+  ],
+  "out": {
+   "leagues": [
+    "tnt"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "BT Box Office HD"
+  ],
+  "out": {
+   "leagues": [
+    "tnt"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "SPFL: Celtic v Rangers"
+  ],
+  "out": {
+   "leagues": [
+    "spfl"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK| Premier Sports 2"
+  ],
+  "out": {
+   "leagues": [
+    "premiersports"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "BEE| DAZN CUP FHD EN"
+  ],
+  "out": {
+   "leagues": [
+    "dazn"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "US: ESPN2"
+  ],
+  "out": {
+   "leagues": [],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "beIN SPORTS 1"
+  ],
+  "out": {
+   "leagues": [
+    "bein"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "Eurosport 1 HD"
+  ],
+  "out": {
+   "leagues": [
+    "eurosport"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "Sky Sports Red Button"
+  ],
+  "out": {
+   "leagues": [
+    "skysports"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "UK: EFL Carabao Cup"
+  ],
+  "out": {
+   "leagues": [
+    "efl"
+   ],
+   "local": null,
+   "placeholder": false
+  }
+ },
+ {
+  "fn": "facets",
+  "in": [
+   "TNT"
   ],
   "out": {
    "leagues": [],
