@@ -171,7 +171,7 @@ describe("tidy categories", () => {
     expect(lists.map((l) => [l.label, l.country, l.ppv])).toEqual([["General", "UK", false], ["DAZN", "UK", true]]);
   });
 
-  it("orders by country (UK, USA, Canada first, then the rest, then none), then events last, then name", () => {
+  it("orders by country (UK, USA, Canada, ... other markets left out, then none), then events last, then name", () => {
     const { db, addCategory } = world();
     addCategory("s", "BEE| DAZN PPV", ["X"]);
     addCategory("s", "DE| NEWS", ["X"]);
@@ -180,7 +180,7 @@ describe("tidy categories", () => {
     addCategory("s", "UK| KIDS", ["X"]);
     addCategory("s", "UK| ESPN PPV", ["X"]);
     expect(listTidyCategories(db).map((l) => `${l.country ?? "-"} ${l.label}${l.ppv ? " (ppv)" : ""}`)).toEqual([
-      "UK Kids", "UK News", "UK ESPN (ppv)", "US News", "DE News", "- BEE| DAZN (ppv)", // an unknown prefix stays: the "Other" section mixes places
+      "UK Kids", "UK News", "UK ESPN (ppv)", "US News", "- BEE| DAZN (ppv)", // an unknown prefix stays: the "Other" section mixes places
     ]);
   });
 
@@ -273,6 +273,13 @@ describe("league and local-station lists", () => {
     const { db, add } = world();
     add("s", "US| NHL TEAM PPV", ["Boston Bruins", "Toronto Maple Leafs", "Montreal Canadiens"]);
     expect(listFacetLists(db).map((f) => [f.id, f.count])).toEqual([["league:nhl", 3]]);
+  });
+
+  it("only builds lists for the UK, US, Canada, New Zealand and Australia", () => {
+    const { db, add } = world();
+    add("s", "UK| NEWS", ["UK: BBC One", "UK: BBC Two", "UK: ITV1"]);
+    add("s", "DE| NEWS", ["DE: Das Erste", "DE: ZDF", "DE: RTL"]);
+    expect(listTidyCategories(db).map((c) => c.country)).toEqual(["UK"]);
   });
 
   it("keeps a one-market broadcaster's list to that market's channels, in the provider's order", () => {

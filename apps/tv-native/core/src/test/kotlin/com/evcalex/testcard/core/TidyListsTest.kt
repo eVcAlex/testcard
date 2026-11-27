@@ -181,7 +181,7 @@ class TidyListsTest {
         val db = setup()
         for (raw in listOf("BEE| DAZN PPV", "DE| NEWS", "US| NEWS", "UK| NEWS", "UK| KIDS", "UK| ESPN PPV")) db.addCategory("s", raw, listOf("X"))
         assertEquals(
-            listOf("UK Kids", "UK News", "UK ESPN (ppv)", "US News", "DE News", "- BEE| DAZN (ppv)"),
+            listOf("UK Kids", "UK News", "UK ESPN (ppv)", "US News", "- BEE| DAZN (ppv)"),
             db.tidy().map { "${it.country ?: "-"} ${it.label}${if (it.ppv) " (ppv)" else ""}" },
         )
     }

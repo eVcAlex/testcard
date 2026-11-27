@@ -51,6 +51,7 @@ private fun SQLiteConnection.guideLeads(sourceId: String?): List<Lead> {
     val leads = ArrayList<Lead>()
     for (row in rows) {
         val country = channelGuideCountry(row.country, row.categoryCountry, row.rawName) ?: continue
+        if (!inTidyMarkets(country)) continue
         // A network's local stations have their own lists, and an event slot with nothing on is not a station.
         if (localNetworkOf(row.rawName) != null || isPlaceholderChannelName(row.rawName)) continue
         leads += Lead(row.id, row.source, country, row.name)
@@ -94,6 +95,10 @@ fun guideCountryOf(code: String?): String? {
     val known = if (upper == "GB") "UK" else upper
     return if (known in COUNTRY_NAMES) known else null
 }
+
+/** The markets Tidy playlist builds lists for (`TIDY_COUNTRIES` in `guideListLabels.ts`); a channel of any other known country is left to the provider's own groups. */
+private val TIDY_COUNTRIES = setOf("UK", "US", "CA", "NZ", "AU")
+private fun inTidyMarkets(country: String?): Boolean = country == null || country in TIDY_COUNTRIES
 
 /** "UK: BBC One", "US - NBC" or "CA| CTV": the country a provider put in front of a channel's name, when it is a known one. */
 fun guideCountryFromName(rawName: String): String? = NAME_COUNTRY.find(rawName)?.groupValues?.get(1)?.let(::guideCountryOf)
@@ -204,6 +209,7 @@ fun SQLiteConnection.listTidyCategories(sourceId: String? = null): List<TidyCate
     for (row in tidyRows(sourceId, null)) {
         val ppv = row.tags.split(" ").contains("ppv")
         val country = guideCountryOf(row.country)
+        if (!inTidyMarkets(country)) continue
         val label = tidyCategoryLabel(row.rawName, ppv)
         val key = "${row.sourceId}\u0000${country ?: ""}\u0000${if (ppv) 1 else 0}\u0000${label.lowercase(Locale.ROOT)}"
         val group = groups.getOrPut(key) { Group(label, country, ppv) }
@@ -275,6 +281,7 @@ private fun SQLiteConnection.facetRows(sourceId: String?): List<FacetRow> {
     ) { Raw(it.getText(0), it.getText(1), it.getText(2), it.getText(3), it.textOrNull(4), it.textOrNull(5), it.getText(6), it.textOrNull(7) ?: "") }
         .filter { !hasHiddenTag(it.tags) && !isPlaceholderChannelName(it.rawName) }
         .map { FacetRow(it.channelId, it.sourceId, it.rawName, it.name, channelGuideCountry(it.country, it.categoryCountry, it.rawName), it.categoryRaw) }
+        .filter { inTidyMarkets(it.country) }
 }
 
 private fun stationKey(row: FacetRow) = "${row.sourceId}\u0000${row.country ?: ""}\u0000${sameChannelKey(row.name)}"

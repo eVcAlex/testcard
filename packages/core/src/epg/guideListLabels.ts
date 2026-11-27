@@ -24,6 +24,10 @@ export function guideCountryOf(code: string | null | undefined): string | null {
   return Object.prototype.hasOwnProperty.call(COUNTRY_NAMES, known) ? known : null;
 }
 
+/** The markets Tidy playlist builds lists for; a channel of any other known country is left to the provider's own groups. */
+export const TIDY_COUNTRIES: readonly string[] = ["UK", "US", "CA", "NZ", "AU"];
+export const inTidyMarkets = (country: string | null): boolean => country === null || TIDY_COUNTRIES.includes(country);
+
 /** "UK: BBC One", "US - NBC" or "CA| CTV": the country a provider put in front of a channel's name, when it is a known one. */
 export function guideCountryFromName(rawName: string): string | null {
   const match = /^\s*([A-Za-z]{2,3})\s*[:|-]\s*/.exec(rawName);

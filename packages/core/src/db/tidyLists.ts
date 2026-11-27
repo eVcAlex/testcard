@@ -2,7 +2,7 @@ import type Database from "better-sqlite3";
 import { channelShown } from "../sync/hidden.js";
 import { fallbackRank, sameChannelKey } from "../normalise/displayName.js";
 import { CHANNEL_COLUMNS, type ChannelRow } from "./queries.js";
-import { channelGuideCountry, guideCountryOf, parseFacetListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, facetListId, type FacetList, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
+import { channelGuideCountry, guideCountryOf, inTidyMarkets, parseFacetListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, facetListId, type FacetList, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
 import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOfChannel, localListLabel, localNetworkOf } from "../epg/tidyKnowledge.js";
 import { decodeTags } from "../normalise/classifyCategory.js";
 import { categoryShown } from "../sync/hidden.js";
@@ -52,7 +52,7 @@ function guideLeads(db: Database.Database, sourceId?: string): Lead[] {
   for (const row of rows) {
     const country = channelGuideCountry(row.country, row.categoryCountry, row.rawName);
     // A network's local stations have their own lists, and an event slot with nothing on is not a station.
-    if (country === null || localNetworkOf(row.rawName) !== null || isPlaceholderChannelName(row.rawName)) continue;
+    if (country === null || !inTidyMarkets(country) || localNetworkOf(row.rawName) !== null || isPlaceholderChannelName(row.rawName)) continue;
     leads.push({ id: row.id, sourceId: row.sourceId, country, name: row.name });
   }
   return inStationOrder(leads, (lead) => `${lead.sourceId}\u0000${lead.country}\u0000${sameChannelKey(lead.name)}`);
@@ -126,6 +126,7 @@ export function listTidyCategories(db: Database.Database, sourceId?: string): Ti
   for (const row of tidyRows(db, sourceId)) {
     const ppv = decodeTags(row.tags).includes("ppv");
     const country = guideCountryOf(row.country);
+    if (!inTidyMarkets(country)) continue;
     const label = tidyCategoryLabel(row.rawName, ppv);
     const key = `${row.sourceId}\u0000${country ?? ""}\u0000${ppv ? 1 : 0}\u0000${label.toLowerCase()}`;
     let group = groups.get(key);
@@ -185,7 +186,9 @@ function facetRows(db: Database.Database, sourceId?: string): FacetRow[] {
   for (const row of rows) {
     const tags = decodeTags(row.tags);
     if (tags.includes("junk") || tags.includes("separator") || tags.includes("adult") || isPlaceholderChannelName(row.rawName)) continue;
-    out.push({ channelId: row.channelId, sourceId: row.sourceId, rawName: row.rawName, name: row.name, country: channelGuideCountry(row.country, row.categoryCountry, row.rawName), categoryRaw: row.categoryRaw });
+    const country = channelGuideCountry(row.country, row.categoryCountry, row.rawName);
+    if (!inTidyMarkets(country)) continue;
+    out.push({ channelId: row.channelId, sourceId: row.sourceId, rawName: row.rawName, name: row.name, country, categoryRaw: row.categoryRaw });
   }
   return out;
 }
