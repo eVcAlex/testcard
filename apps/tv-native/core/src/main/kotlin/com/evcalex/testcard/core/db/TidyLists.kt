@@ -4,6 +4,7 @@ import androidx.sqlite.SQLiteConnection
 import com.evcalex.testcard.core.epg.LEAGUES
 import com.evcalex.testcard.core.epg.NETWORKS
 import com.evcalex.testcard.core.epg.isPlaceholderChannelName
+import com.evcalex.testcard.core.epg.isBroadcasterChannel
 import com.evcalex.testcard.core.epg.leagueListLabel
 import com.evcalex.testcard.core.epg.leaguesOfChannel
 import com.evcalex.testcard.core.epg.localListLabel

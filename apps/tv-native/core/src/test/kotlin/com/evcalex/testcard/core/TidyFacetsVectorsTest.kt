@@ -6,6 +6,7 @@ import com.evcalex.testcard.core.db.guideCountryOf
 import com.evcalex.testcard.core.db.tidyCategoryLabel
 import com.evcalex.testcard.core.epg.isPlaceholderChannelName
 import com.evcalex.testcard.core.epg.leaguesOf
+import com.evcalex.testcard.core.epg.isBroadcasterChannel
 import com.evcalex.testcard.core.epg.leaguesOfChannel
 import com.evcalex.testcard.core.epg.stationRank
 import com.evcalex.testcard.core.normalise.listStationKey
@@ -37,6 +38,7 @@ class TidyFacetsVectorsTest {
         "stationRank" -> JsonPrimitive(stationRank(row.string(0), row.string(1)))
         "qualityRank" -> JsonPrimitive(qualityRank(row.string(0)))
         "listStationKey" -> JsonPrimitive(listStationKey(row.string(0)))
+        "isBroadcasterChannel" -> JsonPrimitive(isBroadcasterChannel(row.string(0), row.string(1)))
         "guideCountryOf" -> text(guideCountryOf(row.string(0)))
         "channelGuideCountry" -> text(channelGuideCountry(nullable(arg(row, 0)), nullable(arg(row, 1)), row.string(2)))
         "guideCountryHeading" -> JsonPrimitive(guideCountryHeading(nullable(arg(row, 0))))

@@ -3,7 +3,7 @@ import { channelShown } from "../sync/hidden.js";
 import { listStationKey, qualityRank } from "../normalise/displayName.js";
 import { CHANNEL_COLUMNS, type ChannelRow } from "./queries.js";
 import { channelGuideCountry, guideCountryOf, inTidyMarkets, parseFacetListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, facetListId, type FacetList, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
-import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOfChannel, localListLabel, stationRank, localNetworkOf } from "../epg/tidyKnowledge.js";
+import { LEAGUES, NETWORKS, isPlaceholderChannelName, isBroadcasterChannel, leagueListLabel, leaguesOfChannel, localListLabel, stationRank, localNetworkOf } from "../epg/tidyKnowledge.js";
 import { decodeTags } from "../normalise/classifyCategory.js";
 import { categoryShown } from "../sync/hidden.js";
 
@@ -53,7 +53,7 @@ function guideLeads(db: Database.Database, sourceId?: string): Lead[] {
   for (const row of rows) {
     const country = channelGuideCountry(row.country, row.categoryCountry, row.rawName);
     // A network's local stations have their own lists, and an event slot with nothing on is not a station.
-    if (country === null || !inTidyMarkets(country) || localNetworkOf(row.rawName) !== null || isPlaceholderChannelName(row.rawName)) continue;
+    if (country === null || !inTidyMarkets(country) || localNetworkOf(row.rawName) !== null || isPlaceholderChannelName(row.rawName) || isBroadcasterChannel(row.rawName, country)) continue;
     leads.push({ id: row.id, sourceId: row.sourceId, country, name: row.name });
   }
   return inStationOrder(leads, (lead) => `${lead.sourceId}\u0000${lead.country}\u0000${listStationKey(lead.name)}`);

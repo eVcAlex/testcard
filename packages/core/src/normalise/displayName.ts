@@ -184,6 +184,19 @@ export function stationLabel(displayed: string): string {
 }
 
 /**
+ * A copy's name under its station's heading: the provider's tag and the quality ("Nowtv| Sky Sports Main Event HD" gives "Nowtv · HD",
+ * "Sky Sports Main Event UHD/4K" gives "UHD/4K", an unmarked copy "Standard"), since the heading already says which station it is.
+ */
+export function copyLabel(displayed: string): string {
+  const tagged = /^([A-Za-z0-9+]{2,8})\s*[|:]\s*(.*)$/.exec(displayed.trim());
+  const tag = tagged?.[1] ?? null;
+  const rest = tagged?.[2] ?? displayed;
+  const quality = TRAILING_QUALITY.exec(rest)?.[0].replace(/^[\s\-|/+]+/, "").replace(/^[([]\s*|\s*[)\]]$/g, "").trim() ?? "";
+  const label = quality === "" ? "Standard" : quality;
+  return tag === null ? label : `${tag} · ${label}`;
+}
+
+/**
  * What makes two rows of a list one station: `sameChannelKey`, without a provider's tag in front ("Nowtv| Sky Sports Main Event") and
  * with "Events" read as "Event" (a provider's typo), so the copies of a station from different groups sit together under one heading.
  */

@@ -14,7 +14,7 @@ import { openSetupProfile, parseSetupFragment, sealSetupProfile, setupProof } fr
 import { guideKey, matchGuide, type GuideChannel, type MatchableChannel } from "../src/epg/matchGuide.js";
 import { channelGuideCountry, guideCountryHeading, guideCountryOf, tidyCategoryLabel } from "../src/epg/guideListLabels.js";
 import { qualityRank } from "../src/normalise/displayName.js";
-import { isPlaceholderChannelName, leaguesOf, leaguesOfChannel, localNetworkOf, stationRank } from "../src/epg/tidyKnowledge.js";
+import { isPlaceholderChannelName, leaguesOf, isBroadcasterChannel, leaguesOfChannel, localNetworkOf, stationRank } from "../src/epg/tidyKnowledge.js";
 import { splitTitle } from "../src/normalise/splitTitle.js";
 import { isDatedTitle, titleKey } from "../src/normalise/titleKey.js";
 import { classifyEntry, movieKey, seriesKey, urlExtension } from "../src/source/m3u/classifyEntry.js";
@@ -300,8 +300,9 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
   ] as const) add("tidyFacets", "leaguesOfChannel", [raw, category, country], leaguesOfChannel(raw, category, country));
   for (const name of ["Nowtv| Sky Sports Main Event", "Sky Sports Main Events HD", "Sky Sports Main Event UHD/4K", "UK: BBC One HD", "US| NBC", "DAZN", "NOWTV|", ""]) add("tidyFacets", "listStationKey", [name], listStationKey(name));
   for (const name of ["Sky Sports 1 UHD 50fps", "Sky Sports 1 4K", "Sky Sports 1 FHD", "Sky Sports 1 (1080p50)", "Sky Sports 1 HD", "Sky Sports 1 (720p25)", "Sky Sports 1", "Sky Sports 1 SD", "BBC One 576p", "ITV1 HEVC", ""]) add("tidyFacets", "qualityRank", [name], qualityRank(name));
+  for (const [raw, country] of [["Sky Sport News", "UK"], ["Sky Witness HD", "UK"], ["Sky Sports Main Event", "UK"], ["Sky Atlantic", "IE"], ["BBC One", "UK"], ["TNT Sports 1", "UK"], ["ESPN", "US"], ["Skyline TV", "UK"], ["Sky News", "US"]] as const) add("tidyFacets", "isBroadcasterChannel", [raw, country], isBroadcasterChannel(raw, country));
   for (const [list, name] of [
-    ["skysports", "Sky Sports Main Event UHD"], ["skysports", "Sky Sports Premier League HD"], ["skysports", "Sky Sports 1"], ["skysports", "Sky Sports 2 FHD"], ["skysports", "Sky Sports F1"], ["skysports", "Sky Sports Racing"],
+    ["skysports", "Sky Sports Main Event UHD"], ["skysports", "Sky Sports Premier League HD"], ["skysports", "Sky Sports 1"], ["skysports", "Sky Sports F1 1"], ["skysports", "Nowtv| Sky Sports 2 (UHD)"], ["tnt", "BT Sport 2"], ["skysports", "Sky Sports 2 FHD"], ["skysports", "Sky Sports F1"], ["skysports", "Sky Sports Racing"],
     ["skysports", "Sky Sports Golf"], ["skysports", "Sky Sports Mix"], ["skysports", "Sky Sports Whatever"], ["tnt", "TNT Sports 3"], ["tnt", "TNT Sports Ultimate"], ["tnt", "BT Sport Box Office"], ["dazn", "DAZN 1"],
   ] as const) add("tidyFacets", "stationRank", [list, name], stationRank(list, name));
   for (const code of ["UK", "uk", "GB", "gb", "US", "CA", "NBA", "PRIME", "VIP", "BEE", "XX", "INT", "", " us "]) add("tidyFacets", "guideCountryOf", [code], guideCountryOf(code));

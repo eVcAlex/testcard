@@ -654,7 +654,9 @@
    "SKY CINEMA"
   ],
   "out": {
-   "leagues": [],
+   "leagues": [
+    "skychannels"
+   ],
    "local": null,
    "placeholder": false
   }
@@ -1062,6 +1064,78 @@
   "out": 3
  },
  {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "Sky Sport News",
+   "UK"
+  ],
+  "out": true
+ },
+ {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "Sky Witness HD",
+   "UK"
+  ],
+  "out": true
+ },
+ {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "Sky Sports Main Event",
+   "UK"
+  ],
+  "out": true
+ },
+ {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "Sky Atlantic",
+   "IE"
+  ],
+  "out": true
+ },
+ {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "BBC One",
+   "UK"
+  ],
+  "out": false
+ },
+ {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "TNT Sports 1",
+   "UK"
+  ],
+  "out": true
+ },
+ {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "ESPN",
+   "US"
+  ],
+  "out": false
+ },
+ {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "Skyline TV",
+   "UK"
+  ],
+  "out": false
+ },
+ {
+  "fn": "isBroadcasterChannel",
+  "in": [
+   "Sky News",
+   "US"
+  ],
+  "out": false
+ },
+ {
   "fn": "stationRank",
   "in": [
    "skysports",
@@ -1084,6 +1158,30 @@
    "Sky Sports 1"
   ],
   "out": 2
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Sky Sports F1 1"
+  ],
+  "out": 10
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "skysports",
+   "Nowtv| Sky Sports 2 (UHD)"
+  ],
+  "out": 3
+ },
+ {
+  "fn": "stationRank",
+  "in": [
+   "tnt",
+   "BT Sport 2"
+  ],
+  "out": 1
  },
  {
   "fn": "stationRank",

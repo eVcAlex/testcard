@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryDisplayName, channelDisplayName, displayName } from "../normalise/displayName.js";
+import { categoryDisplayName, channelDisplayName, copyLabel, displayName } from "../normalise/displayName.js";
 
 // Each provider has its own house style, so these cover the common ones, not just the one we started with.
 describe("displayName", () => {
@@ -108,5 +108,15 @@ describe("categoryDisplayName", () => {
   it("adds nothing to a name with no emoji, or one that is only emoji", () => {
     expect(categoryDisplayName("UK| SKY CINEMA")).toBe(displayName("UK| SKY CINEMA"));
     expect(categoryDisplayName("⚽⚽⚽")).toBe("⚽⚽⚽");
+  });
+});
+
+describe("copyLabel", () => {
+  it("names a copy under its station's heading by its tag and quality", () => {
+    expect(copyLabel("Nowtv| Sky Sports Main Event HD")).toBe("Nowtv · HD");
+    expect(copyLabel("Sky Sports Main Event UHD/4K")).toBe("UHD/4K");
+    expect(copyLabel("Sky Sports Main Event")).toBe("Standard");
+    expect(copyLabel("Sky Sports Main Event (1080p50)")).toBe("1080p50");
+    expect(copyLabel("Nowtv| Sky Sports Main Event")).toBe("Nowtv · Standard");
   });
 });

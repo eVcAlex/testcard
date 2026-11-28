@@ -16,6 +16,7 @@ export interface League {
 /** In the order the rail lists them: the big leagues first. A channel can belong to more than one. */
 export const LEAGUES: readonly League[] = [
   { key: "skysports", label: "Sky Sports", emoji: "📺", pattern: "sky ?sports\\b", countries: ["UK", "IE"] },
+  { key: "skychannels", label: "Sky Channels", emoji: "📺", pattern: "\\bsky\\b(?!\\s*sports?\\b)", countries: ["UK", "IE"] },
   { key: "tnt", label: "TNT Sports / BT Sport", emoji: "📺", pattern: "tnt ?sports?\\b|\\bBT ?sports?\\b|\\bBT box office\\b", countries: ["UK", "IE"] },
   { key: "spfl", label: "Scottish Football", emoji: "⚽", pattern: "\\bSPFL\\b|scottish (?:premiership|football|championship|cup)|\\bcinch\\b|viaplay scot", countries: ["UK", "IE"] },
   { key: "efl", label: "EFL", emoji: "⚽", pattern: "\\bEFL\\b|carabao|sky bet (?:championship|league)", countries: ["UK"] },
@@ -76,8 +77,8 @@ export const NETWORKS: readonly Network[] = [
  * then the rest in the provider's order ("Main Event", "Premier League", "Sports 1", "Sports 2" ...). Only for the broadcasters listed.
  */
 export const STATION_ORDER: Readonly<Record<string, readonly string[]>> = {
-  skysports: ["main event", "premier league", "\\b1\\b", "\\b2\\b", "\\b3\\b", "\\b4\\b", "\\b5\\b", "football", "cricket", "golf", "f1|formula", "action", "arena", "mix", "news", "racing"],
-  tnt: ["\\b1\\b", "\\b2\\b", "\\b3\\b", "\\b4\\b", "ultimate", "box office"],
+  skysports: ["main event", "premier league", "sports?\\s+1\\b", "sports?\\s+2\\b", "sports?\\s+3\\b", "sports?\\s+4\\b", "sports?\\s+5\\b", "football", "cricket", "golf", "f1|formula", "action", "arena", "mix", "news", "racing"],
+  tnt: ["sports?\\s+1\\b", "sports?\\s+2\\b", "sports?\\s+3\\b", "sports?\\s+4\\b", "ultimate", "box office"],
 };
 const ORDER_PATTERNS = Object.fromEntries(Object.entries(STATION_ORDER).map(([key, sources]) => [key, sources.map((source) => new RegExp(source, "i"))]));
 
@@ -112,6 +113,12 @@ export function leaguesOfChannel(rawName: string, categoryRaw: string, country: 
     if (league.countries === undefined) return true;
     return country !== null ? league.countries.includes(country) : !PREFIXED.test(rawName);
   }).map((league) => league.key);
+}
+
+/** A pay broadcaster's channel (Sky, TNT, BT...): it has its own list, so the national "TV Guide" leaves it out. */
+export function isBroadcasterChannel(rawName: string, country: string | null): boolean {
+  if (/\bsky ?sport\b/i.test(rawName)) return true;
+  return leaguesOfChannel(rawName, "", country).some((key) => LEAGUES.find((league) => league.key === key)?.countries !== undefined);
 }
 
 /** "(WMAQ)", "(KGO)", "(Wtvd)": a U.S. station's call letters in brackets. */

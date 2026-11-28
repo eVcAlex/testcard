@@ -35,6 +35,15 @@ describe("TV Guide lists", () => {
     expect(listGuideCountries(db)).toEqual([{ country: "UK", count: 4 }, { country: "US", count: 1 }]);
   });
 
+  it("keeps Sky and the other pay broadcasters out of the TV Guide, in their own lists", () => {
+    const { db, add } = setup();
+    add("bbc", "s", "BBC One", "UK");
+    add("sky1", "s", "Sky Witness HD", "UK");
+    add("sky2", "s", "Sky Sport News", "UK");
+    add("sky3", "s", "Sky Sports Main Event", "UK");
+    expect(browseGuideChannels(db, { country: "UK" }).map((c) => c.id)).toEqual(["bbc"]);
+  });
+
   it("lists every quality of a station together, the best picture first, then the next station by name", () => {
     const { db, add } = setup();
     add("bbc4k", "s", "BBC One 4K", "UK");
@@ -297,6 +306,12 @@ describe("league and local-station lists", () => {
     expect(browseFacetList(db, { id: "league:skysports" }).map((c) => c.raw_name)).toEqual([
       "Sky Sports Main Event UHD", "Sky Sports Main Event HD", "Sky Sports Premier League HD", "Sky Sports 1", "Sky Sports 2", "Sky Sports Golf", "Sky Sports Racing",
     ]);
+  });
+
+  it("does not take Sky Sports F1 1 for Sky Sports 1", () => {
+    const { db, add } = world();
+    add("s", "UK| SKY SPORTS", ["Sky Sports F1 1", "Sky Sports 2", "Sky Sports Premier League", "Sky Sports 1", "Sky Sports F1 2"]);
+    expect(browseFacetList(db, { id: "league:skysports" }).map((c) => c.raw_name)).toEqual(["Sky Sports Premier League", "Sky Sports 1", "Sky Sports 2", "Sky Sports F1 1", "Sky Sports F1 2"]);
   });
 
   it("reads a provider's tag and typo as the same station: 'Nowtv| Sky Sports Main Event', 'Main Events'", () => {

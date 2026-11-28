@@ -21,7 +21,9 @@ describe("leaguesOf", () => {
     expect(leaguesOf("MILB 12: Reno Aces")).toEqual(["milb"]);
   });
   it("says nothing for an ordinary channel", () => {
-    for (const name of ["BBC One", "US: CNN", "Dave", "", "SKY CINEMA"]) expect(leaguesOf(name)).toEqual([]);
+    for (const name of ["BBC One", "US: CNN", "Dave", ""]) expect(leaguesOf(name)).toEqual([]);
+    expect(leaguesOf("SKY CINEMA")).toEqual(["skychannels"]);
+    expect(leaguesOf("Sky Sports Main Event")).toEqual(["skysports"]);
   });
   it("has every league once, with a label and an emoji", () => {
     expect(new Set(LEAGUES.map((l) => l.key)).size).toBe(LEAGUES.length);

@@ -12,6 +12,7 @@ class League(val key: String, val label: String, val emoji: String, val pattern:
 /** In the order the rail lists them: the big leagues first. A channel can belong to more than one. */
 val LEAGUES: List<League> = listOf(
     League("skysports", "Sky Sports", "📺", """sky ?sports\b""", listOf("UK", "IE")),
+    League("skychannels", "Sky Channels", "📺", """\bsky\b(?!\s*sports?\b)""", listOf("UK", "IE")),
     League("tnt", "TNT Sports / BT Sport", "📺", """tnt ?sports?\b|\bBT ?sports?\b|\bBT box office\b""", listOf("UK", "IE")),
     League("spfl", "Scottish Football", "⚽", """\bSPFL\b|scottish (?:premiership|football|championship|cup)|\bcinch\b|viaplay scot""", listOf("UK", "IE")),
     League("efl", "EFL", "⚽", """\bEFL\b|carabao|sky bet (?:championship|league)""", listOf("UK")),
@@ -65,8 +66,8 @@ val NETWORKS: List<Network> = listOf(
 
 /** The order a broadcaster's stations are known in (`STATION_ORDER` in `tidyKnowledge.ts`): flagship channels first, then the numbered ones. */
 val STATION_ORDER: Map<String, List<String>> = mapOf(
-    "skysports" to listOf("main event", "premier league", """\b1\b""", """\b2\b""", """\b3\b""", """\b4\b""", """\b5\b""", "football", "cricket", "golf", "f1|formula", "action", "arena", "mix", "news", "racing"),
-    "tnt" to listOf("""\b1\b""", """\b2\b""", """\b3\b""", """\b4\b""", "ultimate", "box office"),
+    "skysports" to listOf("main event", "premier league", """sports?\s+1\b""", """sports?\s+2\b""", """sports?\s+3\b""", """sports?\s+4\b""", """sports?\s+5\b""", "football", "cricket", "golf", "f1|formula", "action", "arena", "mix", "news", "racing"),
+    "tnt" to listOf("""sports?\s+1\b""", """sports?\s+2\b""", """sports?\s+3\b""", """sports?\s+4\b""", "ultimate", "box office"),
 )
 private val ORDER_PATTERNS = STATION_ORDER.mapValues { (_, sources) -> sources.map { Regex(it, RegexOption.IGNORE_CASE) } }
 
@@ -97,6 +98,14 @@ fun leaguesOfChannel(rawName: String, categoryRaw: String, country: String?): Li
             else -> !PREFIXED.containsMatchIn(rawName)
         }
     }.map { it.key }
+}
+
+private val SKY_SPORT_SINGULAR = Regex("""\bsky ?sport\b""", RegexOption.IGNORE_CASE)
+
+/** A pay broadcaster's channel (`isBroadcasterChannel`): it has its own list, so the national "TV Guide" leaves it out. */
+fun isBroadcasterChannel(rawName: String, country: String?): Boolean {
+    if (SKY_SPORT_SINGULAR.containsMatchIn(rawName)) return true
+    return leaguesOfChannel(rawName, "", country).any { key -> LEAGUES.firstOrNull { it.key == key }?.countries != null }
 }
 
 /** "(WMAQ)", "(KGO)", "(Wtvd)": a U.S. station's call letters in brackets. */

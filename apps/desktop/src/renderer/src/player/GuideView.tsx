@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChannelRow } from "@testcard/core";
-import { listStationKey, stationLabel } from "@testcard/core/src/normalise/displayName.js";
+import { copyLabel, listStationKey, stationLabel } from "@testcard/core/src/normalise/displayName.js";
 import { railLists, segmentsFor, startList, type Airing, type RailList } from "@testcard/core/src/epg/guideGrid.js";
 import { parseFacetListId, parseGuideListId, parseTidyCategoryId } from "@testcard/core/src/epg/guideListLabels.js";
 import { decodeTags } from "@testcard/core/src/normalise/classifyCategory.js";
@@ -172,6 +172,7 @@ export function GuideView({
     const derived = !searching && (parseTidyCategoryId(shown) !== null || parseFacetListId(shown) !== null || parseGuideListId(shown) !== null);
     const tops: number[] = [];
     const headings = new Map<number, { label: string; top: number }>();
+    const grouped = new Set<number>();
     let slots = 0;
     for (let i = 0; i < rows.length; ) {
       const key = listStationKey(rows[i]!.normalised_name);
@@ -181,10 +182,14 @@ export function GuideView({
         headings.set(i, { label: stationLabel(rows[i]!.normalised_name), top: slots * ROW_H });
         slots += 1;
       }
-      for (let k = i; k < end; k += 1) { tops.push(slots * ROW_H); slots += 1; }
+      for (let k = i; k < end; k += 1) {
+        tops.push(slots * ROW_H);
+        slots += 1;
+        if (derived && end - i >= 2) grouped.add(k);
+      }
       i = end;
     }
-    return { tops, headings, height: slots * ROW_H };
+    return { tops, headings, grouped, height: slots * ROW_H };
   }, [rows, shown, searching]);
   const rowAt = (y: number) => {
     let low = 0;
@@ -460,7 +465,7 @@ export function GuideView({
                       onContextMenu={(e) => { e.preventDefault(); pick(channel.id, nowMs); setMenu({ x: e.clientX, y: e.clientY, channel }); }}
                     >
                       {channel.logo_url ? <img className="lt-ch-logo" src={logoSrc(channel.logo_url)} alt="" loading="lazy" referrerPolicy="no-referrer" /> : null}
-                      <span className="pw-guide-ch-name">{channel.normalised_name}</span>
+                      <span className="pw-guide-ch-name">{layout.grouped.has(index) ? copyLabel(channel.normalised_name) : channel.normalised_name}</span>
                       {channel.is_favourite ? <Icon name="star" size={12} filled /> : null}
                     </button>
                     <div className="lt-cells">
