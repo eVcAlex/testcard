@@ -7,7 +7,7 @@
  */
 import golden from "../src/__tests__/fixtures/categoryGolden.json" with { type: "json" };
 import { classifyCategory } from "../src/normalise/classifyCategory.js";
-import { categoryDisplayName, channelDisplayName, displayName, fallbackRank, sameChannelKey } from "../src/normalise/displayName.js";
+import { categoryDisplayName, channelDisplayName, displayName, fallbackRank, listStationKey, sameChannelKey } from "../src/normalise/displayName.js";
 import { groupVariants, type RawChannelEntry } from "../src/normalise/groupVariants.js";
 import { dropVariantMarks, parseName } from "../src/normalise/parseName.js";
 import { openSetupProfile, parseSetupFragment, sealSetupProfile, setupProof } from "../src/sync/setupCrypto.js";
@@ -298,6 +298,7 @@ export async function buildVectors(): Promise<Record<string, Vector[]>> {
     ["Sky Sports Action HD", "UK| SKY SPORTS", "UK"], ["MXC| Sky Sports 1", "MXC| SPORTS", null], ["F1| Sky Sports F1 HD", "F1| SKY", null], ["Sky Sports Main Event UHD", "", null],
     ["Sky Sport F1 IT", "IT| SKY", "IT"], ["Sky Sports Premier League", "AU| SPORTS", "AU"], ["TNT Sports 1", "UK| TNT", "UK"], ["UK: EFL Carabao Cup", "", "UK"], ["Sky Sports NZ 1", "", "NZ"],
   ] as const) add("tidyFacets", "leaguesOfChannel", [raw, category, country], leaguesOfChannel(raw, category, country));
+  for (const name of ["Nowtv| Sky Sports Main Event", "Sky Sports Main Events HD", "Sky Sports Main Event UHD/4K", "UK: BBC One HD", "US| NBC", "DAZN", "NOWTV|", ""]) add("tidyFacets", "listStationKey", [name], listStationKey(name));
   for (const name of ["Sky Sports 1 UHD 50fps", "Sky Sports 1 4K", "Sky Sports 1 FHD", "Sky Sports 1 (1080p50)", "Sky Sports 1 HD", "Sky Sports 1 (720p25)", "Sky Sports 1", "Sky Sports 1 SD", "BBC One 576p", "ITV1 HEVC", ""]) add("tidyFacets", "qualityRank", [name], qualityRank(name));
   for (const [list, name] of [
     ["skysports", "Sky Sports Main Event UHD"], ["skysports", "Sky Sports Premier League HD"], ["skysports", "Sky Sports 1"], ["skysports", "Sky Sports 2 FHD"], ["skysports", "Sky Sports F1"], ["skysports", "Sky Sports Racing"],

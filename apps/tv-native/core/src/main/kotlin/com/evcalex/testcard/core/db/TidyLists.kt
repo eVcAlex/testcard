@@ -11,7 +11,7 @@ import com.evcalex.testcard.core.epg.localNetworkOf
 import com.evcalex.testcard.core.epg.stationRank
 import com.evcalex.testcard.core.normalise.categoryDisplayName
 import com.evcalex.testcard.core.normalise.qualityRank
-import com.evcalex.testcard.core.normalise.sameChannelKey
+import com.evcalex.testcard.core.normalise.listStationKey
 import java.util.Locale
 
 /** A country that has "TV Guide" channels, and how many (one per station: its qualities and copies are counted once). */
@@ -57,7 +57,7 @@ private fun SQLiteConnection.guideLeads(sourceId: String?): List<Lead> {
         if (localNetworkOf(row.rawName) != null || isPlaceholderChannelName(row.rawName)) continue
         leads += Lead(row.id, row.source, country, row.name)
     }
-    return inStationOrder(leads, { it.name }, { "${it.sourceId}\u0000${it.country}\u0000${sameChannelKey(it.name)}" })
+    return inStationOrder(leads, { it.name }, { "${it.sourceId}\u0000${it.country}\u0000${listStationKey(it.name)}" })
 }
 
 /** The countries a tidy "TV Guide" list is offered for, with how many channels each lists, the biggest first. */
@@ -236,7 +236,7 @@ fun SQLiteConnection.browseTidyCategory(id: String, limit: Int = 5000): List<Cha
     val categoryIds = parseTidyCategoryId(id)?.takeIf { it.isNotEmpty() } ?: return emptyList()
     class Entry(val id: String, val sourceId: String, val name: String)
     val rows = tidyRows(null, categoryIds.toSet()).map { Entry(it.channelId, it.sourceId, it.name) }
-    val ids = inStationOrder(rows, { it.name }, { "${it.sourceId}\u0000${sameChannelKey(it.name)}" }).take(limit).map { it.id }
+    val ids = inStationOrder(rows, { it.name }, { "${it.sourceId}\u0000${listStationKey(it.name)}" }).take(limit).map { it.id }
     val byId = HashMap<String, ChannelRow>()
     for (part in ids.chunked(500)) {
         for (row in query("SELECT $CHANNEL_COLUMNS FROM channels c WHERE c.id IN (${part.joinToString(",") { "?" }})", *part.toTypedArray()) { it.channelRow() }) byId[row.id] = row
@@ -285,7 +285,7 @@ private fun SQLiteConnection.facetRows(sourceId: String?): List<FacetRow> {
         .filter { inTidyMarkets(it.country) }
 }
 
-private fun stationKey(row: FacetRow) = "${row.sourceId}\u0000${row.country ?: ""}\u0000${sameChannelKey(row.name)}"
+private fun stationKey(row: FacetRow) = "${row.sourceId}\u0000${row.country ?: ""}\u0000${listStationKey(row.name)}"
 
 /** A list needs this many channels to be worth showing: a stray match is not a list. */
 private const val FACET_LIST_LEAST = 3

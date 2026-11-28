@@ -299,6 +299,14 @@ describe("league and local-station lists", () => {
     ]);
   });
 
+  it("reads a provider's tag and typo as the same station: 'Nowtv| Sky Sports Main Event', 'Main Events'", () => {
+    const { db, add } = world();
+    add("s", "UK| SKY SPORTS", ["Sky Sports Main Event HD", "Sky Sports Premier League", "Sky Sports Main Events HD", "Nowtv| Sky Sports Main Event", "Sky Sports Main Event UHD/4K"]);
+    expect(browseFacetList(db, { id: "league:skysports" }).map((c) => c.raw_name)).toEqual([
+      "Sky Sports Main Event UHD/4K", "Sky Sports Main Event HD", "Sky Sports Main Events HD", "Nowtv| Sky Sports Main Event", "Sky Sports Premier League",
+    ]);
+  });
+
   it("gathers a network's local stations from any category, and not its national services", () => {
     const { db, add } = world();
     add("s", "US| NBC", ["US: NBC 5 (WMAQ) CHICAGO", "US: NBC 4 (WCMH) COLUMBUS OH", "US: NBC SPORTS NETWORK"]);

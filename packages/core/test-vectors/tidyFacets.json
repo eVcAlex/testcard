@@ -929,6 +929,62 @@
   "out": []
  },
  {
+  "fn": "listStationKey",
+  "in": [
+   "Nowtv| Sky Sports Main Event"
+  ],
+  "out": "sky sports main event"
+ },
+ {
+  "fn": "listStationKey",
+  "in": [
+   "Sky Sports Main Events HD"
+  ],
+  "out": "sky sports main event"
+ },
+ {
+  "fn": "listStationKey",
+  "in": [
+   "Sky Sports Main Event UHD/4K"
+  ],
+  "out": "sky sports main event"
+ },
+ {
+  "fn": "listStationKey",
+  "in": [
+   "UK: BBC One HD"
+  ],
+  "out": "bbc one"
+ },
+ {
+  "fn": "listStationKey",
+  "in": [
+   "US| NBC"
+  ],
+  "out": "nbc"
+ },
+ {
+  "fn": "listStationKey",
+  "in": [
+   "DAZN"
+  ],
+  "out": "dazn"
+ },
+ {
+  "fn": "listStationKey",
+  "in": [
+   "NOWTV|"
+  ],
+  "out": "nowtv|"
+ },
+ {
+  "fn": "listStationKey",
+  "in": [
+   ""
+  ],
+  "out": ""
+ },
+ {
   "fn": "qualityRank",
   "in": [
    "Sky Sports 1 UHD 50fps"

@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChannelRow } from "@testcard/core";
-import { sameChannelKey, stationLabel } from "@testcard/core/src/normalise/displayName.js";
+import { listStationKey, stationLabel } from "@testcard/core/src/normalise/displayName.js";
 import { railLists, segmentsFor, startList, type Airing, type RailList } from "@testcard/core/src/epg/guideGrid.js";
 import { parseFacetListId, parseGuideListId, parseTidyCategoryId } from "@testcard/core/src/epg/guideListLabels.js";
 import { decodeTags } from "@testcard/core/src/normalise/classifyCategory.js";
@@ -174,9 +174,9 @@ export function GuideView({
     const headings = new Map<number, { label: string; top: number }>();
     let slots = 0;
     for (let i = 0; i < rows.length; ) {
-      const key = sameChannelKey(rows[i]!.normalised_name);
+      const key = listStationKey(rows[i]!.normalised_name);
       let end = i + 1;
-      while (derived && end < rows.length && sameChannelKey(rows[end]!.normalised_name) === key) end += 1;
+      while (derived && end < rows.length && listStationKey(rows[end]!.normalised_name) === key) end += 1;
       if (derived && end - i >= 2) {
         headings.set(i, { label: stationLabel(rows[i]!.normalised_name), top: slots * ROW_H });
         slots += 1;

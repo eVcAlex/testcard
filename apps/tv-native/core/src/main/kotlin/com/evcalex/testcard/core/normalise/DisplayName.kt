@@ -163,6 +163,16 @@ fun sameChannelKey(displayed: String): String {
     return if (base == "") displayed.jsTrim().lowercase(Locale.ROOT) else base
 }
 
+private val STATION_TAG = Regex("^[a-z0-9+]{2,8}\\s*[|:]\\s*")
+private val STATION_EVENTS = Regex("\\bevents\\b")
+private val STATION_SPACES = Regex("\\s+")
+
+/** What makes two rows of a list one station (`listStationKey`): [sameChannelKey] without a provider's tag in front, "Events" read as "Event". */
+fun listStationKey(displayed: String): String {
+    val base = sameChannelKey(displayed).replace(STATION_TAG, "").replace(STATION_EVENTS, "event").replace(STATION_SPACES, " ").trim()
+    return base.ifEmpty { sameChannelKey(displayed) }
+}
+
 private val QUALITY_FHD = Regex("""\b(?:FHD|1080P?\d*)\b""")
 
 /** How a list shows a channel's qualities (`qualityRank`): 4K/UHD, then Full HD, HD, unmarked, SD. */

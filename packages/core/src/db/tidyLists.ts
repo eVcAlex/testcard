@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { channelShown } from "../sync/hidden.js";
-import { qualityRank, sameChannelKey } from "../normalise/displayName.js";
+import { listStationKey, qualityRank } from "../normalise/displayName.js";
 import { CHANNEL_COLUMNS, type ChannelRow } from "./queries.js";
 import { channelGuideCountry, guideCountryOf, inTidyMarkets, parseFacetListId, parseTidyCategoryId, tidyCategoryId, tidyCategoryLabel, facetListId, type FacetList, type GuideCountry, type TidyCategory } from "../epg/guideListLabels.js";
 import { LEAGUES, NETWORKS, isPlaceholderChannelName, leagueListLabel, leaguesOfChannel, localListLabel, stationRank, localNetworkOf } from "../epg/tidyKnowledge.js";
@@ -56,7 +56,7 @@ function guideLeads(db: Database.Database, sourceId?: string): Lead[] {
     if (country === null || !inTidyMarkets(country) || localNetworkOf(row.rawName) !== null || isPlaceholderChannelName(row.rawName)) continue;
     leads.push({ id: row.id, sourceId: row.sourceId, country, name: row.name });
   }
-  return inStationOrder(leads, (lead) => `${lead.sourceId}\u0000${lead.country}\u0000${sameChannelKey(lead.name)}`);
+  return inStationOrder(leads, (lead) => `${lead.sourceId}\u0000${lead.country}\u0000${listStationKey(lead.name)}`);
 }
 
 /** The countries a tidy "TV Guide" list is offered for, with how many channels each lists, the biggest first. */
@@ -153,7 +153,7 @@ export function browseTidyCategory(db: Database.Database, opts: { id: string; li
   const categoryIds = parseTidyCategoryId(opts.id);
   if (categoryIds === null || categoryIds.length === 0) return [];
   const rows = tidyRows(db, undefined, categoryIds).map((row) => ({ id: row.channelId, sourceId: row.sourceId, name: row.name }));
-  const ids = inStationOrder(rows, (row) => `${row.sourceId}\u0000${sameChannelKey(row.name)}`).slice(0, opts.limit ?? 5000).map((row) => row.id);
+  const ids = inStationOrder(rows, (row) => `${row.sourceId}\u0000${listStationKey(row.name)}`).slice(0, opts.limit ?? 5000).map((row) => row.id);
   const byId = new Map<string, ChannelRow>();
   for (let from = 0; from < ids.length; from += 500) {
     const part = ids.slice(from, from + 500);
@@ -199,7 +199,7 @@ function facetsOf(row: FacetRow): { leagues: string[]; local: string | null } {
   return { leagues: leaguesOfChannel(row.rawName, row.categoryRaw, row.country), local: localNetworkOf(row.rawName) };
 }
 
-const stationKey = (row: FacetRow) => `${row.sourceId}\u0000${row.country ?? ""}\u0000${sameChannelKey(row.name)}`;
+const stationKey = (row: FacetRow) => `${row.sourceId}\u0000${row.country ?? ""}\u0000${listStationKey(row.name)}`;
 
 /** A list needs this many channels to be worth showing: a stray match is not a list. */
 const FACET_LIST_LEAST = 3;

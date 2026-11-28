@@ -184,6 +184,19 @@ export function stationLabel(displayed: string): string {
 }
 
 /**
+ * What makes two rows of a list one station: `sameChannelKey`, without a provider's tag in front ("Nowtv| Sky Sports Main Event") and
+ * with "Events" read as "Event" (a provider's typo), so the copies of a station from different groups sit together under one heading.
+ */
+export function listStationKey(displayed: string): string {
+  const base = sameChannelKey(displayed)
+    .replace(/^[a-z0-9+]{2,8}\s*[|:]\s*/, "")
+    .replace(/\bevents\b/g, "event")
+    .replace(/\s+/g, " ")
+    .trim();
+  return base === "" ? sameChannelKey(displayed) : base;
+}
+
+/**
  * Which of a channel's qualities to try first when another has failed: HD first (the most likely to play and
  * still look good), then an unmarked one, then SD, and 4K last, since it is the one most likely to be what failed.
  */
